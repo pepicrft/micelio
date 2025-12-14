@@ -7,30 +7,6 @@
 # General application configuration
 import Config
 
-config :micelio,
-  ecto_repos: [Micelio.Repo],
-  generators: [timestamp_type: :utc_datetime]
-
-# Configure the endpoint
-config :micelio, MicelioWeb.Endpoint,
-  url: [host: "localhost"],
-  adapter: Bandit.PhoenixAdapter,
-  render_errors: [
-    formats: [html: MicelioWeb.ErrorHTML, json: MicelioWeb.ErrorJSON],
-    layout: false
-  ],
-  pubsub_server: Micelio.PubSub,
-  live_view: [signing_salt: "uBaIW6yU"]
-
-# Configure the mailer
-#
-# By default it uses the "Local" adapter which stores the emails
-# locally. You can see the emails in your browser, at "/dev/mailbox".
-#
-# For production it's recommended to configure a different adapter
-# at the `config/runtime.exs`.
-config :micelio, Micelio.Mailer, adapter: Swoosh.Adapters.Local
-
 # Configure esbuild (the version is required)
 config :esbuild,
   version: "0.25.4",
@@ -46,9 +22,34 @@ config :logger, :default_formatter,
   format: "$time $metadata[$level] $message\n",
   metadata: [:request_id]
 
-# Use Jason for JSON parsing in Phoenix
-config :phoenix, :json_library, Jason
+# Configure the mailer
+#
+# By default it uses the "Local" adapter which stores the emails
+# locally. You can see the emails in your browser, at "/dev/mailbox".
+#
+# For production it's recommended to configure a different adapter
+# at the `config/runtime.exs`.
+config :micelio, Micelio.Mailer, adapter: Swoosh.Adapters.Local
+
+# Configure the endpoint
+config :micelio, MicelioWeb.Endpoint,
+  url: [host: "localhost"],
+  adapter: Bandit.PhoenixAdapter,
+  render_errors: [
+    formats: [html: MicelioWeb.ErrorHTML, json: MicelioWeb.ErrorJSON],
+    layout: false
+  ],
+  pubsub_server: Micelio.PubSub,
+  live_view: [signing_salt: "uBaIW6yU"]
+
+config :micelio,
+  ecto_repos: [Micelio.Repo],
+  generators: [timestamp_type: :utc_datetime]
 
 # Import environment specific config. This must remain at the bottom
+
+# Use Jason for JSON parsing in Phoenix
 # of this file so it overrides the configuration defined above.
+config :phoenix, :json_library, Jason
+
 import_config "#{config_env()}.exs"

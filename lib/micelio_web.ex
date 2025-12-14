@@ -23,10 +23,11 @@ defmodule MicelioWeb do
     quote do
       use Phoenix.Router, helpers: false
 
-      # Import common connection and controller functions to use in pipelines
-      import Plug.Conn
       import Phoenix.Controller
       import Phoenix.LiveView.Router
+
+      # Import common connection and controller functions to use in pipelines
+      import Plug.Conn
     end
   end
 
@@ -39,7 +40,6 @@ defmodule MicelioWeb do
   def controller do
     quote do
       use Phoenix.Controller, formats: [:html, :json]
-
       use Gettext, backend: MicelioWeb.Gettext
 
       import Plug.Conn
@@ -82,14 +82,15 @@ defmodule MicelioWeb do
       # Translation
       use Gettext, backend: MicelioWeb.Gettext
 
+      import MicelioWeb.CoreComponents
+
       # HTML escaping functionality
       import Phoenix.HTML
       # Core UI components
-      import MicelioWeb.CoreComponents
+      alias MicelioWeb.Layouts
 
       # Common modules used in templates
       alias Phoenix.LiveView.JS
-      alias MicelioWeb.Layouts
 
       # Routes generation with the ~p sigil
       unquote(verified_routes())

@@ -19,15 +19,14 @@ defmodule MicelioWeb.ConnCase do
 
   using do
     quote do
+      use MicelioWeb, :verified_routes
+      import MicelioWeb.ConnCase
+      import Phoenix.ConnTest
+      import Plug.Conn
       # The default endpoint for testing
       @endpoint MicelioWeb.Endpoint
 
-      use MicelioWeb, :verified_routes
-
       # Import conveniences for testing with connections
-      import Plug.Conn
-      import Phoenix.ConnTest
-      import MicelioWeb.ConnCase
     end
   end
 
