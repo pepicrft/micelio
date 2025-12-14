@@ -22,7 +22,7 @@ FROM ${BUILDER_IMAGE} AS builder
 
 # install build dependencies
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends build-essential git \
+  && apt-get install -y --no-install-recommends build-essential git libgit2-dev \
   && rm -rf /var/lib/apt/lists/*
 
 # prepare build dir
@@ -46,11 +46,16 @@ RUN mkdir config
 COPY config/config.exs config/${MIX_ENV}.exs config/
 RUN mix deps.compile
 
+# Install Zig compiler for NIFs
+RUN mix zig.get
+
 RUN mix assets.setup
 
 COPY priv priv
 
 COPY lib lib
+
+COPY zig zig
 
 # Compile the release
 RUN mix compile
@@ -71,7 +76,7 @@ RUN mix release
 FROM ${RUNNER_IMAGE} AS final
 
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends libstdc++6 openssl libncurses6 locales ca-certificates \
+  && apt-get install -y --no-install-recommends libstdc++6 openssl libncurses6 locales ca-certificates libgit2-1.9 \
   && rm -rf /var/lib/apt/lists/*
 
 # Set the locale

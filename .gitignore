@@ -35,3 +35,9 @@ micelio-*.tar
 npm-debug.log
 /assets/node_modules/
 
+# Zigler build artifacts
+.Elixir.*.zig
+.zig-cache/
+zig-out/
+/priv/lib/
+

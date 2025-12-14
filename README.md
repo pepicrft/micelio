@@ -4,6 +4,11 @@ Micelio is a free-software software forge powered by Elixir, drawing inspiration
 
 ## Development
 
+> [!NOTE]
+> Micelio uses [libgit2](https://libgit2.org/) for Git operations via Zig NIFs. You'll need to install it before compiling:
+> - **macOS**: `brew install libgit2`
+> - **Debian/Ubuntu**: `apt-get install libgit2-dev`
+
 To start your Phoenix server:
 
 * Run `mix setup` to install and setup dependencies
