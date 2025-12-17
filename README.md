@@ -1,6 +1,6 @@
 # Micelio
 
-Micelio is a free-software software forge powered by Elixir, drawing inspiration from SourceHut and Forgejo.
+Micelio is a minimalist, free software git forge built for the agentic era. It replaces human-centric primitives like issues, branches, and pull requests with concepts native to human-agent collaboration: structured tasks, iterative attempts, automated validations, and explicit delegation. Early and experimental.
 
 ## Development
 

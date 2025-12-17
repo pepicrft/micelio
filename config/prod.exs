@@ -15,12 +15,8 @@ config :logger, level: :info
 
 config :micelio, MicelioWeb.Endpoint, cache_static_manifest: "priv/static/cache_manifest.json"
 
-config :micelio, MicelioWeb.Endpoint,
-  force_ssl: [rewrite_on: [:x_forwarded_proto]],
-  exclude: [
-    # paths: ["/health"],
-    hosts: ["localhost", "127.0.0.1"]
-  ]
+# SSL is handled by Kamal proxy - no need for force_ssl in Phoenix
+# The proxy terminates SSL and forwards requests internally over HTTP
 
 # Configure Swoosh API Client
 config :swoosh, api_client: Swoosh.ApiClient.Req

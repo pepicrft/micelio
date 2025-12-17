@@ -1,0 +1,50 @@
+service: micelio
+
+image: micelio/micelio
+
+servers:
+  web:
+    - 91.98.64.68
+
+proxy:
+  ssl: true
+  host: micelio.dev
+  app_port: 4000
+
+registry:
+  server: 91.98.64.68:5000
+  username: micelio
+  password:
+    - KAMAL_REGISTRY_PASSWORD
+
+builder:
+  arch: arm64
+  remote: ssh://root@91.98.64.68
+
+env:
+  clear:
+    PHX_HOST: micelio.dev
+    DATABASE_HOST: micelio-db
+  secret:
+    - SECRET_KEY_BASE
+    - DATABASE_URL
+
+accessories:
+  registry:
+    image: registry:2
+    host: 91.98.64.68
+    port: 5000
+    directories:
+      - data:/var/lib/registry
+  db:
+    image: postgres:17
+    host: 91.98.64.68
+    port: 5432
+    env:
+      clear:
+        POSTGRES_USER: micelio
+        POSTGRES_DB: micelio_production
+      secret:
+        - POSTGRES_PASSWORD
+    directories:
+      - data:/var/lib/postgresql/data
