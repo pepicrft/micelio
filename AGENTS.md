@@ -5,6 +5,24 @@ This is a web application written using the Phoenix web framework.
 - Use `mix precommit` alias when you are done with all changes and fix any pending issues
 - Use the already included and available `:req` (`Req`) library for HTTP requests, **avoid** `:httpoison`, `:tesla`, and `:httpc`. Req is included by default and is the preferred HTTP client for Phoenix apps
 
+## Zig NIFs
+
+Git operations are implemented using Zig NIFs with libgit2. The code is organized with domain-based function prefixes in a single `zig/git/git.zig` file:
+
+- **Shared utilities** - Helper functions like `init_libgit2()`, `null_terminate()`
+- **Status domain** - `status()` for working tree status
+- **Repository domain** - `repository_init()`, `repository_default_branch()`
+- **Tree domain** - `tree_list()`, `tree_blob()` for browsing repository content
+
+The Elixir module `Micelio.Git` exposes these as:
+- `status/1` - Get working tree status
+- `repository_init/1` - Initialize a new repository
+- `repository_default_branch/1` - Get the default branch name
+- `tree_list/3` - List entries at a ref and path
+- `tree_blob/3` - Read file content at a ref and path
+
+All functions return `{:ok, result}` or `{:error, reason}` tuples for proper error handling.
+
 ## Deployment
 
 The app is deployed using [Kamal](https://kamal-deploy.org/). Before deploying, source the environment variables:
