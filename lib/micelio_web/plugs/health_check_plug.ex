@@ -6,8 +6,9 @@ defmodule MicelioWeb.HealthCheckPlug do
   bypassing all other plugs including SSL redirects. This is necessary because
   Kamal's health checks hit containers directly over HTTP.
   """
-  import Plug.Conn
   @behaviour Plug
+
+  import Plug.Conn
 
   def init(opts), do: opts
 

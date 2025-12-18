@@ -20,6 +20,7 @@ defmodule MicelioWeb.ConnCase do
   using do
     quote do
       use MicelioWeb, :verified_routes
+
       import MicelioWeb.ConnCase
       import Phoenix.ConnTest
       import Plug.Conn
