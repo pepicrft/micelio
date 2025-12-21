@@ -1,4 +1,4 @@
-defmodule MicelioWeb.ErrorJSON do
+defmodule MicelioWeb.Browser.ErrorJSON do
   @moduledoc """
   This module is invoked by your endpoint in case of errors on JSON requests.
 

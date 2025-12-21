@@ -1,4 +1,4 @@
-defmodule MicelioWeb.PageHTML do
+defmodule MicelioWeb.Browser.PageHTML do
   @moduledoc """
   This module contains pages rendered by PageController.
 

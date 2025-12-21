@@ -19,7 +19,13 @@ defmodule MicelioWeb.Router do
     plug MicelioWeb.ReesourcePlug, :load_repository
   end
 
-  scope "/", MicelioWeb do
+  scope "/api", MicelioWeb.API do
+    pipe_through :api
+
+    get "/repositories", RepositoryController, :index
+  end
+
+  scope "/", MicelioWeb.Browser do
     pipe_through([:browser, :load_resources])
 
     get "/", PageController, :home
@@ -27,11 +33,6 @@ defmodule MicelioWeb.Router do
     get "/:account", AccountController, :show
     get "/:account/:repository", RepositoryController, :show
   end
-
-  # Other scopes may use custom stacks.
-  # scope "/api", MicelioWeb do
-  #   pipe_through :api
-  # end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development
   if Application.compile_env(:micelio, :dev_routes) do

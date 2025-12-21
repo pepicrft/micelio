@@ -1,4 +1,4 @@
-defmodule MicelioWeb.PageController do
+defmodule MicelioWeb.Browser.PageController do
   use MicelioWeb, :controller
 
   def home(conn, _params) do

@@ -1,0 +1,10 @@
+- Does SourceHut have issues?
+- How does the mailing list work in SourceHut
+- We need to implement authentication
+- Decide how storage can be scaled horizontally (e.g. can we use Ceph in Elixir).
+  - What about SQLite vs Postgres vs MySQL
+- Can we include the marketing pages here and remove them at compile-time?
+  - Or maybe have something like GitHub pages, and make those pages a github-pages kind of site that's deployed to Micelio?
+- I think we should have a zig CLI as part of this repo that can serve as an interface to the repository
+- Support OAuth2 dynamic registration such that MCP clients can interface with it.
+- Set up OpenAPISpex

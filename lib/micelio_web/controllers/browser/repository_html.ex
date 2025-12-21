@@ -1,4 +1,4 @@
-defmodule MicelioWeb.RepositoryHTML do
+defmodule MicelioWeb.Browser.RepositoryHTML do
   use MicelioWeb, :html
 
   embed_templates "repository_html/*"
