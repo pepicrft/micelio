@@ -14,6 +14,7 @@ defmodule MicelioWeb.HealthCheckPlug do
 
   def call(%{path_info: ["up"]} = conn, _opts) do
     conn
+    |> put_resp_content_type("application/html")
     |> send_resp(200, "ok")
     |> halt()
   end

@@ -14,10 +14,18 @@ defmodule MicelioWeb.Router do
     plug :accepts, ["json"]
   end
 
+  pipeline :load_resources do
+    plug MicelioWeb.ReesourcePlug, :load_account
+    plug MicelioWeb.ReesourcePlug, :load_repository
+  end
+
   scope "/", MicelioWeb do
-    pipe_through :browser
+    pipe_through([:browser, :load_resources])
 
     get "/", PageController, :home
+
+    get "/:account", AccountController, :show
+    get "/:account/:repository", RepositoryController, :show
   end
 
   # Other scopes may use custom stacks.
