@@ -117,6 +117,8 @@ jobs:
           restore-keys: build-${{ runner.os }}-${{ env.MIX_ENV }}-
       - name: Install dependencies
         run: mix deps.get
+      - name: Compile
+        run: mix compile
       - name: Run tests
         run: mix test
         env:
