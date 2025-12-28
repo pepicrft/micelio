@@ -1,6 +1,9 @@
 # Micelio
 
-Micelio is a minimalist, free software, and non-profit git forge. Early and experimental.
+Micelio is a minimalist and free software git forge. The main instance is available at [micelio.dev](https://micelio.dev).
+
+> [!WARNING]
+> This project is a work in progress and exploratory. Expect breaking changes and incomplete features.
 
 ## Documentation
 
