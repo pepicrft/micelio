@@ -50,6 +50,6 @@ config :micelio,
 
 # Use Jason for JSON parsing in Phoenix
 # of this file so it overrides the configuration defined above.
-config :phoenix, :json_library, Jason
+config :phoenix, :json_library, JSON
 
 import_config "#{config_env()}.exs"

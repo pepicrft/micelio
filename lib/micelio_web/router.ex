@@ -19,21 +19,6 @@ defmodule MicelioWeb.Router do
     plug MicelioWeb.ReesourcePlug, :load_repository
   end
 
-  scope "/api", MicelioWeb.API do
-    pipe_through :api
-
-    get "/repositories", RepositoryController, :index
-  end
-
-  scope "/", MicelioWeb.Browser do
-    pipe_through([:browser, :load_resources])
-
-    get "/", PageController, :home
-
-    get "/:account", AccountController, :show
-    get "/:account/:repository", RepositoryController, :show
-  end
-
   # Enable LiveDashboard and Swoosh mailbox preview in development
   if Application.compile_env(:micelio, :dev_routes) do
     # If you want to use the LiveDashboard in production, you should put
@@ -43,11 +28,27 @@ defmodule MicelioWeb.Router do
     # as long as you are also using SSL (which you should anyway).
     import Phoenix.LiveDashboard.Router
 
-    scope "/dev" do
+    scope "/admin" do
       pipe_through :browser
 
       live_dashboard "/dashboard", metrics: MicelioWeb.Telemetry
       forward "/mailbox", Plug.Swoosh.MailboxPreview
     end
+  end
+
+  scope "/api", MicelioWeb.API do
+    pipe_through :api
+
+    get "/repositories", RepositoryController, :index
+    get "/releases", ReleaseController, :index
+  end
+
+  scope "/", MicelioWeb.Browser do
+    pipe_through([:browser, :load_resources])
+
+    get "/", PageController, :home
+
+    get "/:account", AccountController, :show
+    get "/:account/:repository", RepositoryController, :show
   end
 end
