@@ -103,6 +103,10 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
       - name: Install libgit2
         run: sudo apt-get update && sudo apt-get install -y libgit2-dev
+      - name: Configure git identity
+        run: |
+          git config --global user.email "ci@micelio.dev"
+          git config --global user.name "Micelio CI"
       - name: Cache deps
         uses: actions/cache@v4
         with:
