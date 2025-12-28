@@ -21,6 +21,18 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
       - name: Install libgit2
         run: sudo apt-get update && sudo apt-get install -y libgit2-dev
+      - name: Cache deps
+        uses: actions/cache@v4
+        with:
+          path: deps
+          key: deps-${{ runner.os }}-${{ hashFiles('mix.lock') }}
+          restore-keys: deps-${{ runner.os }}-
+      - name: Cache build
+        uses: actions/cache@v4
+        with:
+          path: _build
+          key: build-${{ runner.os }}-${{ env.MIX_ENV }}-${{ hashFiles('mix.lock') }}
+          restore-keys: build-${{ runner.os }}-${{ env.MIX_ENV }}-
       - name: Install dependencies
         run: mix deps.get
       - name: Compile with warnings as errors
@@ -35,6 +47,12 @@ jobs:
         with:
           cache: true
           github_token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Cache deps
+        uses: actions/cache@v4
+        with:
+          path: deps
+          key: deps-${{ runner.os }}-${{ hashFiles('mix.lock') }}
+          restore-keys: deps-${{ runner.os }}-
       - name: Install dependencies
         run: mix deps.get
       - name: Check formatting
@@ -49,6 +67,12 @@ jobs:
         with:
           cache: true
           github_token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Cache deps
+        uses: actions/cache@v4
+        with:
+          path: deps
+          key: deps-${{ runner.os }}-${{ hashFiles('mix.lock') }}
+          restore-keys: deps-${{ runner.os }}-
       - name: Install dependencies
         run: mix deps.get
       - name: Check for unused dependencies
@@ -79,6 +103,18 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
       - name: Install libgit2
         run: sudo apt-get update && sudo apt-get install -y libgit2-dev
+      - name: Cache deps
+        uses: actions/cache@v4
+        with:
+          path: deps
+          key: deps-${{ runner.os }}-${{ hashFiles('mix.lock') }}
+          restore-keys: deps-${{ runner.os }}-
+      - name: Cache build
+        uses: actions/cache@v4
+        with:
+          path: _build
+          key: build-${{ runner.os }}-${{ env.MIX_ENV }}-${{ hashFiles('mix.lock') }}
+          restore-keys: build-${{ runner.os }}-${{ env.MIX_ENV }}-
       - name: Install dependencies
         run: mix deps.get
       - name: Run tests
