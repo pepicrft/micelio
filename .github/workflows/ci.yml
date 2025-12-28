@@ -1,0 +1,129 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  MIX_ENV: test
+
+jobs:
+  compile:
+    name: Compile
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v3
+        with:
+          cache: true
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install libgit2
+        run: sudo apt-get update && sudo apt-get install -y libgit2-dev
+      - name: Cache deps
+        uses: actions/cache@v4
+        with:
+          path: deps
+          key: deps-${{ runner.os }}-${{ hashFiles('mix.lock') }}
+          restore-keys: deps-${{ runner.os }}-
+      - name: Cache build
+        uses: actions/cache@v4
+        with:
+          path: _build
+          key: build-${{ runner.os }}-${{ env.MIX_ENV }}-${{ hashFiles('mix.lock') }}
+          restore-keys: build-${{ runner.os }}-${{ env.MIX_ENV }}-
+      - name: Install dependencies
+        run: mix deps.get
+      - name: Compile with warnings as errors
+        run: mix compile --warnings-as-errors
+
+  format:
+    name: Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v3
+        with:
+          cache: true
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Cache deps
+        uses: actions/cache@v4
+        with:
+          path: deps
+          key: deps-${{ runner.os }}-${{ hashFiles('mix.lock') }}
+          restore-keys: deps-${{ runner.os }}-
+      - name: Install dependencies
+        run: mix deps.get
+      - name: Check formatting
+        run: mix format --check-formatted
+
+  unused-deps:
+    name: Unused Dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v3
+        with:
+          cache: true
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Cache deps
+        uses: actions/cache@v4
+        with:
+          path: deps
+          key: deps-${{ runner.os }}-${{ hashFiles('mix.lock') }}
+          restore-keys: deps-${{ runner.os }}-
+      - name: Install dependencies
+        run: mix deps.get
+      - name: Check for unused dependencies
+        run: mix deps.unlock --check-unused
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: micelio_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v3
+        with:
+          cache: true
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install libgit2
+        run: sudo apt-get update && sudo apt-get install -y libgit2-dev
+      - name: Configure git identity
+        run: |
+          git config --global user.email "ci@micelio.dev"
+          git config --global user.name "Micelio CI"
+      - name: Cache deps
+        uses: actions/cache@v4
+        with:
+          path: deps
+          key: deps-${{ runner.os }}-${{ hashFiles('mix.lock') }}
+          restore-keys: deps-${{ runner.os }}-
+      - name: Cache build
+        uses: actions/cache@v4
+        with:
+          path: _build
+          key: build-${{ runner.os }}-${{ env.MIX_ENV }}-${{ hashFiles('mix.lock') }}
+          restore-keys: build-${{ runner.os }}-${{ env.MIX_ENV }}-
+      - name: Install dependencies
+        run: mix deps.get
+      - name: Compile
+        run: mix compile --force
+      - name: Run tests
+        run: mix test
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/micelio_test

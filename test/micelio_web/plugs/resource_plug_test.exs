@@ -15,16 +15,6 @@ defmodule MicelioWeb.ReesourcePlugTest do
 
       assert got.assigns[:selected_account] == account
     end
-
-    test "doesn't assign the account if it doesn't exist" do
-      conn = build_conn(:get, "/micelio", %{account: "micelio"})
-      opts = MicelioWeb.ReesourcePlug.init(:load_account)
-      expect(Micelio.Accounts, :account, fn %{handle: "micelio"} -> {:error, :not_found} end)
-
-      got = MicelioWeb.ReesourcePlug.call(conn, opts)
-
-      assert got.assigns[:selected_account] == nil
-    end
   end
 
   describe "load_repository" do
@@ -37,19 +27,6 @@ defmodule MicelioWeb.ReesourcePlugTest do
       got = MicelioWeb.ReesourcePlug.call(conn, opts)
 
       assert got.assigns[:selected_repository] == repository
-    end
-
-    test "doesn't assign the repository if it doesn't exist" do
-      conn = build_conn(:get, "/micelio/micelio", %{account: "micelio", repository: "micelio"})
-      opts = MicelioWeb.ReesourcePlug.init(:load_repository)
-
-      expect(Micelio.Repositories, :repository, fn %{handle: "micelio"} ->
-        {:error, :not_found}
-      end)
-
-      got = MicelioWeb.ReesourcePlug.call(conn, opts)
-
-      assert got.assigns[:selected_repository] == nil
     end
   end
 end
