@@ -4,15 +4,19 @@ defmodule MicelioWeb.ReesourcePlug do
   end
 
   def call(%{params: %{"account" => account_handle}} = conn, :load_account) do
-    {:ok, account} = Micelio.Accounts.account(%{handle: account_handle})
-    conn |> Plug.Conn.assign(:selected_account, account)
+    case Micelio.Accounts.account(%{handle: account_handle}) do
+      {:ok, account} -> conn |> Plug.Conn.assign(:selected_account, account)
+      {:error, _} -> conn
+    end
   end
 
   def call(conn, :load_account), do: conn
 
   def call(%{params: %{"repository" => repository_handle}} = conn, :load_repository) do
-    {:ok, repository} = Micelio.Repositories.repository(%{handle: repository_handle})
-    conn |> Plug.Conn.assign(:selected_repository, repository)
+    case Micelio.Repositories.repository(%{handle: repository_handle}) do
+      {:ok, repository} -> conn |> Plug.Conn.assign(:selected_repository, repository)
+      {:error, _} -> conn
+    end
   end
 
   def call(conn, :load_repository) do
