@@ -30,15 +30,15 @@ This document outlines the implementation plan for adding hif forge capabilities
         │                                           │
         ▼                                           ▼
 ┌───────────────────────┐               ┌───────────────────────┐
-│      PostgreSQL       │               │     S3 (source of     │
+│   SQLite + Litestream │               │     S3 (source of     │
 │                       │               │        truth)         │
 │  Auth only:           │               │                       │
-│  - Accounts           │               │  ┌─────────────────┐  │
+│  - Users              │               │  ┌─────────────────┐  │
 │  - API tokens         │               │  │  Landing Log    │  │
 │  - Permissions        │               │  │  (append-only)  │  │
 │                       │               │  │  + bloom index  │  │
 │  ~KB per user         │               │  └─────────────────┘  │
-│                       │               │  ┌─────────────────┐  │
+│  Replicated to S3     │               │  ┌─────────────────┐  │
 │                       │               │  │  Sessions       │  │
 │                       │               │  │  (binary)       │  │
 │                       │               │  └─────────────────┘  │
@@ -59,7 +59,7 @@ This document outlines the implementation plan for adding hif forge capabilities
 2. **S3 conditional writes** - Landing uses `If-Match` for atomic CAS, no coordinator
 3. **Binary formats** - All data in compact binary (no JSON), 10-50x smaller
 4. **Bloom filter rollups** - O(log n) conflict detection, not O(n) scan
-5. **PostgreSQL for auth** - Only accounts, tokens, permissions (tiny data)
+5. **SQLite for auth** - Only users, tokens, permissions (tiny, replicated via Litestream)
 6. **Tiered caching** - RAM -> SSD -> CDN -> S3
 
 ### Scale Targets
@@ -73,59 +73,80 @@ This document outlines the implementation plan for adding hif forge capabilities
 
 ---
 
-## Phase 1: Auth Database
+## Phase 1: Auth Database (SQLite + Litestream)
 
-**Goal:** Store users, tokens, and permissions in PostgreSQL.
+**Goal:** Store users, tokens, and permissions in SQLite, replicated to S3 via Litestream.
 
-### 1.1 Migration (Done)
+### 1.1 SQLite Schema
 
-```elixir
-# accounts - users and agents
-create table(:accounts) do
-  add :handle, :string, null: false
-  add :email, :string
-  add :password_hash, :string
-  add :type, :string, default: "user"  # 'user' or 'agent'
-end
+```sql
+-- Users
+CREATE TABLE users (
+    id TEXT PRIMARY KEY,              -- "user_abc123"
+    email TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    created_at TEXT NOT NULL
+);
 
-# api_tokens - for CLI authentication
-create table(:api_tokens) do
-  add :account_id, references(:accounts)
-  add :token_hash, :binary, null: false
-  add :name, :string
-  add :scopes, {:array, :string}
-  add :expires_at, :utc_datetime_usec
-end
+-- API tokens
+CREATE TABLE tokens (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id),
+    token_hash TEXT NOT NULL,
+    name TEXT,
+    expires_at TEXT,
+    created_at TEXT NOT NULL
+);
 
-# project_permissions - who can access which projects
-create table(:project_permissions) do
-  add :project_id, :string, null: false
-  add :account_id, references(:accounts)
-  add :role, :string, default: "read"  # 'owner', 'write', 'read'
-end
+-- Project permissions
+CREATE TABLE permissions (
+    id TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL,
+    user_id TEXT NOT NULL REFERENCES users(id),
+    role TEXT NOT NULL,               -- 'owner', 'write', 'read'
+    created_at TEXT NOT NULL,
+
+    UNIQUE (project_id, user_id)
+);
 ```
 
-### 1.2 Ecto Schemas
+This database stays tiny (~KB per user) and is replicated to S3 every second via Litestream.
 
-| Module | Description |
-|--------|-------------|
-| `Micelio.Hif.Account` | User/agent accounts |
-| `Micelio.Hif.ApiToken` | API tokens for CLI auth |
-| `Micelio.Hif.ProjectPermission` | Project access control |
+### 1.2 Elixir Integration
+
+Use `exqlite` or `ecto_sqlite3` for SQLite access:
+
+```elixir
+# mix.exs
+{:ecto_sqlite3, "~> 0.15"}
+```
 
 ### 1.3 Auth Context
 
 ```elixir
 defmodule Micelio.Hif.Auth do
-  def create_account(attrs)
-  def get_account(id)
-  def create_token(account, name, scopes \\ [])
+  def create_user(attrs)
+  def get_user(id)
+  def create_token(user, name)
   def verify_token(token_string)
-  def check_permission(project_id, account_id, required_role)
+  def check_permission(project_id, user_id, required_role)
 end
 ```
 
-**Deliverable:** Auth tables, schemas, and context with tests
+### 1.4 Litestream Configuration
+
+```yaml
+# litestream.yml
+dbs:
+  - path: /data/hif_auth.db
+    replicas:
+      - type: s3
+        bucket: micelio-hif
+        path: auth/litestream
+        region: auto
+```
+
+**Deliverable:** SQLite auth with Litestream replication
 
 ---
 
@@ -620,7 +641,7 @@ end
 
 | Dependency | Purpose |
 |------------|---------|
-| PostgreSQL | Auth storage |
+| SQLite + Litestream | Auth storage (replicated to S3) |
 | S3 / R2 / MinIO | hif data storage |
 | libhif-core | Binary formats, bloom filters |
 
@@ -630,7 +651,7 @@ end
 
 | Phase | Description | Deliverable |
 |-------|-------------|-------------|
-| 1 | Auth Database | Accounts, tokens, permissions (Done) |
+| 1 | Auth Database | SQLite + Litestream for users, tokens, permissions |
 | 2 | S3 Storage | Binary storage layer |
 | 3 | Session CRUD | Start, update, abandon sessions |
 | 4 | Landing | Coordinator-free with bloom rollups |
@@ -643,8 +664,8 @@ end
 ## Current Status
 
 - [x] PLAN.md created
-- [x] Auth migration (accounts, tokens, permissions)
-- [ ] Auth schemas and context
+- [ ] SQLite + Litestream setup
+- [ ] Auth context
 - [ ] Binary storage layer
 - [ ] Session CRUD
 - [ ] Coordinator-free landing
@@ -656,10 +677,11 @@ end
 
 ## Next Steps
 
-1. Create Ecto schemas for auth tables
-2. Implement `Micelio.Hif.Auth` context
-3. Implement `Micelio.Hif.Binary` serialization
-4. Implement `Micelio.Hif.Storage` with local adapter
-5. Implement `Micelio.Hif.Sessions` context
-6. Implement `Micelio.Hif.Landing` with conditional writes
-7. Add gRPC endpoints
+1. Add `ecto_sqlite3` dependency and configure SQLite
+2. Set up Litestream for S3 replication
+3. Implement `Micelio.Hif.Auth` context
+4. Implement `Micelio.Hif.Binary` serialization
+5. Implement `Micelio.Hif.Storage` with local adapter
+6. Implement `Micelio.Hif.Sessions` context
+7. Implement `Micelio.Hif.Landing` with conditional writes
+8. Add gRPC endpoints
