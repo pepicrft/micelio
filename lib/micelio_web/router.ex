@@ -43,6 +43,17 @@ defmodule MicelioWeb.Router do
     get "/releases", ReleaseController, :index
   end
 
+  # Auth routes (before catch-all)
+  scope "/auth", MicelioWeb.Browser do
+    pipe_through :browser
+
+    get "/login", AuthController, :new
+    post "/login", AuthController, :create
+    get "/sent", AuthController, :sent
+    get "/verify/:token", AuthController, :verify
+    delete "/logout", AuthController, :delete
+  end
+
   scope "/", MicelioWeb.Browser do
     pipe_through([:browser, :load_resources])
 

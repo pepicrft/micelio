@@ -9,7 +9,7 @@ defmodule MicelioWeb.ReesourcePlugTest do
       conn = build_conn(:get, "/micelio", %{account: "micelio"})
       opts = MicelioWeb.ReesourcePlug.init(:load_account)
       account = %Micelio.Accounts.Account{handle: "micelio"}
-      expect(Micelio.Accounts, :account, fn %{handle: "micelio"} -> {:ok, account} end)
+      expect(Micelio.Accounts, :get_account_by_handle, fn "micelio" -> account end)
 
       got = MicelioWeb.ReesourcePlug.call(conn, opts)
 
@@ -22,7 +22,7 @@ defmodule MicelioWeb.ReesourcePlugTest do
       conn = build_conn(:get, "/micelio/micelio", %{account: "micelio", repository: "micelio"})
       opts = MicelioWeb.ReesourcePlug.init(:load_repository)
       repository = %Micelio.Repositories.Repository{handle: "micelio"}
-      expect(Micelio.Repositories, :repository, fn %{handle: "micelio"} -> {:ok, repository} end)
+      expect(Micelio.Repositories, :get_repository_by_handle, fn "micelio" -> repository end)
 
       got = MicelioWeb.ReesourcePlug.call(conn, opts)
 

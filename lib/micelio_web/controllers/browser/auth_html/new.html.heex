@@ -1,0 +1,29 @@
+<div class="mx-auto max-w-sm">
+  <.header>
+    <span class="block text-center">Sign in to Micelio</span>
+    <:subtitle>
+      <span class="block text-center">Enter your email and we'll send you a magic link.</span>
+    </:subtitle>
+  </.header>
+
+  <form action={~p"/auth/login"} method="post" class="mt-8 space-y-4">
+    <input type="hidden" name="_csrf_token" value={Phoenix.Controller.get_csrf_token()} />
+
+    <div>
+      <label for="email" class="block text-sm font-medium mb-1">Email</label>
+      <input
+        type="email"
+        name="email"
+        id="email"
+        placeholder="you@example.com"
+        required
+        autofocus
+        class="input input-bordered w-full"
+      />
+    </div>
+
+    <.button variant="primary" class="w-full">
+      Send magic link
+    </.button>
+  </form>
+</div>
