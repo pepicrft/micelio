@@ -41,6 +41,17 @@ defmodule MicelioWeb.Router do
 
     get "/repositories", RepositoryController, :index
     get "/releases", ReleaseController, :index
+
+    # hif sessions
+    scope "/hif", Hif do
+      resources "/sessions", SessionController, only: [:create, :show, :index]
+
+      post "/sessions/:id/decisions", SessionController, :add_decision
+      post "/sessions/:id/messages", SessionController, :add_message
+      post "/sessions/:id/operations", SessionController, :add_operation
+      post "/sessions/:id/land", SessionController, :land
+      post "/sessions/:id/abandon", SessionController, :abandon
+    end
   end
 
   scope "/", MicelioWeb.Browser do
