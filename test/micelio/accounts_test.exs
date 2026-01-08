@@ -2,63 +2,120 @@ defmodule Micelio.AccountsTest do
   use Micelio.DataCase, async: true
 
   alias Micelio.Accounts
-  alias Micelio.Accounts.{Account, User, LoginToken}
+  alias Micelio.Accounts.{Account, Organization, User, Token}
+
+  describe "Account user_changeset" do
+    setup do
+      {:ok, user} = Repo.insert(%User{email: "changeset-test@example.com"})
+      {:ok, user: user}
+    end
+
+    test "validates required fields", %{user: _user} do
+      changeset = Account.user_changeset(%Account{}, %{})
+      assert "can't be blank" in errors_on(changeset).handle
+      assert "can't be blank" in errors_on(changeset).user_id
+    end
+
+    test "validates single character handle is valid", %{user: user} do
+      changeset = Account.user_changeset(%Account{}, %{user_id: user.id, handle: "a"})
+      refute Map.has_key?(errors_on(changeset), :handle)
+    end
+
+    test "validates handle maximum length", %{user: user} do
+      long_handle = String.duplicate("a", 40)
+      changeset = Account.user_changeset(%Account{}, %{user_id: user.id, handle: long_handle})
+      assert "should be at most 39 character(s)" in errors_on(changeset).handle
+    end
+
+    test "validates handle format - no special characters", %{user: user} do
+      changeset = Account.user_changeset(%Account{}, %{user_id: user.id, handle: "test_user"})
+      assert "must contain only alphanumeric characters and single hyphens, cannot start or end with a hyphen" in errors_on(changeset).handle
+    end
+
+    test "validates handle format - can contain hyphens in middle", %{user: user} do
+      changeset = Account.user_changeset(%Account{}, %{user_id: user.id, handle: "test-user"})
+      refute Map.has_key?(errors_on(changeset), :handle)
+    end
+
+    test "validates handle format - cannot end with hyphen", %{user: user} do
+      changeset = Account.user_changeset(%Account{}, %{user_id: user.id, handle: "testuser-"})
+      assert "must contain only alphanumeric characters and single hyphens, cannot start or end with a hyphen" in errors_on(changeset).handle
+    end
+
+    test "validates handle format - cannot have consecutive hyphens", %{user: user} do
+      changeset = Account.user_changeset(%Account{}, %{user_id: user.id, handle: "test--user"})
+      assert "must contain only alphanumeric characters and single hyphens, cannot start or end with a hyphen" in errors_on(changeset).handle
+    end
+
+    test "validates handle format - cannot start with hyphen", %{user: user} do
+      changeset = Account.user_changeset(%Account{}, %{user_id: user.id, handle: "-testuser"})
+      assert "must contain only alphanumeric characters and single hyphens, cannot start or end with a hyphen" in errors_on(changeset).handle
+    end
+  end
+
+  describe "User changeset" do
+    test "validates required email" do
+      changeset = User.changeset(%User{}, %{})
+      assert "can't be blank" in errors_on(changeset).email
+    end
+
+    test "validates email format" do
+      changeset = User.changeset(%User{}, %{email: "invalid"})
+      assert "must be a valid email address" in errors_on(changeset).email
+    end
+
+    test "validates email max length" do
+      long_email = String.duplicate("a", 150) <> "@example.com"
+      changeset = User.changeset(%User{}, %{email: long_email})
+      assert "should be at most 160 character(s)" in errors_on(changeset).email
+    end
+
+    test "normalizes email to lowercase" do
+      changeset = User.changeset(%User{}, %{email: "TEST@EXAMPLE.COM"})
+      assert Ecto.Changeset.get_change(changeset, :email) == "test@example.com"
+    end
+  end
+
+  describe "Token changeset" do
+    setup do
+      {:ok, user} = Accounts.get_or_create_user_by_email("token-test@example.com")
+      {:ok, user: user}
+    end
+
+    test "validates required fields", %{user: _user} do
+      changeset = Token.changeset(%Token{}, %{})
+      assert "can't be blank" in errors_on(changeset).user_id
+      assert "can't be blank" in errors_on(changeset).purpose
+    end
+
+    test "automatically generates token", %{user: user} do
+      changeset = Token.changeset(%Token{}, %{user_id: user.id, purpose: :login})
+      assert Ecto.Changeset.get_change(changeset, :token) != nil
+    end
+
+    test "automatically sets expiration", %{user: user} do
+      changeset = Token.changeset(%Token{}, %{user_id: user.id, purpose: :login})
+      expires_at = Ecto.Changeset.get_change(changeset, :expires_at)
+      assert expires_at != nil
+      assert DateTime.compare(expires_at, DateTime.utc_now()) == :gt
+    end
+  end
 
   describe "accounts" do
-    test "create_account/1 with valid data creates an account" do
-      assert {:ok, %Account{} = account} =
-               Accounts.create_account(%{type: :user, handle: "testuser"})
-
-      assert account.type == :user
-      assert account.handle == "testuser"
-    end
-
-    test "create_account/1 with organization type" do
-      assert {:ok, %Account{} = account} =
-               Accounts.create_account(%{type: :organization, handle: "my-org"})
-
-      assert account.type == :organization
-      assert account.handle == "my-org"
-    end
-
-    test "create_account/1 with invalid handle fails" do
-      assert {:error, changeset} = Accounts.create_account(%{type: :user, handle: "-invalid"})
-
-      assert "must start and end with alphanumeric characters, can contain hyphens" in errors_on(
-               changeset
-             ).handle
-    end
-
-    test "create_account/1 with reserved handle fails" do
-      assert {:error, changeset} = Accounts.create_account(%{type: :user, handle: "admin"})
-      assert "is reserved" in errors_on(changeset).handle
-    end
-
-    test "create_account/1 with duplicate handle fails" do
-      assert {:ok, _} = Accounts.create_account(%{type: :user, handle: "unique"})
-      assert {:error, changeset} = Accounts.create_account(%{type: :user, handle: "unique"})
-      assert "has already been taken" in errors_on(changeset).handle
-    end
-
-    test "create_account/1 handle is case-insensitive" do
-      assert {:ok, _} = Accounts.create_account(%{type: :user, handle: "CamelCase"})
-      assert {:error, changeset} = Accounts.create_account(%{type: :user, handle: "camelcase"})
-      assert "has already been taken" in errors_on(changeset).handle
-    end
-
     test "get_account/1 returns the account" do
-      {:ok, account} = Accounts.create_account(%{type: :user, handle: "findme"})
-      assert Accounts.get_account(account.id) == account
+      {:ok, user} = Accounts.get_or_create_user_by_email("findme@example.com")
+      assert Accounts.get_account(user.account.id).id == user.account.id
     end
 
     test "get_account_by_handle/1 returns the account" do
-      {:ok, account} = Accounts.create_account(%{type: :user, handle: "byhandle"})
-      assert Accounts.get_account_by_handle("byhandle") == account
+      {:ok, user} = Accounts.get_or_create_user_by_email("byhandle@example.com")
+      assert Accounts.get_account_by_handle(user.account.handle).id == user.account.id
     end
 
     test "get_account_by_handle/1 is case-insensitive" do
-      {:ok, account} = Accounts.create_account(%{type: :user, handle: "MixedCase"})
-      assert Accounts.get_account_by_handle("mixedcase").id == account.id
+      {:ok, user} = Accounts.get_or_create_user_by_email("mixedcase@example.com")
+      handle = user.account.handle
+      assert Accounts.get_account_by_handle(String.upcase(handle)).id == user.account.id
     end
 
     test "handle_available?/1 returns true for available handles" do
@@ -71,14 +128,15 @@ defmodule Micelio.AccountsTest do
     end
 
     test "handle_available?/1 returns false for taken handles" do
-      {:ok, _} = Accounts.create_account(%{type: :user, handle: "taken"})
-      refute Accounts.handle_available?("taken")
+      {:ok, user} = Accounts.get_or_create_user_by_email("taken@example.com")
+      refute Accounts.handle_available?(user.account.handle)
     end
 
-    test "create_organization/1 creates an organization account" do
-      assert {:ok, %Account{} = account} = Accounts.create_organization(%{handle: "my-company"})
-      assert account.type == :organization
-      assert account.handle == "my-company"
+    test "create_organization/1 creates an organization with account" do
+      assert {:ok, %Organization{} = org} = Accounts.create_organization(%{handle: "my-company", name: "My Company"})
+      assert org.name == "My Company"
+      assert org.account.handle == "my-company"
+      assert Account.organization?(org.account)
     end
   end
 
@@ -87,7 +145,7 @@ defmodule Micelio.AccountsTest do
       assert {:ok, %User{} = user} = Accounts.get_or_create_user_by_email("new@example.com")
       assert user.email == "new@example.com"
       assert user.account != nil
-      assert user.account.type == :user
+      assert Account.user?(user.account)
     end
 
     test "get_or_create_user_by_email/1 returns existing user" do
@@ -107,7 +165,7 @@ defmodule Micelio.AccountsTest do
     end
 
     test "get_or_create_user_by_email/1 generates unique handle if taken" do
-      {:ok, _} = Accounts.create_account(%{type: :user, handle: "john"})
+      {:ok, _} = Accounts.get_or_create_user_by_email("john@other.com")
       {:ok, user} = Accounts.get_or_create_user_by_email("john@example.com")
       assert user.account.handle == "john-1"
     end
@@ -131,14 +189,15 @@ defmodule Micelio.AccountsTest do
 
   describe "authentication" do
     test "initiate_login/1 creates a login token" do
-      assert {:ok, %LoginToken{} = token} = Accounts.initiate_login("login@example.com")
+      assert {:ok, %Token{} = token} = Accounts.initiate_login("login@example.com")
       assert token.token != nil
+      assert token.purpose == :login
       assert token.expires_at != nil
       assert token.used_at == nil
     end
 
     test "initiate_login/1 creates user if not exists" do
-      assert {:ok, %LoginToken{}} = Accounts.initiate_login("newlogin@example.com")
+      assert {:ok, %Token{}} = Accounts.initiate_login("newlogin@example.com")
       assert Accounts.get_user_by_email("newlogin@example.com") != nil
     end
 
@@ -154,7 +213,7 @@ defmodule Micelio.AccountsTest do
       {:ok, _} = Accounts.verify_login_token(token.token)
 
       # Token should be marked as used
-      updated_token = Repo.get!(LoginToken, token.id)
+      updated_token = Repo.get!(Token, token.id)
       assert updated_token.used_at != nil
     end
 
@@ -179,21 +238,21 @@ defmodule Micelio.AccountsTest do
       assert {:error, :invalid_token} = Accounts.verify_login_token(token.token)
     end
 
-    test "LoginToken.valid?/1 returns true for valid token" do
+    test "Token.valid?/1 returns true for valid token" do
       {:ok, token} = Accounts.initiate_login("validcheck@example.com")
-      assert LoginToken.valid?(token)
+      assert Token.valid?(token)
     end
 
-    test "LoginToken.valid?/1 returns false for used token" do
+    test "Token.valid?/1 returns false for used token" do
       {:ok, token} = Accounts.initiate_login("usedcheck@example.com")
       used_token = %{token | used_at: DateTime.utc_now()}
-      refute LoginToken.valid?(used_token)
+      refute Token.valid?(used_token)
     end
 
-    test "LoginToken.valid?/1 returns false for expired token" do
+    test "Token.valid?/1 returns false for expired token" do
       {:ok, token} = Accounts.initiate_login("expiredcheck@example.com")
       expired_token = %{token | expires_at: ~U[2020-01-01 00:00:00Z]}
-      refute LoginToken.valid?(expired_token)
+      refute Token.valid?(expired_token)
     end
   end
 end

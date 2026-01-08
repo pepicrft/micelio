@@ -1,25 +1,16 @@
-defmodule Micelio.Accounts.LoginToken do
+defmodule Micelio.Accounts.Token do
   use Ecto.Schema
 
   import Ecto.Changeset
-
-  @type t :: %__MODULE__{
-          id: Ecto.UUID.t(),
-          token: String.t(),
-          user_id: Ecto.UUID.t(),
-          user: Micelio.Accounts.User.t() | Ecto.Association.NotLoaded.t(),
-          expires_at: DateTime.t(),
-          used_at: DateTime.t() | nil,
-          inserted_at: DateTime.t()
-        }
 
   @token_validity_minutes 15
 
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
 
-  schema "login_tokens" do
+  schema "tokens" do
     field :token, :string
+    field :purpose, Ecto.Enum, values: [:login, :email_verification, :password_reset]
     field :expires_at, :utc_datetime
     field :used_at, :utc_datetime
 
@@ -29,13 +20,13 @@ defmodule Micelio.Accounts.LoginToken do
   end
 
   @doc """
-  Creates a changeset for a new login token.
+  Creates a changeset for a new token.
   Automatically generates a secure token and sets expiration.
   """
-  def changeset(login_token, attrs) do
-    login_token
-    |> cast(attrs, [:user_id])
-    |> validate_required([:user_id])
+  def changeset(token, attrs) do
+    token
+    |> cast(attrs, [:user_id, :purpose])
+    |> validate_required([:user_id, :purpose])
     |> put_token()
     |> put_expiration()
     |> assoc_constraint(:user)
@@ -44,8 +35,8 @@ defmodule Micelio.Accounts.LoginToken do
   @doc """
   Marks a token as used.
   """
-  def use_changeset(login_token) do
-    login_token
+  def use_changeset(token) do
+    token
     |> change(used_at: DateTime.utc_now() |> DateTime.truncate(:second))
   end
 

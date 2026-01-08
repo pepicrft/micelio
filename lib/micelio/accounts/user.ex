@@ -3,22 +3,13 @@ defmodule Micelio.Accounts.User do
 
   import Ecto.Changeset
 
-  @type t :: %__MODULE__{
-          id: Ecto.UUID.t(),
-          email: String.t(),
-          account_id: Ecto.UUID.t(),
-          account: Micelio.Accounts.Account.t() | Ecto.Association.NotLoaded.t(),
-          inserted_at: DateTime.t(),
-          updated_at: DateTime.t()
-        }
-
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
 
   schema "users" do
     field :email, :string
 
-    belongs_to :account, Micelio.Accounts.Account
+    has_one :account, Micelio.Accounts.Account
 
     timestamps(type: :utc_datetime)
   end
@@ -28,11 +19,10 @@ defmodule Micelio.Accounts.User do
   """
   def changeset(user, attrs) do
     user
-    |> cast(attrs, [:email, :account_id])
+    |> cast(attrs, [:email])
     |> validate_required([:email])
     |> validate_email()
     |> unique_constraint(:email, name: :users_email_index)
-    |> assoc_constraint(:account)
   end
 
   defp validate_email(changeset) do

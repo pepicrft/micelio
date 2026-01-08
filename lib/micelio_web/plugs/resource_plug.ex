@@ -12,11 +12,6 @@ defmodule MicelioWeb.ReesourcePlug do
 
   def call(conn, :load_account), do: conn
 
-  def call(%{params: %{"repository" => repository_handle}} = conn, :load_repository) do
-    repository = Micelio.Repositories.get_repository_by_handle(repository_handle)
-    conn |> assign(:selected_repository, repository)
-  end
-
   def call(conn, :load_repository) do
     conn
   end

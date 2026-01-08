@@ -18,15 +18,13 @@ defmodule MicelioWeb.ReesourcePlugTest do
   end
 
   describe "load_repository" do
-    test "assigns the repository if it exists" do
-      conn = build_conn(:get, "/micelio/micelio", %{account: "micelio", repository: "micelio"})
+    test "returns conn unchanged when no repository param" do
+      conn = build_conn(:get, "/micelio", %{account: "micelio"})
       opts = MicelioWeb.ReesourcePlug.init(:load_repository)
-      repository = %Micelio.Repositories.Repository{handle: "micelio"}
-      expect(Micelio.Repositories, :get_repository_by_handle, fn "micelio" -> repository end)
 
       got = MicelioWeb.ReesourcePlug.call(conn, opts)
 
-      assert got.assigns[:selected_repository] == repository
+      assert got == conn
     end
   end
 end

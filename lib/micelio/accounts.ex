@@ -5,12 +5,8 @@ defmodule Micelio.Accounts do
 
   import Ecto.Query
 
-  alias Micelio.Accounts.{Account, User, LoginToken}
+  alias Micelio.Accounts.{Account, Organization, User, Token}
   alias Micelio.Repo
-
-  # =============================================================================
-  # Accounts
-  # =============================================================================
 
   @doc """
   Gets an account by ID.
@@ -27,11 +23,20 @@ defmodule Micelio.Accounts do
   end
 
   @doc """
-  Creates a new account.
+  Creates a new account for a user.
   """
-  def create_account(attrs) do
+  def create_user_account(attrs) do
     %Account{}
-    |> Account.changeset(attrs)
+    |> Account.user_changeset(attrs)
+    |> Repo.insert()
+  end
+
+  @doc """
+  Creates a new account for an organization.
+  """
+  def create_organization_account(attrs) do
+    %Account{}
+    |> Account.organization_changeset(attrs)
     |> Repo.insert()
   end
 
@@ -44,10 +49,6 @@ defmodule Micelio.Accounts do
     normalized not in Micelio.Handles.reserved() and
       is_nil(get_account_by_handle(handle))
   end
-
-  # =============================================================================
-  # Users
-  # =============================================================================
 
   @doc """
   Gets a user by ID.
@@ -85,8 +86,8 @@ defmodule Micelio.Accounts do
     handle = generate_handle_from_email(email)
 
     Repo.transaction(fn ->
-      with {:ok, account} <- create_account(%{type: :user, handle: handle}),
-           {:ok, user} <- create_user(%{email: email, account_id: account.id}) do
+      with {:ok, user} <- create_user(%{email: email}),
+           {:ok, account} <- create_user_account(%{handle: handle, user_id: user.id}) do
         %{user | account: account}
       else
         {:error, changeset} -> Repo.rollback(changeset)
@@ -124,10 +125,6 @@ defmodule Micelio.Accounts do
     end
   end
 
-  # =============================================================================
-  # Authentication (Magic Link)
-  # =============================================================================
-
   @doc """
   Initiates the login flow by creating a login token for the user.
   If the user doesn't exist, creates them first.
@@ -143,47 +140,54 @@ defmodule Micelio.Accounts do
   Verifies a login token and returns the user if valid.
   Marks the token as used.
   """
-  def verify_login_token(token) do
-    case get_valid_login_token(token) do
-      nil ->
-        {:error, :invalid_token}
-
-      login_token ->
-        login_token
-        |> LoginToken.use_changeset()
-        |> Repo.update()
-
-        {:ok, Repo.preload(login_token.user, :account)}
+  def verify_login_token(token_string) do
+    with %Token{} = token <- get_valid_token(token_string, :login),
+         {:ok, _} <- token |> Token.use_changeset() |> Repo.update() do
+      {:ok, Repo.preload(token.user, :account)}
+    else
+      nil -> {:error, :invalid_token}
+      {:error, _} -> {:error, :invalid_token}
     end
   end
 
   defp create_login_token(user) do
-    %LoginToken{}
-    |> LoginToken.changeset(%{user_id: user.id})
+    %Token{}
+    |> Token.changeset(%{user_id: user.id, purpose: :login})
     |> Repo.insert()
   end
 
-  defp get_valid_login_token(token) do
+  defp get_valid_token(token_string, purpose) do
     now = DateTime.utc_now()
 
-    LoginToken
-    |> where([lt], lt.token == ^token)
-    |> where([lt], is_nil(lt.used_at))
-    |> where([lt], lt.expires_at > ^now)
+    Token
+    |> where([t], t.token == ^token_string)
+    |> where([t], t.purpose == ^purpose)
+    |> where([t], is_nil(t.used_at))
+    |> where([t], t.expires_at > ^now)
     |> preload(:user)
     |> Repo.one()
   end
 
-  # =============================================================================
-  # Organizations
-  # =============================================================================
-
   @doc """
-  Creates a new organization account.
+  Creates a new organization with an associated account.
   """
   def create_organization(attrs) do
-    attrs
-    |> Map.put(:type, :organization)
-    |> create_account()
+    handle = Map.get(attrs, :handle) || Map.get(attrs, "handle")
+    name = Map.get(attrs, :name) || Map.get(attrs, "name")
+
+    Repo.transaction(fn ->
+      with {:ok, org} <- do_create_organization(%{name: name}),
+           {:ok, account} <- create_organization_account(%{handle: handle, organization_id: org.id}) do
+        %{org | account: account}
+      else
+        {:error, changeset} -> Repo.rollback(changeset)
+      end
+    end)
+  end
+
+  defp do_create_organization(attrs) do
+    %Organization{}
+    |> Organization.changeset(attrs)
+    |> Repo.insert()
   end
 end
