@@ -177,7 +177,8 @@ defmodule Micelio.Accounts do
 
     Repo.transaction(fn ->
       with {:ok, org} <- do_create_organization(%{name: name}),
-           {:ok, account} <- create_organization_account(%{handle: handle, organization_id: org.id}) do
+           {:ok, account} <-
+             create_organization_account(%{handle: handle, organization_id: org.id}) do
         %{org | account: account}
       else
         {:error, changeset} -> Repo.rollback(changeset)

@@ -54,7 +54,8 @@ defmodule Micelio.Accounts.Account do
   defp validate_handle(changeset) do
     changeset
     |> validate_format(:handle, ~r/^[a-z0-9](?:[a-z0-9]|-(?=[a-z0-9])){0,38}$/i,
-      message: "must contain only alphanumeric characters and single hyphens, cannot start or end with a hyphen"
+      message:
+        "must contain only alphanumeric characters and single hyphens, cannot start or end with a hyphen"
     )
     |> validate_length(:handle, min: 1, max: 39)
     |> validate_exclusion(:handle, Micelio.Handles.reserved(), message: "is reserved")

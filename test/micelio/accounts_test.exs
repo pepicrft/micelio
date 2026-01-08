@@ -29,7 +29,10 @@ defmodule Micelio.AccountsTest do
 
     test "validates handle format - no special characters", %{user: user} do
       changeset = Account.user_changeset(%Account{}, %{user_id: user.id, handle: "test_user"})
-      assert "must contain only alphanumeric characters and single hyphens, cannot start or end with a hyphen" in errors_on(changeset).handle
+
+      assert "must contain only alphanumeric characters and single hyphens, cannot start or end with a hyphen" in errors_on(
+               changeset
+             ).handle
     end
 
     test "validates handle format - can contain hyphens in middle", %{user: user} do
@@ -39,17 +42,26 @@ defmodule Micelio.AccountsTest do
 
     test "validates handle format - cannot end with hyphen", %{user: user} do
       changeset = Account.user_changeset(%Account{}, %{user_id: user.id, handle: "testuser-"})
-      assert "must contain only alphanumeric characters and single hyphens, cannot start or end with a hyphen" in errors_on(changeset).handle
+
+      assert "must contain only alphanumeric characters and single hyphens, cannot start or end with a hyphen" in errors_on(
+               changeset
+             ).handle
     end
 
     test "validates handle format - cannot have consecutive hyphens", %{user: user} do
       changeset = Account.user_changeset(%Account{}, %{user_id: user.id, handle: "test--user"})
-      assert "must contain only alphanumeric characters and single hyphens, cannot start or end with a hyphen" in errors_on(changeset).handle
+
+      assert "must contain only alphanumeric characters and single hyphens, cannot start or end with a hyphen" in errors_on(
+               changeset
+             ).handle
     end
 
     test "validates handle format - cannot start with hyphen", %{user: user} do
       changeset = Account.user_changeset(%Account{}, %{user_id: user.id, handle: "-testuser"})
-      assert "must contain only alphanumeric characters and single hyphens, cannot start or end with a hyphen" in errors_on(changeset).handle
+
+      assert "must contain only alphanumeric characters and single hyphens, cannot start or end with a hyphen" in errors_on(
+               changeset
+             ).handle
     end
   end
 
@@ -97,7 +109,7 @@ defmodule Micelio.AccountsTest do
       changeset = Token.changeset(%Token{}, %{user_id: user.id, purpose: :login})
       expires_at = Ecto.Changeset.get_change(changeset, :expires_at)
       assert expires_at != nil
-      assert DateTime.compare(expires_at, DateTime.utc_now()) == :gt
+      assert DateTime.after?(expires_at, DateTime.utc_now())
     end
   end
 
@@ -133,7 +145,9 @@ defmodule Micelio.AccountsTest do
     end
 
     test "create_organization/1 creates an organization with account" do
-      assert {:ok, %Organization{} = org} = Accounts.create_organization(%{handle: "my-company", name: "My Company"})
+      assert {:ok, %Organization{} = org} =
+               Accounts.create_organization(%{handle: "my-company", name: "My Company"})
+
       assert org.name == "My Company"
       assert org.account.handle == "my-company"
       assert Account.organization?(org.account)
