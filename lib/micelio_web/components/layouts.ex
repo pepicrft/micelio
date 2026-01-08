@@ -49,9 +49,13 @@ defmodule MicelioWeb.Layouts do
               <a href={~p"/projects"} class="btn btn-ghost">Projects</a>
             </li>
             <li>
-              <a href={~p"/auth/logout"} method="delete" class="btn btn-ghost">
-                Logout
-              </a>
+              <form action={~p"/auth/logout"} method="post" style="display: inline;">
+                <input type="hidden" name="_csrf_token" value={Phoenix.Controller.get_csrf_token()} />
+                <input type="hidden" name="_method" value="delete" />
+                <button type="submit" class="btn btn-ghost" style="border: none; background: transparent; cursor: pointer;">
+                  Logout
+                </button>
+              </form>
             </li>
           <% else %>
             <li>
