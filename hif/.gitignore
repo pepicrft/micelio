@@ -1,0 +1,8 @@
+# Zig build artifacts
+.zig-cache/
+zig-out/
+
+# Release artifacts
+artifacts/
+release/
+dist/

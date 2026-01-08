@@ -1,0 +1,45 @@
+name: hif
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    name: build (${{ matrix.target }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - x86_64-linux-gnu
+          - aarch64-linux-gnu
+          - x86-linux-gnu
+          - x86_64-macos
+          - aarch64-macos
+          - x86_64-windows-gnu
+          - aarch64-windows-gnu
+          - x86-windows-gnu
+          - x86_64-freebsd
+          - aarch64-freebsd
+          - wasm32-wasi
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install tools with mise
+        uses: jdx/mise-action@v2
+        with:
+          cache: true
+      - name: Cache Zig build artifacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/zig
+            zig-cache
+            .zig-cache
+          key: zig-${{ matrix.target }}-${{ runner.os }}-${{ hashFiles('build.zig', 'build.zig.zon', 'src/**') }}
+          restore-keys: |
+            zig-${{ matrix.target }}-${{ runner.os }}-
+            zig-${{ matrix.target }}-
+      - name: Build
+        run: zig build -Dtarget=${{ matrix.target }}
