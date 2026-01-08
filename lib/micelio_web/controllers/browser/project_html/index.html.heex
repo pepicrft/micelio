@@ -1,0 +1,29 @@
+<div class="projects-container">
+  <header class="projects-header">
+    <h1>Projects</h1>
+    <a href={~p"/projects/new"} class="project-button">
+      New Project
+    </a>
+  </header>
+
+  <%= if Enum.empty?(@projects) do %>
+    <div class="projects-empty">
+      <p>You don't have any projects yet.</p>
+      <a href={~p"/projects/new"} class="project-button">
+        Create your first project
+      </a>
+    </div>
+  <% else %>
+    <div class="projects-list">
+      <%= for project <- @projects do %>
+        <a href={~p"/projects/#{project.handle}"} class="project-card">
+          <div class="project-card-name">{project.name}</div>
+          <div class="project-card-handle">@{@account.handle}/{project.handle}</div>
+          <%= if project.description do %>
+            <div class="project-card-description">{project.description}</div>
+          <% end %>
+        </a>
+      <% end %>
+    </div>
+  <% end %>
+</div>

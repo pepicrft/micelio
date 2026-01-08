@@ -1,0 +1,33 @@
+<div class="project-show-container">
+  <header class="project-show-header">
+    <h1>{@project.name}</h1>
+    <div class="project-show-handle">@{@account.handle}/{@project.handle}</div>
+    <%= if @project.description do %>
+      <p class="project-show-description">{@project.description}</p>
+    <% end %>
+
+    <div class="project-show-actions">
+      <a
+        href={~p"/projects/#{@project.handle}/edit"}
+        class="project-show-action project-show-action-edit"
+      >
+        Edit
+      </a>
+      <form action={~p"/projects/#{@project.handle}"} method="post" style="display: inline;">
+        <input type="hidden" name="_csrf_token" value={Phoenix.Controller.get_csrf_token()} />
+        <input type="hidden" name="_method" value="delete" />
+        <button
+          type="submit"
+          class="project-show-action project-show-action-delete"
+          onclick="return confirm('Are you sure you want to delete this project?');"
+        >
+          Delete
+        </button>
+      </form>
+    </div>
+  </header>
+
+  <div class="project-content">
+    <p>Project content will go here.</p>
+  </div>
+</div>

@@ -8,10 +8,15 @@ defmodule MicelioWeb.Router do
     plug :put_root_layout, html: {MicelioWeb.Layouts, :root}
     plug :protect_from_forgery
     plug :put_secure_browser_headers
+    plug MicelioWeb.AuthenticationPlug
   end
 
   pipeline :api do
     plug :accepts, ["json"]
+  end
+
+  pipeline :require_auth do
+    plug MicelioWeb.RequireAuthPlug
   end
 
   pipeline :load_resources do
@@ -52,6 +57,19 @@ defmodule MicelioWeb.Router do
     get "/sent", AuthController, :sent
     get "/verify/:token", AuthController, :verify
     delete "/logout", AuthController, :delete
+  end
+
+  # Project routes (require authentication)
+  scope "/projects", MicelioWeb.Browser do
+    pipe_through [:browser, :require_auth]
+
+    get "/", ProjectController, :index
+    get "/new", ProjectController, :new
+    post "/", ProjectController, :create
+    get "/:handle", ProjectController, :show
+    get "/:handle/edit", ProjectController, :edit
+    put "/:handle", ProjectController, :update
+    delete "/:handle", ProjectController, :delete
   end
 
   scope "/", MicelioWeb.Browser do
