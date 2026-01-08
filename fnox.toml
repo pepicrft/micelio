@@ -1,0 +1,12 @@
+[providers.age]
+type = "age"
+recipients = ["age147aml8dcjnfyj8gacmx8fvskkrg0gq9lfcrfvmquj28ft3rag5sqyq3nss"]
+identity = "~/.config/fnox/micelio-age.txt"
+
+[secrets]
+# Kamal deployment secrets
+KAMAL_REGISTRY_PASSWORD = { provider = "age" }
+POSTGRES_PASSWORD = { provider = "age" }
+SECRET_KEY_BASE = { provider = "age" }
+DATABASE_URL = { provider = "age" }
+SSH_PRIVATE_KEY = { provider = "age" }
