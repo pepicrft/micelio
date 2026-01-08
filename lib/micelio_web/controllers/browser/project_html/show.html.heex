@@ -1,9 +1,10 @@
+<.app flash={@flash} current_user={assigns[:current_user]}>
 <div class="project-show-container">
   <header class="project-show-header">
-    <h1>{@project.name}</h1>
-    <div class="project-show-handle">@{@account.handle}/{@project.handle}</div>
+    <h1><%= @project.name %></h1>
+    <div class="project-show-handle">@<%= @account.handle %>/<%= @project.handle %></div>
     <%= if @project.description do %>
-      <p class="project-show-description">{@project.description}</p>
+      <p class="project-show-description"><%= @project.description %></p>
     <% end %>
 
     <div class="project-show-actions">
@@ -28,6 +29,31 @@
   </header>
 
   <div class="project-content">
-    <p>Project content will go here.</p>
+    <div style="padding: 1.5rem; background: #f9fafb; border-radius: 8px; margin-bottom: 1.5rem;">
+      <h3 style="margin-top: 0; color: #374151;">Project Overview</h3>
+      <div style="display: grid; gap: 1rem;">
+        <div>
+          <strong>Created:</strong> <%= Calendar.strftime(@project.inserted_at, "%B %d, %Y") %>
+        </div>
+        <div>
+          <strong>Last updated:</strong> <%= Calendar.strftime(@project.updated_at, "%B %d, %Y at %I:%M %p") %>
+        </div>
+        <div>
+          <strong>Handle:</strong> <%= @project.handle %>
+        </div>
+      </div>
+    </div>
+    
+    <div style="text-align: center; padding: 2rem; color: #6b7280;">
+      <p>🚀 Project features will be added here soon!</p>
+      <p>This could include:</p>
+      <ul style="text-align: left; display: inline-block; color: #9ca3af;">
+        <li>Repository management</li>
+        <li>Issue tracking</li>
+        <li>Collaboration tools</li>
+        <li>Documentation</li>
+      </ul>
+    </div>
   </div>
 </div>
+</.app>

@@ -49,6 +49,40 @@ liveSocket.connect();
 // >> liveSocket.disableLatencySim()
 window.liveSocket = liveSocket;
 
+// Project handle auto-generation
+function slugify(str) {
+  return str
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '') // Remove special characters
+    .replace(/\s+/g, '-')     // Replace spaces with hyphens
+    .replace(/-+/g, '-');     // Replace multiple hyphens with single hyphen
+}
+
+function setupProjectHandleGeneration() {
+  const nameInput = document.getElementById('project_name');
+  const handleInput = document.getElementById('project_handle');
+  
+  if (nameInput && handleInput) {
+    let handleModified = false;
+    
+    // Check if handle was manually modified
+    handleInput.addEventListener('input', () => {
+      handleModified = true;
+    });
+    
+    // Auto-generate handle from name
+    nameInput.addEventListener('input', (e) => {
+      if (!handleModified) {
+        handleInput.value = slugify(e.target.value);
+      }
+    });
+  }
+}
+
+// Setup project handle generation when DOM is ready
+document.addEventListener('DOMContentLoaded', setupProjectHandleGeneration);
+
 // The lines below enable quality of life phoenix_live_reload
 // development features:
 //

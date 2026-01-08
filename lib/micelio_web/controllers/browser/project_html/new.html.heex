@@ -1,3 +1,4 @@
+<.app flash={@flash} current_user={assigns[:current_user]}>
 <div class="project-form-container">
   <header class="project-form-header">
     <h1>Create a new project</h1>
@@ -22,7 +23,7 @@
         }
       />
       <%= if @changeset.errors[:name] do %>
-        <span class="project-error">{elem(@changeset.errors[:name], 0)}</span>
+        <span class="project-error"><%= elem(@changeset.errors[:name], 0) %></span>
       <% end %>
     </div>
 
@@ -34,13 +35,15 @@
         id="project_handle"
         placeholder="my-awesome-project"
         required
+        pattern="^[a-zA-Z0-9](?:[a-zA-Z0-9]|-(?=[a-zA-Z0-9])){0,99}$"
+        title="Must contain only alphanumeric characters and single hyphens, cannot start or end with a hyphen"
         class={"project-input #{if @changeset.errors[:handle], do: "project-input-error"}"}
         value={
           Phoenix.HTML.Form.normalize_value("text", Ecto.Changeset.get_field(@changeset, :handle))
         }
       />
       <%= if @changeset.errors[:handle] do %>
-        <span class="project-error">{elem(@changeset.errors[:handle], 0)}</span>
+        <span class="project-error"><%= elem(@changeset.errors[:handle], 0) %></span>
       <% end %>
     </div>
 
@@ -51,7 +54,7 @@
         id="project_description"
         placeholder="A short description of your project"
         class="project-input project-textarea"
-      >{Ecto.Changeset.get_field(@changeset, :description)}</textarea>
+      ><%= Ecto.Changeset.get_field(@changeset, :description) %></textarea>
     </div>
 
     <button type="submit" class="project-button">
@@ -59,3 +62,4 @@
     </button>
   </form>
 </div>
+</.app>

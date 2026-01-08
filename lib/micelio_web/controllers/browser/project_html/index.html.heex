@@ -1,3 +1,4 @@
+<.app flash={@flash} current_user={assigns[:current_user]}>
 <div class="projects-container">
   <header class="projects-header">
     <h1>Projects</h1>
@@ -8,22 +9,28 @@
 
   <%= if Enum.empty?(@projects) do %>
     <div class="projects-empty">
-      <p>You don't have any projects yet.</p>
-      <a href={~p"/projects/new"} class="project-button">
-        Create your first project
-      </a>
+      <div style="text-align: center; padding: 2rem;">
+        <h2 style="color: #6b7280; margin-bottom: 1rem;">No projects yet</h2>
+        <p style="color: #9ca3af; margin-bottom: 1.5rem;">
+          Projects help you organize your code and collaborate with others.
+        </p>
+        <a href={~p"/projects/new"} class="project-button">
+          Create your first project
+        </a>
+      </div>
     </div>
   <% else %>
     <div class="projects-list">
       <%= for project <- @projects do %>
         <a href={~p"/projects/#{project.handle}"} class="project-card">
-          <div class="project-card-name">{project.name}</div>
-          <div class="project-card-handle">@{@account.handle}/{project.handle}</div>
+          <div class="project-card-name"><%= project.name %></div>
+          <div class="project-card-handle">@<%= @account.handle %>/<%= project.handle %></div>
           <%= if project.description do %>
-            <div class="project-card-description">{project.description}</div>
+            <div class="project-card-description"><%= project.description %></div>
           <% end %>
         </a>
       <% end %>
     </div>
   <% end %>
 </div>
+</.app>
