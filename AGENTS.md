@@ -125,6 +125,9 @@ custom classes must fully style the input
 <!-- phoenix:ecto-start -->
 ## Ecto Guidelines
 
+- **Never** use `@type` annotations in Ecto schema modules. Ecto schemas are self-documenting through their field definitions
+- **Never** use section divider comments like `# ====` in context modules. Use `@moduledoc` and `@doc` for documentation
+
 - **Always** preload Ecto associations in queries when they'll be accessed in templates, ie a message that needs to reference the `message.user.email`
 - Remember `import Ecto.Query` and other supporting modules when you write `seeds.exs`
 - `Ecto.Schema` fields always use the `:string` type, even for `:text`, columns, ie: `field :name, :string`
@@ -133,6 +136,17 @@ custom classes must fully style the input
 - Fields which are set programatically, such as `user_id`, must not be listed in `cast` calls or similar for security purposes. Instead they must be explicitly set when creating the struct
 - **Always** invoke `mix ecto.gen.migration migration_name_using_underscores` when generating migration files, so the correct timestamp and conventions are applied
 <!-- phoenix:ecto-end -->
+
+## CSS Guidelines
+
+- **Never** use Tailwind CSS classes in templates
+- Use vanilla modern CSS only
+- Define a theme following the [theme-ui specification](https://theme-ui.com/) modeled with CSS variables in `assets/css/theme/tokens.css`
+- CSS variables are **required** for all values (colors, spacing, typography, etc.). Hardcoded values are exceptions and should be avoided
+- CSS files must mirror the pages structure:
+  - `assets/css/theme/tokens.css`: Design tokens as CSS variables (colors, spacing, typography, shadows, radii)
+  - `assets/css/routes/<page>.css`: Page-specific styles that consume the design tokens
+- Use semantic class names that describe purpose (e.g., `.auth-container`, `.auth-button`) rather than utility classes
 
 <!-- phoenix:html-start -->
 ## Phoenix HTML guidelines

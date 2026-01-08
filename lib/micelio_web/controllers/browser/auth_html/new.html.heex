@@ -1,0 +1,27 @@
+<div class="auth-container">
+  <header class="auth-header">
+    <h1>Sign in to Micelio</h1>
+    <p>Enter your email and we'll send you a magic link.</p>
+  </header>
+
+  <form action={~p"/auth/login"} method="post" class="auth-form" id="auth-login-form">
+    <input type="hidden" name="_csrf_token" value={Phoenix.Controller.get_csrf_token()} />
+
+    <div class="auth-form-group">
+      <label for="email">Email</label>
+      <input
+        type="email"
+        name="email"
+        id="email"
+        placeholder="you@example.com"
+        required
+        autofocus
+        class="auth-input"
+      />
+    </div>
+
+    <button type="submit" class="auth-button">
+      Send magic link
+    </button>
+  </form>
+</div>
