@@ -20,6 +20,8 @@ registry:
 builder:
   arch: arm64
   remote: ssh://root@91.98.64.68
+  driver-opts:
+    - config=/etc/buildkit/buildkitd.toml
 
 env:
   clear:
