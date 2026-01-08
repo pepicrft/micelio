@@ -39,5 +39,12 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H 91.98.64.68 >> ~/.ssh/known_hosts
 
+      - name: Configure remote buildx for insecure registry
+        run: |
+          ssh root@91.98.64.68 "docker buildx rm kamal-remote-ssh---root-91-98-64-68 2>/dev/null || true"
+          ssh root@91.98.64.68 "docker buildx create --use --name kamal-remote-ssh---root-91-98-64-68 \
+            --driver docker-container \
+            --config /etc/buildkit/buildkitd.toml"
+
       - name: Deploy with Kamal
         run: fnox exec -- kamal deploy
