@@ -68,6 +68,55 @@ if config_env() == :prod do
 
   config :micelio, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
 
+  # Configure SMTP mailer
+  smtp_host = System.get_env("SMTP_HOST")
+  smtp_username = System.get_env("SMTP_USERNAME")
+  smtp_password = System.get_env("SMTP_PASSWORD")
+
+  required_smtp_vars = [
+    {"SMTP_HOST", smtp_host},
+    {"SMTP_USERNAME", smtp_username},
+    {"SMTP_PASSWORD", smtp_password}
+  ]
+
+  missing_smtp_vars = required_smtp_vars |> Enum.filter(fn {_, val} -> is_nil(val) end) |> Enum.map(fn {name, _} -> name end)
+
+  if Enum.any?(missing_smtp_vars) do
+    raise """
+    Missing required SMTP configuration. The following environment variables are not set:
+
+    #{Enum.map(missing_smtp_vars, &"  - #{&1}") |> Enum.join("\n")}
+
+    Please configure SMTP using fnox:
+      fnox set SMTP_HOST smtp.example.com
+      fnox set SMTP_USERNAME your-username
+      fnox set SMTP_PASSWORD your-password
+      fnox set SMTP_PORT 587
+      fnox set SMTP_FROM_EMAIL noreply@yourapp.com
+      fnox set SMTP_FROM_NAME "Your App"
+
+    Optional variables (have defaults):
+      - SMTP_PORT (default: "587")
+      - SMTP_FROM_EMAIL (default: "noreply@micelio.dev")
+      - SMTP_FROM_NAME (default: "Micelio")
+    """
+  end
+
+  smtp_port = System.get_env("SMTP_PORT") || "587"
+  smtp_from_email = System.get_env("SMTP_FROM_EMAIL") || "noreply@micelio.dev"
+  smtp_from_name = System.get_env("SMTP_FROM_NAME") || "Micelio"
+
+  config :micelio, Micelio.Mailer,
+    adapter: Swoosh.Adapters.SMTP,
+    relay: smtp_host,
+    port: String.to_integer(smtp_port),
+    username: smtp_username,
+    password: smtp_password,
+    tls: :if_available,
+    ssl: false,
+    auth: :always,
+    from: {smtp_from_name, smtp_from_email}
+
   # ## SSL Support
   #
   # To get SSL working, you will need to add the `https` key
