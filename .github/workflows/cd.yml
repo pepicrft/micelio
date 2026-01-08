@@ -41,19 +41,19 @@ jobs:
 
       - name: Configure buildx for insecure registry
         run: |
-          mkdir -p ~/.docker/buildx
-          cat > /tmp/buildkitd.toml << 'EOF'
-          [registry."91.98.64.68:5000"]
-            http = true
-            insecure = true
-          EOF
-          docker context create kamal-remote-ssh---root-91-98-64-68-context --description 'Remote build host' --docker 'host=ssh://root@91.98.64.68' || true
+          # Clean up any existing builder containers on remote
+          ssh root@91.98.64.68 "docker rm -f \$(docker ps -aq --filter name=buildx_buildkit_kamal) 2>/dev/null || true"
+
+          # Create context and builder on CI runner pointing to remote
+          docker context rm kamal-remote-ssh---root-91-98-64-68-context 2>/dev/null || true
+          docker context create kamal-remote-ssh---root-91-98-64-68-context --description 'Remote build host' --docker 'host=ssh://root@91.98.64.68'
           docker buildx rm kamal-remote-ssh---root-91-98-64-68 2>/dev/null || true
           docker buildx create --name kamal-remote-ssh---root-91-98-64-68 \
             --driver docker-container \
-            --config /tmp/buildkitd.toml \
+            --config /etc/buildkit/buildkitd.toml \
             kamal-remote-ssh---root-91-98-64-68-context
           docker buildx use kamal-remote-ssh---root-91-98-64-68
+          docker buildx inspect --bootstrap kamal-remote-ssh---root-91-98-64-68
 
       - name: Deploy with Kamal
         run: fnox exec -- kamal deploy
