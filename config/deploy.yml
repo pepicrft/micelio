@@ -25,9 +25,10 @@ env:
   clear:
     PHX_HOST: micelio.dev
     DATABASE_HOST: micelio-db
+    DATABASE_URL: postgres://micelio:${POSTGRES_PASSWORD}@micelio-db:5432/micelio_production
   secret:
     - SECRET_KEY_BASE
-    - DATABASE_URL
+    - POSTGRES_PASSWORD
 
 accessories:
   registry:

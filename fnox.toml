@@ -1,12 +1,10 @@
 [providers.age]
 type = "age"
 recipients = ["age147aml8dcjnfyj8gacmx8fvskkrg0gq9lfcrfvmquj28ft3rag5sqyq3nss"]
-identity = "~/.config/fnox/micelio-age.txt"
+key_file = "~/.config/fnox/micelio-age.txt"
 
 [secrets]
-# Kamal deployment secrets
-KAMAL_REGISTRY_PASSWORD = { provider = "age" }
-POSTGRES_PASSWORD = { provider = "age" }
-SECRET_KEY_BASE = { provider = "age" }
-DATABASE_URL = { provider = "age" }
-SSH_PRIVATE_KEY = { provider = "age" }
+KAMAL_REGISTRY_PASSWORD= { provider = "age", value = "YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBEMHJjZ240MnUvT1dRa28wTnpwMHZjdmw3dm1VS2pmTTUzdEE3RFdqdzNZCitFc1M5Zis1VURHSWQ0NmljUTRVUzdPbHd2cGdtQldKSVZMSHBjS3RnNEkKLT4gdid7cy1ncmVhc2UgfHQteSB+cG1ESykKM1ZNVjhOcmh3NitmN0M0dk1kZwotLS0gcm1hS0xxMUFYY2cxeXRWOVVEVHdyUFJPMzM4ZDJ2cmR5cVA2RklJT1VDZwrdUzUtOTj2ect6rN/Gjvi3DQVHBhEpvQJst7OszbQSJLd5s9Pa/0lEwjNk9gUBBhJdbclMwY/C6sg4oG4zbcUnx+2379k/1hyQj6D+2Me+rsBYcqK+40d51AKZ5S/ddsc=" }
+POSTGRES_PASSWORD= { provider = "age", value = "YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBZc2tESDNGb1ExMldHY1VTK2hqbEV2R1VpbnZaK3F6TExSNjFIZ0xUOUM0Ci9SK0loOXI2bWJ1VWFoWXEyRG80QmRyM3dPYlJZN29VbmtJVXc1amhhcEkKLT4gWitrei1ncmVhc2UKZ1BXdTJoRVhSdDM0MEloMU41Q09nT2RKdzVRQ3BJcEtraXkwU2Jnd1J6Q05jMzhWcGMwdUJQdm5SbzlpZytXeQo0UQotLS0gTldBdGVCaDNiOFhmVUxlTVVGajVrUW1SWXdUR0xEQ3YzVGNOemlzQVBHWQppb2yPmxUpVYm11je5ABfUvJqSwc6LzYe94BBmSYvsAMeAr7AMA7JtsGCk8YeEoTuDJukDkbQmbpyKA+GW+mT9aJxeEISThgkRJy2A6XA/IJNCSaSWP2kHLqKEACwCG90=" }
+SECRET_KEY_BASE= { provider = "age", value = "YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBMaWdrTHQ2R2FlZmJ4VFgxa0RLMkZGaUZzaHRmbVFvQnJ6WDFOYmdEQzMwCmZYM3o3bXRYWnNQbFpwRzBhRXZGSFIwZDl3dDJ3RnFReXNKblB3MFhyUEEKLT4gOT5vLWdyZWFzZSByTyBbYD5ZIHQqMXQ7ZXEKNGE5eWtmRTBiempGCi0tLSBUUE1Ta2lPZC9wMUN3RHYwOVJFaytPRXMwZWovS1gxa2sxZk1UVDZvOUp3Cm2K4Y0NwOj8To71BbyG3GPlUiQWyjGPMsZPPl8tjMsxB0plx3eMU54Jhd2LEjRGIHmAL3qrxfb+eqZfmlMimdgTJWvB/ppdxyaH0S94bPicAW1mvJvE8gUPh1jiNy6E1JkkSM/0rWA6WkPJm7RWUKWvflCiYkPJErrXYofmbogC9SUL4tiDOFsC4Jx3thlszLcGxh+3kq9Sw66Pq9f3lpg=" }
+SSH_PRIVATE_KEY= { provider = "age" }
