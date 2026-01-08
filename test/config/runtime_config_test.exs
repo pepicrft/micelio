@@ -9,7 +9,8 @@ defmodule RuntimeConfigTest do
         {"SMTP_PASSWORD", "pass"}
       ]
 
-      missing = vars
+      missing =
+        vars
         |> Enum.filter(fn {_, val} -> is_nil(val) end)
         |> Enum.map(fn {name, _} -> name end)
 
@@ -23,7 +24,8 @@ defmodule RuntimeConfigTest do
         {"SMTP_PASSWORD", "pass"}
       ]
 
-      missing = vars
+      missing =
+        vars
         |> Enum.filter(fn {_, val} -> is_nil(val) end)
         |> Enum.map(fn {name, _} -> name end)
 
@@ -37,7 +39,8 @@ defmodule RuntimeConfigTest do
         {"SMTP_PASSWORD", nil}
       ]
 
-      missing = vars
+      missing =
+        vars
         |> Enum.filter(fn {_, val} -> is_nil(val) end)
         |> Enum.map(fn {name, _} -> name end)
 
@@ -51,7 +54,8 @@ defmodule RuntimeConfigTest do
         {"SMTP_PASSWORD", nil}
       ]
 
-      missing = vars
+      missing =
+        vars
         |> Enum.filter(fn {_, val} -> is_nil(val) end)
         |> Enum.map(fn {name, _} -> name end)
 
@@ -65,7 +69,8 @@ defmodule RuntimeConfigTest do
         {"SMTP_PASSWORD", "pass"}
       ]
 
-      missing = vars
+      missing =
+        vars
         |> Enum.filter(fn {_, val} -> is_nil(val) end)
         |> Enum.map(fn {name, _} -> name end)
 

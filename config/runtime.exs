@@ -47,6 +47,22 @@ if config_env() == :prod do
 
   host = System.get_env("PHX_HOST") || "example.com"
 
+  # Configure SMTP mailer
+  smtp_host = System.get_env("SMTP_HOST")
+  smtp_username = System.get_env("SMTP_USERNAME")
+  smtp_password = System.get_env("SMTP_PASSWORD")
+
+  required_smtp_vars = [
+    {"SMTP_HOST", smtp_host},
+    {"SMTP_USERNAME", smtp_username},
+    {"SMTP_PASSWORD", smtp_password}
+  ]
+
+  missing_smtp_vars =
+    required_smtp_vars
+    |> Enum.filter(fn {_, val} -> is_nil(val) end)
+    |> Enum.map(fn {name, _} -> name end)
+
   config :micelio, Micelio.Repo,
     # ssl: true,
     url: database_url,
@@ -67,19 +83,6 @@ if config_env() == :prod do
     secret_key_base: secret_key_base
 
   config :micelio, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
-
-  # Configure SMTP mailer
-  smtp_host = System.get_env("SMTP_HOST")
-  smtp_username = System.get_env("SMTP_USERNAME")
-  smtp_password = System.get_env("SMTP_PASSWORD")
-
-  required_smtp_vars = [
-    {"SMTP_HOST", smtp_host},
-    {"SMTP_USERNAME", smtp_username},
-    {"SMTP_PASSWORD", smtp_password}
-  ]
-
-  missing_smtp_vars = required_smtp_vars |> Enum.filter(fn {_, val} -> is_nil(val) end) |> Enum.map(fn {name, _} -> name end)
 
   if Enum.any?(missing_smtp_vars) do
     raise """
