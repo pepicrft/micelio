@@ -86,4 +86,6 @@ jobs:
           export SMTP_FROM_EMAIL=$(fnox get SMTP_FROM_EMAIL)
           export SMTP_FROM_NAME=$(fnox get SMTP_FROM_NAME)
 
+          # Set secrets for Kamal using environment variables
+          kamal setup push-secrets || true
           kamal deploy
