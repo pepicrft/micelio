@@ -41,6 +41,14 @@ jobs:
           ssh-keygen -R 91.98.64.68 2>/dev/null || true
           ssh-keyscan -H 91.98.64.68 >> ~/.ssh/known_hosts
 
+          # Configure SSH to skip strict host key checking for this server
+          cat >> ~/.ssh/config << EOF
+          Host 91.98.64.68
+            StrictHostKeyChecking no
+            UserKnownHostsFile=/dev/null
+          EOF
+          chmod 600 ~/.ssh/config
+
       - name: Configure buildx for insecure registry
         run: |
           # Clean up any existing builder containers on remote
