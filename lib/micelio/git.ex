@@ -10,7 +10,7 @@ defmodule Micelio.Git do
 
   use Zig,
     otp_app: :micelio,
-    zig_code_path: "./zig/git/git.zig",
+    zig_code_path: "zig/git/git.zig",
     c: [
       link_lib: {:system, "git2"}
     ]
