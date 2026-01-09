@@ -21,9 +21,13 @@ defmodule MicelioWeb.Browser.AuthController do
       {:ok, login_token} ->
         login_url = url(~p"/auth/verify/#{login_token.token}")
 
-        login_token.user
-        |> AuthEmail.login_email(login_url)
-        |> Mailer.deliver()
+        email_result =
+          login_token.user
+          |> AuthEmail.login_email(login_url)
+          |> Mailer.deliver()
+
+        require Logger
+        Logger.info("Email delivery result: #{inspect(email_result)}")
 
         conn
         |> put_flash(:info, "Check your email for a login link!")
