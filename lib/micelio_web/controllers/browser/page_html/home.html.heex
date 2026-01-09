@@ -29,45 +29,74 @@
     current_user={assigns[:current_user]}
   >
     <div class="home-container">
-      <h1 class="home-title">micelio</h1>
-      <p class="home-tagline">
-        A minimal forge for an agent-first world. Built for the future where AI agents and humans collaborate on code at unprecedented scale.
-      </p>
-
-      <div class="home-actions">
-        <a href={~p"/auth/login"} class="home-btn home-btn--primary">
-          Get Started
-        </a>
+      <div class="home-header">
+        <h1 class="home-title">micelio</h1>
+        <p class="home-tagline">
+          A minimal forge for an agent-first world. Built for the future where AI agents and humans collaborate on code at unprecedented scale.
+        </p>
+        <div class="home-actions">
+          <a href={~p"/auth/login"} class="home-btn home-btn--primary">
+            Get Started
+          </a>
+        </div>
       </div>
 
-      <div class="home-features">
-        <h2 class="home-features-title">Built for the Future of Code</h2>
-        <ul class="home-features-list">
-          <li class="home-feature">
-            <h3 class="home-feature-title">Agent-Native</h3>
-            <p class="home-feature-description">
-              Sessions capture goal, reasoning, and changes together. Designed for hundreds of AI agents working concurrently.
+      <div class="home-content">
+        <div class="home-main">
+          <div class="home-overview">
+            <p>
+              <strong>Welcome to micelio!</strong> This is the version control system
+              the agent-first world has been waiting for.
             </p>
-          </li>
-          <li class="home-feature">
-            <h3 class="home-feature-title">Forge-First</h3>
+            <ul>
+              <li>
+                Built for hundreds of AI agents working concurrently on massive codebases
+              </li>
+              <li>Sessions capture goal, reasoning, and changes together</li>
+              <li>Forge-first architecture with object storage at the core</li>
+              <li>Scales to billions of files and hundreds of thousands of landings per day</li>
+              <li>
+                Inspired by Google Piper, Meta Sapling, Turbopuffer, and WarpStream
+              </li>
+            </ul>
+          </div>
+
+          <div class="home-feature">
+            <h3 class="home-feature-title">Agent-Native by Design</h3>
             <p class="home-feature-description">
-              The server is the source of truth, not local disk. Built for massive scale with object storage at the core.
+              Sessions capture goal, reasoning, and changes together. Built for hundreds 
+              of AI agents working concurrently, with stateless compute that auto-scales 
+              based on demand.
             </p>
-          </li>
-          <li class="home-feature">
+          </div>
+
+          <div class="home-feature">
             <h3 class="home-feature-title">Human + AI Collaboration</h3>
             <p class="home-feature-description">
-              Humans reviewing, not writing most code. Conversation, decisions, and changes unified in one workflow.
+              Designed for a future where humans review, not write most code. 
+              Conversation, decisions, and changes are unified in one workflow.
             </p>
-          </li>
-          <li class="home-feature">
-            <h3 class="home-feature-title">Infinite Scale</h3>
+          </div>
+        </div>
+
+        <div class="home-sidebar">
+          <div class="home-feature">
+            <h3 class="home-feature-title">Massive Scale</h3>
             <p class="home-feature-description">
-              Billions of files, hundreds of thousands of landings per day. Inspired by Google Piper and Meta Sapling.
+              Targets Google/Meta scale: 1B+ files, 500k+ landings per day, 
+              100k+ concurrent sessions. Object storage-first architecture 
+              with O(log n) operations.
             </p>
-          </li>
-        </ul>
+          </div>
+
+          <div class="home-feature">
+            <h3 class="home-feature-title">Forge-First</h3>
+            <p class="home-feature-description">
+              The server is the source of truth, not local disk. Coordinator-free 
+              landing with S3 conditional writes. No single bottleneck.
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   </Layouts.app>

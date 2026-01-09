@@ -1,12 +1,12 @@
 :root {
-  /* Colors */
-  --color-text: #1a1a1a;
-  --color-text-muted: #666666;
+  /* Colors - SourceHut inspired */
+  --color-text: #212529;
+  --color-text-muted: #6c757d;
   --color-background: #ffffff;
-  --color-primary: #0066cc;
-  --color-primary-hover: #0052a3;
+  --color-primary: #007bff;
+  --color-primary-hover: #0069d9;
   --color-secondary: #6c757d;
-  --color-border: #e0e0e0;
+  --color-border: #e9ecef;
   --color-error: #dc3545;
   --color-success: #28a745;
 

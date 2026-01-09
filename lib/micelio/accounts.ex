@@ -151,8 +151,9 @@ defmodule Micelio.Accounts do
   end
 
   defp create_login_token(user) do
-    changeset = %Token{}
-    |> Token.changeset(%{user_id: user.id, purpose: :login})
+    changeset =
+      %Token{}
+      |> Token.changeset(%{user_id: user.id, purpose: :login})
 
     with {:ok, token} <- Repo.insert(changeset) do
       {:ok, Repo.preload(token, :user)}

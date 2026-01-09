@@ -114,19 +114,22 @@ if config_env() == :prod do
 
   # Parse SSL/TLS settings from environment variables
   smtp_ssl = System.get_env("SMTP_SSL", "false") == "true"
-  smtp_tls = case System.get_env("SMTP_TLS", "if_available") do
-    "true" -> :always
-    "false" -> :never
-    _ -> :if_available
-  end
+
+  smtp_tls =
+    case System.get_env("SMTP_TLS", "if_available") do
+      "true" -> :always
+      "false" -> :never
+      _ -> :if_available
+    end
 
   # Configure TLS options for SMTP
   # Note: For now we disable verification to work around gen_smtp CA cert issues
-  smtp_tls_options = if smtp_ssl or smtp_tls == :always do
-    [verify: :verify_none]
-  else
-    []
-  end
+  smtp_tls_options =
+    if smtp_ssl or smtp_tls == :always do
+      [verify: :verify_none]
+    else
+      []
+    end
 
   config :micelio, Micelio.Mailer,
     adapter: Swoosh.Adapters.SMTP,

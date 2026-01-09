@@ -1,10 +1,11 @@
 defmodule MicelioWeb.Browser.AuthController do
   use MicelioWeb, :controller
-  require Logger
 
   alias Micelio.Accounts
   alias Micelio.Accounts.AuthEmail
   alias Micelio.Mailer
+
+  require Logger
 
   @doc """
   Renders the login form.
