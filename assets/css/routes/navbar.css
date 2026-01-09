@@ -1,0 +1,101 @@
+/* SourceHut-inspired navbar */
+
+nav {
+  padding: 0.5rem 1rem 0;
+  max-width: 960px;
+  margin: 0 auto;
+  clear: both;
+}
+
+nav a:not(:first-child):not(.btn) {
+  margin-left: 1rem;
+  color: #666;
+}
+
+nav .brand {
+  font-size: 1.25rem;
+  position: relative;
+  top: 1px;
+}
+
+nav .brand a {
+  text-decoration: none;
+  color: #212529 !important;
+  margin-left: 0 !important;
+}
+
+nav .brand .icon {
+  width: 1.2rem;
+}
+
+@media (max-width: 900px) {
+  nav .hidden-small {
+    display: none;
+  }
+}
+
+.icon {
+  display: inline-block;
+  line-height: 0.75em;
+  width: 0.4em;
+  vertical-align: -0.17em;
+}
+
+.icon path {
+  fill: currentColor;
+}
+
+.icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* SourceHut navbar layout */
+.navbar {
+  padding: 0.5rem 1rem 0;
+  max-width: 960px;
+  margin: 0 auto;
+  clear: both;
+}
+
+.navbar .brand {
+  font-size: 1.25rem;
+  position: relative;
+  top: 1px;
+  display: inline-block;
+}
+
+.navbar .brand a {
+  text-decoration: none;
+  color: #212529 !important;
+  margin-left: 0.5rem !important;
+}
+
+.navbar .brand .icon {
+  width: 1.2rem;
+}
+
+.navbar a:not(:first-child):not(.btn) {
+  margin-left: 1rem;
+  color: #666;
+  text-decoration: none;
+}
+
+.navbar a:not(.btn):hover {
+  color: #0056b3;
+  text-decoration: underline;
+}
+
+.navbar .btn {
+  /* SourceHut button styling already handled in home.css */
+}
+
+.pull-right {
+  float: right;
+}
+
+@media (max-width: 900px) {
+  .navbar .hidden-small {
+    display: none;
+  }
+}

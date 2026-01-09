@@ -39,48 +39,45 @@ defmodule MicelioWeb.Layouts do
 
   def app(assigns) do
     ~H"""
-    <header class="navbar px-4 sm:px-6 lg:px-8">
-      <div class="flex-1">
-        <a href="/" class="flex-1 flex w-fit items-center gap-2">
-          <img src={~p"/images/logo.svg"} width="36" />
-          <span class="text-sm font-semibold">Micelio</span>
-        </a>
-      </div>
-      <div class="flex-none">
-        <ul class="flex flex-column px-1 space-x-4 items-center">
-          <%= if assigns[:current_user] do %>
-            <li>
-              <a href={~p"/projects"} class="btn btn-ghost">Projects</a>
-            </li>
-            <li>
-              <form action={~p"/auth/logout"} method="post" style="display: inline;">
-                <input type="hidden" name="_csrf_token" value={Phoenix.Controller.get_csrf_token()} />
-                <input type="hidden" name="_method" value="delete" />
-                <button
-                  type="submit"
-                  class="btn btn-ghost"
-                  style="border: none; background: transparent; cursor: pointer;"
-                >
-                  Logout
-                </button>
-              </form>
-            </li>
-          <% else %>
-            <li>
-              <a href={~p"/auth/login"} class="btn btn-primary">
-                Login
-              </a>
-            </li>
-          <% end %>
-        </ul>
-      </div>
-    </header>
+    <div>
+      <nav class="navbar">
+        <span class="brand">
+          <span class="icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+              <path d="M256 8C119 8 8 119 8 256s111 248 248 248 248-111 248-248S393 8 256 8zm0 448c-110.5 0-200-89.5-200-200S145.5 56 256 56s200 89.5 200 200-89.5 200-200 200z"/>
+            </svg>
+          </span>
+          <a href="/">micelio</a>
+        </span>
+        
+        <%= if assigns[:current_user] do %>
+          <a href={~p"/projects"}>projects</a>
+          <form action={~p"/auth/logout"} method="post" style="display: inline; margin-left: 1rem;">
+            <input type="hidden" name="_csrf_token" value={Phoenix.Controller.get_csrf_token()} />
+            <input type="hidden" name="_method" value="delete" />
+            <button
+              type="submit"
+              style="border: none; background: transparent; cursor: pointer; color: #666; font-size: inherit; text-decoration: none;"
+            >
+              logout
+            </button>
+          </form>
+        <% else %>
+          <a href={~p"/auth/login"} class="btn pull-right hidden-small">
+            Get started
+            <span class="icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 512">
+                <path d="M0 384.662V127.338c0-17.818 21.543-26.741 34.142-14.142l128.662 128.662c7.81 7.81 7.81 20.474 0 28.284L34.142 398.804C21.543 411.404 0 402.48 0 384.662z"/>
+              </svg>
+            </span>
+          </a>
+        <% end %>
+      </nav>
+    </div>
 
-    <main class="px-4 py-20 sm:px-6 lg:px-8">
-      <div class="mx-auto max-w-2xl space-y-4">
-        <.flash_group flash={@flash} />
-        {render_slot(@inner_block)}
-      </div>
+    <main>
+      <.flash_group flash={@flash} />
+      {render_slot(@inner_block)}
     </main>
     """
   end
