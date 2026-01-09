@@ -118,7 +118,7 @@ if config_env() == :prod do
     port: String.to_integer(smtp_port),
     username: smtp_username,
     password: smtp_password,
-    tls: :if_available,
+    tls: :always,
     ssl: false,
     auth: :always,
     from: {smtp_from_name, smtp_from_email}
