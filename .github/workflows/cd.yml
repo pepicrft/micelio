@@ -86,8 +86,9 @@ jobs:
           export SMTP_FROM_EMAIL=$(fnox get SMTP_FROM_EMAIL)
           export SMTP_FROM_NAME=$(fnox get SMTP_FROM_NAME)
 
-          # Create .kamal/secrets file on remote server with all required secrets
-          ssh root@91.98.64.68 "mkdir -p .kamal && cat > .kamal/secrets << 'EOF'
+          # Create .kamal/secrets file locally with all required secrets
+          mkdir -p .kamal
+          cat > .kamal/secrets << EOF
           KAMAL_REGISTRY_PASSWORD=$KAMAL_REGISTRY_PASSWORD
           SECRET_KEY_BASE=$SECRET_KEY_BASE
           POSTGRES_PASSWORD=$POSTGRES_PASSWORD
@@ -97,6 +98,9 @@ jobs:
           SMTP_PORT=$SMTP_PORT
           SMTP_FROM_EMAIL=$SMTP_FROM_EMAIL
           SMTP_FROM_NAME=$SMTP_FROM_NAME
-          EOF"
+          EOF
+
+          # Copy secrets to remote server
+          scp .kamal/secrets root@91.98.64.68:.kamal/secrets
 
           kamal deploy
