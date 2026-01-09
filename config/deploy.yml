@@ -27,13 +27,15 @@ env:
     DATABASE_HOST: micelio-db
     DATABASE_USER: micelio
     DATABASE_NAME: micelio_production
+    SMTP_PORT: "465"
+    SMTP_SSL: "true"
+    SMTP_TLS: "always"
   secret:
     - SECRET_KEY_BASE
     - POSTGRES_PASSWORD
     - SMTP_HOST
     - SMTP_USERNAME
     - SMTP_PASSWORD
-    - SMTP_PORT
     - SMTP_FROM_EMAIL
     - SMTP_FROM_NAME
 

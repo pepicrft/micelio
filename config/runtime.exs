@@ -112,14 +112,22 @@ if config_env() == :prod do
   smtp_from_email = System.get_env("SMTP_FROM_EMAIL") || "noreply@micelio.dev"
   smtp_from_name = System.get_env("SMTP_FROM_NAME") || "Micelio"
 
+  # Parse SSL/TLS settings from environment variables
+  smtp_ssl = System.get_env("SMTP_SSL", "false") == "true"
+  smtp_tls = case System.get_env("SMTP_TLS", "if_available") do
+    "true" -> :always
+    "false" -> :never
+    _ -> :if_available
+  end
+
   config :micelio, Micelio.Mailer,
     adapter: Swoosh.Adapters.SMTP,
     relay: smtp_host,
-    port: 465,
+    port: String.to_integer(smtp_port),
     username: smtp_username,
     password: smtp_password,
-    tls: :always,
-    ssl: true,
+    tls: smtp_tls,
+    ssl: smtp_ssl,
     auth: :always,
     from: {smtp_from_name, smtp_from_email}
 
