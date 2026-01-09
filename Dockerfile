@@ -46,8 +46,8 @@ RUN mkdir config
 COPY config/config.exs config/${MIX_ENV}.exs config/
 RUN mix deps.compile
 
-# Install Zig compiler for NIFs
-RUN mix zig.get
+# Install Zig compiler for NIFs and clear cache
+RUN rm -rf /root/.cache/zigler && mix zig.get
 
 RUN mix assets.setup
 

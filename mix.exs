@@ -61,7 +61,7 @@ defmodule Micelio.MixProject do
       {:bandit, "~> 1.5"},
       {:quokka, "~> 2.11", only: [:dev, :test], runtime: false},
       {:mimic, "~> 2.0", only: :test},
-      {:zigler, "~> 0.15.1", runtime: false}
+      {:zigler, "~> 0.14.0", runtime: false}
     ]
   end
 
