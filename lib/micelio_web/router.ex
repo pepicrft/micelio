@@ -48,6 +48,16 @@ defmodule MicelioWeb.Router do
     get "/releases", ReleaseController, :index
   end
 
+  # Blog routes (public)
+  scope "/blog", MicelioWeb.Browser do
+    pipe_through :browser
+
+    get "/", BlogController, :index
+    get "/rss", BlogController, :rss
+    get "/atom", BlogController, :atom
+    get "/:id", BlogController, :show
+  end
+
   # Auth routes (before catch-all)
   scope "/auth", MicelioWeb.Browser do
     pipe_through :browser

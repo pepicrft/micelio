@@ -50,6 +50,8 @@ defmodule MicelioWeb.Layouts do
           <a href="/">micelio</a>
         </span>
         
+        <a href={~p"/blog"}>blog</a>
+        
         <%= if assigns[:current_user] do %>
           <a href={~p"/projects"}>projects</a>
           <form action={~p"/auth/logout"} method="post" style="display: inline; margin-left: 1rem;">

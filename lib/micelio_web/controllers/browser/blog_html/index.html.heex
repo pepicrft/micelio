@@ -1,0 +1,40 @@
+<Layouts.app
+  flash={@flash}
+  current_scope={assigns[:current_scope]}
+  current_user={assigns[:current_user]}
+>
+  <div class="blog-container">
+    <div class="blog-header">
+      <h1 class="blog-title">Blog</h1>
+      <p class="blog-tagline">
+        Updates and insights from the Micelio team about building the future of agent-first software development.
+      </p>
+      <div class="blog-feeds">
+        <a href={~p"/blog/rss"} class="blog-feed-link">RSS</a>
+        <a href={~p"/blog/atom"} class="blog-feed-link">Atom</a>
+      </div>
+    </div>
+
+    <div class="blog-posts">
+      <%= for post <- @posts do %>
+        <article class="blog-post-preview">
+          <h2 class="blog-post-title">
+            <a href={~p"/blog/#{post.id}"}><%= post.title %></a>
+          </h2>
+          <div class="blog-post-meta">
+            <time datetime={post.date}><%= format_date(post.date) %></time>
+            <span class="blog-post-author">by <%= post.author %></span>
+            <%= if length(post.tags) > 0 do %>
+              <div class="blog-post-tags">
+                <%= for tag <- post.tags do %>
+                  <span class="blog-post-tag"><%= tag %></span>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+          <p class="blog-post-description"><%= post.description %></p>
+        </article>
+      <% end %>
+    </div>
+  </div>
+</Layouts.app>
