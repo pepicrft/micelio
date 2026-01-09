@@ -2,4 +2,8 @@
 set -eu
 
 cd -P -- "$(dirname -- "$0")"
+
+# Run migrations before starting the server
+./migrate
+
 PHX_SERVER=true exec ./micelio start
