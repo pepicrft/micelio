@@ -7,7 +7,7 @@
     <.live_title default="Micelio" suffix=" · Phoenix Framework">
       {assigns[:page_title]}
     </.live_title>
-    <%!-- CSS is bundled with JavaScript via import "../css/app.css" in app.js --%>
+    <link phx-track-static rel="stylesheet" href={~p"/assets/js/app.css"} />
     <script defer phx-track-static type="text/javascript" src={~p"/assets/js/app.js"}>
     </script>
   </head>
