@@ -58,6 +58,18 @@ defmodule MicelioWeb.Router do
     get "/:id", BlogController, :show
   end
 
+  # Changelog routes (public)
+  scope "/changelog", MicelioWeb.Browser do
+    pipe_through :browser
+
+    get "/", ChangelogController, :index
+    get "/rss", ChangelogController, :rss
+    get "/atom", ChangelogController, :atom
+    get "/category/:category", ChangelogController, :category
+    get "/version/:version", ChangelogController, :version
+    get "/:id", ChangelogController, :show
+  end
+
   # Auth routes (before catch-all)
   scope "/auth", MicelioWeb.Browser do
     pipe_through :browser
