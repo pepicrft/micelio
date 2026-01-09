@@ -1,31 +1,75 @@
-<Layouts.app
-  flash={@flash}
-  current_scope={assigns[:current_scope]}
-  current_user={assigns[:current_user]}
->
-  <div class="text-center">
-    <h1 class="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl">
-      Welcome to Micelio
-    </h1>
-    <p class="mt-6 text-lg leading-8 text-gray-600">
-      Your personal code repository platform. Organize, share, and collaborate on your projects.
-    </p>
+<%= if assigns[:current_user] do %>
+  <%!-- Authenticated users see their dashboard --%>
+  <Layouts.app
+    flash={@flash}
+    current_scope={assigns[:current_scope]}
+    current_user={assigns[:current_user]}
+  >
+    <div class="home-container">
+      <h1 class="home-title">Welcome back, {@current_user.email}</h1>
+      <p class="home-tagline">
+        Ready to work on your projects?
+      </p>
 
-    <%= if assigns[:current_user] do %>
-      <div class="mt-10 flex items-center justify-center gap-x-6">
-        <a href={~p"/projects"} class="btn btn-primary">
+      <div class="home-actions">
+        <a href={~p"/projects"} class="home-btn home-btn--primary">
           View Projects
         </a>
-        <a href={~p"/projects/new"} class="btn btn-ghost">
-          Create New Project
+        <a href={~p"/projects/new"} class="home-btn home-btn--secondary">
+          New Project
         </a>
       </div>
-    <% else %>
-      <div class="mt-10 flex items-center justify-center gap-x-6">
-        <a href={~p"/auth/login"} class="btn btn-primary">
+    </div>
+  </Layouts.app>
+<% else %>
+  <%!-- Unauthenticated users see the landing page --%>
+  <Layouts.app
+    flash={@flash}
+    current_scope={assigns[:current_scope]}
+    current_user={assigns[:current_user]}
+  >
+    <div class="home-container">
+      <h1 class="home-title">micelio</h1>
+      <p class="home-tagline">
+        A minimal, self-hosted forge for your software projects.
+        Keep your code organized, accessible, and under your control.
+      </p>
+
+      <div class="home-actions">
+        <a href={~p"/auth/login"} class="home-btn home-btn--primary">
           Get Started
         </a>
       </div>
-    <% end %>
-  </div>
-</Layouts.app>
+
+      <div class="home-features">
+        <h2 class="home-features-title">Features</h2>
+        <ul class="home-features-list">
+          <li class="home-feature">
+            <h3 class="home-feature-title">Self-hosted</h3>
+            <p class="home-feature-description">
+              Own your data and infrastructure. No vendor lock-in, no external dependencies.
+            </p>
+          </li>
+          <li class="home-feature">
+            <h3 class="home-feature-title">Minimal Interface</h3>
+            <p class="home-feature-description">
+              Clean, fast, and focused on what matters. No bloat, just the tools you need.
+            </p>
+          </li>
+          <li class="home-feature">
+            <h3 class="home-feature-title">Git Integration</h3>
+            <p class="home-feature-description">
+              Native Git repository management with web browsing and project organization.
+            </p>
+          </li>
+          <li class="home-feature">
+            <h3 class="home-feature-title">Privacy First</h3>
+            <p class="home-feature-description">
+              Your projects stay private by default. Share what you want, when you want.
+            </p>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </Layouts.app>
+<% end %>

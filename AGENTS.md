@@ -143,6 +143,7 @@ custom classes must fully style the input
 
 - **Never** use Tailwind CSS classes in templates
 - Use vanilla modern CSS only
+- **UI Design Philosophy**: Keep the interface minimal and functional like [SourceHut](https://sourcehut.org) - clean typography, generous whitespace, clear hierarchy, no unnecessary decoration
 - Define a theme following the [theme-ui specification](https://theme-ui.com/) modeled with CSS variables in `assets/css/theme/tokens.css`
 - CSS variables are **required** for all values (colors, spacing, typography, etc.). Hardcoded values are exceptions and should be avoided
 - CSS files must mirror the pages structure:
