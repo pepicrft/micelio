@@ -296,4 +296,198 @@ This model gives agents the speed of local development with the confidence of en
 
 ---
 
+## hif Build Cache Daemon [TO REVIEW/VALIDATE]
+
+### Architecture: Local Daemon + Protocol Translation
+
+**Inspired by [Fabrik's](https://github.com/tuist/fabrik) proven architecture**, hif implements a local daemon that speaks existing build system protocols while providing S3-backed global caching.
+
+#### Core Design Pattern
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    hif daemon                           │
+│                  (per-session)                          │
+│                                                         │
+│ ┌─────────────────┐ ┌─────────────────┐ ┌─────────────┐ │
+│ │ Bazel Protocol  │ │ Gradle Protocol │ │Docker Reg.  │ │
+│ │ (gRPC Remote    │ │ (HTTP Build     │ │(Layer Cache)│ │
+│ │  Cache API)     │ │  Cache API)     │ │             │ │
+│ └─────────────────┘ └─────────────────┘ └─────────────┘ │
+│                                                         │
+│ ┌─────────────────────────────────────────────────────┐ │
+│ │            hif Session Engine                       │ │
+│ │  • Content-addressable artifact mapping            │ │
+│ │  • Session-scoped authentication                   │ │
+│ │  • S3 backend with local cache tiers               │ │
+│ │  • Automatic protocol detection & routing          │ │
+│ └─────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────┘
+                            │
+                            ▼
+                  ┌─────────────────┐
+                  │   Micelio S3    │
+                  │ (Global Cache)  │
+                  └─────────────────┘
+```
+
+#### Zero-Configuration Activation
+
+**Shell integration pattern (from Fabrik):**
+```bash
+# One-time setup
+echo 'eval "$(hif activate zsh)"' >> ~/.zshrc
+
+# Automatic activation on directory change
+cd ~/my-project
+# → hif detects session context
+# → starts daemon with session-scoped identity  
+# → exports build tool environment variables
+# → all build commands transparently use cache
+```
+
+#### Protocol Translation Examples
+
+**Bazel Remote Cache Protocol:**
+```bash
+# Daemon exports standard Bazel env vars
+export BAZELRC=$HOME/.local/state/hif/sessions/abc123/bazelrc
+
+# Auto-generated bazelrc content:
+# build --remote_cache=grpc://localhost:8080
+# build --remote_upload_local_results=true
+
+# Bazel commands work unchanged
+bazel build //...
+# → Talks to hif daemon via gRPC
+# → hif translates to S3 content-addressed storage
+# → Transparent caching across all agents
+```
+
+**Gradle Build Cache:**
+```bash
+# Daemon exports Gradle-specific URL
+export GRADLE_BUILD_CACHE_URL=http://localhost:8080/gradle-cache/
+
+# Gradle automatically uses remote cache
+./gradlew build
+# → Gradle sends HTTP requests to hif daemon
+# → hif maps to S3 artifacts with session context
+# → Perfect cache sharing without configuration
+```
+
+**Docker Registry Protocol:**
+```bash
+# Daemon exposes Docker registry API
+export DOCKER_REGISTRY=localhost:8080
+
+# Docker commands work transparently  
+docker build -t myapp .
+# → Docker pushes layers to hif daemon
+# → hif stores layers in S3 content-addressed
+# → Other agents get instant layer cache hits
+```
+
+#### Session-Scoped Daemon Management
+
+**Per-session daemon isolation:**
+```
+hif session start "add-payments"
+├── Computes session hash: sha256:abc123...
+├── Spawns daemon: ~/.local/state/hif/sessions/abc123/
+│   ├── daemon.pid
+│   ├── ports.json → {"http": 54321, "grpc": 54322}
+│   ├── session_identity → time-bound S3 credentials
+│   └── bazelrc → auto-generated build tool configs
+├── Session ends → daemon auto-terminates
+└── Credentials expire → no lingering access
+```
+
+#### Multi-Toolchain Content Addressing
+
+**Universal artifact mapping:**
+```
+Source changes hash: sha256:def456...
+Build artifacts stored as:
+├── s3://forge/artifacts/bazel/def456/binary
+├── s3://forge/artifacts/gradle/def456/jar  
+├── s3://forge/artifacts/docker/def456/layers/
+└── s3://forge/artifacts/custom/def456/outputs/
+
+Cross-toolchain deduplication:
+├── Same source hash = shared base artifacts
+├── Different toolchains = different artifact paths
+└── hif daemon handles mapping automatically
+```
+
+#### Advanced Cache Hierarchy
+
+**Multi-tier caching strategy (inspired by Fabrik's P2P discovery):**
+```
+Agent cache lookup order:
+1. Local filesystem cache (instant)
+2. Local network P2P cache (1-5ms) 
+3. Regional S3 bucket (10-50ms)
+4. Global S3 bucket (50-200ms)
+5. Rebuild locally (fallback)
+
+hif daemon coordinates all tiers transparently
+```
+
+#### Build System Integration Matrix
+
+| Build System | Protocol | Configuration | hif Integration |
+|--------------|----------|---------------|-----------------|
+| **Bazel** | gRPC Remote Cache | `BAZELRC` env var | Zero-config via auto-generated bazelrc |
+| **Gradle** | HTTP Build Cache | `GRADLE_BUILD_CACHE_URL` | Zero-config via env var export |
+| **Buck2** | gRPC Remote Cache | Command flags | Via shell alias or wrapper |
+| **Nx** | HTTP Cache API | `NX_SELF_HOSTED_REMOTE_CACHE_SERVER` | Zero-config via env var |
+| **TurboRepo** | HTTP API | `TURBO_API`, `TURBO_TOKEN` | Auto-generated token + URL |
+| **Docker** | Registry Protocol | `DOCKER_REGISTRY` | Daemon exposes registry API |
+| **sccache** | HTTP/S3 Protocol | `SCCACHE_ENDPOINT` | Compiler cache integration |
+| **Custom** | HTTP REST | `CACHE_URL` | Generic HTTP cache interface |
+
+#### Agent Workflow Integration
+
+**Seamless integration with hif sessions:**
+```
+Session: "Optimize API performance"
+├── Goal: Reduce response time by 50ms
+├── Conversation: [agent reasoning about approach]
+├── Build Context:
+│   ├── Cache hits: 95% (Bazel remote cache)
+│   ├── Build time: 0.8s (mostly cached)
+│   ├── Test time: 2.1s (integration tests)
+│   └── Total validation: 2.9s
+├── Decisions:
+│   ├── "Database connection pooling approach"
+│   ├── "All tests pass in <3s - confident change"
+│   └── "Performance improvement verified"
+└── Land: Session includes build performance metrics
+```
+
+#### Implementation Benefits
+
+**For Agents:**
+- **Instant feedback**: 95%+ cache hit rates mean sub-second validation
+- **Zero configuration**: All build tools work without modification
+- **Consistent environments**: Nix + cached artifacts = identical results
+- **Autonomous workflow**: No waiting for CI, no manual cache management
+
+**For Organizations:**
+- **Massive cost savings**: Shared cache eliminates redundant builds
+- **Global consistency**: Same artifacts used everywhere
+- **Security**: Session-scoped access, full audit trails
+- **Scalability**: S3 handles unlimited storage, unlimited agents
+
+**For Build Systems:**  
+- **No modification required**: Existing build scripts work unchanged
+- **Protocol compatibility**: Speaks native build system languages
+- **Performance**: Local daemon eliminates network roundtrips for cache checks
+- **Reliability**: Graceful degradation if cache unavailable
+
+This daemon architecture provides the "narrow waist" that makes hif universally adoptable while enabling revolutionary agent workflows.
+
+---
+
 *Built by [Pedro Piñera](https://github.com/pepicrft) and contributors. GPL-2.0 licensed.*
