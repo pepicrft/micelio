@@ -120,6 +120,15 @@ if config_env() == :prod do
     _ -> :if_available
   end
 
+  # Configure TLS options for SMTP
+  smtp_tls_options = if smtp_ssl or smtp_tls == :always do
+    # Configure CA certificates for SSL/TLS verification
+    cacertfile = System.get_env("SMTP_CERT_FILE", "/etc/ssl/certs/ca-certificates.crt")
+    [verify: :verify_peer, cacertfile: cacertfile]
+  else
+    []
+  end
+
   config :micelio, Micelio.Mailer,
     adapter: Swoosh.Adapters.SMTP,
     relay: smtp_host,
@@ -128,6 +137,7 @@ if config_env() == :prod do
     password: smtp_password,
     tls: smtp_tls,
     ssl: smtp_ssl,
+    tls_options: smtp_tls_options,
     auth: :always,
     from: {smtp_from_name, smtp_from_email}
 
