@@ -1,5 +1,6 @@
 defmodule MicelioWeb.Browser.AuthController do
   use MicelioWeb, :controller
+  require Logger
 
   alias Micelio.Accounts
   alias Micelio.Accounts.AuthEmail
@@ -26,7 +27,6 @@ defmodule MicelioWeb.Browser.AuthController do
           |> AuthEmail.login_email(login_url)
           |> Mailer.deliver()
 
-        require Logger
         Logger.info("Email delivery result: #{inspect(email_result)}")
 
         conn
