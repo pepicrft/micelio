@@ -172,4 +172,128 @@ Git was revolutionary for its time, enabling distributed human collaboration at 
 
 ---
 
+## Agent-First Build System Architecture [TO REVIEW/VALIDATE]
+
+### The Nix + S3 Integration Model
+
+**Core insight:** Agents need local validation they can trust, but the forge needs stateless, scalable execution and caching.
+
+#### Nix's Role: Environment Reproducibility
+- **flake.nix defines everything:** dependencies, build steps, test environments
+- **Local agent validation:** `nix develop --command make test` gives instant feedback
+- **Reproducible anywhere:** same Nix derivation = identical environment (agent machine = remote = prod)
+- **Content addressing:** Nix's `/nix/store/hash-package` model aligns with S3 content-addressable storage
+
+#### S3's Role: Stateless Persistence & Distribution
+```
+S3 Bucket Structure:
+├── derivations/
+│   └── sha256:abc123.drv → Nix derivation definitions
+├── artifacts/  
+│   └── sha256:def456/ → build outputs, binaries, assets
+├── cache/
+│   ├── builds/sha256:ghi789 → complete build results
+│   ├── tests/sha256:jkl012 → test execution results  
+│   └── telemetry/sha256:mno345 → timing, resource usage
+├── execution-logs/
+│   └── sha256:pqr678 → full build/test output logs
+└── attestations/
+    └── sha256:stu901 → cryptographic proof of execution
+```
+
+#### Agent Build Workflow
+```
+1. Agent modifies code in hif session
+2. Build system generates Nix derivation from changes
+3. Check S3 for existing artifact: GET /artifacts/sha256:computed-hash
+4. Cache miss → Execute locally: nix-build derivation  
+5. Cache hit → Skip build, validate locally: nix develop --command make verify
+6. Upload results to S3: PUT /artifacts/sha256:new-hash
+7. All tests pass → hif land (session includes build attestation)
+```
+
+#### Remote Execution Integration
+```
+For heavy builds or special capabilities:
+├── Agent generates Nix derivation locally
+├── Submits to remote execution queue (stored in S3)
+├── Remote workers:
+│   ├── Fetch derivation from S3
+│   ├── Execute in identical Nix environment  
+│   ├── Upload artifacts back to S3
+│   └── Signal completion via S3 event
+└── Agent gets notification, validates results locally
+```
+
+#### Security & Secrets Model
+```
+Capability-based access via S3 policies:
+├── Agent identity: arn:aws:iam::account:role/agent-session-abc123
+├── Scoped permissions:
+│   ├── s3:GetObject on artifacts/* (read builds)
+│   ├── s3:PutObject on artifacts/session-abc123/* (write own builds)
+│   └── secretsmanager:GetSecretValue for session-scoped secrets
+├── Time-bound: role expires with hif session
+└── Audit trail: CloudTrail logs every S3/secrets access
+```
+
+#### Build Cache Optimization
+```
+Content-addressable caching strategy:
+├── Input hash: source + dependencies + build script + Nix derivation
+├── S3 check: artifacts/sha256:input-hash exists?
+├── Cache hit: Download artifact, verify locally with Nix
+├── Cache miss: Build locally/remotely, upload to S3
+└── Global sharing: all agents benefit from each other's builds
+```
+
+#### Stateless Forge Workers
+```
+Micelio forge workers (Elixir/Phoenix):
+├── No local state: everything in S3
+├── Build requests: generate Nix derivations, queue in S3
+├── Status queries: check S3 for completion
+├── Artifact serving: presigned S3 URLs for downloads
+└── Auto-scaling: workers are completely stateless
+```
+
+#### Integration with hif Sessions
+```
+Session: "Add payment gateway integration"
+├── Goal: Integrate Stripe API safely
+├── Build Context:
+│   ├── Nix derivation: payment-gateway.nix (reproducible env)
+│   ├── S3 artifacts: sha256:abc123 (cached build outputs)
+│   ├── Test results: sha256:def456 (integration test pass)
+│   └── Security attestation: sha256:ghi789 (secrets access logged)
+├── Decisions: 
+│   ├── "Used Stripe test keys for integration tests"
+│   └── "All tests pass in identical production environment"
+└── Land: Session includes cryptographic proof builds work
+```
+
+#### Why This Architecture Works
+
+**For Agents:**
+- Instant local feedback via Nix
+- Confidence: local success = production success  
+- Autonomous: no waiting for CI queues
+- Secure: capability-based secret access
+
+**For Organizations:**
+- Scalable: S3 handles petabytes, millions of artifacts
+- Cost-effective: pay only for storage used, workers auto-scale
+- Auditable: every build, test, secret access logged
+- Reproducible: bit-for-bit identical builds anywhere
+
+**For the Forge:**
+- Stateless: workers can restart/scale without losing state
+- Global: S3 provides worldwide CDN for build artifacts
+- Reliable: 11 nines durability, no backup needed
+- Simple: no complex distributed caching layer
+
+This model gives agents the speed of local development with the confidence of enterprise-grade CI/CD, while keeping the forge architecture stateless and scalable.
+
+---
+
 *Built by [Pedro Piñera](https://github.com/pepicrft) and contributors. GPL-2.0 licensed.*
