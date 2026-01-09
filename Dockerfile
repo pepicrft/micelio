@@ -56,6 +56,7 @@ COPY priv priv
 COPY lib lib
 
 COPY zig zig
+COPY zig lib/micelio/zig
 
 # Compile the release
 RUN mix compile
