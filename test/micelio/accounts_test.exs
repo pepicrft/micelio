@@ -137,6 +137,8 @@ defmodule Micelio.AccountsTest do
     test "handle_available?/1 returns false for reserved handles" do
       refute Accounts.handle_available?("admin")
       refute Accounts.handle_available?("settings")
+      refute Accounts.handle_available?("pedro")
+      refute Accounts.handle_available?("micelio")
     end
 
     test "handle_available?/1 returns false for taken handles" do
@@ -151,6 +153,33 @@ defmodule Micelio.AccountsTest do
       assert org.name == "My Company"
       assert org.account.handle == "my-company"
       assert Account.organization?(org.account)
+    end
+
+    test "create_organization/1 fails when handle is taken" do
+      assert {:ok, %Organization{}} =
+               Accounts.create_organization(%{handle: "taken-org", name: "Taken Org"})
+
+      assert {:error, changeset} =
+               Accounts.create_organization(%{handle: "taken-org", name: "Other Org"})
+
+      assert "has already been taken" in errors_on(changeset).handle
+    end
+  end
+
+  describe "organization registration changeset" do
+    test "validates required fields" do
+      changeset = Accounts.change_organization_registration()
+      assert "can't be blank" in errors_on(changeset).name
+      assert "can't be blank" in errors_on(changeset).handle
+    end
+
+    test "validates handle format" do
+      changeset =
+        Accounts.change_organization_registration(%{"name" => "Example", "handle" => "bad_org"})
+
+      assert "must contain only alphanumeric characters and single hyphens, cannot start or end with a hyphen" in errors_on(
+               changeset
+             ).handle
     end
   end
 

@@ -131,6 +131,7 @@ defmodule Micelio.Handles do
     "media",
 
     # Brand
+    "pedro",
     "micelio",
     "github",
     "gitlab",

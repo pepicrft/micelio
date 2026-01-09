@@ -1,20 +1,25 @@
-<.app flash={@flash}>
-<div class="mx-auto max-w-sm text-center">
-  <.header>
-    <span class="block text-center">Check your email</span>
-    <:subtitle>
-      <span class="block text-center">We've sent you a magic link. Click it to sign in.</span>
-    </:subtitle>
-  </.header>
+<Layouts.app
+  flash={@flash}
+  current_scope={assigns[:current_scope]}
+  current_user={assigns[:current_user]}
+>
+  <div class="mx-auto max-w-sm text-center">
+    <.header>
+      <span class="block text-center">Check your email</span>
+      <:subtitle>
+        <span class="block text-center">We've sent you a magic link. Click it to sign in.</span>
+      </:subtitle>
+    </.header>
 
-  <p class="mt-4 text-sm text-gray-600">
-    The link will expire in 15 minutes. <br /> If you don't see the email, check your spam folder.
-  </p>
+    <p class="mt-4 text-sm text-gray-600">
+      The link will expire in 15 minutes. <br />
+      If you don't see the email, check your spam folder.
+    </p>
 
-  <p class="mt-8">
-    <.link href={~p"/auth/login"} class="text-sm font-semibold text-blue-600 hover:underline">
-      ← Try again with a different email
-    </.link>
-  </p>
-</div>
-</.app>
+    <p class="mt-8">
+      <.link href={~p"/auth/login"} class="text-sm font-semibold text-blue-600 hover:underline">
+        ← Try again with a different email
+      </.link>
+    </p>
+  </div>
+</Layouts.app>

@@ -31,6 +31,10 @@ defmodule MicelioWeb.Layouts do
     default: nil,
     doc: "the current [scope](https://hexdocs.pm/phoenix/scopes.html)"
 
+  attr :current_user, :map,
+    default: nil,
+    doc: "the current authenticated user"
+
   slot :inner_block, required: true
 
   def app(assigns) do
@@ -52,7 +56,11 @@ defmodule MicelioWeb.Layouts do
               <form action={~p"/auth/logout"} method="post" style="display: inline;">
                 <input type="hidden" name="_csrf_token" value={Phoenix.Controller.get_csrf_token()} />
                 <input type="hidden" name="_method" value="delete" />
-                <button type="submit" class="btn btn-ghost" style="border: none; background: transparent; cursor: pointer;">
+                <button
+                  type="submit"
+                  class="btn btn-ghost"
+                  style="border: none; background: transparent; cursor: pointer;"
+                >
                   Logout
                 </button>
               </form>

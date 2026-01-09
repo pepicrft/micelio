@@ -5,7 +5,7 @@ defmodule Micelio.Accounts do
 
   import Ecto.Query
 
-  alias Micelio.Accounts.{Account, Organization, User, Token}
+  alias Micelio.Accounts.{Account, Organization, OrganizationRegistration, User, Token}
   alias Micelio.Repo
 
   @doc """
@@ -184,6 +184,13 @@ defmodule Micelio.Accounts do
         {:error, changeset} -> Repo.rollback(changeset)
       end
     end)
+  end
+
+  @doc """
+  Returns a changeset for organization registration.
+  """
+  def change_organization_registration(attrs \\ %{}) do
+    OrganizationRegistration.changeset(%OrganizationRegistration{}, attrs)
   end
 
   defp do_create_organization(attrs) do

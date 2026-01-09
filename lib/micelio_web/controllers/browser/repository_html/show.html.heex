@@ -1,3 +1,7 @@
-<.app flash={@flash} current_user={assigns[:current_user]}>
-<h1>Repository</h1>
-</.app>
+<Layouts.app
+  flash={@flash}
+  current_scope={assigns[:current_scope]}
+  current_user={assigns[:current_user]}
+>
+  <h1>Repository</h1>
+</Layouts.app>

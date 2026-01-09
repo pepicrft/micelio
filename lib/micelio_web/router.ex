@@ -72,6 +72,14 @@ defmodule MicelioWeb.Router do
     delete "/:handle", ProjectController, :delete
   end
 
+  # Organization routes (require authentication)
+  scope "/organizations", MicelioWeb.Browser do
+    pipe_through [:browser, :require_auth]
+
+    get "/new", OrganizationController, :new
+    post "/", OrganizationController, :create
+  end
+
   scope "/", MicelioWeb.Browser do
     pipe_through([:browser, :load_resources])
 

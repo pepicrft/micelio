@@ -1,65 +1,72 @@
-<.app flash={@flash} current_user={assigns[:current_user]}>
-<div class="project-form-container">
-  <header class="project-form-header">
-    <h1>Create a new project</h1>
-    <p>Projects are where you organize your code and collaborate.</p>
-  </header>
+<Layouts.app
+  flash={@flash}
+  current_scope={assigns[:current_scope]}
+  current_user={assigns[:current_user]}
+>
+  <div class="project-form-container">
+    <header class="project-form-header">
+      <h1>Create a new project</h1>
+      <p>Projects are where you organize your code and collaborate.</p>
+    </header>
 
-  <form action={~p"/projects"} method="post" class="project-form" id="project-new-form">
-    <input type="hidden" name="_csrf_token" value={Phoenix.Controller.get_csrf_token()} />
+    <form action={~p"/projects"} method="post" class="project-form" id="project-new-form">
+      <input type="hidden" name="_csrf_token" value={Phoenix.Controller.get_csrf_token()} />
 
-    <div class="project-form-group">
-      <label for="project_name">Project name</label>
-      <input
-        type="text"
-        name="project[name]"
-        id="project_name"
-        placeholder="My Awesome Project"
-        required
-        autofocus
-        class={"project-input #{if @changeset.errors[:name], do: "project-input-error"}"}
-        value={
-          Phoenix.HTML.Form.normalize_value("text", Ecto.Changeset.get_field(@changeset, :name))
-        }
-      />
-      <%= if @changeset.errors[:name] do %>
-        <span class="project-error"><%= elem(@changeset.errors[:name], 0) %></span>
-      <% end %>
-    </div>
+      <div class="project-form-group">
+        <label for="project_name">Project name</label>
+        <input
+          type="text"
+          name="project[name]"
+          id="project_name"
+          placeholder="My Awesome Project"
+          required
+          autofocus
+          class={"project-input #{if @changeset.errors[:name], do: "project-input-error"}"}
+          value={
+            Phoenix.HTML.Form.normalize_value("text", Ecto.Changeset.get_field(@changeset, :name))
+          }
+        />
+        <%= if @changeset.errors[:name] do %>
+          <span class="project-error">{elem(@changeset.errors[:name], 0)}</span>
+        <% end %>
+      </div>
 
-    <div class="project-form-group">
-      <label for="project_handle">Handle</label>
-      <input
-        type="text"
-        name="project[handle]"
-        id="project_handle"
-        placeholder="my-awesome-project"
-        required
-        pattern="^[a-zA-Z0-9](?:[a-zA-Z0-9]|-(?=[a-zA-Z0-9])){0,99}$"
-        title="Must contain only alphanumeric characters and single hyphens, cannot start or end with a hyphen"
-        class={"project-input #{if @changeset.errors[:handle], do: "project-input-error"}"}
-        value={
-          Phoenix.HTML.Form.normalize_value("text", Ecto.Changeset.get_field(@changeset, :handle))
-        }
-      />
-      <%= if @changeset.errors[:handle] do %>
-        <span class="project-error"><%= elem(@changeset.errors[:handle], 0) %></span>
-      <% end %>
-    </div>
+      <div class="project-form-group">
+        <label for="project_handle">Handle</label>
+        <input
+          type="text"
+          name="project[handle]"
+          id="project_handle"
+          placeholder="my-awesome-project"
+          required
+          pattern="^[a-zA-Z0-9](?:[a-zA-Z0-9]|-(?=[a-zA-Z0-9])){0,99}$"
+          title="Must contain only alphanumeric characters and single hyphens, cannot start or end with a hyphen"
+          class={"project-input #{if @changeset.errors[:handle], do: "project-input-error"}"}
+          value={
+            Phoenix.HTML.Form.normalize_value(
+              "text",
+              Ecto.Changeset.get_field(@changeset, :handle)
+            )
+          }
+        />
+        <%= if @changeset.errors[:handle] do %>
+          <span class="project-error">{elem(@changeset.errors[:handle], 0)}</span>
+        <% end %>
+      </div>
 
-    <div class="project-form-group">
-      <label for="project_description">Description (optional)</label>
-      <textarea
-        name="project[description]"
-        id="project_description"
-        placeholder="A short description of your project"
-        class="project-input project-textarea"
-      ><%= Ecto.Changeset.get_field(@changeset, :description) %></textarea>
-    </div>
+      <div class="project-form-group">
+        <label for="project_description">Description (optional)</label>
+        <textarea
+          name="project[description]"
+          id="project_description"
+          placeholder="A short description of your project"
+          class="project-input project-textarea"
+        ><%= Ecto.Changeset.get_field(@changeset, :description) %></textarea>
+      </div>
 
-    <button type="submit" class="project-button">
-      Create project
-    </button>
-  </form>
-</div>
-</.app>
+      <button type="submit" class="project-button">
+        Create project
+      </button>
+    </form>
+  </div>
+</Layouts.app>

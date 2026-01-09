@@ -24,7 +24,7 @@ defmodule Micelio.Projects.Project do
     |> cast(attrs, [:handle, :name, :description, :account_id])
     |> validate_required([:handle, :name, :account_id])
     |> validate_handle()
-    |> unique_constraint([:account_id, :handle],
+    |> unique_constraint(:handle,
       name: :projects_account_handle_index,
       message: "has already been taken for this account"
     )

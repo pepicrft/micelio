@@ -1,4 +1,8 @@
-<.app flash={@flash} current_user={assigns[:current_user]}>
+<Layouts.app
+  flash={@flash}
+  current_scope={assigns[:current_scope]}
+  current_user={assigns[:current_user]}
+>
   <div class="text-center">
     <h1 class="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl">
       Welcome to Micelio
@@ -6,7 +10,7 @@
     <p class="mt-6 text-lg leading-8 text-gray-600">
       Your personal code repository platform. Organize, share, and collaborate on your projects.
     </p>
-    
+
     <%= if assigns[:current_user] do %>
       <div class="mt-10 flex items-center justify-center gap-x-6">
         <a href={~p"/projects"} class="btn btn-primary">
@@ -24,4 +28,4 @@
       </div>
     <% end %>
   </div>
-</.app>
+</Layouts.app>

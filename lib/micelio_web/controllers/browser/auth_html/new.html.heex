@@ -1,29 +1,33 @@
-<.app flash={@flash}>
-<div class="auth-container">
-  <header class="auth-header">
-    <h1>Sign in to Micelio</h1>
-    <p>Enter your email and we'll send you a magic link.</p>
-  </header>
+<Layouts.app
+  flash={@flash}
+  current_scope={assigns[:current_scope]}
+  current_user={assigns[:current_user]}
+>
+  <div class="auth-container">
+    <header class="auth-header">
+      <h1>Sign in to Micelio</h1>
+      <p>Enter your email and we'll send you a magic link.</p>
+    </header>
 
-  <form action={~p"/auth/login"} method="post" class="auth-form" id="auth-login-form">
-    <input type="hidden" name="_csrf_token" value={Phoenix.Controller.get_csrf_token()} />
+    <form action={~p"/auth/login"} method="post" class="auth-form" id="auth-login-form">
+      <input type="hidden" name="_csrf_token" value={Phoenix.Controller.get_csrf_token()} />
 
-    <div class="auth-form-group">
-      <label for="email">Email</label>
-      <input
-        type="email"
-        name="email"
-        id="email"
-        placeholder="you@example.com"
-        required
-        autofocus
-        class="auth-input"
-      />
-    </div>
+      <div class="auth-form-group">
+        <label for="email">Email</label>
+        <input
+          type="email"
+          name="email"
+          id="email"
+          placeholder="you@example.com"
+          required
+          autofocus
+          class="auth-input"
+        />
+      </div>
 
-    <button type="submit" class="auth-button">
-      Send magic link
-    </button>
-  </form>
-</div>
-</.app>
+      <button type="submit" class="auth-button">
+        Send magic link
+      </button>
+    </form>
+  </div>
+</Layouts.app>
