@@ -115,11 +115,11 @@ if config_env() == :prod do
   config :micelio, Micelio.Mailer,
     adapter: Swoosh.Adapters.SMTP,
     relay: smtp_host,
-    port: String.to_integer(smtp_port),
+    port: 465,
     username: smtp_username,
     password: smtp_password,
     tls: :always,
-    ssl: false,
+    ssl: true,
     auth: :always,
     from: {smtp_from_name, smtp_from_email}
 
