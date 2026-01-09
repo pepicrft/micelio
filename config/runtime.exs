@@ -24,12 +24,15 @@ config :micelio, MicelioWeb.Endpoint,
   http: [port: String.to_integer(System.get_env("PORT", "4000"))]
 
 if config_env() == :prod do
+  # Build DATABASE_URL from individual environment variables
+  database_user = System.get_env("DATABASE_USER") || "micelio"
+  database_password = System.get_env("POSTGRES_PASSWORD") || raise "POSTGRES_PASSWORD is missing"
+  database_host = System.get_env("DATABASE_HOST") || "localhost"
+  database_name = System.get_env("DATABASE_NAME") || "micelio_production"
+
   database_url =
     System.get_env("DATABASE_URL") ||
-      raise """
-      environment variable DATABASE_URL is missing.
-      For example: ecto://USER:PASS@HOST/DATABASE
-      """
+      "postgres://#{database_user}:#{database_password}@#{database_host}/#{database_name}"
 
   maybe_ipv6 = if System.get_env("ECTO_IPV6") in ~w(true 1), do: [:inet6], else: []
 
