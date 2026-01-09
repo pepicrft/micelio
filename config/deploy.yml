@@ -29,6 +29,12 @@ env:
   secret:
     - SECRET_KEY_BASE
     - POSTGRES_PASSWORD
+    - SMTP_HOST
+    - SMTP_USERNAME
+    - SMTP_PASSWORD
+    - SMTP_PORT
+    - SMTP_FROM_EMAIL
+    - SMTP_FROM_NAME
 
 accessories:
   registry:
