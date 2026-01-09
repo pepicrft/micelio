@@ -121,11 +121,9 @@ if config_env() == :prod do
   end
 
   # Configure TLS options for SMTP
+  # Note: For now we disable verification to work around gen_smtp CA cert issues
   smtp_tls_options = if smtp_ssl or smtp_tls == :always do
-    # Configure CA certificates for SSL/TLS verification
-    # Note: gen_smtp requires specific format for tls_options
-    cacerts = :public_key.cacerts_get() |> :public_key.pem_decode() |> elem(1)
-    [verify: :verify_peer, cacerts: cacerts]
+    [verify: :verify_none]
   else
     []
   end
