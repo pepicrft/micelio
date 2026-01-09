@@ -35,9 +35,10 @@ jobs:
       - name: Set up SSH
         run: |
           mkdir -p ~/.ssh
+          touch ~/.ssh/known_hosts
           fnox get SSH_PRIVATE_KEY > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keygen -R 91.98.64.68
+          ssh-keygen -R 91.98.64.68 2>/dev/null || true
           ssh-keyscan -H 91.98.64.68 >> ~/.ssh/known_hosts
 
       - name: Configure buildx for insecure registry
