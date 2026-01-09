@@ -123,8 +123,9 @@ if config_env() == :prod do
   # Configure TLS options for SMTP
   smtp_tls_options = if smtp_ssl or smtp_tls == :always do
     # Configure CA certificates for SSL/TLS verification
-    cacertfile = System.get_env("SMTP_CERT_FILE", "/etc/ssl/certs/ca-certificates.crt")
-    [verify: :verify_peer, cacertfile: cacertfile]
+    # Note: gen_smtp requires specific format for tls_options
+    cacerts = :public_key.cacerts_get() |> :public_key.pem_decode() |> elem(1)
+    [verify: :verify_peer, cacerts: cacerts]
   else
     []
   end
