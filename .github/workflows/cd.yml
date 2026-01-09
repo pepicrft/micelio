@@ -74,4 +74,16 @@ jobs:
           docker buildx inspect --bootstrap kamal-remote-ssh---root-91-98-64-68
 
       - name: Deploy with Kamal
-        run: fnox exec -- kamal deploy
+        run: |
+          # Export secrets from fnox as environment variables for Kamal
+          export KAMAL_REGISTRY_PASSWORD=$(fnox get KAMAL_REGISTRY_PASSWORD)
+          export SECRET_KEY_BASE=$(fnox get SECRET_KEY_BASE)
+          export POSTGRES_PASSWORD=$(fnox get POSTGRES_PASSWORD)
+          export SMTP_HOST=$(fnox get SMTP_HOST)
+          export SMTP_USERNAME=$(fnox get SMTP_USERNAME)
+          export SMTP_PASSWORD=$(fnox get SMTP_PASSWORD)
+          export SMTP_PORT=$(fnox get SMTP_PORT)
+          export SMTP_FROM_EMAIL=$(fnox get SMTP_FROM_EMAIL)
+          export SMTP_FROM_NAME=$(fnox get SMTP_FROM_NAME)
+
+          kamal deploy
