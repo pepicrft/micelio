@@ -97,13 +97,11 @@ defmodule MicelioWeb.Browser.AuthController do
     details = [reason: inspect(reason, pretty: true, limit: :infinity)]
 
     cond do
-      match?(%Swoosh.Error{}, reason) ->
-        error = reason
-
+      is_map(reason) and Map.get(reason, :__struct__) == Swoosh.Error ->
         details ++
           [
-            error: Exception.message(error),
-            swoosh_reason: inspect(error.reason, pretty: true, limit: :infinity)
+            error: Exception.message(reason),
+            swoosh_reason: inspect(Map.get(reason, :reason), pretty: true, limit: :infinity)
           ]
 
       match?(%{__exception__: true}, reason) ->
