@@ -103,6 +103,8 @@ if config_env() == :prod do
 
     Optional variables (have defaults):
       - SMTP_PORT (default: "587")
+      - SMTP_SSL (default: "false")
+      - SMTP_TLS (default: "if_available")
       - SMTP_FROM_EMAIL (default: "noreply@micelio.dev")
       - SMTP_FROM_NAME (default: "Micelio")
       - SMTP_TLS_VERIFY (default: "true")
@@ -121,7 +123,10 @@ if config_env() == :prod do
   smtp_tls =
     case System.get_env("SMTP_TLS", "if_available") do
       "true" -> :always
+      "always" -> :always
+      "if_available" -> :if_available
       "false" -> :never
+      "never" -> :never
       _ -> :if_available
     end
 

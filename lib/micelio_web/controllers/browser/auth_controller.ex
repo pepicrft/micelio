@@ -35,10 +35,10 @@ defmodule MicelioWeb.Browser.AuthController do
             )
 
           {:error, reason} ->
-            Logger.error("Login email delivery failed",
-              user_id: login_token.user.id,
-              email: login_token.user.email,
-              reason: inspect(reason)
+            Logger.error(
+              "Login email delivery failed",
+              [user_id: login_token.user.id, email: login_token.user.email] ++
+                delivery_error_metadata(reason)
             )
         end
 
@@ -91,5 +91,26 @@ defmodule MicelioWeb.Browser.AuthController do
     |> clear_session()
     |> put_flash(:info, "You have been logged out.")
     |> redirect(to: ~p"/")
+  end
+
+  defp delivery_error_metadata(reason) do
+    details = [reason: inspect(reason, pretty: true, limit: :infinity)]
+
+    cond do
+      match?(%Swoosh.Error{}, reason) ->
+        error = reason
+
+        details ++
+          [
+            error: Exception.message(error),
+            swoosh_reason: inspect(error.reason, pretty: true, limit: :infinity)
+          ]
+
+      match?(%{__exception__: true}, reason) ->
+        details ++ [error: Exception.message(reason)]
+
+      true ->
+        details
+    end
   end
 end
