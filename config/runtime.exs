@@ -105,6 +105,9 @@ if config_env() == :prod do
       - SMTP_PORT (default: "587")
       - SMTP_FROM_EMAIL (default: "noreply@micelio.dev")
       - SMTP_FROM_NAME (default: "Micelio")
+      - SMTP_TLS_VERIFY (default: "true")
+      - SMTP_TLS_CA_CERTS_PATH (default: system CA certs)
+      - SMTP_TLS_SERVER_NAME (default: SMTP_HOST)
     """
   end
 
@@ -122,13 +125,32 @@ if config_env() == :prod do
       _ -> :if_available
     end
 
-  # Configure TLS options for SMTP
-  # Note: For now we disable verification to work around gen_smtp CA cert issues
+  # Configure TLS options for SMTP.
+  # Default to peer verification and allow optional CA overrides.
+  smtp_tls_verify = System.get_env("SMTP_TLS_VERIFY", "true") != "false"
+  smtp_tls_ca_cert_path = System.get_env("SMTP_TLS_CA_CERTS_PATH")
+  smtp_tls_server_name = System.get_env("SMTP_TLS_SERVER_NAME") || smtp_host
+
   smtp_tls_options =
-    if smtp_ssl or smtp_tls == :always do
-      [verify: :verify_none]
-    else
-      []
+    cond do
+      (smtp_ssl or smtp_tls in [:always, :if_available]) and smtp_tls_verify ->
+        ca_options =
+          case smtp_tls_ca_cert_path do
+            nil -> [cacerts: :public_key.cacerts_get()]
+            path -> [cacertfile: path]
+          end
+
+        [
+          verify: :verify_peer,
+          depth: 99,
+          server_name_indication: String.to_charlist(smtp_tls_server_name)
+        ] ++ ca_options
+
+      smtp_ssl or smtp_tls in [:always, :if_available] ->
+        [verify: :verify_none]
+
+      true ->
+        []
     end
 
   config :micelio, Micelio.Mailer,

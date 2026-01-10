@@ -23,18 +23,35 @@ defmodule MicelioWeb.Browser.AuthController do
       {:ok, login_token} ->
         login_url = url(~p"/auth/verify/#{login_token.token}")
 
-        email_result =
+        email =
           login_token.user
           |> AuthEmail.login_email(login_url)
-          |> Mailer.deliver()
 
-        Logger.info("Email delivery result: #{inspect(email_result)}")
+        case Mailer.deliver(email) do
+          {:ok, _response} ->
+            Logger.info("Login email delivered",
+              user_id: login_token.user.id,
+              email: login_token.user.email
+            )
+
+          {:error, reason} ->
+            Logger.error("Login email delivery failed",
+              user_id: login_token.user.id,
+              email: login_token.user.email,
+              reason: inspect(reason)
+            )
+        end
 
         conn
         |> put_flash(:info, "Check your email for a login link!")
         |> redirect(to: ~p"/auth/sent")
 
-      {:error, _reason} ->
+      {:error, reason} ->
+        Logger.warning("Login email initiation failed",
+          email: email,
+          reason: inspect(reason)
+        )
+
         conn
         |> put_flash(:error, "Something went wrong. Please try again.")
         |> redirect(to: ~p"/auth/login")

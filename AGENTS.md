@@ -25,8 +25,14 @@ All functions return `{:ok, result}` or `{:error, reason}` tuples for proper err
 
 ## Deployment
 
-The app is deployed using [Kamal](https://kamal-deploy.org/). Before deploying, source the environment variables:
+The app is deployed using [Kamal](https://kamal-deploy.org/) via **Continuous Integration**. 
 
+**Deployment Workflow:**
+- **Push changes directly to `main` branch on origin** 
+- **GitHub Actions CI automatically handles deployment**
+- No manual deployment commands needed
+
+**Manual deployment (if needed):**
 ```bash
 source .env && kamal deploy
 ```
