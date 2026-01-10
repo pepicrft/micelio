@@ -1,35 +1,38 @@
-<div class="max-w-4xl mx-auto px-4 py-8">
-  <nav class="mb-8">
-    <.link navigate={~p"/changelog"} class="text-blue-600 hover:text-blue-800 font-medium">
-      ← Back to Changelog
-    </.link>
-  </nav>
-
-  <header class="mb-8">
-    <h1 class="text-4xl font-bold text-gray-900 mb-4">
-      Version <%= @version %>
-    </h1>
-    <p class="text-xl text-gray-600 mb-6">
-      All changes included in version <%= @version %>.
-    </p>
-  </header>
-
-  <div class="space-y-6">
-    <%= for entry <- @entries do %>
-      <.entry_card entry={entry} />
-    <% end %>
-  </div>
-
-  <%= if Enum.empty?(@entries) do %>
-    <div class="text-center py-12">
-      <.icon name="hero-document-text" class="w-16 h-16 text-gray-300 mx-auto mb-4" />
-      <h3 class="text-lg font-medium text-gray-900 mb-2">No entries for this version</h3>
-      <p class="text-gray-600">
-        No changelog entries found for version <%= @version %>.
-      </p>
-      <.link navigate={~p"/changelog"} class="mt-4 inline-block text-blue-600 hover:text-blue-800 font-medium">
-        View all entries →
+<Layouts.app
+  flash={@flash}
+  current_scope={assigns[:current_scope]}
+  current_user={assigns[:current_user]}
+>
+  <div class="changelog-container">
+    <div class="changelog-nav">
+      <.link navigate={~p"/changelog"} class="changelog-nav-link">
+        ← Back to Changelog
       </.link>
     </div>
-  <% end %>
-</div>
+
+    <div class="changelog-header">
+      <h1 class="changelog-title">
+        Version <%= @version %>
+      </h1>
+      <p class="changelog-tagline">
+        All changes included in version <%= @version %>.
+      </p>
+    </div>
+
+    <div class="changelog-entries">
+      <%= for entry <- @entries do %>
+        <.entry_card entry={entry} />
+      <% end %>
+    </div>
+
+    <%= if Enum.empty?(@entries) do %>
+      <div class="changelog-empty">
+        <div class="changelog-empty-icon">📝</div>
+        <h3 class="changelog-empty-title">No entries for this version</h3>
+        <p class="changelog-empty-message">
+          No changelog entries found for version <%= @version %>.
+        </p>
+      </div>
+    <% end %>
+  </div>
+</Layouts.app>

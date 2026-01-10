@@ -1,0 +1,291 @@
+/* Changelog styles - consistent with blog styling */
+
+.changelog-container {
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-4);
+}
+
+.changelog-header {
+  margin-bottom: var(--space-8);
+}
+
+.changelog-title {
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-normal);
+  color: var(--color-text);
+  margin: 0 0 var(--space-4) 0;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--space-2);
+}
+
+.changelog-tagline {
+  font-size: var(--font-size-lg);
+  color: var(--color-text-muted);
+  margin: 0 0 var(--space-4) 0;
+  line-height: var(--line-height-normal);
+}
+
+.changelog-filters {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+@media (min-width: 640px) {
+  .changelog-filters {
+    flex-direction: row;
+    align-items: center;
+  }
+}
+
+.changelog-categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.changelog-category-label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.changelog-category-link {
+  display: inline-block;
+  padding: var(--space-1) var(--space-2);
+  background: var(--color-border);
+  color: var(--color-text);
+  text-decoration: none;
+  border-radius: 0;
+  font-size: var(--font-size-sm);
+  border: 1px solid var(--color-border);
+}
+
+.changelog-category-link:hover {
+  background: var(--color-primary);
+  color: white;
+  text-decoration: none;
+}
+
+.changelog-category-link.active {
+  background: var(--color-primary);
+  color: white;
+  border-color: var(--color-primary);
+}
+
+.changelog-feeds {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.changelog-feed-link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--color-text-muted);
+  text-decoration: none;
+  font-size: var(--font-size-sm);
+  border: 1px solid var(--color-border);
+  padding: var(--space-1) var(--space-2);
+  border-radius: 0;
+}
+
+.changelog-feed-link:hover {
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+  text-decoration: none;
+}
+
+.changelog-entries {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.changelog-entry {
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--space-6);
+}
+
+.changelog-entry:last-child {
+  border-bottom: none;
+}
+
+.changelog-entry-header {
+  margin-bottom: var(--space-3);
+}
+
+.changelog-entry-title {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-normal);
+  margin: 0 0 var(--space-2) 0;
+}
+
+.changelog-entry-title a {
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.changelog-entry-title a:hover {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
+.changelog-entry-meta {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.changelog-entry-version {
+  background: var(--color-border);
+  padding: 0.125rem var(--space-2);
+  font-size: 0.75rem;
+  border-radius: 0;
+  font-family: monospace;
+}
+
+.changelog-entry-category {
+  background: var(--color-primary);
+  color: white;
+  padding: 0.125rem var(--space-2);
+  font-size: 0.75rem;
+  border-radius: 0;
+  text-transform: capitalize;
+}
+
+.changelog-entry-description {
+  font-size: var(--font-size-base);
+  color: var(--color-text);
+  margin: 0;
+  line-height: var(--line-height-normal);
+}
+
+.changelog-empty {
+  text-align: center;
+  padding: var(--space-12) var(--space-4);
+}
+
+.changelog-empty-icon {
+  width: 4rem;
+  height: 4rem;
+  color: var(--color-text-muted);
+  margin: 0 auto var(--space-4);
+  opacity: 0.5;
+}
+
+.changelog-empty-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text);
+  margin: 0 0 var(--space-2) 0;
+}
+
+.changelog-empty-message {
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+/* Individual changelog entry page */
+.changelog-detail {
+  max-width: 50rem;
+}
+
+.changelog-detail-header {
+  margin-bottom: var(--space-6);
+}
+
+.changelog-detail-content {
+  line-height: 1.6;
+  font-size: var(--font-size-base);
+}
+
+.changelog-detail-content h1,
+.changelog-detail-content h2,
+.changelog-detail-content h3,
+.changelog-detail-content h4,
+.changelog-detail-content h5,
+.changelog-detail-content h6 {
+  margin-top: var(--space-6);
+  margin-bottom: var(--space-3);
+  font-weight: var(--font-weight-medium);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 0.25rem;
+}
+
+.changelog-detail-content h1 {
+  font-size: var(--font-size-2xl);
+}
+
+.changelog-detail-content h2 {
+  font-size: var(--font-size-xl);
+}
+
+.changelog-detail-content h3 {
+  font-size: var(--font-size-lg);
+}
+
+.changelog-detail-content p {
+  margin: var(--space-4) 0;
+}
+
+.changelog-detail-content ul,
+.changelog-detail-content ol {
+  margin: var(--space-4) 0;
+  padding-left: var(--space-6);
+}
+
+.changelog-detail-content li {
+  margin: var(--space-2) 0;
+}
+
+.changelog-detail-content blockquote {
+  border-left: 3px solid var(--color-border);
+  padding-left: var(--space-4);
+  margin: var(--space-4) 0;
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+.changelog-detail-content code {
+  background: var(--color-border);
+  padding: 0.125rem var(--space-1);
+  font-size: 0.9em;
+  border-radius: 0;
+}
+
+.changelog-detail-content pre {
+  background: var(--color-border);
+  padding: var(--space-4);
+  margin: var(--space-4) 0;
+  overflow-x: auto;
+  border-radius: 0;
+}
+
+.changelog-detail-content pre code {
+  background: none;
+  padding: 0;
+}
+
+.changelog-nav {
+  margin-top: var(--space-8);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+
+.changelog-nav-link {
+  color: var(--color-text-muted);
+  text-decoration: none;
+  font-size: var(--font-size-sm);
+}
+
+.changelog-nav-link:hover {
+  color: var(--color-primary);
+  text-decoration: underline;
+}

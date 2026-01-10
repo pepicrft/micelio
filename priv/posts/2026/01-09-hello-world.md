@@ -1,54 +1,104 @@
 %{
-  title: "Hello, World!",
-  author: "Micelio Team",
-  tags: ~w(announcement),
-  description: "Welcome to the Micelio blog - your source for updates on the agent-first forge."
+  title: "A Vision for Agent-First Development",
+  author: "Pedro Piñera",
+  tags: ~w(vision announcement),
+  description: "Why we're building Micelio and hif: rethinking version control for an AI-native world where humans and agents collaborate as peers."
 }
 
 ---
 
-# Hello, World!
+# A Vision for Agent-First Development
 
-Welcome to the Micelio blog! This is our first post announcing the launch of Micelio - a minimal, agent-first forge designed for the future of software development.
+*A founder's perspective on why Git can't handle our AI-driven future.*
 
-## What is Micelio?
+The future of software development is already here, scattered unevenly across our industry. At OpenAI, hundreds of AI agents collaborate on massive codebases. At Google, billions of files live in monorepos that dwarf anything Git was designed for. At Meta, thousands of engineers land hundreds of changes daily in systems that prioritize scale over the traditional commit model.
 
-Micelio is not just another Git forge. It's built from the ground up for an agent-first world where:
+**The writing is on the wall: Git tracks what happened. We need systems that track why.**
 
-- **AI agents and humans collaborate** on massive codebases
-- **Sessions capture goal, reasoning, and changes** together
-- **The server is the source of truth**, not local disk
-- **Infinite scale** is the target - billions of files, hundreds of thousands of landings per day
+## The Problem We're Solving
 
-## Inspired by the Best
+I've spent years watching brilliant developers waste time on tool friction instead of building the future. The current reality is broken:
 
-We take inspiration from industry leaders who've solved scale:
+Git was revolutionary for enabling distributed human collaboration, but it's fundamentally **snapshot-based** and **human-centric**. When you have hundreds of AI agents working concurrently, making thousands of decisions per minute, Git's commit model collapses under the weight of reality.
 
-- **Google Piper**: Billion-file monorepos
-- **Meta Sapling**: Massive concurrent development
-- **Turbopuffer**: Object storage-first architecture
-- **WarpStream**: Stateless, auto-scaling compute
+**Consider this scenario:** An agent is tasked with "add authentication to the API." In Git, you see the final commits—perhaps a dozen files changed. But you miss the crucial context: Why JWT over sessions? What security requirements drove the bcrypt choice? Which alternatives were considered and rejected?
 
-## The Vision
+**That reasoning is the most valuable artifact of software development, and Git throws it away.**
 
-We're building for a future where:
+## Our Solution: hif + Micelio
 
-1. **Hundreds of AI agents** work concurrently on the same codebase
-2. **Humans review**, not write most code
-3. **Object storage** provides infinite capacity at minimal cost
-4. **Coordinator-free landing** eliminates bottlenecks
+We're building two interconnected projects that reimagine version control for an AI-native world:
 
-## What's Next?
+### hif: Version Control That Captures Why
 
-This is just the beginning. Stay tuned for:
+**Philosophy:** *"Git tracks what. hif tracks why."*
 
-- Technical deep-dives into our architecture
-- Progress updates on agent-native features
-- Insights from building for unprecedented scale
-- Tips for human-AI collaboration workflows
+Instead of commits, hif has **sessions**—complete units of work containing:
+- 🎯 **Goal** - what you're trying to accomplish
+- 💬 **Conversation** - dialogue between agents and humans
+- 🧠 **Decisions** - reasoning behind choices made
+- 📝 **Changes** - the actual file modifications
 
-Welcome to the future of code collaboration. Welcome to Micelio!
+```
+Session: "Add authentication to API"
+├── Goal: Implement secure login/logout endpoints
+├── Conversation
+│   ├── Human: "Use JWT tokens for auth"
+│   ├── Agent: "Should I store sessions in Redis?"
+│   ├── Human: "No, keep JWT stateless"
+│   └── Agent: "Implementing with bcrypt for passwords"
+├── Decisions
+│   ├── "JWT chosen over sessions per human preference"
+│   ├── "Bcrypt for password hashing - industry standard"
+│   └── "Auth middleware follows existing pattern"
+└── Changes
+    ├── + src/auth/jwt.zig
+    ├── + src/middleware/auth.zig
+    └── ~ src/main.zig (added auth routes)
+```
+
+### Micelio: The Forge for Agent-First Teams
+
+Micelio is the modern, minimalist forge built specifically for hif workflows. It's designed for teams where humans and AI agents work as peers, with sessions as the fundamental unit of collaboration.
+
+Key architectural decisions:
+- **Forge-first** - server is source of truth, not local disk
+- **Object storage-first** - S3 as primary storage for unlimited scale
+- **Stateless compute** - no coordinator bottlenecks
+- **Session-based UI** - browse reasoning, not just code changes
+
+## Why This Matters to You
+
+### If You're a Developer
+
+**Capture your reasoning.** Never lose context of why decisions were made. Hand off work to agents with complete context. Review their reasoning, not just their code changes.
+
+### If You're a Team Lead
+
+**Transparent decision-making.** Everyone sees the why, not just the what. Onboard new team members by showing them historical decision context. Integrate AI agents as first-class team members.
+
+### If You're Building the Future
+
+**Scale beyond Git's limits.** Handle massive monorepos efficiently. Prepare for the agent-first development paradigm that's coming whether we're ready or not.
+
+## The Path Forward
+
+This is **work in progress**—we're not ready for production use yet. But the vision is clear, and we're building it piece by piece:
+
+**Near term:** Session UI, conflict resolution, performance optimization
+**Medium term:** Agent SDKs, migration tools, ecosystem growth
+**Long term:** Industry adoption as the standard for agent-first development
+
+## Join Us
+
+We're building something unprecedented: version control that captures not just what we built, but how we reasoned, why we chose alternatives, and how we can learn from the process.
+
+**The future of software development is collaborative intelligence—humans and AI agents working together as peers.** This requires new tools designed from the ground up for this reality.
+
+Git was revolutionary for its time. Now it's time for what comes next.
+
+**Micelio + hif is our bet on that future.**
 
 ---
 
-*Follow our development at [micelio.dev](https://micelio.dev) and join the conversation about the future of software development.*
+*Pedro Piñera is the founder of Micelio. Follow the project at [micelio.dev](https://micelio.dev) or contribute on [GitHub](https://github.com/pepicrft/micelio).*

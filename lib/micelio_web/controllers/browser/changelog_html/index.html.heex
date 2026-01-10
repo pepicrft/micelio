@@ -1,56 +1,60 @@
-<div class="max-w-4xl mx-auto px-4 py-8">
-  <header class="mb-8">
-    <h1 class="text-4xl font-bold text-gray-900 mb-4">Changelog</h1>
-    <p class="text-xl text-gray-600 mb-6">
-      Stay up to date with the latest changes, improvements, and new features in Micelio.
-    </p>
-    
-    <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-      <div class="flex flex-wrap gap-2">
-        <span class="text-sm text-gray-600">Filter by category:</span>
-        <.link navigate={~p"/changelog"} class="px-3 py-1 bg-gray-200 text-gray-800 rounded-full text-sm hover:bg-gray-300">
-          All
-        </.link>
-        <%= for category <- @categories do %>
-          <.link 
-            navigate={~p"/changelog/category/#{category}"} 
-            class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200"
-          >
-            <%= String.capitalize(category) %>
-          </.link>
-        <% end %>
-      </div>
+<Layouts.app
+  flash={@flash}
+  current_scope={assigns[:current_scope]}
+  current_user={assigns[:current_user]}
+>
+  <div class="changelog-container">
+    <div class="changelog-header">
+      <h1 class="changelog-title">Changelog</h1>
+      <p class="changelog-tagline">
+        Stay up to date with the latest changes, improvements, and new features in Micelio.
+      </p>
       
-      <div class="flex gap-2">
-        <.link 
-          href={~p"/changelog/rss"} 
-          class="flex items-center gap-1 px-3 py-1 text-orange-600 border border-orange-600 rounded hover:bg-orange-50"
-        >
-          <.icon name="hero-rss" class="w-4 h-4" />
-          RSS
-        </.link>
-        <.link 
-          href={~p"/changelog/atom"} 
-          class="flex items-center gap-1 px-3 py-1 text-blue-600 border border-blue-600 rounded hover:bg-blue-50"
-        >
-          <.icon name="hero-rss" class="w-4 h-4" />
-          Atom
-        </.link>
+      <div class="changelog-filters">
+        <div class="changelog-categories">
+          <span class="changelog-category-label">Filter by category:</span>
+          <.link navigate={~p"/changelog"} class="changelog-category-link">
+            All
+          </.link>
+          <%= for category <- @categories do %>
+            <.link 
+              navigate={~p"/changelog/category/#{category}"} 
+              class="changelog-category-link"
+            >
+              <%= String.capitalize(category) %>
+            </.link>
+          <% end %>
+        </div>
+        
+        <div class="changelog-feeds">
+          <.link 
+            href={~p"/changelog/rss"} 
+            class="changelog-feed-link"
+          >
+            RSS
+          </.link>
+          <.link 
+            href={~p"/changelog/atom"} 
+            class="changelog-feed-link"
+          >
+            Atom
+          </.link>
+        </div>
       </div>
     </div>
-  </header>
 
-  <div class="space-y-6">
-    <%= for entry <- @entries do %>
-      <.entry_card entry={entry} />
+    <div class="changelog-entries">
+      <%= for entry <- @entries do %>
+        <.entry_card entry={entry} />
+      <% end %>
+    </div>
+
+    <%= if Enum.empty?(@entries) do %>
+      <div class="changelog-empty">
+        <div class="changelog-empty-icon">📝</div>
+        <h3 class="changelog-empty-title">No changelog entries yet</h3>
+        <p class="changelog-empty-message">Check back soon for updates!</p>
+      </div>
     <% end %>
   </div>
-
-  <%= if Enum.empty?(@entries) do %>
-    <div class="text-center py-12">
-      <.icon name="hero-document-text" class="w-16 h-16 text-gray-300 mx-auto mb-4" />
-      <h3 class="text-lg font-medium text-gray-900 mb-2">No changelog entries yet</h3>
-      <p class="text-gray-600">Check back soon for updates!</p>
-    </div>
-  <% end %>
-</div>
+</Layouts.app>
