@@ -51,6 +51,7 @@ defmodule MicelioWeb.Layouts do
         </span>
         
         <a href={~p"/blog"}>blog</a>
+        <a href={~p"/changelog"}>changelog</a>
         
         <%= if assigns[:current_user] do %>
           <a href={~p"/projects"}>projects</a>

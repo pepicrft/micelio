@@ -1,4 +1,4 @@
-defmodule MicelioWeb.Browser.BlogHtml do
+defmodule MicelioWeb.Browser.BlogHTML do
   @moduledoc """
   This module contains pages rendered by BlogController.
   """
