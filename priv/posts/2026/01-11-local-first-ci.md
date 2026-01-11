@@ -54,15 +54,199 @@ When an agent builds code locally, Nix generates a derivation hash from source c
 
 **Same derivation hash = identical environment = trustworthy results.**
 
-### Attestation Model
+### The Deeper Trust Problem: Execution Provenance
 
-But we can go further. Instead of just trusting that environments match, we cryptographically prove it. Each session includes a build attestation: the Nix derivation hash (reproducible environment), test result hashes, agent identity, timestamp, and a cryptographic signature proving this specific agent built this specific code in this specific environment. Anyone can verify by rebuilding from the same derivation hash—results must match bit-for-bit, or the attestation is invalid.
+But there's a more subtle question that goes to the heart of local-first CI: **How do we prove an agent ran the project's actual test suite with the project's actual dependencies, not something else?**
+
+Consider the attack vectors:
+- An agent could modify test scripts to make them easier to pass
+- It could use different dependencies than the project specifies
+- It could run a subset of tests and claim it ran the full suite
+- It could fake attestations by running tests against modified code
+
+This isn't about trusting the agent's intentions—it's about **cryptographically proving provenance**: that the exact scripts, dependencies, and configuration specified in the project were used for execution.
+
+### Provenance Through Hash Chains
+
+The solution lies in Nix's derivation model, which creates a cryptographic chain from inputs to outputs. Here's how it works:
+
+**1. Source Hash Chain**
+
+When you commit code to hif, the session captures:
+- Git commit hash of the source code (SHA-1 or SHA-256)
+- Hash of the `flake.nix` or build configuration
+- Hash of dependency lockfiles (`mix.lock`, `package-lock.json`, etc.)
+
+These form the **source provenance**: a cryptographic fingerprint of what the project specifies should be built and tested.
+
+**2. Derivation Hash**
+
+Nix then computes a derivation hash from:
+- Source code hashes (from step 1)
+- Every dependency's hash (recursively, down to glibc and the kernel)
+- Build scripts from the repository (not agent-supplied scripts)
+- Compiler and toolchain hashes
+- Environment variables defined in the project
+
+The derivation hash is a **deterministic function** of these inputs. You cannot get the same derivation hash by using different test scripts or different dependencies. The math doesn't allow it.
+
+**3. Execution Attestation**
+
+When the agent executes tests, it produces:
+- Derivation hash (proves what was built)
+- Output hash (hash of build artifacts and test results)
+- Execution log hash (hash of stdout/stderr from test run)
+- Agent identity and timestamp
+- Cryptographic signature over all of the above
+
+This attestation proves: "Agent X, at time T, executed derivation D (which is derived from source S and dependencies Deps), producing output O, with execution log L."
+
+**4. Verification Chain**
+
+Anyone can verify this claim:
+1. Check that derivation D actually corresponds to source hash S and the project's declared dependencies
+2. Rebuild derivation D locally (hermetic, deterministic)
+3. Confirm the output hash matches (bit-for-bit reproducibility)
+4. Inspect the execution log to verify test commands match project scripts
+5. Verify the cryptographic signature is valid
+
+If the agent modified test scripts, the derivation hash changes (different inputs). If it used different dependencies, the derivation hash changes. If it ran different commands, the output hash won't match when verified. The cryptography makes cheating detectable.
+
+### Hermetic Execution: No Escape Hatches
+
+But what prevents an agent from running tests outside the Nix environment entirely, where it could use whatever dependencies it wants?
+
+This is where **hermetic execution** becomes critical. Nix builds occur in isolated namespaces where:
+- No network access (except to fetch declared dependencies)
+- No access to the host filesystem (only the Nix store)
+- No ambient dependencies from the system
+- Timestamps are normalized (reproducible builds)
+- Environmental variables are controlled
+
+The agent cannot accidentally or maliciously use undeclared dependencies because they're literally not available in the execution environment. The only way to get a valid derivation hash is to use exactly what the project specifies.
+
+### Script Integrity: Running Project Tests, Not Agent Tests
+
+A critical question: how do we prove the test scripts executed are the ones from the project repository, not agent-supplied substitutes?
+
+**Nix derivations include source trees**. When you build a derivation, the build inputs include:
+- The exact source code (hash-verified from Git)
+- Test scripts from the repository (part of the source tree)
+- Build configurations (Makefiles, package.json scripts, mix.exs tasks)
+
+The derivation hash cryptographically binds these together. You cannot substitute different test scripts and produce the same derivation hash—the content addressing ensures script integrity.
+
+For example, if your repository defines:
+
+```
+# In mix.exs
+defp aliases do
+  [
+    test: ["ecto.create --quiet", "ecto.migrate", "test"]
+  ]
+end
+```
+
+The Nix derivation includes this file's hash. An agent running `mix test` executes the commands defined in this file, not some other variant. If the agent modifies `mix.exs` to skip tests, the derivation hash changes, and verification fails.
+
+### Lockfile Integrity: Proving Dependency Versions
+
+Dependency lockfiles (`mix.lock`, `package-lock.json`, `Cargo.lock`) specify exact versions of every transitive dependency. But how do we prove an agent used these exact versions?
+
+**Content-addressed dependency resolution**: Nix resolves dependencies based on hashes, not version strings. The lockfile specifies:
+- Package name
+- Version
+- Hash of the package contents
+
+When Nix builds the derivation, it:
+1. Reads the lockfile hash (part of source tree)
+2. Resolves each dependency by content hash
+3. Includes those hashes in the derivation computation
+
+If an agent uses a different version of a dependency (even with the same version number but different code), the content hash differs, the derivation hash differs, and verification fails.
+
+This prevents:
+- Using a compromised version of a dependency
+- Using a fork with modified behavior
+- Using a different version than declared
+- Adding undeclared dependencies
+
+### Real-World Example: The Full Chain
+
+Let's trace through a complete example:
+
+**Project Repository:**
+- Git commit: `abc123` (source code)
+- `flake.nix`: declares Elixir 1.15.7, Erlang 26.2
+- `mix.lock`: pins phoenix 1.8.3 (hash: `def456`)
+- `mix.exs`: defines `mix test` command
+- Test suite: 147 tests in `test/` directory
+
+**Agent Execution:**
+1. Agent checks out commit `abc123`
+2. Nix reads `flake.nix` and `mix.lock`
+3. Computes derivation hash from:
+   - Source tree hash (includes `mix.exs`, test files)
+   - Elixir 1.15.7 hash
+   - Erlang 26.2 hash
+   - Phoenix 1.8.3 hash (from lockfile)
+   - All transitive dependencies (hashed)
+   - Build command: `mix test` (from `mix.exs`)
+4. Derivation hash: `xyz789`
+5. Nix executes tests in hermetic environment
+6. Produces output hash: `uvw012` (test results + artifacts)
+7. Agent signs attestation: "Built derivation `xyz789`, produced output `uvw012`"
+
+**Verification:**
+1. Reviewer sees attestation claims derivation `xyz789`
+2. Checks that `xyz789` derives from commit `abc123` ✓
+3. Checks derivation includes all lockfile dependencies ✓
+4. Rebuilds derivation `xyz789` locally
+5. Output hash matches `uvw012` ✓
+6. Inspects execution log: ran 147 tests, all passed ✓
+7. Signature valid ✓
+
+**What this proves:**
+- The agent used commit `abc123`'s source code
+- It used exact dependencies from `mix.lock`
+- It ran test commands from `mix.exs`
+- It executed all 147 tests
+- Results are reproducible
+
+**What the agent cannot do:**
+- Modify test files (changes source hash, changes derivation hash)
+- Use different dependencies (changes derivation hash)
+- Run fewer tests (changes output hash, visible in logs)
+- Fake results (cannot produce valid signature for false attestation)
+
+### Trust Model: Cryptographic Proof, Not Hope
+
+This is fundamentally different from traditional CI's trust model:
+
+**Traditional CI:**
+- Trust the CI provider (GitHub, CircleCI, etc.)
+- Trust the infrastructure isn't compromised
+- Trust the logs weren't tampered with
+- Trust the agent configuration matches the project
+
+**Local-First CI with Provenance:**
+- Cryptographically prove the source code hash
+- Cryptographically prove the dependency hashes
+- Cryptographically prove the execution environment
+- Cryptographically prove the test scripts executed
+- Cryptographically prove the results
+- Anyone can verify independently
+
+The trust shifts from "we trust the infrastructure" to "we can verify the mathematics." Even if an agent is malicious, it cannot produce a valid attestation for modified tests or dependencies without detection.
 
 This is more secure than traditional CI because:
 1. **Reproducible verification**: Anyone can rebuild and verify results match
 2. **No shared infrastructure to compromise**: Each agent has isolated execution
 3. **Cryptographic audit trail**: Every build is signed and attributable
 4. **Content-addressed artifacts**: Tampering changes the hash
+5. **Provenance guarantees**: Execution environment is cryptographically bound to project specifications
+6. **Script integrity**: Cannot run different tests without detection
+7. **Dependency integrity**: Cannot use different versions without detection
 
 ### Dependency Trust Through Transparency
 
@@ -185,35 +369,6 @@ With local-first CI:
 This is the infrastructure that makes hif's session model practical. Consider a session optimizing database query performance: the agent profiles queries, finds an N+1 problem, adds an index, and tests with production data samples. The build context captures the Nix environment hash (reproducible), test results (1.8s, all green, cache hit), and performance improvement (latency drops from 45ms to 18ms). The attestation proves the build succeeded. The agent's reasoning explains why a B-tree index was optimal, how it tested with 1M records, and why it's safe to land.
 
 The session isn't just code changes—it's **code + reasoning + proof that it works**. Local-first CI makes this proof instant and cryptographically verifiable.
-
-## The Path Forward
-
-This isn't science fiction. The pieces exist today:
-
-- **Nix** provides reproducible builds (production-ready since 2003)
-- **S3** provides content-addressed storage at planet scale  
-- **Cryptographic attestations** are standard in supply-chain security
-- **hif** is implementing this architecture right now
-
-What we're doing with Micelio:
-
-**Near term (Q1 2026):**
-- hif daemon with Nix integration
-- Filesystem and object storage artifact caching  
-- Basic attestation signatures
-- Local validation workflows
-
-**Medium term (Q2-Q3 2026):**
-- Multi-tier cache hierarchy (local, P2P, remote)
-- Protocol translation for Bazel/Gradle/etc  
-- Advanced attestation verification
-- Migration tools from traditional CI
-
-**Long term (2026+):**
-- Industry adoption of local-first model
-- Standardized attestation formats
-- Federated cache networks
-- New paradigms we can't imagine yet
 
 ## The Shift: From Queue to Flow
 
