@@ -2,6 +2,7 @@ const std = @import("std");
 const yazap = @import("yazap");
 const oauth = @import("oauth.zig");
 const projects = @import("projects.zig");
+const session = @import("session.zig");
 
 const App = yazap.App;
 const Arg = yazap.Arg;
@@ -53,7 +54,28 @@ pub fn main() !void {
     try root.addSubcommand(clone_cmd);
 
     // Session: Manage work sessions
-    const session_cmd = app.createCommand("session", "Manage work sessions");
+    var session_cmd = app.createCommand("session", "Manage work sessions");
+    
+    var session_start_cmd = app.createCommand("start", "Start a new session");
+    try session_start_cmd.addArg(Arg.positional("ORGANIZATION", "Organization handle", null));
+    try session_start_cmd.addArg(Arg.positional("PROJECT", "Project handle", null));
+    try session_start_cmd.addArg(Arg.positional("GOAL", "What you're trying to accomplish", null));
+    try session_cmd.addSubcommand(session_start_cmd);
+    
+    const session_status_cmd = app.createCommand("status", "Show current session status");
+    try session_cmd.addSubcommand(session_status_cmd);
+    
+    var session_note_cmd = app.createCommand("note", "Add a note to the session");
+    try session_note_cmd.addArg(Arg.positional("MESSAGE", "Note message", null));
+    try session_note_cmd.addArg(Arg.singleValueOption("role", 'r', "Role (human|agent)"));
+    try session_cmd.addSubcommand(session_note_cmd);
+    
+    const session_land_cmd = app.createCommand("land", "Land the current session (push to forge)");
+    try session_cmd.addSubcommand(session_land_cmd);
+    
+    const session_abandon_cmd = app.createCommand("abandon", "Abandon the current session");
+    try session_cmd.addSubcommand(session_abandon_cmd);
+    
     try root.addSubcommand(session_cmd);
 
     const matches = app.parseProcess() catch {
@@ -142,13 +164,57 @@ pub fn main() !void {
         return;
     }
 
-    if (matches.subcommandMatches("session")) |_| {
+    if (matches.subcommandMatches("session")) |session_matches| {
+        if (session_matches.subcommandMatches("start")) |start_matches| {
+            const org = start_matches.getSingleValue("ORGANIZATION");
+            const project = start_matches.getSingleValue("PROJECT");
+            const goal = start_matches.getSingleValue("GOAL");
+            
+            if (org == null or project == null or goal == null) {
+                std.debug.print("Error: organization, project, and goal required\n", .{});
+                std.debug.print("Usage: hif session start <organization> <project> <goal>\n", .{});
+                return;
+            }
+            
+            try session.start(allocator, org.?, project.?, goal.?);
+            return;
+        }
+
+        if (session_matches.subcommandMatches("status")) |_| {
+            try session.status(allocator);
+            return;
+        }
+
+        if (session_matches.subcommandMatches("note")) |note_matches| {
+            const message = note_matches.getSingleValue("MESSAGE");
+            const role = note_matches.getSingleValue("role") orelse "human";
+            
+            if (message == null) {
+                std.debug.print("Error: message required\n", .{});
+                std.debug.print("Usage: hif session note <message> [--role human|agent]\n", .{});
+                return;
+            }
+            
+            try session.addNote(allocator, role, message.?);
+            return;
+        }
+
+        if (session_matches.subcommandMatches("land")) |_| {
+            try session.land(allocator, oauth.default_server);
+            return;
+        }
+
+        if (session_matches.subcommandMatches("abandon")) |_| {
+            try session.abandon(allocator);
+            return;
+        }
+
         std.debug.print("Session management commands:\n", .{});
-        std.debug.print("  start   - Start a new session with a goal\n", .{});
-        std.debug.print("  status  - Show current session status\n", .{});
-        std.debug.print("  land    - Land the current session\n", .{});
-        std.debug.print("  abandon - Abandon the current session\n", .{});
-        std.debug.print("\n(Not yet implemented - forge connection required)\n", .{});
+        std.debug.print("  start <org> <project> <goal>  - Start a new session\n", .{});
+        std.debug.print("  status                        - Show current session status\n", .{});
+        std.debug.print("  note <message> [--role]       - Add a note to the session\n", .{});
+        std.debug.print("  land                          - Land the session (push to forge)\n", .{});
+        std.debug.print("  abandon                       - Abandon the current session\n", .{});
         return;
     }
 

@@ -58,6 +58,9 @@ defmodule MicelioWeb.Router do
     get "/projects/:organization/:handle", ProjectController, :show
     put "/projects/:organization/:handle", ProjectController, :update
     delete "/projects/:organization/:handle", ProjectController, :delete
+
+    # Session Management (requires bearer token)
+    post "/sessions", SessionController, :create
   end
 
   scope "/device", MicelioWeb.API do
