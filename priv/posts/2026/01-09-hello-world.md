@@ -57,9 +57,9 @@ For companies building the future, it means scaling beyond Git's limits, handlin
 
 This is work in progress. We're not ready for production use yet, but the vision is clear, and we're building it piece by piece. Near term, we're focusing on session interfaces, conflict resolution, and performance optimization. Medium term, we'll build agent SDKs, migration tools, and ecosystem growth. Long term, we're aiming for industry adoption as the standard for agent-first development.
 
-## Join Us
+## Let's Tinker Together
 
-We're building something unprecedented: version control that captures not just what we built, but how we reasoned, why we chose alternatives, and how we can learn from the process. And we're building it in the open, designed for you to run wherever you need it.
+If this excites you, let's build it together. We're working on something unprecedented: version control that captures not just what we built, but how we reasoned, why we chose alternatives, and how we can learn from the process. It's all happening in the open, designed for you to run wherever you need it.
 
 The future of software development is collaborative intelligence: humans and AI agents working together as peers. This requires new tools designed from the ground up for this reality—tools you can own, modify, and deploy on your own terms. Git was revolutionary for its time. Now it's time for what comes next.
 
