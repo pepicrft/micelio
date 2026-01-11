@@ -36,23 +36,7 @@ This isn't just faster. It's a fundamentally different trust model. In tradition
 
 ### How It Works
 
-```
-# Agent working on a session
-hif session start "optimize-api-performance"
-
-# Make changes, run full validation locally
-nix develop --command make test
-# → Tests run in identical Nix environment
-# → Same dependencies as production
-# → Cached artifacts from S3
-# → Results in 2.3 seconds
-
-# All green? Land it
-hif land
-# → Session includes cryptographic attestation
-# → Build artifacts uploaded to S3
-# → No CI queue, no waiting
-```
+An agent starts a session, makes changes, and runs the full test suite locally using Nix. The tests execute in an identical environment to production—same dependencies, same tooling, same everything. Results come back in seconds thanks to cached artifacts. If everything passes, the agent lands the session with a cryptographic attestation proving the build succeeded. No CI queue, no waiting.
 
 The key insight: if we can **guarantee environment reproducibility**, local execution becomes trustworthy. The question shifts from "did the tests pass?" to "can we trust the environment they ran in?"
 
@@ -64,56 +48,15 @@ This is the right question, and the answer isn't "trust developers more." It's *
 
 ### Content-Addressable Everything
 
-Nix gives us this superpower: every dependency, every build input, every environment variable gets hashed into a content-address. When you build something with Nix, the result is deterministic.
+Nix gives us this superpower: every dependency, every build input, every environment variable gets hashed into a content-address. When you build something with Nix, the result is deterministic. A project's Nix configuration pins exact versions—not "Elixir 1.15" but a specific commit hash from the package repository.
 
-```
-# flake.nix for your project
-{
-  inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/23.11";
-    # Exact commit hash - cryptographically pinned
-  };
-
-  outputs = { self, nixpkgs }: {
-    devShell = nixpkgs.mkShell {
-      buildInputs = [
-        pkgs.elixir_1_15
-        pkgs.erlang_26  
-        pkgs.nodejs_20
-      ];
-      # Every input hashed: sha256:abc123...
-    };
-  };
-}
-```
-
-When an agent builds code locally, Nix generates a derivation hash from:
-- Source code content
-- All dependencies (pinned by hash)  
-- Build script
-- Compiler version
-- Environment variables
+When an agent builds code locally, Nix generates a derivation hash from source code content, all dependencies (pinned by hash), build scripts, compiler versions, and environment variables.
 
 **Same derivation hash = identical environment = trustworthy results.**
 
 ### Attestation Model
 
-But we can go further. Instead of just trusting that environments match, we cryptographically prove it:
-
-```
-Session: "Add payment gateway"
-├── Goal: Integrate Stripe API
-├── Build Attestation:
-│   ├── Nix derivation: sha256:def456 (reproducible env)
-│   ├── Test results: sha256:ghi789 (all pass)
-│   ├── Agent identity: agent-session-abc123
-│   ├── Timestamp: 2026-01-11T18:00:00Z
-│   └── Signature: cryptographic proof this agent built this
-└── Verification:
-    ├── Anyone can rebuild from derivation hash
-    ├── Results must match exactly (bit-for-bit)
-    └── Signature proves agent authorization
-```
+But we can go further. Instead of just trusting that environments match, we cryptographically prove it. Each session includes a build attestation: the Nix derivation hash (reproducible environment), test result hashes, agent identity, timestamp, and a cryptographic signature proving this specific agent built this specific code in this specific environment. Anyone can verify by rebuilding from the same derivation hash—results must match bit-for-bit, or the attestation is invalid.
 
 This is more secure than traditional CI because:
 1. **Reproducible verification**: Anyone can rebuild and verify results match
@@ -123,26 +66,7 @@ This is more secure than traditional CI because:
 
 ### Dependency Trust Through Transparency
 
-For third-party dependencies, we layer additional verification:
-
-**Binary cache attestations:**
-```
-# Official Nix cache serves pre-built packages
-# Each binary includes build attestation
-nix-store --verify /nix/store/abc123-elixir-1.15.0
-# → Cryptographic signature from Nix build farm
-# → Reproducible: you can rebuild from source and verify hash matches
-# → Tamper-proof: any modification breaks the signature
-```
-
-**Vulnerability scanning integration:**
-```
-# Before landing session, scan dependencies
-nix develop --command security-scan
-# → Checks CVE databases for known vulnerabilities
-# → Verifies package signatures
-# → Fails if untrusted packages detected
-```
+For third-party dependencies, we layer additional verification. Official Nix caches serve pre-built packages, each with cryptographic signatures from the build farm. You can verify any package or rebuild from source to confirm the hash matches—tampering is immediately detectable. Before landing a session, vulnerability scanners can check dependencies against CVE databases and verify package signatures, failing the build if untrusted packages are detected.
 
 The trust model becomes: **don't trust, verify**. Every dependency is cryptographically pinned, every build is reproducible, every result is attestable.
 
@@ -152,42 +76,13 @@ You might be thinking: "This sounds great in theory, but won't every developer n
 
 This is where Nix's architecture shines.
 
-### Content-Addressable Storage Meets S3
+### Content-Addressable Storage
 
-Remember how we designed hif with S3 as primary storage? Nix follows the same pattern—everything lives in `/nix/store/hash-packagename`, a content-addressed file system.
+Nix follows a content-addressed pattern—everything lives in `/nix/store/hash-packagename`, a content-addressed file system. This structure works beautifully whether you're storing artifacts on local filesystem (default for self-hosted setups) or object storage like S3 (optional, useful for cloud deployments).
 
-This maps perfectly to S3:
+The storage hierarchy organizes derivations (build definitions), artifacts (pre-built binaries and cached builds), test outputs, and attestations (cryptographic proofs of execution). All content-addressed by SHA-256 hashes.
 
-```
-S3 Bucket Structure:
-├── derivations/
-│   └── sha256:abc123.drv → Nix derivation definitions
-├── artifacts/  
-│   └── sha256:def456/ → pre-built binaries, cached builds
-├── cache/
-│   ├── builds/sha256:ghi789 → complete build results
-│   └── tests/sha256:jkl012 → test execution outputs
-└── attestations/
-    └── sha256:mno345 → cryptographic proof of execution
-```
-
-When an agent needs a dependency:
-
-```
-# Agent checks: do I have this locally?
-ls /nix/store/sha256:abc123-elixir-1.15.0
-# → Not found locally
-
-# Check S3 cache
-aws s3 ls s3://micelio-cache/artifacts/sha256:abc123/
-# → Found! Another agent already built this
-
-# Download binary (not source)
-nix copy --from s3://micelio-cache sha256:abc123-elixir-1.15.0
-# → 50MB download in 2 seconds
-# → Verify hash matches
-# → Ready to use
-```
+When an agent needs a dependency, it checks locally first. If not found, it queries the shared cache (filesystem or object storage depending on your deployment). If another agent already built it, the binary downloads in seconds with hash verification. No rebuilding from source needed.
 
 **This is revolutionary**: agents share a global build cache. The first agent to need a dependency pays the build cost. Every subsequent agent gets instant access to the pre-built artifact.
 
@@ -210,73 +105,21 @@ Actually, no. Here's why:
 
 **1. Cache Hit Rate**
 
-In a traditional setup, each commit triggers fresh builds. In content-addressed Nix:
-
-```
-# Change one file
-git add src/api/routes.ex
-
-# Nix rebuilds only affected dependencies
-nix build
-# → Core libraries: cache hit (0s)
-# → Database layer: cache hit (0s)  
-# → API layer: rebuild (1.2s)
-# → Tests for API: rebuild (0.8s)
-# Total: 2 seconds
-```
+In a traditional setup, each commit triggers fresh builds. With content-addressed Nix, changing one file only rebuilds affected components. Core libraries? Cache hit. Database layer? Cache hit. Only the modified API layer and its tests rebuild—taking maybe 2 seconds total instead of minutes.
 
 With hundreds of agents working on the same codebase, cache hit rates approach 95%+. Most validation cycles take seconds, not minutes.
 
 **2. Incremental Builds**
 
-Nix's content-addressing enables perfect incrementality:
-
-```
-# Monday: Agent builds feature A
-nix build .#feature-a
-# → Builds dependencies D1, D2, D3
-# → Takes 5 minutes first time
-# → Results cached in S3
-
-# Tuesday: Different agent builds feature B
-nix build .#feature-b  
-# → Needs same dependencies D1, D2
-# → Cache hit from S3 (instant)
-# → Only builds new code (30s)
-```
+Nix's content-addressing enables perfect incrementality. When one agent builds a feature requiring dependencies D1, D2, and D3, those artifacts get cached. The next day, when a different agent builds a different feature needing D1 and D2, it gets instant cache hits and only builds the new code. What might have taken 5 minutes the first time takes 30 seconds the second time.
 
 **3. Parallel Execution**
 
-Agents don't compete for CI slots:
-
-```
-Traditional CI:
-├── Agent 1 pushes → Queue position 1 → Runs in 2min
-├── Agent 2 pushes → Queue position 2 → Waits 2min, runs 2min  
-├── Agent 3 pushes → Queue position 3 → Waits 4min, runs 2min
-└── Total time: 8 minutes for 3 agents
-
-Local-First:
-├── Agent 1 validates → 2s (cache hit)
-├── Agent 2 validates → 2s (cache hit, parallel)
-├── Agent 3 validates → 2s (cache hit, parallel)
-└── Total time: 2 seconds for 3 agents
-```
+Agents don't compete for CI slots. In traditional CI, three agents pushing sequentially might wait 2, 4, and 6 minutes respectively—8 minutes total. With local-first CI, all three validate in parallel with cache hits, completing in 2 seconds each. No queue, no waiting.
 
 **4. Smart Caching Hierarchy**
 
-We can layer caches for even better performance:
-
-```
-Cache lookup order:
-1. Local /nix/store (instant)
-2. Local network P2P cache (1-5ms)
-3. Regional S3 bucket (10-50ms)  
-4. Global S3 bucket (50-200ms)
-5. Rebuild from source (fallback)
-```
-
-In practice, 99%+ of lookups hit local or P2P cache. Validation feels instant.
+We can layer caches for even better performance. Lookups check local storage first (instant), then local network P2P cache (1-5ms), then remote storage if configured (10-200ms), and finally rebuild from source as a fallback. In practice, 99%+ of lookups hit local or P2P cache. Validation feels instant.
 
 ## Infrastructure Requirements: Surprisingly Minimal
 
@@ -284,20 +127,11 @@ You might expect local-first CI to require massive infrastructure. Actually, it'
 
 ### What You Need
 
-**For the Cache (S3):**
-```
-Monthly storage (1000 developers, 100 projects):
-├── Nix derivations: ~500MB
-├── Build artifacts: ~50GB  
-├── Test results: ~10GB
-├── Attestations: ~1GB
-└── Total: ~62GB × $0.023/GB = $1.43/month
+**For the Cache:**
 
-Monthly transfer (95% cache hit rate):
-├── Cache downloads: 1000 devs × 10 builds/day × 50MB × 5% miss = 2.5TB
-├── Cost: 2.5TB × $0.09/GB = $225/month
-└── Compare to: GitHub Actions 2000min/user × 1000 users = $40,000/month
-```
+Self-hosted setups default to filesystem storage—straightforward and zero external dependencies. For a team of 1000 developers working on 100 projects, typical storage needs run around 60GB total: Nix derivations (~500MB), build artifacts (~50GB), test results (~10GB), and attestations (~1GB). With 95% cache hit rates, bandwidth requirements stay surprisingly low.
+
+Cloud deployments can optionally use object storage (S3, etc.) for the same content-addressed structure. Monthly costs compare favorably: roughly $225/month for 1000 developers versus $40,000/month for equivalent GitHub Actions minutes.
 
 **For Agents (Compute):**
 - Each agent needs: 2-4 CPU cores, 4-8GB RAM (commodity hardware)
@@ -307,8 +141,7 @@ Monthly transfer (95% cache hit rate):
 
 **For the Forge (Micelio):**
 - Stateless web servers (auto-scaling)
-- SQLite for auth only (~KB per user)
-- S3 for everything else
+- Filesystem or object storage for artifacts
 - No build execution infrastructure
 
 ### What You Don't Need
@@ -321,7 +154,7 @@ Monthly transfer (95% cache hit rate):
 
 The architecture is **radically simpler** because we leverage:
 - Nix for reproducibility (free, open source)
-- S3 for global caching (commodity storage)  
+- Filesystem or object storage for caching (commodity storage)  
 - Content-addressing for deduplication (automatic)
 - Agent machines for execution (already available)
 
@@ -329,75 +162,11 @@ The architecture is **radically simpler** because we leverage:
 
 Here's what development looks like in this model:
 
-**Agent Workflow:**
-```
-# Session starts
-hif session start "add-realtime-notifications"
+**Agent Workflow:** An agent starts a session for adding realtime notifications, iterates rapidly through changes to websocket handlers, push notification logic, and tests. Each validation cycle completes in under a second with cache hits. When everything's green, the agent lands the session—uploading build artifacts, including a cryptographic attestation of the successful build, and sharing the cached results so other agents benefit immediately.
 
-# Agent iterates rapidly
-edit src/notifications/websocket.ex
-nix develop --command mix test
-# → 1.2s, cache hit, all green
+**Human Review:** A developer reviews the pending session, seeing the agent's identity, build attestation (derivation hash, test results, timing), and the decisions made. If skeptical, they can verify locally by rebuilding from the exact derivation hash—results must match the agent's attestation or the signature is invalid. Once satisfied, they approve the session.
 
-edit src/notifications/push.ex  
-nix develop --command mix test
-# → 0.9s, incremental rebuild, all green
-
-edit test/notifications_test.exs
-nix develop --command mix test  
-# → 1.1s, test changes, all green
-
-# Land the session
-hif land
-# → Uploads build artifacts to S3
-# → Cryptographic attestation of successful build
-# → Session includes full reasoning + decisions
-# → Other agents immediately benefit from cache
-```
-
-**Human Review:**
-```
-# Review pending session
-hif session show abc123
-
-Session: "Add realtime notifications"
-├── Agent: NotificationBot-7
-├── Build Attestation:
-│   ├── Derivation: sha256:def456 (reproducible)
-│   ├── Tests: 147 passed, 0 failed (1.1s)
-│   ├── Build time: 1.2s (95% cache hit)
-│   └── Signature: verified ✓
-├── Decisions:
-│   ├── "Used Phoenix.PubSub for websocket layer"
-│   ├── "Redis backend for presence tracking"
-│   └── "All tests green, including load tests"
-└── Changes: [view diff]
-
-# Verify locally if skeptical
-nix build --derivation sha256:def456
-# → Rebuilds from exact same environment
-# → Results must match agent's attestation
-# → Cryptographic proof of correctness
-
-# Approve
-hif session approve abc123
-```
-
-**Infrastructure Operator:**
-```
-# Monitor cache health
-aws s3 ls s3://micelio-cache/artifacts/ --summarize
-# → Total objects: 15,847
-# → Total size: 62.3 GB
-# → Cache hit rate: 97.2% (from CloudWatch metrics)
-
-# Check for anomalies
-hif audit attestations --last 24h
-# → 1,847 builds verified
-# → 0 attestation failures
-# → Average build time: 2.1s
-# → Agent efficiency: 99.1%
-```
+**Infrastructure Operator:** Operators monitor cache health—total objects, storage size, cache hit rates. They audit attestations over time windows, checking for failures, tracking average build times, and monitoring agent efficiency. A healthy system shows 95%+ cache hits and sub-3-second validation cycles.
 
 ## Connecting to Micelio's Vision
 
@@ -413,26 +182,7 @@ With local-first CI:
 - **Trust is cryptographic**: Attestations prove correctness without centralized authority
 - **Scale is unlimited**: Hundreds of agents validate in parallel without infrastructure bottleneck
 
-This is the infrastructure that makes hif's session model practical:
-
-```
-Session: "Optimize database query performance"
-├── Goal: Reduce API latency by 50ms
-├── Conversation:
-│   ├── Agent: "Profiled queries, found N+1 in user endpoint"
-│   ├── Agent: "Adding database index on user_id"  
-│   └── Agent: "Testing with production data sample"
-├── Build Context:
-│   ├── Nix env: sha256:abc123 (reproducible)
-│   ├── Tests: 1.8s, all green, cache hit
-│   ├── Performance: latency 45ms→18ms ✓
-│   └── Attestation: verified build
-├── Decisions:
-│   ├── "B-tree index optimal for this query pattern"  
-│   ├── "Tested with 1M record sample, performance verified"
-│   └── "No breaking changes, safe to land"
-└── Land: Session includes performance proof
-```
+This is the infrastructure that makes hif's session model practical. Consider a session optimizing database query performance: the agent profiles queries, finds an N+1 problem, adds an index, and tests with production data samples. The build context captures the Nix environment hash (reproducible), test results (1.8s, all green, cache hit), and performance improvement (latency drops from 45ms to 18ms). The attestation proves the build succeeded. The agent's reasoning explains why a B-tree index was optimal, how it tested with 1M records, and why it's safe to land.
 
 The session isn't just code changes—it's **code + reasoning + proof that it works**. Local-first CI makes this proof instant and cryptographically verifiable.
 
@@ -449,12 +199,12 @@ What we're doing with Micelio:
 
 **Near term (Q1 2026):**
 - hif daemon with Nix integration
-- S3 artifact caching  
+- Filesystem and object storage artifact caching  
 - Basic attestation signatures
 - Local validation workflows
 
 **Medium term (Q2-Q3 2026):**
-- Multi-tier cache hierarchy (local, P2P, S3)
+- Multi-tier cache hierarchy (local, P2P, remote)
 - Protocol translation for Bazel/Gradle/etc  
 - Advanced attestation verification
 - Migration tools from traditional CI
