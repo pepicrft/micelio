@@ -1,44 +1,43 @@
-/* SourceHut-inspired navbar */
+/* Navbar */
 
-nav {
-  padding: 0.5rem 1rem 0;
-  max-width: 960px;
+nav,
+.navbar {
+  padding: var(--theme-ui-space-1) var(--theme-ui-space-2);
+  max-width: var(--theme-ui-sizes-container);
   margin: 0 auto;
-  clear: both;
 }
 
-nav a:not(:first-child):not(.btn) {
-  margin-left: 1rem;
-  color: #666;
-}
-
-nav .brand {
-  font-size: 1.25rem;
-  position: relative;
-  top: 1px;
-}
-
-nav .brand a {
+nav a:not(:first-child):not(.btn),
+.navbar a:not(:first-child):not(.btn) {
+  margin-left: var(--theme-ui-space-2);
+  color: var(--theme-ui-colors-secondary);
   text-decoration: none;
-  color: #212529 !important;
-  margin-left: 0 !important;
 }
 
-nav .brand .icon {
-  width: 1.2rem;
+nav a:not(.btn):hover,
+.navbar a:not(.btn):hover {
+  color: var(--theme-ui-colors-primary);
+  text-decoration: underline;
 }
 
-@media (max-width: 900px) {
-  nav .hidden-small {
-    display: none;
-  }
+nav .brand,
+.navbar .brand {
+  display: inline-block;
+}
+
+nav .brand a,
+.navbar .brand a {
+  text-decoration: none;
+  color: var(--theme-ui-colors-text);
+  margin-left: 0;
+  font-weight: var(--theme-ui-fontWeights-bold);
 }
 
 .icon {
   display: inline-block;
-  line-height: 0.75em;
-  width: 0.4em;
-  vertical-align: -0.17em;
+  width: 1rem;
+  height: 1rem;
+  vertical-align: middle;
 }
 
 .icon path {
@@ -50,51 +49,12 @@ nav .brand .icon {
   height: 100%;
 }
 
-/* SourceHut navbar layout */
-.navbar {
-  padding: 0.5rem 1rem 0;
-  max-width: 960px;
-  margin: 0 auto;
-  clear: both;
-}
-
-.navbar .brand {
-  font-size: 1.25rem;
-  position: relative;
-  top: 1px;
-  display: inline-block;
-}
-
-.navbar .brand a {
-  text-decoration: none;
-  color: #212529 !important;
-  margin-left: 0.5rem !important;
-}
-
-.navbar .brand .icon {
-  width: 1.2rem;
-}
-
-.navbar a:not(:first-child):not(.btn) {
-  margin-left: 1rem;
-  color: #666;
-  text-decoration: none;
-}
-
-.navbar a:not(.btn):hover {
-  color: #0056b3;
-  text-decoration: underline;
-}
-
-.navbar .btn {
-  /* SourceHut button styling already handled in home.css */
-}
-
 .pull-right {
   float: right;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 60rem) {
+  nav .hidden-small,
   .navbar .hidden-small {
     display: none;
   }

@@ -1,67 +1,77 @@
 :root {
-  /* Colors - SourceHut inspired */
-  --color-text: #212529;
-  --color-text-muted: #6c757d;
-  --color-background: #ffffff;
-  --color-primary: #007bff;
-  --color-primary-hover: #0069d9;
-  --color-secondary: #6c757d;
-  --color-border: #e9ecef;
-  --color-error: #dc3545;
-  --color-success: #28a745;
+  /* Theme UI - Colors */
+  --theme-ui-colors-text: #000000;
+  --theme-ui-colors-background: #ffffff;
+  --theme-ui-colors-primary: #000000;
+  --theme-ui-colors-secondary: #666666;
+  --theme-ui-colors-muted: #999999;
+  --theme-ui-colors-border: #e0e0e0;
 
-  /* Typography */
-  --font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-size-xs: 0.75rem;
-  --font-size-sm: 0.875rem;
-  --font-size-base: 1rem;
-  --font-size-lg: 1.125rem;
-  --font-size-xl: 1.25rem;
-  --font-size-2xl: 1.5rem;
-  --font-size-3xl: 1.875rem;
-  --font-weight-normal: 400;
-  --font-weight-medium: 500;
-  --font-weight-semibold: 600;
-  --font-weight-bold: 700;
-  --line-height-tight: 1.25;
-  --line-height-normal: 1.5;
-  --line-height-relaxed: 1.625;
+  /* Theme UI - Typography (single size) */
+  --theme-ui-fonts-body: system-ui, -apple-system, sans-serif;
+  --theme-ui-fonts-mono: ui-monospace, monospace;
+  --theme-ui-fontSizes-body: 1rem;
+  --theme-ui-fontWeights-body: 400;
+  --theme-ui-fontWeights-bold: 600;
+  --theme-ui-lineHeights-body: 1.5;
 
-  /* Spacing */
-  --space-1: 0.25rem;
-  --space-2: 0.5rem;
-  --space-3: 0.75rem;
-  --space-4: 1rem;
-  --space-5: 1.25rem;
-  --space-6: 1.5rem;
-  --space-8: 2rem;
-  --space-10: 2.5rem;
-  --space-12: 3rem;
-  --space-16: 4rem;
+  /* Theme UI - Space */
+  --theme-ui-space-1: 0.5rem;
+  --theme-ui-space-2: 1rem;
+  --theme-ui-space-3: 2rem;
+  --theme-ui-space-4: 4rem;
 
-  /* Border radius */
-  --radius-sm: 0.25rem;
-  --radius-md: 0.375rem;
-  --radius-lg: 0.5rem;
-  --radius-full: 9999px;
+  /* Theme UI - Radii */
+  --theme-ui-radii-default: 0;
+  --theme-ui-radii-small: 2px;
 
-  /* Shadows */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  /* Theme UI - Borders */
+  --theme-ui-borders-thin: 1px solid var(--theme-ui-colors-border);
 
   /* Layout */
-  --max-width-sm: 24rem;
-  --max-width-md: 28rem;
-  --max-width-lg: 32rem;
-  --max-width-xl: 36rem;
+  --theme-ui-sizes-container: 60rem;
 }
 
-/* Base styles */
+/* Base reset */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Base typography */
 body {
-  font-family: var(--font-family);
-  font-size: var(--font-size-base);
-  line-height: var(--line-height-normal);
-  color: var(--color-text);
-  background-color: var(--color-background);
+  font-family: var(--theme-ui-fonts-body);
+  font-size: var(--theme-ui-fontSizes-body);
+  font-weight: var(--theme-ui-fontWeights-body);
+  line-height: var(--theme-ui-lineHeights-body);
+  color: var(--theme-ui-colors-text);
+  background-color: var(--theme-ui-colors-background);
+}
+
+/* Single font size for all elements */
+h1, h2, h3, h4, h5, h6,
+p, li, a, button, input, textarea, select {
+  font-size: var(--theme-ui-fontSizes-body);
+  line-height: var(--theme-ui-lineHeights-body);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: var(--theme-ui-fontWeights-bold);
+}
+
+/* Links */
+a {
+  color: var(--theme-ui-colors-primary);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* Code */
+code, pre {
+  font-family: var(--theme-ui-fonts-mono);
+  font-size: var(--theme-ui-fontSizes-body);
 }

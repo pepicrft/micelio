@@ -1,52 +1,51 @@
+/* Account devices styles */
+
 .device-management {
-  max-width: var(--max-width-lg);
-  margin: var(--space-12) auto;
-  padding: 0 var(--space-4);
+  max-width: var(--theme-ui-sizes-container);
+  margin: var(--theme-ui-space-4) auto;
+  padding: 0 var(--theme-ui-space-2);
 }
 
 .device-management-header h1 {
-  font-size: var(--font-size-2xl);
-  margin-bottom: var(--space-2);
+  font-weight: var(--theme-ui-fontWeights-bold);
+  margin-bottom: var(--theme-ui-space-1);
 }
 
 .device-management-header p {
-  color: var(--color-text-muted);
-  margin-bottom: var(--space-6);
+  color: var(--theme-ui-colors-muted);
+  margin-bottom: var(--theme-ui-space-3);
 }
 
 .device-management-empty {
-  border: 1px dashed var(--color-border);
-  border-radius: var(--radius-lg);
-  padding: var(--space-6);
-  color: var(--color-text-muted);
+  border: 1px dashed var(--theme-ui-colors-border);
+  padding: var(--theme-ui-space-3);
+  color: var(--theme-ui-colors-muted);
 }
 
 .device-management-list {
   display: grid;
-  gap: var(--space-4);
+  gap: var(--theme-ui-space-2);
 }
 
 .device-management-card {
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  padding: var(--space-5);
+  border: var(--theme-ui-borders-thin);
+  padding: var(--theme-ui-space-2);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: var(--space-4);
+  gap: var(--theme-ui-space-2);
 }
 
 .device-management-title {
-  font-weight: var(--font-weight-semibold);
-  margin-bottom: var(--space-1);
+  font-weight: var(--theme-ui-fontWeights-bold);
+  margin-bottom: var(--theme-ui-space-1);
 }
 
 .device-management-meta {
-  color: var(--color-text-muted);
-  font-size: var(--font-size-sm);
+  color: var(--theme-ui-colors-muted);
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--theme-ui-space-1);
 }
 
 .device-management-actions {
@@ -56,18 +55,17 @@
 
 .device-management-revoke {
   background: transparent;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: var(--space-2) var(--space-4);
-  color: var(--color-error);
+  border: var(--theme-ui-borders-thin);
+  padding: var(--theme-ui-space-1);
+  color: var(--theme-ui-colors-primary);
   cursor: pointer;
 }
 
 .device-management-revoke:hover {
-  border-color: var(--color-error);
+  border-color: var(--theme-ui-colors-primary);
 }
 
-@media (max-width: 640px) {
+@media (max-width: 40rem) {
   .device-management-card {
     flex-direction: column;
     align-items: flex-start;

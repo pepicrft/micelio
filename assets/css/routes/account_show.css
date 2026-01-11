@@ -1,23 +1,25 @@
+/* Account show styles */
+
 .account-overview {
-  max-width: var(--max-width-md);
-  margin: var(--space-12) auto;
-  padding: 0 var(--space-4);
+  max-width: var(--theme-ui-sizes-container);
+  margin: var(--theme-ui-space-4) auto;
+  padding: 0 var(--theme-ui-space-2);
 }
 
 .account-overview h1 {
-  font-size: var(--font-size-2xl);
-  margin-bottom: var(--space-2);
+  font-weight: var(--theme-ui-fontWeights-bold);
+  margin-bottom: var(--theme-ui-space-1);
 }
 
 .account-overview p {
-  color: var(--color-text-muted);
-  margin-bottom: var(--space-4);
+  color: var(--theme-ui-colors-muted);
+  margin-bottom: var(--theme-ui-space-2);
 }
 
 .account-device-link {
-  color: var(--color-primary);
+  color: var(--theme-ui-colors-primary);
   text-decoration: none;
-  font-weight: var(--font-weight-medium);
+  font-weight: var(--theme-ui-fontWeights-bold);
 }
 
 .account-device-link:hover {

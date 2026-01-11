@@ -1,128 +1,107 @@
+/* Organizations styles */
+
 .organization-form-container {
-  max-width: var(--max-width-sm);
-  margin-left: auto;
-  margin-right: auto;
-  padding: var(--space-4);
+  max-width: var(--theme-ui-sizes-container);
+  margin: 0 auto;
+  padding: var(--theme-ui-space-2);
 }
 
 .organization-form-header {
-  margin-bottom: var(--space-6);
+  margin-bottom: var(--theme-ui-space-3);
 }
 
 .organization-form-header h1 {
-  font-size: var(--font-size-2xl);
-  font-weight: var(--font-weight-semibold);
-  margin-bottom: var(--space-2);
+  font-weight: var(--theme-ui-fontWeights-bold);
+  margin-bottom: var(--theme-ui-space-1);
 }
 
 .organization-form-header p {
-  color: var(--color-text-muted);
-  font-size: var(--font-size-sm);
+  color: var(--theme-ui-colors-muted);
 }
 
 .organization-form {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--theme-ui-space-2);
 }
 
 .organization-form-group {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--theme-ui-space-1);
 }
 
 .organization-form .fieldset {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--theme-ui-space-1);
   margin: 0;
 }
 
 .organization-form .label {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  margin-bottom: var(--space-1);
-  color: var(--color-text);
+  font-weight: var(--theme-ui-fontWeights-bold);
+  margin-bottom: var(--theme-ui-space-1);
+  color: var(--theme-ui-colors-text);
 }
 
 .organization-input {
   width: 100%;
-  padding: var(--space-2) var(--space-3);
-  font-size: var(--font-size-base);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background-color: var(--color-background);
-  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  padding: var(--theme-ui-space-1);
+  border: var(--theme-ui-borders-thin);
+  background-color: var(--theme-ui-colors-background);
 }
 
 .organization-input:focus {
   outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.12);
+  border-color: var(--theme-ui-colors-primary);
 }
 
 .organization-input::placeholder {
-  color: var(--color-text-muted);
-}
-
-.organization-input-error {
-  border-color: var(--color-error);
-}
-
-.organization-form-group p {
-  margin: 0;
-  font-size: var(--font-size-sm);
-  color: var(--color-error);
+  color: var(--theme-ui-colors-muted);
 }
 
 .organization-form-hint {
-  margin-top: var(--space-1);
-  color: var(--color-text-muted);
-  font-size: var(--font-size-sm);
+  margin-top: var(--theme-ui-space-1);
+  color: var(--theme-ui-colors-muted);
 }
 
 .organization-form-actions {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--theme-ui-space-1);
 }
 
 .organization-button {
   width: 100%;
-  padding: var(--space-2) var(--space-4);
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-medium);
-  color: #ffffff;
-  background-color: var(--color-primary);
+  padding: var(--theme-ui-space-1);
+  font-weight: var(--theme-ui-fontWeights-bold);
+  color: var(--theme-ui-colors-background);
+  background-color: var(--theme-ui-colors-primary);
   border: none;
-  border-radius: var(--radius-md);
   cursor: pointer;
   text-align: center;
   text-decoration: none;
-  transition: background-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
 }
 
 .organization-button:hover {
-  background-color: var(--color-primary-hover);
+  background-color: var(--theme-ui-colors-secondary);
 }
 
 .organization-button:focus {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.3);
 }
 
 .organization-button-secondary {
   background-color: transparent;
-  color: var(--color-text);
-  border: 1px solid var(--color-border);
+  color: var(--theme-ui-colors-text);
+  border: var(--theme-ui-borders-thin);
 }
 
 .organization-button-secondary:hover {
-  background-color: var(--color-background);
+  background-color: var(--theme-ui-colors-border);
 }
 
-@media (min-width: 640px) {
+@media (min-width: 40rem) {
   .organization-form-actions {
     flex-direction: row;
   }
