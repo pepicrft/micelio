@@ -285,7 +285,7 @@ fn credentialsPath(allocator: std.mem.Allocator) ![]u8 {
     return xdg.credentialsFilePath(allocator, credentials_filename);
 }
 
-fn readCredentials(allocator: std.mem.Allocator) !?Credentials {
+pub fn readCredentials(allocator: std.mem.Allocator) !?Credentials {
     const path = try credentialsPath(allocator);
     defer allocator.free(path);
 

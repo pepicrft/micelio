@@ -51,6 +51,13 @@ defmodule MicelioWeb.Router do
     post "/device/auth", DeviceAuthController, :create
     post "/device/token", DeviceTokenController, :create
     post "/device/client", DeviceClientController, :create
+
+    # Project Management (requires bearer token)
+    get "/projects", ProjectController, :index
+    post "/projects", ProjectController, :create
+    get "/projects/:organization/:handle", ProjectController, :show
+    put "/projects/:organization/:handle", ProjectController, :update
+    delete "/projects/:organization/:handle", ProjectController, :delete
   end
 
   scope "/device", MicelioWeb.API do
