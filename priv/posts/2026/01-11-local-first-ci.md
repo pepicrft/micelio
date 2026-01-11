@@ -36,7 +36,7 @@ This isn't just faster. It's a fundamentally different trust model. In tradition
 
 ### How It Works
 
-```bash
+```
 # Agent working on a session
 hif session start "optimize-api-performance"
 
@@ -66,7 +66,7 @@ This is the right question, and the answer isn't "trust developers more." It's *
 
 Nix gives us this superpower: every dependency, every build input, every environment variable gets hashed into a content-address. When you build something with Nix, the result is deterministic.
 
-```nix
+```
 # flake.nix for your project
 {
   inputs = {
@@ -126,7 +126,7 @@ This is more secure than traditional CI because:
 For third-party dependencies, we layer additional verification:
 
 **Binary cache attestations:**
-```bash
+```
 # Official Nix cache serves pre-built packages
 # Each binary includes build attestation
 nix-store --verify /nix/store/abc123-elixir-1.15.0
@@ -136,7 +136,7 @@ nix-store --verify /nix/store/abc123-elixir-1.15.0
 ```
 
 **Vulnerability scanning integration:**
-```bash
+```
 # Before landing session, scan dependencies
 nix develop --command security-scan
 # → Checks CVE databases for known vulnerabilities
@@ -173,7 +173,7 @@ S3 Bucket Structure:
 
 When an agent needs a dependency:
 
-```bash
+```
 # Agent checks: do I have this locally?
 ls /nix/store/sha256:abc123-elixir-1.15.0
 # → Not found locally
@@ -212,7 +212,7 @@ Actually, no. Here's why:
 
 In a traditional setup, each commit triggers fresh builds. In content-addressed Nix:
 
-```bash
+```
 # Change one file
 git add src/api/routes.ex
 
@@ -231,7 +231,7 @@ With hundreds of agents working on the same codebase, cache hit rates approach 9
 
 Nix's content-addressing enables perfect incrementality:
 
-```bash
+```
 # Monday: Agent builds feature A
 nix build .#feature-a
 # → Builds dependencies D1, D2, D3
@@ -330,7 +330,7 @@ The architecture is **radically simpler** because we leverage:
 Here's what development looks like in this model:
 
 **Agent Workflow:**
-```bash
+```
 # Session starts
 hif session start "add-realtime-notifications"
 
@@ -356,7 +356,7 @@ hif land
 ```
 
 **Human Review:**
-```bash
+```
 # Review pending session
 hif session show abc123
 
@@ -384,7 +384,7 @@ hif session approve abc123
 ```
 
 **Infrastructure Operator:**
-```bash
+```
 # Monitor cache health
 aws s3 ls s3://micelio-cache/artifacts/ --summarize
 # → Total objects: 15,847
