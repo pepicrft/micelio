@@ -13,13 +13,13 @@ The future of software development is already here, scattered unevenly across ou
 
 The writing is on the wall: Git tracks what happened, but we need systems that track why.
 
-## The GitHub Analogy That Changes Everything
+## Open Source Infrastructure, Built for Self-Hosting
 
-Think about the relationship between Git and GitHub. Git is the open protocol that revolutionized distributed version control. GitHub became the closed platform that made Git accessible to millions of developers, creating an ecosystem where code could be shared, discovered, and collaborated on at unprecedented scale.
+Unlike the GitHub model where a closed platform controls the infrastructure, we're building both **hif** and **Micelio** as fully open source projects designed for anyone to run in their own infrastructure.
 
-We're building the same relationship for the age of AI agents. **hif** is our Git: an open protocol designed from the ground up for AI-native development. **Micelio** is our GitHub: a closed platform that makes hif accessible and powerful for teams where humans and agents work as peers.
+**hif** is the open protocol designed from the ground up for AI-native development. **Micelio** is the open forge infrastructure that makes hif accessible and powerful for teams where humans and agents work as peers. Both are built with self-hosting in mind, giving you complete control over your development infrastructure.
 
-Just as GitHub didn't replace Git but made it thrive, Micelio won't replace hif but will provide the forge infrastructure that teams need to scale agent collaboration. And just as Git works perfectly fine without GitHub (but GitHub made it mainstream), hif will work fully offline while Micelio provides the collaborative infrastructure that makes it shine.
+Whether you run Micelio on your own servers, in your private cloud, or use a hosted version, you maintain ownership of your data and processes. This isn't just about open source licensing—it's about architectural decisions that prioritize portability, standard protocols, and avoiding vendor lock-in.
 
 ## Why Git Can't Handle Our AI-Driven Future
 
@@ -39,11 +39,11 @@ This approach enables possibilities that traditional version control simply can'
 
 We also believe containers will continue to commoditize, so we're building a developer experience where where the action happens becomes an implementation detail. Whether your tests run locally, in a container, or in the cloud should be transparent to the developer workflow.
 
-## Micelio: The Forge for Scale
+## Micelio: The Open Forge for Scale
 
-Micelio is designed to handle the scale of companies like Shopify or Meta. We're not building another small-team code hosting service. Instead, we're designing for the enterprise scales that modern software demands, with agent collaboration as a first-class citizen rather than an afterthought.
+Micelio is designed to handle the scale of companies like Shopify or Meta, but as an open source project you can deploy on your own infrastructure. We're not building another small-team code hosting service. Instead, we're designing for enterprise scales that modern software demands, with agent collaboration as a first-class citizen and self-hosting as a core design principle.
 
-The forge uses modern infrastructure patterns with object storage as primary storage for unlimited scale, stateless compute to avoid coordinator bottlenecks, and session-based interfaces that let you browse reasoning and decision-making, not just code changes.
+The forge uses modern infrastructure patterns with object storage as primary storage for unlimited scale, stateless compute to avoid coordinator bottlenecks, and session-based interfaces that let you browse reasoning and decision-making, not just code changes. Deploy it on-premises, in your private cloud, or use it as a managed service—the architecture is designed to work anywhere.
 
 ## Why This Matters
 
@@ -59,12 +59,12 @@ This is work in progress. We're not ready for production use yet, but the vision
 
 ## Join Us
 
-We're building something unprecedented: version control that captures not just what we built, but how we reasoned, why we chose alternatives, and how we can learn from the process.
+We're building something unprecedented: version control that captures not just what we built, but how we reasoned, why we chose alternatives, and how we can learn from the process. And we're building it in the open, designed for you to run wherever you need it.
 
-The future of software development is collaborative intelligence: humans and AI agents working together as peers. This requires new tools designed from the ground up for this reality. Git was revolutionary for its time. Now it's time for what comes next.
+The future of software development is collaborative intelligence: humans and AI agents working together as peers. This requires new tools designed from the ground up for this reality—tools you can own, modify, and deploy on your own terms. Git was revolutionary for its time. Now it's time for what comes next.
 
-**Micelio + hif is our bet on that future.**
+**Micelio + hif is our bet on that future. Open source, self-hostable, built for the age of AI agents.**
 
 ---
 
-*Pedro Piñera is building Micelio. Follow the project at [micelio.dev](https://micelio.dev) or contribute on [GitHub](https://github.com/pepicrft/micelio).*
+*Pedro Piñera is building Micelio and hif as open source projects. Follow the project at [micelio.dev](https://micelio.dev) or contribute on [GitHub](https://github.com/pepicrft/micelio).*
