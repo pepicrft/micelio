@@ -36,9 +36,11 @@ This isn't just faster. It's a fundamentally different trust model. In tradition
 
 ### How It Works
 
-An agent starts a session, makes changes, and runs the full test suite locally using Nix. The tests execute in an identical environment to production—same dependencies, same tooling, same everything. Results come back in seconds thanks to cached artifacts. If everything passes, the agent lands the session with a cryptographic attestation proving the build succeeded. No CI queue, no waiting.
+An agent starts a session, makes changes, and runs the full test suite locally. The tests execute in an identical environment to production—same dependencies, same tooling, same everything. Results come back in seconds thanks to cached artifacts. If everything passes, the agent lands the session with a cryptographic attestation proving the build succeeded. No CI queue, no waiting.
 
 The key insight: if we can **guarantee environment reproducibility**, local execution becomes trustworthy. The question shifts from "did the tests pass?" to "can we trust the environment they ran in?"
+
+*Note: How hif and Micelio will integrate with technologies like Nix for reproducible builds is still being determined. The concepts below explore one possible approach.*
 
 ## The Trust Problem: Dependencies and Verification
 
@@ -72,9 +74,9 @@ The solution lies in Nix's derivation model, which creates a cryptographic chain
 
 **1. Source Hash Chain**
 
-When you commit code to hif, the session captures:
-- Git commit hash of the source code (SHA-1 or SHA-256)
-- Hash of the `flake.nix` or build configuration
+When you start a hif session, the system captures:
+- Hash of the source code tree at session start
+- Hash of the build configuration (`flake.nix` or similar)
 - Hash of dependency lockfiles (`mix.lock`, `package-lock.json`, etc.)
 
 These form the **source provenance**: a cryptographic fingerprint of what the project specifies should be built and tested.
@@ -129,8 +131,8 @@ The agent cannot accidentally or maliciously use undeclared dependencies because
 
 A critical question: how do we prove the test scripts executed are the ones from the project repository, not agent-supplied substitutes?
 
-**Nix derivations include source trees**. When you build a derivation, the build inputs include:
-- The exact source code (hash-verified from Git)
+**Derivations include source trees**. When you build a derivation, the build inputs include:
+- The exact source code (hash-verified from the session's tree state)
 - Test scripts from the repository (part of the source tree)
 - Build configurations (Makefiles, package.json scripts, mix.exs tasks)
 
@@ -175,39 +177,39 @@ This prevents:
 
 Let's trace through a complete example:
 
-**Project Repository:**
-- Git commit: `abc123` (source code)
+**Project State:**
+- hif session: `session-abc123` starting from tree state `tree-xyz`
 - `flake.nix`: declares Elixir 1.15.7, Erlang 26.2
 - `mix.lock`: pins phoenix 1.8.3 (hash: `def456`)
 - `mix.exs`: defines `mix test` command
 - Test suite: 147 tests in `test/` directory
 
 **Agent Execution:**
-1. Agent checks out commit `abc123`
-2. Nix reads `flake.nix` and `mix.lock`
+1. Agent starts session from tree state `tree-xyz`
+2. Build system reads `flake.nix` and `mix.lock`
 3. Computes derivation hash from:
-   - Source tree hash (includes `mix.exs`, test files)
+   - Source tree hash `tree-xyz` (includes `mix.exs`, test files)
    - Elixir 1.15.7 hash
    - Erlang 26.2 hash
    - Phoenix 1.8.3 hash (from lockfile)
    - All transitive dependencies (hashed)
    - Build command: `mix test` (from `mix.exs`)
-4. Derivation hash: `xyz789`
-5. Nix executes tests in hermetic environment
-6. Produces output hash: `uvw012` (test results + artifacts)
-7. Agent signs attestation: "Built derivation `xyz789`, produced output `uvw012`"
+4. Derivation hash: `deriv-789`
+5. Hermetic execution of tests
+6. Produces output hash: `output-012` (test results + artifacts)
+7. Agent signs attestation: "Built derivation `deriv-789`, produced output `output-012`"
 
 **Verification:**
-1. Reviewer sees attestation claims derivation `xyz789`
-2. Checks that `xyz789` derives from commit `abc123` ✓
+1. Reviewer sees attestation claims derivation `deriv-789`
+2. Checks that `deriv-789` derives from tree state `tree-xyz` ✓
 3. Checks derivation includes all lockfile dependencies ✓
-4. Rebuilds derivation `xyz789` locally
-5. Output hash matches `uvw012` ✓
+4. Rebuilds derivation `deriv-789` locally
+5. Output hash matches `output-012` ✓
 6. Inspects execution log: ran 147 tests, all passed ✓
 7. Signature valid ✓
 
 **What this proves:**
-- The agent used commit `abc123`'s source code
+- The agent used tree state `tree-xyz`'s source code
 - It used exact dependencies from `mix.lock`
 - It ran test commands from `mix.exs`
 - It executed all 147 tests
@@ -238,6 +240,123 @@ This is fundamentally different from traditional CI's trust model:
 - Anyone can verify independently
 
 The trust shifts from "we trust the infrastructure" to "we can verify the mathematics." Even if an agent is malicious, it cannot produce a valid attestation for modified tests or dependencies without detection.
+
+## Open Source Contributions in an Agent-First World
+
+This raises fascinating questions about how open source collaboration changes when agents are first-class contributors. If agents can submit sessions with cryptographic proofs, what does the review process look like?
+
+### What Gets Reviewed?
+
+In traditional open source, reviewers check:
+- Code quality and correctness
+- Test coverage
+- Performance implications
+- Security concerns
+- Alignment with project goals
+
+In agent-first development with cryptographic attestations, some things become **verifiable** rather than reviewable:
+
+**Verifiable (Cryptographically Proven):**
+- Tests actually ran and passed
+- Code builds in declared environment
+- Dependencies match lockfile
+- No undeclared dependencies used
+- Execution environment matches spec
+
+**Still Requires Human Review:**
+- Does this solve the right problem?
+- Is the approach sound architecturally?
+- Are there better alternatives?
+- Does it align with project direction?
+- Is it maintainable long-term?
+- Security implications of the changes
+- Performance impact on real workloads
+
+The attestation doesn't tell you if the code is *good*—it only proves it works as claimed. The "why" still requires human judgment.
+
+### Who Reviews?
+
+This opens interesting possibilities:
+
+**1. Human Maintainers Review Sessions**
+
+The traditional model still works: human maintainers review agent-submitted sessions just like human-submitted ones. The attestation provides confidence that tests pass, but humans still judge whether the change should merge.
+
+**2. Agents Review Other Agents**
+
+Could agents themselves take on a review role? Potentially:
+- An agent could verify attestations (mechanical check)
+- It could check code style matches project conventions
+- It could identify obvious security patterns (SQL injection, etc.)
+- It could flag performance regressions based on benchmarks
+
+But agents struggle with:
+- Judging architectural soundness
+- Evaluating long-term maintainability
+- Understanding project vision and philosophy
+- Making subjective trade-off decisions
+
+**3. Hybrid Review Workflows**
+
+The most practical approach might be tiered review:
+
+**Tier 1 - Automated Verification (Immediate):**
+- Agent verifies cryptographic attestations
+- Agent checks code formatting, linting
+- Agent runs additional security scanners
+- Agent compares performance benchmarks
+
+**Tier 2 - Agent Review (Minutes):**
+- Agent summarizes changes and reasoning
+- Agent identifies potential concerns
+- Agent suggests improvements
+- Agent flags items needing human attention
+
+**Tier 3 - Human Review (When Needed):**
+- For significant architectural changes
+- For security-sensitive code
+- For decisions requiring project judgment
+- When automated tiers flag concerns
+
+This creates a "review pyramid": most sessions pass automated checks, some get agent review, only a subset needs human attention.
+
+### External Contributions
+
+For open source projects accepting external contributions, the provenance model becomes especially valuable:
+
+**Trust Model for Unknown Contributors:**
+- You don't know the contributor
+- You don't control their infrastructure
+- You can't trust their local execution environment
+
+**But with attestations:**
+- Cryptographic proof they ran the project's tests (not modified versions)
+- Proof they used the project's dependencies (not compromised ones)
+- Proof the execution environment matches specifications
+- Anyone can independently verify these claims
+
+This doesn't mean you blindly accept the contribution—it means you can focus review time on "is this a good change?" rather than "did they actually test this?"
+
+### The Review Bottleneck
+
+Open source often struggles with maintainer bandwidth. Agent-first development could help:
+
+**Today:** Maintainers manually review every PR, check out code, run tests, review logic, provide feedback, repeat.
+
+**Agent-First:** Automated verification handles mechanical checks. Agents summarize changes and reasoning. Maintainers focus on high-value review: alignment with project vision, architectural soundness, long-term maintainability.
+
+This doesn't eliminate human review—it makes it more effective by offloading mechanical verification to cryptographic proofs and routine checks to agents.
+
+### Open Questions
+
+This model is experimental. Questions we're exploring:
+
+- **Liability:** If an agent introduces a bug, who's responsible? The agent's operator? The project maintainer who merged it?
+- **Trust delegation:** Can maintainers delegate some review authority to trusted agents?
+- **Contribution credit:** How do we attribute contributions when agents are involved?
+- **Community dynamics:** How do agent contributors participate in project discussions and RFC processes?
+
+These aren't solved problems—they're areas we'll discover through experimentation.
 
 This is more secure than traditional CI because:
 1. **Reproducible verification**: Anyone can rebuild and verify results match
@@ -380,14 +499,13 @@ This isn't just faster—it's a fundamentally different architecture for an agen
 
 We're betting it's practical. We're building the infrastructure to prove it.
 
-## Join Us
+## Join the Conversation
 
-If this vision excites you, we're building it in the open:
+If this vision excites you, we're exploring these ideas in the open. The project isn't ready for contributions yet, but we'd love to hear your thoughts:
 
-- **Try hif**: Clone the repo and experiment with session workflows
-- **Contribute**: Help design the Nix integration and attestation model  
-- **Discuss**: Join our Discord to shape where this goes
-- **Deploy**: Run Micelio on your infrastructure, own your cache
+**Join our Discord:** [https://discord.gg/3SZU3aEQP](https://discord.gg/3SZU3aEQP)
+
+Discuss local-first CI, execution provenance, agent-first development, and the future of software collaboration. We're figuring this out together.
 
 The future of software development is collaborative intelligence—humans and agents working together as peers. That requires infrastructure designed from the ground up for instant validation, perfect reproducibility, and cryptographic trust.
 
@@ -395,4 +513,4 @@ The future of software development is collaborative intelligence—humans and ag
 
 ---
 
-*Follow the project at [micelio.dev](https://micelio.dev), contribute on [GitHub](https://github.com/pepicrft/micelio), or join our [Discord community](https://discord.gg/3SZU3aEQP).*
+*Follow the project at [micelio.dev](https://micelio.dev) or join our Discord at [https://discord.gg/3SZU3aEQP](https://discord.gg/3SZU3aEQP)*
