@@ -219,4 +219,33 @@ if config_env() == :prod do
   #     config :swoosh, :api_client, Swoosh.ApiClient.Req
   #
   # See https://hexdocs.pm/swoosh/Swoosh.html#module-installation for details.
+
+  # ## Storage configuration
+  #
+  # Configure storage backend. By default uses local filesystem.
+  # Set STORAGE_BACKEND=s3 to use S3 storage.
+  storage_backend =
+    case System.get_env("STORAGE_BACKEND") do
+      "s3" -> :s3
+      _ -> :local
+    end
+
+  storage_config =
+    case storage_backend do
+      :local ->
+        [
+          backend: :local,
+          local_path: System.get_env("STORAGE_LOCAL_PATH") || "/var/micelio/storage"
+        ]
+
+      :s3 ->
+        [
+          backend: :s3,
+          s3_bucket: System.fetch_env!("S3_BUCKET"),
+          s3_region: System.get_env("S3_REGION") || "us-east-1"
+          # AWS credentials from IAM roles or environment
+        ]
+    end
+
+  config :micelio, Micelio.Storage, storage_config
 end

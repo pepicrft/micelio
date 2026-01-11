@@ -88,3 +88,15 @@ config :phoenix_live_view,
 
 # Disable swoosh api client as it is only required for production adapters.
 config :swoosh, :api_client, false
+
+# Storage configuration (local by default, S3 opt-in)
+config :micelio, Micelio.Storage,
+  backend: :local,
+  local_path: Path.join(System.tmp_dir(), "micelio/storage")
+
+# For S3 storage (opt-in), uncomment and configure:
+# config :micelio, Micelio.Storage,
+#   backend: :s3,
+#   s3_bucket: "micelio-dev-sessions",
+#   s3_region: "us-east-1"
+#   # AWS credentials from environment or IAM roles
