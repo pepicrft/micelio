@@ -3,7 +3,11 @@
   current_scope={assigns[:current_scope]}
   current_user={assigns[:current_user]}
 >
-  <div>
+  <div class="account-overview">
     <h1>Account</h1>
+    <p>Manage your profile and connected tools.</p>
+    <.link navigate={~p"/account/devices"} class="account-device-link" id="account-devices-link">
+      Manage connected devices
+    </.link>
   </div>
 </Layouts.app>

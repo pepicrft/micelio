@@ -10,6 +10,8 @@ defmodule Micelio.Accounts.User do
     field :email, :string
 
     has_one :account, Micelio.Accounts.Account
+    has_many :organization_memberships, Micelio.Accounts.OrganizationMembership
+    has_many :organizations, through: [:organization_memberships, :organization]
 
     timestamps(type: :utc_datetime)
   end

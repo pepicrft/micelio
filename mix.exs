@@ -52,6 +52,8 @@ defmodule Micelio.MixProject do
       {:esbuild, "~> 0.10", runtime: Mix.env() == :dev},
       {:swoosh, "~> 1.16"},
       {:gen_smtp, "~> 1.2"},
+      {:grpc, "~> 0.8"},
+      {:protobuf, "~> 0.12"},
       {:req, "~> 0.5"},
       {:telemetry_metrics, "~> 1.0"},
       {:telemetry_poller, "~> 1.0"},
@@ -61,8 +63,9 @@ defmodule Micelio.MixProject do
       {:bandit, "~> 1.5"},
       {:quokka, "~> 2.11", only: [:dev, :test], runtime: false},
       {:mimic, "~> 2.0", only: :test},
-      {:zigler, "~> 0.14.0", runtime: false},
-      {:nimble_publisher, "~> 1.0"}
+      {:nimble_publisher, "~> 1.0"},
+      {:let_me, "~> 1.2"},
+      {:boruta, git: "https://github.com/malach-it/boruta_auth", branch: "master"}
     ]
   end
 

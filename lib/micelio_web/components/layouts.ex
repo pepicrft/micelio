@@ -52,9 +52,11 @@ defmodule MicelioWeb.Layouts do
         
         <a href={~p"/blog"}>blog</a>
         <a href={~p"/changelog"}>changelog</a>
+        <a href="https://discord.gg/C2P7EGMb4" target="_blank" rel="noopener noreferrer">discord</a>
         
         <%= if assigns[:current_user] do %>
           <a href={~p"/projects"}>projects</a>
+          <a href={~p"/account/devices"}>devices</a>
           <form action={~p"/auth/logout"} method="post" style="display: inline; margin-left: 1rem;">
             <input type="hidden" name="_csrf_token" value={Phoenix.Controller.get_csrf_token()} />
             <input type="hidden" name="_method" value="delete" />

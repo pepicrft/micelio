@@ -21,7 +21,7 @@ defmodule MicelioWeb.Browser.OrganizationController do
   Creates a new organization.
   """
   def create(conn, %{"organization" => organization_params}) do
-    case Accounts.create_organization(organization_params) do
+    case Accounts.create_organization_for_user(conn.assigns.current_user, organization_params) do
       {:ok, organization} ->
         conn
         |> put_flash(:info, "Organization created successfully!")

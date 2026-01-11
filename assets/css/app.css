@@ -9,3 +9,5 @@
 @import "./routes/auth.css";
 @import "./routes/projects.css";
 @import "./routes/organizations.css";
+@import "./routes/device_auth.css";
+@import "./routes/account_devices.css";

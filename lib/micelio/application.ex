@@ -7,16 +7,18 @@ defmodule Micelio.Application do
 
   @impl true
   def start(_type, _args) do
-    children = [
-      MicelioWeb.Telemetry,
-      Micelio.Repo,
-      {DNSCluster, query: Application.get_env(:micelio, :dns_cluster_query) || :ignore},
-      {Phoenix.PubSub, name: Micelio.PubSub},
-      # Start a worker by calling: Micelio.Worker.start_link(arg)
-      # {Micelio.Worker, arg},
-      # Start to serve requests, typically the last entry
-      MicelioWeb.Endpoint
-    ]
+    children =
+      [
+        MicelioWeb.Telemetry,
+        Micelio.Repo,
+        {DNSCluster, query: Application.get_env(:micelio, :dns_cluster_query) || :ignore},
+        {Phoenix.PubSub, name: Micelio.PubSub},
+        # Start a worker by calling: Micelio.Worker.start_link(arg)
+        # {Micelio.Worker, arg},
+        # Start to serve requests, typically the last entry
+        MicelioWeb.Endpoint
+      ]
+      |> maybe_add_grpc_server()
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
@@ -30,5 +32,22 @@ defmodule Micelio.Application do
   def config_change(changed, _new, removed) do
     MicelioWeb.Endpoint.config_change(changed, removed)
     :ok
+  end
+
+  defp maybe_add_grpc_server(children) do
+    grpc_config = Application.get_env(:micelio, Micelio.GRPC, [])
+
+    if Keyword.get(grpc_config, :enabled, false) do
+      port = Keyword.get(grpc_config, :port, 50_051)
+      children ++ [
+        {GRPC.Server.Supervisor,
+         %{
+           port: port,
+           servers: [Micelio.GRPC.Endpoint]
+         }}
+      ]
+    else
+      children
+    end
   end
 end

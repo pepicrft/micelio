@@ -164,6 +164,42 @@ defmodule Micelio.AccountsTest do
 
       assert "has already been taken" in errors_on(changeset).handle
     end
+
+    test "create_organization_for_user/2 links membership" do
+      {:ok, user} = Accounts.get_or_create_user_by_email("org-owner@example.com")
+
+      assert {:ok, %Organization{} = org} =
+               Accounts.create_organization_for_user(user, %{
+                 handle: "owner-org",
+                 name: "Owner Org"
+               })
+
+      assert Accounts.user_in_organization?(user, org.id)
+    end
+
+    test "list_organizations_for_user/1 returns only memberships" do
+      {:ok, user} = Accounts.get_or_create_user_by_email("org-member@example.com")
+
+      {:ok, org_one} =
+        Accounts.create_organization_for_user(user, %{
+          handle: "member-org-one",
+          name: "Member Org One"
+        })
+
+      {:ok, _org_two} =
+        Accounts.create_organization(%{handle: "not-a-member", name: "Not a Member"})
+
+      organizations = Accounts.list_organizations_for_user(user)
+      assert Enum.map(organizations, & &1.id) == [org_one.id]
+    end
+
+    test "get_organization_by_handle/1 returns the organization" do
+      {:ok, org} =
+        Accounts.create_organization(%{handle: "lookup-org", name: "Lookup Org"})
+
+      assert {:ok, loaded} = Accounts.get_organization_by_handle("lookup-org")
+      assert loaded.id == org.id
+    end
   end
 
   describe "organization registration changeset" do

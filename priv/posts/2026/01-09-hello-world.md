@@ -65,6 +65,8 @@ The future of software development is collaborative intelligence: humans and AI 
 
 **Micelio + hif is our bet on that future. Open source, self-hostable, built for the age of AI agents.**
 
+Join the conversation on [Discord](https://discord.gg/C2P7EGMb4) and help shape where this goes.
+
 ---
 
-*Pedro Piñera is building Micelio and hif as open source projects. Follow the project at [micelio.dev](https://micelio.dev) or contribute on [GitHub](https://github.com/pepicrft/micelio).*
+*Pedro Piñera is building Micelio and hif as open source projects. Follow the project at [micelio.dev](https://micelio.dev), contribute on [GitHub](https://github.com/pepicrft/micelio), or join our [Discord community](https://discord.gg/C2P7EGMb4).*

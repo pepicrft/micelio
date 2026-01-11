@@ -1,5 +1,6 @@
 const std = @import("std");
 const yazap = @import("yazap");
+const oauth = @import("oauth.zig");
 
 const App = yazap.App;
 const Arg = yazap.Arg;
@@ -15,7 +16,13 @@ pub fn main() !void {
     var root = app.rootCommand();
 
     // Auth: Authenticate with a forge
-    const auth_cmd = app.createCommand("auth", "Authenticate with a forge");
+    var auth_cmd = app.createCommand("auth", "Authenticate with a forge");
+    const auth_login_cmd = app.createCommand("login", "Authenticate via device flow");
+    const auth_status_cmd = app.createCommand("status", "Show authentication status");
+    const auth_logout_cmd = app.createCommand("logout", "Remove stored credentials");
+    try auth_cmd.addSubcommand(auth_login_cmd);
+    try auth_cmd.addSubcommand(auth_status_cmd);
+    try auth_cmd.addSubcommand(auth_logout_cmd);
     try root.addSubcommand(auth_cmd);
 
     // Project: Manage projects
@@ -36,45 +43,54 @@ pub fn main() !void {
         return;
     };
 
-    var buf: [256]u8 = undefined;
-    var stdout = std.fs.File.stdout().writer(&buf);
+    // Output handled by std.debug.print in oauth functions
 
-    if (matches.subcommandMatches("auth")) |_| {
-        try stdout.interface.writeAll("Authenticating with forge...\n");
-        try stdout.interface.writeAll("(Not yet implemented - forge connection required)\n");
-        try stdout.interface.flush();
+    if (matches.subcommandMatches("auth")) |auth_matches| {
+        if (auth_matches.subcommandMatches("login")) |_| {
+            try oauth.login(allocator, oauth.default_server);
+            return;
+        }
+
+        if (auth_matches.subcommandMatches("status")) |_| {
+            try oauth.status(allocator, oauth.default_server);
+            return;
+        }
+
+        if (auth_matches.subcommandMatches("logout")) |_| {
+            try oauth.logout(allocator);
+            return;
+        }
+
+        std.debug.print("Usage: hif auth <login|status|logout>\n", .{});
         return;
     }
 
     if (matches.subcommandMatches("project")) |_| {
-        try stdout.interface.writeAll("Project management commands:\n");
-        try stdout.interface.writeAll("  create  - Create a new project on the forge\n");
-        try stdout.interface.writeAll("  list    - List your projects\n");
-        try stdout.interface.writeAll("\n(Not yet implemented - forge connection required)\n");
-        try stdout.interface.flush();
+        std.debug.print("Project management commands:\n", .{});
+        std.debug.print("  create  - Create a new project on the forge\n", .{});
+        std.debug.print("  list    - List your projects\n", .{});
+        std.debug.print("\n(Not yet implemented - forge connection required)\n", .{});
         return;
     }
 
     if (matches.subcommandMatches("clone")) |clone_matches| {
         if (clone_matches.getSingleValue("PROJECT")) |project| {
-            try stdout.interface.print("Cloning project '{s}'...\n", .{project});
-            try stdout.interface.writeAll("(Not yet implemented - forge connection required)\n");
+            std.debug.print("Cloning project '{s}'...\n", .{project});
+            std.debug.print("(Not yet implemented - forge connection required)\n", .{});
         } else {
-            try stdout.interface.writeAll("Error: project name required\n");
-            try stdout.interface.writeAll("Usage: hif clone <project>\n");
+            std.debug.print("Error: project name required\n", .{});
+            std.debug.print("Usage: hif clone <project>\n", .{});
         }
-        try stdout.interface.flush();
         return;
     }
 
     if (matches.subcommandMatches("session")) |_| {
-        try stdout.interface.writeAll("Session management commands:\n");
-        try stdout.interface.writeAll("  start   - Start a new session with a goal\n");
-        try stdout.interface.writeAll("  status  - Show current session status\n");
-        try stdout.interface.writeAll("  land    - Land the current session\n");
-        try stdout.interface.writeAll("  abandon - Abandon the current session\n");
-        try stdout.interface.writeAll("\n(Not yet implemented - forge connection required)\n");
-        try stdout.interface.flush();
+        std.debug.print("Session management commands:\n", .{});
+        std.debug.print("  start   - Start a new session with a goal\n", .{});
+        std.debug.print("  status  - Show current session status\n", .{});
+        std.debug.print("  land    - Land the current session\n", .{});
+        std.debug.print("  abandon - Abandon the current session\n", .{});
+        std.debug.print("\n(Not yet implemented - forge connection required)\n", .{});
         return;
     }
 

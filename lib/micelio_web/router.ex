@@ -46,6 +46,19 @@ defmodule MicelioWeb.Router do
 
     get "/repositories", RepositoryController, :index
     get "/releases", ReleaseController, :index
+
+    # OAuth2 Device Authentication Flow
+    post "/device/auth", DeviceAuthController, :create
+    post "/device/token", DeviceTokenController, :create
+    post "/device/client", DeviceClientController, :create
+  end
+
+  scope "/device", MicelioWeb.API do
+    pipe_through :api
+
+    post "/register", DeviceClientController, :create
+    post "/auth", DeviceAuthController, :create
+    post "/token", DeviceTokenController, :create
   end
 
   # Blog routes (public)
@@ -81,17 +94,23 @@ defmodule MicelioWeb.Router do
     delete "/logout", AuthController, :delete
   end
 
+  scope "/device", MicelioWeb.Browser do
+    pipe_through [:browser, :require_auth]
+
+    get "/auth", DeviceAuthController, :new
+    post "/auth/verify", DeviceAuthController, :verify
+  end
+
   # Project routes (require authentication)
   scope "/projects", MicelioWeb.Browser do
     pipe_through [:browser, :require_auth]
 
-    get "/", ProjectController, :index
-    get "/new", ProjectController, :new
-    post "/", ProjectController, :create
-    get "/:handle", ProjectController, :show
-    get "/:handle/edit", ProjectController, :edit
-    put "/:handle", ProjectController, :update
-    delete "/:handle", ProjectController, :delete
+    live_session :projects, on_mount: {MicelioWeb.LiveAuth, :require_auth} do
+      live "/", MicelioWeb.ProjectLive.Index, :index
+      live "/new", MicelioWeb.ProjectLive.New, :new
+      live "/:organization_handle/:project_handle/edit", MicelioWeb.ProjectLive.Edit, :edit
+      live "/:organization_handle/:project_handle", MicelioWeb.ProjectLive.Show, :show
+    end
   end
 
   # Organization routes (require authentication)
@@ -100,6 +119,13 @@ defmodule MicelioWeb.Router do
 
     get "/new", OrganizationController, :new
     post "/", OrganizationController, :create
+  end
+
+  scope "/account", MicelioWeb.Browser do
+    pipe_through [:browser, :require_auth]
+
+    get "/devices", DeviceController, :index
+    delete "/devices/:id", DeviceController, :delete
   end
 
   scope "/", MicelioWeb.Browser do
