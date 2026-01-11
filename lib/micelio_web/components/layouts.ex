@@ -52,7 +52,7 @@ defmodule MicelioWeb.Layouts do
         
         <a href={~p"/blog"}>blog</a>
         <a href={~p"/changelog"}>changelog</a>
-        <a href="https://discord.gg/C2P7EGMb4" target="_blank" rel="noopener noreferrer">discord</a>
+        <a href="https://discord.gg/3SZU3aEQP" target="_blank" rel="noopener noreferrer">discord</a>
         
         <%= if assigns[:current_user] do %>
           <a href={~p"/projects"}>projects</a>
