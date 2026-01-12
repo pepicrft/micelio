@@ -35,7 +35,7 @@ defmodule Micelio.OAuth.Clients do
     {:error, "Client creation not supported via OpenID registration"}
   end
 
-  @impl Boruta.Openid.Clients
+  @impl Boruta.Oauth.Clients
   def list_clients_jwk, do: []
 
   @impl Boruta.Openid.Clients

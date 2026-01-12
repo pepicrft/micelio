@@ -1,8 +1,11 @@
 defmodule Micelio.Storage.Local do
   @moduledoc """
   Local filesystem storage backend.
-  
+
   Stores files in a local directory structure.
+  Uses the configured `:local_path` under `:micelio, Micelio.Storage`
+  (set in runtime via `STORAGE_LOCAL_PATH`), falling back to a temporary
+  directory when unset.
   """
 
   @doc """
@@ -10,7 +13,7 @@ defmodule Micelio.Storage.Local do
   """
   def put(key, content) do
     path = build_path(key)
-    
+
     with :ok <- ensure_directory(path),
          :ok <- File.write(path, content) do
       {:ok, key}
@@ -22,7 +25,7 @@ defmodule Micelio.Storage.Local do
   """
   def get(key) do
     path = build_path(key)
-    
+
     case File.read(path) do
       {:ok, content} -> {:ok, content}
       {:error, :enoent} -> {:error, :not_found}
@@ -35,7 +38,7 @@ defmodule Micelio.Storage.Local do
   """
   def delete(key) do
     path = build_path(key)
-    
+
     case File.rm(path) do
       :ok -> {:ok, key}
       {:error, :enoent} -> {:ok, key}
@@ -49,7 +52,7 @@ defmodule Micelio.Storage.Local do
   def list(prefix) do
     base_path = base_path()
     pattern = Path.join([base_path, prefix, "**", "*"])
-    
+
     files =
       pattern
       |> Path.wildcard()
@@ -57,7 +60,7 @@ defmodule Micelio.Storage.Local do
       |> Enum.map(fn path ->
         String.replace_prefix(path, base_path <> "/", "")
       end)
-    
+
     {:ok, files}
   end
 

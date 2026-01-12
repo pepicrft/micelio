@@ -1,0 +1,316 @@
+/* Sessions list styles */
+
+.sessions-container {
+  max-width: var(--theme-ui-sizes-container);
+  margin: 0 auto;
+  padding: var(--theme-ui-space-2);
+}
+
+.sessions-header {
+  margin-bottom: var(--theme-ui-space-3);
+}
+
+.sessions-header h1 {
+  font-weight: var(--theme-ui-fontWeights-bold);
+  margin-bottom: var(--theme-ui-space-1);
+}
+
+.sessions-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: var(--theme-ui-space-1);
+  color: var(--theme-ui-colors-muted);
+  margin-bottom: var(--theme-ui-space-2);
+}
+
+.sessions-breadcrumb a {
+  color: var(--theme-ui-colors-primary);
+  text-decoration: none;
+}
+
+.sessions-breadcrumb a:hover {
+  text-decoration: underline;
+}
+
+.sessions-filters {
+  display: flex;
+  gap: var(--theme-ui-space-1);
+  margin-bottom: var(--theme-ui-space-3);
+  flex-wrap: wrap;
+}
+
+.filter-button {
+  padding: var(--theme-ui-space-1) var(--theme-ui-space-2);
+  border: var(--theme-ui-borders-thin);
+  background-color: var(--theme-ui-colors-background);
+  color: var(--theme-ui-colors-text);
+  cursor: pointer;
+}
+
+.filter-button:hover {
+  border-color: var(--theme-ui-colors-primary);
+}
+
+.filter-button.active {
+  background-color: var(--theme-ui-colors-primary);
+  color: var(--theme-ui-colors-background);
+  border-color: var(--theme-ui-colors-primary);
+}
+
+.sessions-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--theme-ui-space-2);
+}
+
+.session-card {
+  display: block;
+  padding: var(--theme-ui-space-2);
+  background-color: var(--theme-ui-colors-background);
+  border: var(--theme-ui-borders-thin);
+  text-decoration: none;
+  color: inherit;
+}
+
+.session-card:hover {
+  border-color: var(--theme-ui-colors-primary);
+}
+
+.session-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--theme-ui-space-2);
+  margin-bottom: var(--theme-ui-space-1);
+}
+
+.session-goal {
+  font-weight: var(--theme-ui-fontWeights-bold);
+  flex: 1;
+}
+
+.status-badge {
+  padding: 2px 8px;
+  font-size: 0.875rem;
+  font-weight: var(--theme-ui-fontWeights-bold);
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.status-badge-active {
+  background-color: #e3f2fd;
+  color: #1976d2;
+}
+
+.status-badge-landed {
+  background-color: #e8f5e9;
+  color: #388e3c;
+}
+
+.status-badge-abandoned {
+  background-color: #fce4ec;
+  color: #c2185b;
+}
+
+.session-card-meta {
+  display: flex;
+  gap: var(--theme-ui-space-1);
+  color: var(--theme-ui-colors-muted);
+  margin-bottom: var(--theme-ui-space-1);
+  flex-wrap: wrap;
+}
+
+.session-card-stats {
+  display: flex;
+  gap: var(--theme-ui-space-1);
+  color: var(--theme-ui-colors-muted);
+  flex-wrap: wrap;
+}
+
+.sessions-empty {
+  text-align: center;
+  padding: var(--theme-ui-space-4);
+  color: var(--theme-ui-colors-muted);
+}
+
+/* Session show styles */
+
+.session-show-container {
+  max-width: var(--theme-ui-sizes-container);
+  margin: 0 auto;
+  padding: var(--theme-ui-space-2);
+}
+
+.session-show-header {
+  margin-bottom: var(--theme-ui-space-3);
+}
+
+.session-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: var(--theme-ui-space-1);
+  color: var(--theme-ui-colors-muted);
+  margin-bottom: var(--theme-ui-space-2);
+}
+
+.session-breadcrumb a {
+  color: var(--theme-ui-colors-primary);
+  text-decoration: none;
+}
+
+.session-breadcrumb a:hover {
+  text-decoration: underline;
+}
+
+.session-show-title {
+  display: flex;
+  align-items: center;
+  gap: var(--theme-ui-space-2);
+  margin-bottom: var(--theme-ui-space-2);
+}
+
+.session-show-title h1 {
+  font-weight: var(--theme-ui-fontWeights-bold);
+}
+
+.session-show-meta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--theme-ui-space-1);
+  color: var(--theme-ui-colors-muted);
+}
+
+.session-show-actions {
+  display: flex;
+  gap: var(--theme-ui-space-1);
+  margin-bottom: var(--theme-ui-space-3);
+}
+
+.session-action {
+  padding: var(--theme-ui-space-1) var(--theme-ui-space-2);
+  border: var(--theme-ui-borders-thin);
+  background-color: var(--theme-ui-colors-background);
+  color: var(--theme-ui-colors-text);
+  cursor: pointer;
+}
+
+.session-action:hover {
+  background-color: var(--theme-ui-colors-border);
+}
+
+.session-action-abandon {
+  color: #c2185b;
+  border-color: #c2185b;
+}
+
+.session-action-abandon:hover {
+  background-color: #fce4ec;
+}
+
+.session-action-delete {
+  color: #d32f2f;
+  border-color: #d32f2f;
+}
+
+.session-action-delete:hover {
+  background-color: #ffebee;
+}
+
+.session-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--theme-ui-space-3);
+}
+
+.session-section {
+  padding: var(--theme-ui-space-2);
+  border: var(--theme-ui-borders-thin);
+  background-color: var(--theme-ui-colors-background);
+}
+
+.session-section h2 {
+  font-weight: var(--theme-ui-fontWeights-bold);
+  margin-bottom: var(--theme-ui-space-2);
+}
+
+.session-conversation {
+  display: flex;
+  flex-direction: column;
+  gap: var(--theme-ui-space-2);
+}
+
+.conversation-message {
+  padding: var(--theme-ui-space-2);
+  border: var(--theme-ui-borders-thin);
+}
+
+.message-role {
+  font-weight: var(--theme-ui-fontWeights-bold);
+  margin-bottom: var(--theme-ui-space-1);
+  text-transform: capitalize;
+}
+
+.message-user .message-role {
+  color: #1976d2;
+}
+
+.message-assistant .message-role {
+  color: #388e3c;
+}
+
+.message-system .message-role {
+  color: var(--theme-ui-colors-muted);
+}
+
+.message-content {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.session-decisions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--theme-ui-space-2);
+}
+
+.decision-item {
+  padding: var(--theme-ui-space-2);
+  border: var(--theme-ui-borders-thin);
+  background-color: var(--theme-ui-colors-background);
+}
+
+.decision-text {
+  font-weight: var(--theme-ui-fontWeights-bold);
+  margin-bottom: var(--theme-ui-space-1);
+}
+
+.decision-reasoning {
+  color: var(--theme-ui-colors-muted);
+}
+
+.session-metadata {
+  display: flex;
+  flex-direction: column;
+  gap: var(--theme-ui-space-1);
+}
+
+.metadata-item {
+  display: flex;
+  gap: var(--theme-ui-space-1);
+}
+
+.metadata-key {
+  font-weight: var(--theme-ui-fontWeights-bold);
+}
+
+.metadata-value {
+  color: var(--theme-ui-colors-muted);
+}
+
+.session-files {
+  color: var(--theme-ui-colors-muted);
+}
+
+.info-message {
+  font-style: italic;
+}

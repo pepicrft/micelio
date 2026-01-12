@@ -1,8 +1,8 @@
 defmodule MicelioWeb.API.SessionController do
   use MicelioWeb, :controller
 
-  alias Micelio.{Accounts, Projects, Sessions, Storage}
   alias Micelio.OAuth.AccessTokens
+  alias Micelio.{Accounts, Projects, Sessions, Storage}
 
   action_fallback MicelioWeb.API.FallbackController
 
@@ -49,22 +49,26 @@ defmodule MicelioWeb.API.SessionController do
          true <- Accounts.user_in_organization?(user, organization.id),
          project when not is_nil(project) <-
            Projects.get_project_by_handle(organization.id, project_handle) do
-      
       conversation = Map.get(params, "conversation", [])
       decisions = Map.get(params, "decisions", [])
       files = Map.get(params, "files", [])
-      
-      started_at = 
+
+      started_at =
         case Map.get(params, "started_at") do
-          nil -> DateTime.utc_now()
-          timestamp when is_integer(timestamp) -> 
+          nil ->
+            DateTime.utc_now()
+
+          timestamp when is_integer(timestamp) ->
             DateTime.from_unix!(timestamp)
+
           timestamp when is_binary(timestamp) ->
             case Integer.parse(timestamp) do
               {unix_time, ""} -> DateTime.from_unix!(unix_time)
               _ -> DateTime.utc_now()
             end
-          _ -> DateTime.utc_now()
+
+          _ ->
+            DateTime.utc_now()
         end
 
       # Create session in database
@@ -78,17 +82,19 @@ defmodule MicelioWeb.API.SessionController do
         started_at: started_at,
         metadata: %{
           organization_handle: org_handle,
-          project_handle: project_handle,
-          files_count: length(files)
+          project_handle: project_handle
         }
       }
 
       case Sessions.create_session(session_attrs) do
         {:ok, session} ->
-          # Store files if provided
-          if length(files) > 0 do
-            store_session_files(session_id, files)
-          end
+          # Store files and create session changes
+          change_stats =
+            if not Enum.empty?(files) do
+              store_session_changes(session, files)
+            else
+              %{total: 0, added: 0, modified: 0, deleted: 0}
+            end
 
           # Mark as landed
           {:ok, landed_session} = Sessions.land_session(session)
@@ -104,7 +110,7 @@ defmodule MicelioWeb.API.SessionController do
               status: landed_session.status,
               conversation_count: length(conversation),
               decisions_count: length(decisions),
-              files_count: length(files),
+              changes: change_stats,
               started_at: landed_session.started_at,
               landed_at: landed_session.landed_at
             }
@@ -121,15 +127,52 @@ defmodule MicelioWeb.API.SessionController do
     end
   end
 
-  defp store_session_files(session_id, files) do
-    Enum.each(files, fn file ->
-      path = Map.get(file, "path")
-      content = Map.get(file, "content")
-      
-      if path && content do
-        key = "sessions/#{session_id}/files/#{path}"
-        Storage.put(key, content)
-      end
-    end)
+  defp store_session_changes(session, files) do
+    # Track changes by type
+    stats = %{total: 0, added: 0, modified: 0, deleted: 0}
+
+    changes_attrs =
+      Enum.map(files, fn file ->
+        path = Map.get(file, "path")
+        content = Map.get(file, "content")
+        # Default to modified
+        change_type = Map.get(file, "change_type", "modified")
+
+        # For large files, store in S3/local storage and reference by key
+        # For small files (< 100KB), store inline
+        {storage_key, inline_content} =
+          if content && byte_size(content) > 100_000 do
+            key = "sessions/#{session.session_id}/changes/#{path}"
+            {:ok, _} = Storage.put(key, content)
+            {key, nil}
+          else
+            {nil, content}
+          end
+
+        %{
+          session_id: session.id,
+          file_path: path,
+          change_type: change_type,
+          storage_key: storage_key,
+          content: inline_content,
+          metadata: %{
+            size: if(content, do: byte_size(content), else: 0)
+          }
+        }
+      end)
+
+    # Create all changes in a transaction
+    case Sessions.create_session_changes(changes_attrs) do
+      {:ok, changes} ->
+        # Calculate stats
+        Enum.reduce(changes, stats, fn change, acc ->
+          acc
+          |> Map.update!(:total, &(&1 + 1))
+          |> Map.update!(String.to_atom(change.change_type), &(&1 + 1))
+        end)
+
+      {:error, _} ->
+        stats
+    end
   end
 end

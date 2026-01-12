@@ -233,3 +233,64 @@
 .project-show-action-edit:hover {
   background-color: var(--theme-ui-colors-border);
 }
+
+.project-show-navigation {
+  display: flex;
+  gap: var(--theme-ui-space-2);
+  margin-bottom: var(--theme-ui-space-3);
+  padding-bottom: var(--theme-ui-space-2);
+  border-bottom: var(--theme-ui-borders-thin);
+}
+
+.project-show-nav-link {
+  padding: var(--theme-ui-space-1) var(--theme-ui-space-2);
+  text-decoration: none;
+  color: var(--theme-ui-colors-primary);
+  border: var(--theme-ui-borders-thin);
+  background-color: var(--theme-ui-colors-background);
+}
+
+.project-show-nav-link:hover {
+  background-color: var(--theme-ui-colors-border);
+}
+
+.project-recent-sessions {
+  margin-bottom: var(--theme-ui-space-3);
+}
+
+.project-recent-sessions h2 {
+  font-weight: var(--theme-ui-fontWeights-bold);
+  margin-bottom: var(--theme-ui-space-2);
+}
+
+.sessions-list-compact {
+  display: flex;
+  flex-direction: column;
+  gap: var(--theme-ui-space-1);
+  margin-bottom: var(--theme-ui-space-2);
+}
+
+.session-card-compact {
+  display: block;
+  padding: var(--theme-ui-space-1);
+  background-color: var(--theme-ui-colors-background);
+  border: var(--theme-ui-borders-thin);
+  text-decoration: none;
+  color: inherit;
+}
+
+.session-card-compact:hover {
+  border-color: var(--theme-ui-colors-primary);
+}
+
+.session-card-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--theme-ui-space-2);
+}
+
+.session-goal-compact {
+  flex: 1;
+  font-weight: var(--theme-ui-fontWeights-medium);
+}

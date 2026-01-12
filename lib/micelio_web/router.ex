@@ -112,14 +112,16 @@ defmodule MicelioWeb.Router do
   end
 
   # Project routes (require authentication)
-  scope "/projects", MicelioWeb.Browser do
+  scope "/projects", MicelioWeb do
     pipe_through [:browser, :require_auth]
 
     live_session :projects, on_mount: {MicelioWeb.LiveAuth, :require_auth} do
-      live "/", MicelioWeb.ProjectLive.Index, :index
-      live "/new", MicelioWeb.ProjectLive.New, :new
-      live "/:organization_handle/:project_handle/edit", MicelioWeb.ProjectLive.Edit, :edit
-      live "/:organization_handle/:project_handle", MicelioWeb.ProjectLive.Show, :show
+      live "/", ProjectLive.Index, :index
+      live "/new", ProjectLive.New, :new
+      live "/:organization_handle/:project_handle/edit", ProjectLive.Edit, :edit
+      live "/:organization_handle/:project_handle", ProjectLive.Show, :show
+      live "/:organization_handle/:project_handle/sessions", SessionLive.Index, :index
+      live "/:organization_handle/:project_handle/sessions/:id", SessionLive.Show, :show
     end
   end
 

@@ -35,4 +35,32 @@ defmodule MicelioWeb.ConnCase do
     Micelio.DataCase.setup_sandbox(tags)
     {:ok, conn: Phoenix.ConnTest.build_conn()}
   end
+
+  @doc """
+  Setup helper that registers and logs in a user.
+
+      setup :register_and_log_in_user
+
+  It stores an updated connection and a user in the
+  test context.
+  """
+  def register_and_log_in_user(%{conn: conn}) do
+    user = user_fixture()
+    %{conn: log_in_user(conn, user), user: user}
+  end
+
+  @doc """
+  Logs the given `user` into the `conn`.
+
+  It returns an updated `conn`.
+  """
+  def log_in_user(conn, user) do
+    Plug.Test.init_test_session(conn, %{user_id: user.id})
+  end
+
+  defp user_fixture(attrs \\ %{}) do
+    email = attrs[:email] || "user#{System.unique_integer()}@example.com"
+    {:ok, user} = Micelio.Accounts.get_or_create_user_by_email(email)
+    user
+  end
 end

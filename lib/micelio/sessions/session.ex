@@ -1,5 +1,6 @@
 defmodule Micelio.Sessions.Session do
   use Ecto.Schema
+
   import Ecto.Changeset
 
   @primary_key {:id, :binary_id, autogenerate: true}
@@ -17,6 +18,7 @@ defmodule Micelio.Sessions.Session do
 
     belongs_to :project, Micelio.Projects.Project
     belongs_to :user, Micelio.Accounts.User
+    has_many :changes, Micelio.Sessions.SessionChange
 
     timestamps()
   end
@@ -43,10 +45,16 @@ defmodule Micelio.Sessions.Session do
 
   @doc false
   def create_changeset(session, attrs) do
+    started_at =
+      case attrs[:started_at] do
+        nil -> DateTime.utc_now() |> DateTime.truncate(:second)
+        dt -> dt
+      end
+
     session
     |> changeset(attrs)
     |> put_change(:status, "active")
-    |> put_change(:started_at, attrs[:started_at] || DateTime.utc_now())
+    |> put_change(:started_at, started_at)
   end
 
   @doc false
@@ -54,6 +62,14 @@ defmodule Micelio.Sessions.Session do
     session
     |> changeset(attrs)
     |> put_change(:status, "landed")
-    |> put_change(:landed_at, DateTime.utc_now())
+    |> put_change(:landed_at, DateTime.utc_now() |> DateTime.truncate(:second))
+  end
+
+  @doc false
+  def abandon_changeset(session) do
+    session
+    |> change()
+    |> put_change(:status, "abandoned")
+    |> put_change(:landed_at, DateTime.utc_now() |> DateTime.truncate(:second))
   end
 end

@@ -3,28 +3,41 @@ defmodule MicelioWeb.ProjectLive.Show do
 
   alias Micelio.Authorization
   alias Micelio.Projects
+  alias Micelio.Sessions
 
   @impl true
-  def mount(%{"organization_handle" => org_handle, "project_handle" => project_handle}, _session, socket) do
+  def mount(
+        %{"organization_handle" => org_handle, "project_handle" => project_handle},
+        _session,
+        socket
+      ) do
     case Projects.get_project_for_user_by_handle(
            socket.assigns.current_user,
            org_handle,
            project_handle
          ) do
       {:ok, project, organization} ->
-        if Authorization.authorize(:project_read, socket.assigns.current_user, project) != :ok do
-          {:ok,
-           socket
-           |> put_flash(:error, "You do not have access to this project.")
-           |> push_navigate(to: ~p"/projects")}
-        else
+        if Authorization.authorize(:project_read, socket.assigns.current_user, project) == :ok do
+          recent_sessions =
+            Sessions.list_sessions_for_project(project)
+            |> Enum.take(5)
+
+          session_count = Sessions.count_sessions_for_project(project)
+
           socket =
             socket
             |> assign(:page_title, project.name)
             |> assign(:project, project)
             |> assign(:organization, organization)
+            |> assign(:recent_sessions, recent_sessions)
+            |> assign(:session_count, session_count)
 
           {:ok, socket}
+        else
+          {:ok,
+           socket
+           |> put_flash(:error, "You do not have access to this project.")
+           |> push_navigate(to: ~p"/projects")}
         end
 
       {:error, _reason} ->
@@ -71,12 +84,48 @@ defmodule MicelioWeb.ProjectLive.Show do
           <% end %>
         </header>
 
+        <div class="project-show-navigation">
+          <.link
+            navigate={~p"/projects/#{@organization.account.handle}/#{@project.handle}/sessions"}
+            class="project-show-nav-link"
+          >
+            Sessions ({@session_count})
+          </.link>
+        </div>
+
+        <%= if not Enum.empty?(@recent_sessions) do %>
+          <div class="project-recent-sessions">
+            <h2>Recent Sessions</h2>
+            <div class="sessions-list-compact">
+              <%= for session <- @recent_sessions do %>
+                <.link
+                  navigate={
+                    ~p"/projects/#{@organization.account.handle}/#{@project.handle}/sessions/#{session.id}"
+                  }
+                  class="session-card-compact"
+                >
+                  <div class="session-card-content">
+                    <div class="session-goal-compact">{session.goal}</div>
+                    <span class={"status-badge status-badge-#{session.status}"}>
+                      {String.capitalize(session.status)}
+                    </span>
+                  </div>
+                </.link>
+              <% end %>
+            </div>
+            <.link
+              navigate={~p"/projects/#{@organization.account.handle}/#{@project.handle}/sessions"}
+              class="project-show-action"
+            >
+              View all sessions
+            </.link>
+          </div>
+        <% end %>
+
         <div class="project-show-actions">
           <%= if Authorization.authorize(:project_update, @current_user, @project) == :ok do %>
             <.link
-              navigate={
-                ~p"/projects/#{@organization.account.handle}/#{@project.handle}/edit"
-              }
+              navigate={~p"/projects/#{@organization.account.handle}/#{@project.handle}/edit"}
               class="project-show-action project-show-action-edit"
               id="project-edit"
             >

@@ -1,15 +1,14 @@
 defmodule Micelio.Storage do
   @moduledoc """
   Storage abstraction for session files and artifacts.
-  
+
   By default uses local filesystem storage. Can be configured to use S3.
-  
-  Configuration:
-      config :micelio, Micelio.Storage,
-        backend: :local,  # or :s3
-        local_path: "/var/micelio/storage",
-        s3_bucket: "micelio-sessions",
-        s3_region: "us-east-1"
+
+  Configuration via `config/runtime.exs`:
+      STORAGE_BACKEND=local|s3
+      STORAGE_LOCAL_PATH=/var/micelio/storage  # defaults to /var/micelio/storage in prod or <tmp>/micelio/storage in dev/test
+      S3_BUCKET=micelio-sessions
+      S3_REGION=us-east-1
   """
 
   @doc """
