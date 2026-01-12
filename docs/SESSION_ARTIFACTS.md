@@ -13,6 +13,15 @@ Micelio's session system implements the hif philosophy where development is orga
 
 Unlike Git commits which are snapshots of code at a point in time, session changes capture file modifications with their reasoning context.
 
+## Session Lifecycle (API + CLI)
+
+- Start without landing: `POST /api/sessions/start`
+- Land with artifacts: `POST /api/sessions/:session_id/land`
+- Single-shot land (start + land): `POST /api/sessions`
+- CLI helpers:
+  - `mix micelio.session.start --session-id ... --goal ... --organization ... --project ...`
+  - `mix micelio.session.land --session-id ... [--file path[:change_type]] [--metadata key=value,...]`
+
 ### Key Differences
 
 | Git Commits | Session Changes |

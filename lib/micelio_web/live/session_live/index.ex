@@ -17,12 +17,13 @@ defmodule MicelioWeb.SessionLive.Index do
       {:ok, project, organization} ->
         if Authorization.authorize(:project_read, socket.assigns.current_user, project) == :ok do
           socket =
-            socket
-            |> assign(:page_title, "Sessions - #{project.name}")
-            |> assign(:project, project)
-            |> assign(:organization, organization)
-            |> assign(:status_filter, "all")
-            |> load_sessions()
+          socket
+          |> assign(:page_title, "Sessions - #{project.name}")
+          |> assign(:project, project)
+          |> assign(:organization, organization)
+          |> assign(:status_filter, "all")
+          |> assign(:sort_order, :newest)
+          |> load_sessions()
 
           {:ok, socket}
         else
@@ -50,15 +51,37 @@ defmodule MicelioWeb.SessionLive.Index do
     {:noreply, socket}
   end
 
+  @impl true
+  def handle_event("sort", %{"sort" => sort}, socket) do
+    socket =
+      socket
+      |> assign(:sort_order, normalize_sort(sort))
+      |> load_sessions()
+
+    {:noreply, socket}
+  end
+
   defp load_sessions(socket) do
     status_filter = socket.assigns.status_filter
+    sort_order = socket.assigns.sort_order
     project = socket.assigns.project
 
-    opts = if status_filter == "all", do: [], else: [status: status_filter]
+    opts =
+      []
+      |> maybe_put(:status, status_filter)
+      |> Keyword.put(:sort, sort_order)
+
     sessions = Sessions.list_sessions_for_project(project, opts)
 
     assign(socket, :sessions, sessions)
   end
+
+  defp maybe_put(opts, _key, "all"), do: opts
+  defp maybe_put(opts, key, value), do: Keyword.put(opts, key, value)
+
+  defp normalize_sort("oldest"), do: :oldest
+  defp normalize_sort("status"), do: :status
+  defp normalize_sort(_), do: :newest
 
   defp status_badge_class("active"), do: "status-badge-active"
   defp status_badge_class("landed"), do: "status-badge-landed"
@@ -94,39 +117,50 @@ defmodule MicelioWeb.SessionLive.Index do
           </div>
         </header>
 
-        <div class="sessions-filters">
-          <button
-            type="button"
-            class={"filter-button #{if @status_filter == "all", do: "active", else: ""}"}
-            phx-click="filter"
-            phx-value-status="all"
-          >
-            All
-          </button>
-          <button
-            type="button"
-            class={"filter-button #{if @status_filter == "active", do: "active", else: ""}"}
-            phx-click="filter"
-            phx-value-status="active"
-          >
-            Active
-          </button>
-          <button
-            type="button"
-            class={"filter-button #{if @status_filter == "landed", do: "active", else: ""}"}
-            phx-click="filter"
-            phx-value-status="landed"
-          >
-            Landed
-          </button>
-          <button
-            type="button"
-            class={"filter-button #{if @status_filter == "abandoned", do: "active", else: ""}"}
-            phx-click="filter"
-            phx-value-status="abandoned"
-          >
-            Abandoned
-          </button>
+        <div class="sessions-controls">
+          <div class="sessions-filters">
+            <button
+              type="button"
+              class={"filter-button #{if @status_filter == "all", do: "active", else: ""}"}
+              phx-click="filter"
+              phx-value-status="all"
+            >
+              All
+            </button>
+            <button
+              type="button"
+              class={"filter-button #{if @status_filter == "active", do: "active", else: ""}"}
+              phx-click="filter"
+              phx-value-status="active"
+            >
+              Active
+            </button>
+            <button
+              type="button"
+              class={"filter-button #{if @status_filter == "landed", do: "active", else: ""}"}
+              phx-click="filter"
+              phx-value-status="landed"
+            >
+              Landed
+            </button>
+            <button
+              type="button"
+              class={"filter-button #{if @status_filter == "abandoned", do: "active", else: ""}"}
+              phx-click="filter"
+              phx-value-status="abandoned"
+            >
+              Abandoned
+            </button>
+          </div>
+
+          <form class="sessions-sort" phx-change="sort">
+            <label for="sort-order">Sort</label>
+            <select id="sort-order" name="sort">
+              <option value="newest" selected={@sort_order == :newest}>Newest first</option>
+              <option value="oldest" selected={@sort_order == :oldest}>Oldest first</option>
+              <option value="status" selected={@sort_order == :status}>By status</option>
+            </select>
+          </form>
         </div>
 
         <%= if Enum.empty?(@sessions) do %>

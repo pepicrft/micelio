@@ -16,17 +16,24 @@ defmodule Micelio.Sessions do
   """
   def list_sessions_for_project(%Project{} = project, opts \\ []) do
     status_filter = Keyword.get(opts, :status)
+    sort = Keyword.get(opts, :sort, :newest)
 
     query =
       Session
       |> where([s], s.project_id == ^project.id)
-      |> order_by([s], desc: s.inserted_at)
 
     query =
       if status_filter && status_filter != "all" do
         where(query, [s], s.status == ^status_filter)
       else
         query
+      end
+
+    query =
+      case sort do
+        :oldest -> order_by(query, asc: :started_at)
+        :status -> order_by(query, asc: :status, desc: :started_at)
+        _ -> order_by(query, desc: :started_at)
       end
 
     Repo.all(query)

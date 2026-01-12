@@ -61,6 +61,8 @@ defmodule MicelioWeb.Router do
 
     # Session Management (requires bearer token)
     post "/sessions", SessionController, :create
+    post "/sessions/start", SessionController, :start
+    post "/sessions/:session_id/land", SessionController, :land
   end
 
   scope "/device", MicelioWeb.API do

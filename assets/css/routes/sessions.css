@@ -1,3 +1,15 @@
+:root {
+  --sessions-status-active-bg: #e3f2fd;
+  --sessions-status-active-text: #1f3d7a;
+  --sessions-status-landed-bg: #e8f5e9;
+  --sessions-status-landed-text: #2d6a36;
+  --sessions-status-abandoned-bg: #fce4ec;
+  --sessions-status-abandoned-text: #9c1445;
+  --sessions-border-subtle: #d8d8d8;
+  --sessions-danger-text: #b3261e;
+  --sessions-danger-bg: #fdecea;
+}
+
 /* Sessions list styles */
 
 .sessions-container {
@@ -32,10 +44,18 @@
   text-decoration: underline;
 }
 
+.sessions-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--theme-ui-space-2);
+  margin-bottom: var(--theme-ui-space-3);
+  flex-wrap: wrap;
+}
+
 .sessions-filters {
   display: flex;
   gap: var(--theme-ui-space-1);
-  margin-bottom: var(--theme-ui-space-3);
   flex-wrap: wrap;
 }
 
@@ -55,6 +75,19 @@
   background-color: var(--theme-ui-colors-primary);
   color: var(--theme-ui-colors-background);
   border-color: var(--theme-ui-colors-primary);
+}
+
+.sessions-sort {
+  display: flex;
+  gap: var(--theme-ui-space-1);
+  align-items: center;
+}
+
+.sessions-sort select {
+  padding: calc(var(--theme-ui-space-1) / 2) var(--theme-ui-space-1);
+  border: var(--theme-ui-borders-thin);
+  background-color: var(--theme-ui-colors-background);
+  color: var(--theme-ui-colors-text);
 }
 
 .sessions-list {
@@ -98,18 +131,18 @@
 }
 
 .status-badge-active {
-  background-color: #e3f2fd;
-  color: #1976d2;
+  background-color: var(--sessions-status-active-bg);
+  color: var(--sessions-status-active-text);
 }
 
 .status-badge-landed {
-  background-color: #e8f5e9;
-  color: #388e3c;
+  background-color: var(--sessions-status-landed-bg);
+  color: var(--sessions-status-landed-text);
 }
 
 .status-badge-abandoned {
-  background-color: #fce4ec;
-  color: #c2185b;
+  background-color: var(--sessions-status-abandoned-bg);
+  color: var(--sessions-status-abandoned-text);
 }
 
 .session-card-meta {
@@ -199,21 +232,21 @@
 }
 
 .session-action-abandon {
-  color: #c2185b;
-  border-color: #c2185b;
+  color: var(--sessions-status-abandoned-text);
+  border-color: var(--sessions-status-abandoned-text);
 }
 
 .session-action-abandon:hover {
-  background-color: #fce4ec;
+  background-color: var(--sessions-status-abandoned-bg);
 }
 
 .session-action-delete {
-  color: #d32f2f;
-  border-color: #d32f2f;
+  color: var(--sessions-danger-text);
+  border-color: var(--sessions-danger-text);
 }
 
 .session-action-delete:hover {
-  background-color: #ffebee;
+  background-color: var(--sessions-danger-bg);
 }
 
 .session-content {
@@ -251,11 +284,11 @@
 }
 
 .message-user .message-role {
-  color: #1976d2;
+  color: var(--sessions-status-active-text);
 }
 
 .message-assistant .message-role {
-  color: #388e3c;
+  color: var(--sessions-status-landed-text);
 }
 
 .message-system .message-role {

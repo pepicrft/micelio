@@ -119,6 +119,41 @@ defmodule Micelio.SessionsTest do
       assert Sessions.count_sessions_for_project(project, status: "landed") == 1
     end
 
+    test "list_sessions_for_project/2 supports sorting", %{user: user, project: project} do
+      {:ok, older} =
+        Sessions.create_session(%{
+          session_id: "older",
+          goal: "Older session",
+          project_id: project.id,
+          user_id: user.id,
+          started_at:
+            DateTime.utc_now()
+            |> DateTime.add(-3600, :second)
+            |> DateTime.truncate(:second)
+        })
+
+      {:ok, newer} =
+        Sessions.create_session(%{
+          session_id: "newer",
+          goal: "Newer session",
+          project_id: project.id,
+          user_id: user.id,
+          started_at: DateTime.utc_now() |> DateTime.truncate(:second)
+        })
+
+      {:ok, _} = Sessions.land_session(older)
+
+      sessions_newest = Sessions.list_sessions_for_project(project, sort: :newest)
+      assert hd(sessions_newest).id == newer.id
+
+      sessions_oldest = Sessions.list_sessions_for_project(project, sort: :oldest)
+      assert hd(sessions_oldest).id == older.id
+
+      sessions_by_status = Sessions.list_sessions_for_project(project, sort: :status)
+      assert hd(sessions_by_status).status == "active"
+      assert Enum.at(sessions_by_status, 1).status == "landed"
+    end
+
     test "get_session/1 returns the session with given id", %{user: user, project: project} do
       {:ok, session} =
         Sessions.create_session(%{

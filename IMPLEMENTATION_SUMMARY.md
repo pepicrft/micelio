@@ -9,6 +9,12 @@ Successfully redesigned session artifact/change tracking based on the hif vision
 
 ## What Was Accomplished
 
+### Latest additions
+- Added LiveView session sorting controls (newest/oldest/status) and refreshed route styles using CSS variables
+- Introduced bloom filter generation for session changes (`change_filter` stored in session metadata) to enable conflict checks
+- Added API endpoints for session start/land plus CLI helpers (`mix micelio.session.start` / `mix micelio.session.land`)
+- Recorded session lifecycle docs in `docs/SESSION_ARTIFACTS.md`
+
 ### 1. Database Schema (Migration)
 Created `session_changes` table with:
 - ✅ Reference to parent session (with cascade delete)
