@@ -39,21 +39,12 @@ defmodule Micelio.Repo.Migrations.CreateInitialSchema do
     create index(:accounts, [:user_id])
     create index(:accounts, [:organization_id])
 
-    create constraint(:accounts, :account_owner_exclusive,
-             check:
-               "(user_id IS NOT NULL AND organization_id IS NULL) OR (user_id IS NULL AND organization_id IS NOT NULL)"
-           )
-
     # Tokens table
-    execute(
-      "CREATE TYPE token_purpose AS ENUM ('login', 'email_verification', 'password_reset')",
-      "DROP TYPE token_purpose"
-    )
 
     create table(:tokens, primary_key: false) do
       add :id, :binary_id, primary_key: true
       add :token, :string, null: false
-      add :purpose, :token_purpose, null: false
+      add :purpose, :string, null: false
       add :user_id, references(:users, type: :binary_id, on_delete: :delete_all), null: false
       add :expires_at, :utc_datetime, null: false
       add :used_at, :utc_datetime

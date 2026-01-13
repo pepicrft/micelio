@@ -7,6 +7,18 @@
 # General application configuration
 import Config
 
+# Configure Boruta schemas to use custom table names
+config :boruta, Boruta.Ecto.Token, source: "oauth_tokens"
+
+config :boruta, Boruta.Oauth,
+  repo: Micelio.Repo,
+  contexts: [
+    resource_owners: Micelio.OAuth.ResourceOwners,
+    clients: Micelio.OAuth.Clients,
+    access_tokens: Micelio.OAuth.AccessTokens
+  ],
+  token_generator: Micelio.OAuth.TokenGenerator
+
 # Configure esbuild (the version is required)
 config :esbuild,
   version: "0.25.4",
@@ -21,6 +33,10 @@ config :esbuild,
 config :logger, :default_formatter,
   format: "$time $metadata[$level] $message\n",
   metadata: [:request_id]
+
+config :micelio, Micelio.GRPC,
+  enabled: false,
+  port: 50_051
 
 # Configure the mailer
 #
@@ -45,23 +61,6 @@ config :micelio, MicelioWeb.Endpoint,
 config :micelio,
   ecto_repos: [Micelio.Repo],
   generators: [timestamp_type: :utc_datetime]
-
-config :boruta, Boruta.Oauth,
-  repo: Micelio.Repo,
-  contexts: [
-    resource_owners: Micelio.OAuth.ResourceOwners,
-    clients: Micelio.OAuth.Clients,
-    access_tokens: Micelio.OAuth.AccessTokens
-  ],
-  token_generator: Micelio.OAuth.TokenGenerator
-
-# Configure Boruta schemas to use custom table names
-config :boruta, Boruta.Ecto.Token,
-  source: "oauth_tokens"
-
-config :micelio, Micelio.GRPC,
-  enabled: false,
-  port: 50_051
 
 # Import environment specific config. This must remain at the bottom
 

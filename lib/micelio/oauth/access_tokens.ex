@@ -47,7 +47,11 @@ defmodule Micelio.OAuth.AccessTokens do
   end
 
   @impl AccessTokens
-  def create(%{client: %Client{id: client_id, access_token_ttl: access_token_ttl}, scope: scope} = params, options) do
+  def create(
+        %{client: %Client{id: client_id, access_token_ttl: access_token_ttl}, scope: scope} =
+          params,
+        options
+      ) do
     sub = params[:sub]
     state = params[:state]
     redirect_uri = params[:redirect_uri]

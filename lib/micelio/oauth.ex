@@ -5,8 +5,8 @@ defmodule Micelio.OAuth do
 
   import Ecto.Query
 
-  alias Ecto.Multi
   alias Boruta.Oauth.ResourceOwner
+  alias Ecto.Multi
   alias Micelio.Accounts.User
   alias Micelio.OAuth.{AccessTokens, BorutaClient, DeviceClient, DeviceGrant, DeviceSession}
   alias Micelio.Repo
@@ -71,7 +71,10 @@ defmodule Micelio.OAuth do
 
     Multi.new()
     |> Multi.insert(:boruta_client, BorutaClient.changeset(%BorutaClient{}, boruta_attrs))
-    |> Multi.insert(:device_client, DeviceClient.registration_changeset(%DeviceClient{}, defaults))
+    |> Multi.insert(
+      :device_client,
+      DeviceClient.registration_changeset(%DeviceClient{}, defaults)
+    )
     |> Repo.transaction()
     |> case do
       {:ok, %{device_client: device_client}} -> {:ok, device_client}
@@ -123,10 +126,9 @@ defmodule Micelio.OAuth do
   """
   def get_device_grant_by_user_code(user_code) do
     normalized_code = normalize_user_code(user_code)
+
     if is_binary(normalized_code) do
       Repo.get_by(DeviceGrant, user_code: normalized_code)
-    else
-      nil
     end
   end
 
@@ -139,17 +141,13 @@ defmodule Micelio.OAuth do
         {:error, :not_found}
 
       %DeviceGrant{} = grant ->
-        with :ok <- ensure_grant_active(grant),
-             {:ok, grant} <-
-               grant
-               |> DeviceGrant.approve_changeset(%{
-                 user_id: user.id,
-                 approved_at: DateTime.utc_now() |> DateTime.truncate(:second)
-               })
-               |> Repo.update() do
-          {:ok, grant}
-        else
-          {:error, reason} -> {:error, reason}
+        with :ok <- ensure_grant_active(grant) do
+          grant
+          |> DeviceGrant.approve_changeset(%{
+            user_id: user.id,
+            approved_at: DateTime.utc_now() |> DateTime.truncate(:second)
+          })
+          |> Repo.update()
         end
     end
   end

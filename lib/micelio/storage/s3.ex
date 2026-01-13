@@ -87,6 +87,35 @@ defmodule Micelio.Storage.S3 do
   end
 
   @doc """
+  Retrieves content by key from S3 along with metadata like ETag.
+  """
+  def get_with_metadata(key) when is_binary(key) do
+    with {:ok, config} <- validate_config(),
+         url = build_url(config, key),
+         {:ok, req} <- build_signed_request(config, :get, url),
+         {:ok, response} <- Req.request(req) do
+      case response.status do
+        200 ->
+          {:ok,
+           %{
+             content: response.body,
+             etag: header_value(response.headers, "etag")
+           }}
+
+        404 ->
+          {:error, :not_found}
+
+        status ->
+          {:error, {:s3_error, status, response.body}}
+      end
+    else
+      {:error, reason} = error ->
+        Logger.error("S3: GET #{key} failed: #{inspect(reason)}")
+        error
+    end
+  end
+
+  @doc """
   Deletes a file by key from S3.
 
   Returns {:ok, key} even if the object doesn't exist (idempotent).
@@ -154,6 +183,87 @@ defmodule Micelio.Storage.S3 do
       {:error, reason} ->
         Logger.error("S3: HEAD #{key} failed: #{inspect(reason)}")
         false
+    end
+  end
+
+  @doc """
+  Returns metadata for a key when available.
+  """
+  def head(key) when is_binary(key) do
+    with {:ok, config} <- validate_config(),
+         url = build_url(config, key),
+         {:ok, req} <- build_signed_request(config, :head, url),
+         {:ok, response} <- Req.request(req) do
+      case response.status do
+        200 ->
+          {:ok,
+           %{
+             etag: header_value(response.headers, "etag"),
+             size: content_length(response.headers)
+           }}
+
+        404 ->
+          {:error, :not_found}
+
+        status ->
+          {:error, {:s3_error, status, response.body}}
+      end
+    else
+      {:error, reason} = error ->
+        Logger.error("S3: HEAD #{key} failed: #{inspect(reason)}")
+        error
+    end
+  end
+
+  @doc """
+  Stores content only if the current ETag matches.
+  """
+  def put_if_match(key, content, etag) when is_binary(key) and is_binary(content) do
+    with {:ok, config} <- validate_config(),
+         url = build_url(config, key),
+         headers = build_headers(content) ++ [{"if-match", etag}],
+         {:ok, req} <- build_signed_request(config, :put, url, content, headers),
+         {:ok, response} <- Req.request(req) do
+      case response.status do
+        status when status in 200..299 ->
+          {:ok, key}
+
+        412 ->
+          {:error, :precondition_failed}
+
+        status ->
+          {:error, {:s3_error, status, response.body}}
+      end
+    else
+      {:error, reason} = error ->
+        Logger.error("S3: PUT #{key} failed: #{inspect(reason)}")
+        error
+    end
+  end
+
+  @doc """
+  Stores content only if the key does not exist.
+  """
+  def put_if_none_match(key, content) when is_binary(key) and is_binary(content) do
+    with {:ok, config} <- validate_config(),
+         url = build_url(config, key),
+         headers = build_headers(content) ++ [{"if-none-match", "*"}],
+         {:ok, req} <- build_signed_request(config, :put, url, content, headers),
+         {:ok, response} <- Req.request(req) do
+      case response.status do
+        status when status in 200..299 ->
+          {:ok, key}
+
+        412 ->
+          {:error, :precondition_failed}
+
+        status ->
+          {:error, {:s3_error, status, response.body}}
+      end
+    else
+      {:error, reason} = error ->
+        Logger.error("S3: PUT #{key} failed: #{inspect(reason)}")
+        error
     end
   end
 
@@ -394,6 +504,21 @@ defmodule Micelio.Storage.S3 do
          ) do
       [token] -> token
       _ -> nil
+    end
+  end
+
+  defp header_value(headers, name) do
+    Enum.find_value(headers, fn {key, value} ->
+      if String.downcase(key) == name do
+        value
+      end
+    end)
+  end
+
+  defp content_length(headers) do
+    case header_value(headers, "content-length") do
+      nil -> nil
+      value -> String.to_integer(value)
     end
   end
 end

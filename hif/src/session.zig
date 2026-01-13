@@ -1,7 +1,9 @@
 const std = @import("std");
 const xdg = @import("xdg.zig");
 const oauth = @import("oauth.zig");
-const http = @import("http.zig");
+const grpc_client = @import("grpc/client.zig");
+const grpc_endpoint = @import("grpc/endpoint.zig");
+const sessions_proto = @import("grpc/sessions_proto.zig");
 
 const SessionState = struct {
     id: []const u8,
@@ -11,6 +13,7 @@ const SessionState = struct {
     started_at: []const u8,
     conversation: []Conversation = &[_]Conversation{},
     decisions: []Decision = &[_]Decision{},
+    files: []FileChange = &[_]FileChange{},
 };
 
 const Conversation = struct {
@@ -23,6 +26,12 @@ const Decision = struct {
     description: []const u8,
     reasoning: []const u8,
     timestamp: []const u8,
+};
+
+const FileChange = struct {
+    path: []const u8,
+    content: []const u8,
+    change_type: []const u8,
 };
 
 const session_filename = "session.json";
@@ -59,6 +68,28 @@ pub fn start(allocator: std.mem.Allocator, organization: []const u8, project: []
 
     const session_id = try generateSessionId(arena_alloc);
     const now = try currentTimestamp(arena_alloc);
+
+    const creds = try oauth.readCredentials(arena_alloc);
+    if (creds == null or creds.?.access_token == null) {
+        std.debug.print("Error: Not authenticated. Run 'hif auth login' first.\n", .{});
+        return error.NotAuthenticated;
+    }
+
+    const endpoint = try grpc_endpoint.parseServer(arena_alloc, creds.?.server);
+    const request = try sessions_proto.encodeStartSessionRequest(arena_alloc, organization, project, session_id, goal);
+    defer arena_alloc.free(request);
+
+    const response = try grpc_client.unaryCall(
+        arena_alloc,
+        endpoint.target,
+        endpoint.host,
+        "/micelio.sessions.v1.SessionService/StartSession",
+        request,
+        creds.?.access_token.?,
+    );
+    defer arena_alloc.free(response.bytes);
+
+    _ = try sessions_proto.decodeSessionResponse(arena_alloc, response.bytes);
 
     const session = SessionState{
         .id = session_id,
@@ -124,6 +155,13 @@ pub fn status(allocator: std.mem.Allocator) !void {
             std.debug.print("    Reasoning: {s}\n", .{decision.reasoning});
         }
     }
+
+    if (session.files.len > 0) {
+        std.debug.print("\nFiles ({}):\n", .{session.files.len});
+        for (session.files) |change| {
+            std.debug.print("  {s} ({s})\n", .{ change.path, change.change_type });
+        }
+    }
 }
 
 pub fn addNote(allocator: std.mem.Allocator, role: []const u8, message: []const u8) !void {
@@ -169,6 +207,50 @@ pub fn addNote(allocator: std.mem.Allocator, role: []const u8, message: []const 
     std.debug.print("Note added to session.\n", .{});
 }
 
+pub fn write(allocator: std.mem.Allocator, path: []const u8) !void {
+    var arena = std.heap.ArenaAllocator.init(allocator);
+    defer arena.deinit();
+    const arena_alloc = arena.allocator();
+
+    const session_path = try sessionStatePath(arena_alloc);
+    const data = try xdg.readFileAlloc(arena_alloc, session_path, 1024 * 1024);
+
+    if (data == null) {
+        std.debug.print("Error: No active session. Start one with 'hif session start'.\n", .{});
+        return error.NoActiveSession;
+    }
+
+    var session = try std.json.parseFromSlice(SessionState, arena_alloc, data.?, .{ .allocate = .alloc_always });
+    defer session.deinit();
+
+    const content = try std.io.getStdIn().readAllAlloc(arena_alloc, 10 * 1024 * 1024);
+
+    try ensureParentDir(path);
+    const file = try std.fs.cwd().createFile(path, .{ .truncate = true });
+    defer file.close();
+    try file.writeAll(content);
+
+    const change = FileChange{
+        .path = path,
+        .content = content,
+        .change_type = "modified",
+    };
+
+    session.value.files = try upsertChange(arena_alloc, session.value.files, change);
+
+    var payload_buf = std.io.Writer.Allocating.init(arena_alloc);
+    defer payload_buf.deinit();
+    const formatter = std.json.fmt(session.value, .{});
+    try formatter.format(&payload_buf.writer);
+    const payload = try payload_buf.toOwnedSlice();
+
+    const file_state = try std.fs.cwd().createFile(session_path, .{ .truncate = true });
+    defer file_state.close();
+    try file_state.writeAll(payload);
+
+    std.debug.print("Wrote {s} ({} bytes)\n", .{ path, content.len });
+}
+
 pub fn land(allocator: std.mem.Allocator, server: []const u8) !void {
     var arena = std.heap.ArenaAllocator.init(allocator);
     defer arena.deinit();
@@ -190,46 +272,29 @@ pub fn land(allocator: std.mem.Allocator, server: []const u8) !void {
 
     const session = try std.json.parseFromSliceLeaky(SessionState, arena_alloc, data.?, .{ .ignore_unknown_fields = true });
 
-    var client = std.http.Client{ .allocator = arena_alloc };
-    defer client.deinit();
+    const endpoint = try grpc_endpoint.parseServer(arena_alloc, server);
+    const changes = try mapChanges(arena_alloc, session.files);
+    defer arena_alloc.free(changes);
+    const request = try sessions_proto.encodeLandSessionRequest(arena_alloc, session.id, changes);
+    defer arena_alloc.free(request);
 
-    // For now, just send the session to a basic endpoint
-    // In the future, this will create a proper session record with file changes
-    const payload_struct = struct {
-        session_id: []const u8,
-        goal: []const u8,
-        organization: []const u8,
-        project: []const u8,
-        started_at: []const u8,
-        conversation: []Conversation,
-        decisions: []Decision,
-    }{
-        .session_id = session.id,
-        .goal = session.goal,
-        .organization = session.project_org,
-        .project = session.project_handle,
-        .started_at = session.started_at,
-        .conversation = session.conversation,
-        .decisions = session.decisions,
-    };
+    const response = try grpc_client.unaryCall(
+        arena_alloc,
+        endpoint.target,
+        endpoint.host,
+        "/micelio.sessions.v1.SessionService/LandSession",
+        request,
+        creds.?.access_token.?,
+    );
+    defer arena_alloc.free(response.bytes);
 
-    var payload_buf = std.io.Writer.Allocating.init(arena_alloc);
-    defer payload_buf.deinit();
-    const formatter = std.json.fmt(payload_struct, .{});
-    try formatter.format(&payload_buf.writer);
-    const payload = try payload_buf.toOwnedSlice();
-
-    const url = try std.fmt.allocPrint(arena_alloc, "{s}/api/sessions", .{server});
-    const response = try http.postJsonAuth(arena_alloc, &client, url, payload, creds.?.access_token.?);
-
-    if (response.status != .created and response.status != .ok) {
-        std.debug.print("Error: Failed to land session (status: {})\n", .{response.status});
-        std.debug.print("Response: {s}\n", .{response.body});
-        return error.LandFailed;
-    }
+    const landed = try sessions_proto.decodeSessionResponse(arena_alloc, response.bytes);
 
     std.debug.print("Session landed successfully!\n", .{});
-    std.debug.print("Session ID: {s}\n", .{session.id});
+    std.debug.print("Session ID: {s}\n", .{landed.session_id});
+    if (landed.landing_position > 0) {
+        std.debug.print("Landing position: {d}\n", .{landed.landing_position});
+    }
     
     // Remove local session file
     const path_remove = try sessionStatePath(allocator);
@@ -258,6 +323,48 @@ fn generateSessionId(allocator: std.mem.Allocator) ![]u8 {
     
     const encoded = std.base64.url_safe_no_pad.Encoder.encode(try allocator.alloc(u8, std.base64.url_safe_no_pad.Encoder.calcSize(16)), &random_bytes);
     return try allocator.dupe(u8, encoded);
+}
+
+fn ensureParentDir(path: []const u8) !void {
+    var iter = std.mem.splitBackwardsScalar(u8, path, '/');
+    const filename = iter.next() orelse return;
+    _ = filename;
+
+    if (iter.next()) |dir| {
+        try std.fs.cwd().makePath(dir);
+    }
+}
+
+fn upsertChange(allocator: std.mem.Allocator, existing: []FileChange, change: FileChange) ![]FileChange {
+    var updated = std.ArrayList(FileChange).init(allocator);
+    var replaced = false;
+
+    for (existing) |item| {
+        if (std.mem.eql(u8, item.path, change.path)) {
+            try updated.append(change);
+            replaced = true;
+        } else {
+            try updated.append(item);
+        }
+    }
+
+    if (!replaced) {
+        try updated.append(change);
+    }
+
+    return updated.toOwnedSlice();
+}
+
+fn mapChanges(allocator: std.mem.Allocator, files: []FileChange) ![]sessions_proto.FileChange {
+    var mapped = try allocator.alloc(sessions_proto.FileChange, files.len);
+    for (files, 0..) |file, idx| {
+        mapped[idx] = .{
+            .path = file.path,
+            .content = file.content,
+            .change_type = file.change_type,
+        };
+    }
+    return mapped;
 }
 
 fn currentTimestamp(allocator: std.mem.Allocator) ![]u8 {

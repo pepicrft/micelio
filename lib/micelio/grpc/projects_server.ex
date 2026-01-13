@@ -15,13 +15,13 @@ defmodule Micelio.GRPC.Projects.V1.ProjectService.Server do
     UpdateProjectRequest
   }
 
+  alias Micelio.OAuth.AccessTokens
   alias Micelio.Projects
   alias Micelio.Projects.Project
 
-  def list_projects(%ListProjectsRequest{} = request, _stream) do
-    with :ok <- require_field(request.user_id, "user_id"),
-         :ok <- require_field(request.organization_handle, "organization_handle"),
-         {:ok, user} <- fetch_user(request.user_id),
+  def list_projects(%ListProjectsRequest{} = request, stream) do
+    with :ok <- require_field(request.organization_handle, "organization_handle"),
+         {:ok, user} <- fetch_user(request.user_id, stream),
          {:ok, organization} <- Accounts.get_organization_by_handle(request.organization_handle),
          true <- Accounts.user_in_organization?(user, organization.id) do
       projects = Projects.list_projects_for_organization(organization.id)
@@ -35,11 +35,10 @@ defmodule Micelio.GRPC.Projects.V1.ProjectService.Server do
     end
   end
 
-  def get_project(%GetProjectRequest{} = request, _stream) do
-    with :ok <- require_field(request.user_id, "user_id"),
-         :ok <- require_field(request.organization_handle, "organization_handle"),
+  def get_project(%GetProjectRequest{} = request, stream) do
+    with :ok <- require_field(request.organization_handle, "organization_handle"),
          :ok <- require_field(request.handle, "handle"),
-         {:ok, user} <- fetch_user(request.user_id),
+         {:ok, user} <- fetch_user(request.user_id, stream),
          {:ok, organization} <- Accounts.get_organization_by_handle(request.organization_handle),
          true <- Accounts.user_in_organization?(user, organization.id),
          %Project{} = project <- Projects.get_project_by_handle(organization.id, request.handle) do
@@ -51,12 +50,11 @@ defmodule Micelio.GRPC.Projects.V1.ProjectService.Server do
     end
   end
 
-  def create_project(%CreateProjectRequest{} = request, _stream) do
-    with :ok <- require_field(request.user_id, "user_id"),
-         :ok <- require_field(request.organization_handle, "organization_handle"),
+  def create_project(%CreateProjectRequest{} = request, stream) do
+    with :ok <- require_field(request.organization_handle, "organization_handle"),
          :ok <- require_field(request.handle, "handle"),
          :ok <- require_field(request.name, "name"),
-         {:ok, user} <- fetch_user(request.user_id),
+         {:ok, user} <- fetch_user(request.user_id, stream),
          {:ok, organization} <- Accounts.get_organization_by_handle(request.organization_handle),
          true <- Accounts.user_in_organization?(user, organization.id) do
       attrs = %{
@@ -79,11 +77,10 @@ defmodule Micelio.GRPC.Projects.V1.ProjectService.Server do
     end
   end
 
-  def update_project(%UpdateProjectRequest{} = request, _stream) do
-    with :ok <- require_field(request.user_id, "user_id"),
-         :ok <- require_field(request.organization_handle, "organization_handle"),
+  def update_project(%UpdateProjectRequest{} = request, stream) do
+    with :ok <- require_field(request.organization_handle, "organization_handle"),
          :ok <- require_field(request.handle, "handle"),
-         {:ok, user} <- fetch_user(request.user_id),
+         {:ok, user} <- fetch_user(request.user_id, stream),
          {:ok, organization} <- Accounts.get_organization_by_handle(request.organization_handle),
          true <- Accounts.user_in_organization?(user, organization.id),
          %Project{} = project <- Projects.get_project_by_handle(organization.id, request.handle) do
@@ -107,11 +104,10 @@ defmodule Micelio.GRPC.Projects.V1.ProjectService.Server do
     end
   end
 
-  def delete_project(%DeleteProjectRequest{} = request, _stream) do
-    with :ok <- require_field(request.user_id, "user_id"),
-         :ok <- require_field(request.organization_handle, "organization_handle"),
+  def delete_project(%DeleteProjectRequest{} = request, stream) do
+    with :ok <- require_field(request.organization_handle, "organization_handle"),
          :ok <- require_field(request.handle, "handle"),
-         {:ok, user} <- fetch_user(request.user_id),
+         {:ok, user} <- fetch_user(request.user_id, stream),
          {:ok, organization} <- Accounts.get_organization_by_handle(request.organization_handle),
          true <- Accounts.user_in_organization?(user, organization.id),
          %Project{} = project <- Projects.get_project_by_handle(organization.id, request.handle),
@@ -139,12 +135,34 @@ defmodule Micelio.GRPC.Projects.V1.ProjectService.Server do
     }
   end
 
-  defp fetch_user(nil), do: {:error, unauthenticated_status("User is required.")}
+  defp fetch_user(user_id, stream) do
+    case empty_to_nil(user_id) do
+      nil -> fetch_user_from_token(stream)
+      value -> fetch_user_by_id(value)
+    end
+  end
 
-  defp fetch_user(user_id) do
+  defp fetch_user_by_id(user_id) do
     case Accounts.get_user(user_id) do
       nil -> {:error, unauthenticated_status("User not found.")}
       user -> {:ok, user}
+    end
+  end
+
+  defp fetch_user_from_token(stream) do
+    with {:ok, token} <- fetch_bearer_token(stream),
+         %Boruta.Oauth.Token{} = access_token <- AccessTokens.get_by(value: token),
+         user when not is_nil(user) <- Accounts.get_user(access_token.sub) do
+      {:ok, user}
+    else
+      _ -> {:error, unauthenticated_status("User is required.")}
+    end
+  end
+
+  defp fetch_bearer_token(stream) do
+    case Map.get(stream.http_request_headers, "authorization") do
+      "Bearer " <> token -> {:ok, token}
+      _ -> {:error, :no_token}
     end
   end
 

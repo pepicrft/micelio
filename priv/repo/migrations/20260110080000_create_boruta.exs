@@ -8,7 +8,7 @@ defmodule Micelio.Repo.Migrations.CreateBoruta do
       add :secret, :string
       add :name, :string, null: false
       add :access_token_ttl, :integer, null: false
-      add :authorization_code_ttl, :integer, null: false  
+      add :authorization_code_ttl, :integer, null: false
       add :refresh_token_ttl, :integer, null: false
       add :id_token_ttl, :integer, null: false
       add :redirect_uris, {:array, :string}, null: false, default: []
@@ -28,7 +28,7 @@ defmodule Micelio.Repo.Migrations.CreateBoruta do
     create table(:oauth_tokens, primary_key: false) do
       add :id, :binary_id, primary_key: true
       add :type, :string, null: false
-      add :value, :string, null: false  
+      add :value, :string, null: false
       add :revoked_at, :utc_datetime
       add :expires_at, :utc_datetime
       add :redirect_uri, :string

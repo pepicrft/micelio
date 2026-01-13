@@ -12,12 +12,12 @@
 
     <div class="changelog-header">
       <h1 class="changelog-title">
-        <%= String.capitalize(@category) %> Updates
+        {String.capitalize(@category)} Updates
       </h1>
       <p class="changelog-tagline">
-        All changelog entries categorized under "<%= @category %>".
+        All changelog entries categorized under "{@category}".
       </p>
-      
+
       <div class="changelog-filters">
         <div class="changelog-categories">
           <span class="changelog-category-label">Other categories:</span>
@@ -25,8 +25,8 @@
             All
           </.link>
           <%= for category <- @categories do %>
-            <.link 
-              navigate={~p"/changelog/category/#{category}"} 
+            <.link
+              navigate={~p"/changelog/category/#{category}"}
               class={[
                 "changelog-category-link",
                 if category == @category do
@@ -36,7 +36,7 @@
                 end
               ]}
             >
-              <%= String.capitalize(category) %>
+              {String.capitalize(category)}
             </.link>
           <% end %>
         </div>
@@ -54,7 +54,7 @@
         <div class="changelog-empty-icon">📝</div>
         <h3 class="changelog-empty-title">No entries in this category</h3>
         <p class="changelog-empty-message">
-          No changelog entries found for the "<%= @category %>" category.
+          No changelog entries found for the "{@category}" category.
         </p>
       </div>
     <% end %>

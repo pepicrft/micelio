@@ -42,8 +42,9 @@ defmodule Micelio.Authorization.Checks do
   def repository_member(_, _), do: false
 
   def repository_owner(%User{} = user, %Account{} = account),
-    do: Accounts.user_owns_account?(user, account) or
-      Accounts.user_role_in_organization?(user, account.organization_id, "owner")
+    do:
+      Accounts.user_owns_account?(user, account) or
+        Accounts.user_role_in_organization?(user, account.organization_id, "owner")
 
   def repository_owner(%User{} = user, %{account: %Account{} = account}),
     do: repository_owner(user, account)

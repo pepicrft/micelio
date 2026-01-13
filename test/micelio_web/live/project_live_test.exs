@@ -76,7 +76,7 @@ defmodule MicelioWeb.ProjectLiveTest do
         name: "Edit Org"
       })
 
-    {:ok, project} =
+    {:ok, _project} =
       Projects.create_project(%{
         handle: "edit-project",
         name: "Edit Project",
@@ -84,7 +84,9 @@ defmodule MicelioWeb.ProjectLiveTest do
       })
 
     conn = login_user(conn, user)
-    {:ok, view, _html} = live(conn, ~p"/projects/#{organization.account.handle}/edit-project/edit")
+
+    {:ok, view, _html} =
+      live(conn, ~p"/projects/#{organization.account.handle}/edit-project/edit")
 
     form =
       form(view, "#project-form",

@@ -17,13 +17,13 @@ defmodule MicelioWeb.SessionLive.Index do
       {:ok, project, organization} ->
         if Authorization.authorize(:project_read, socket.assigns.current_user, project) == :ok do
           socket =
-          socket
-          |> assign(:page_title, "Sessions - #{project.name}")
-          |> assign(:project, project)
-          |> assign(:organization, organization)
-          |> assign(:status_filter, "all")
-          |> assign(:sort_order, :newest)
-          |> load_sessions()
+            socket
+            |> assign(:page_title, "Sessions - #{project.name}")
+            |> assign(:project, project)
+            |> assign(:organization, organization)
+            |> assign(:status_filter, "all")
+            |> assign(:sort_order, :newest)
+            |> load_sessions()
 
           {:ok, socket}
         else

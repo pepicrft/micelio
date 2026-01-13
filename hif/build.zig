@@ -3,6 +3,7 @@ const std = @import("std");
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
+    const grpc_enabled = b.option(bool, "grpc", "Build gRPC C core for the CLI") orelse true;
 
     const yazap_mod = b.addModule("yazap", .{
         .root_source_file = b.path("vendor/yazap/src/lib.zig"),
@@ -32,29 +33,22 @@ pub fn build(b: *std.Build) void {
                 },
             }),
         });
+        exe_val.addIncludePath(b.path("src"));
+        exe_val.addCSourceFile(.{
+            .file = b.path("src/grpc/client.c"),
+            .flags = &.{"-std=c11"},
+        });
+        exe_val.linkLibC();
+        if (grpc_enabled) {
+            const grpc = addGrpc(b, optimize);
+            exe_val.step.dependOn(grpc.step);
+            exe_val.addIncludePath(grpc.include_dir);
+            exe_val.addLibraryPath(grpc.lib_dir);
+            exe_val.linkSystemLibrary("grpc");
+            exe_val.linkSystemLibrary("gpr");
+        }
         b.installArtifact(exe_val);
         exe = exe_val;
-    }
-
-    // C ABI static library for FFI integration (skip for WASM)
-    if (target.result.os.tag != .freestanding) {
-        const ffi_lib = b.addLibrary(.{
-            .name = "hif_ffi",
-            .linkage = .static,
-            .root_module = b.createModule(.{
-                .root_source_file = b.path("src/ffi.zig"),
-                .target = target,
-                .optimize = optimize,
-                .imports = &.{
-                    .{ .name = "hif", .module = hif_mod },
-                },
-            }),
-        });
-        ffi_lib.linkLibC();
-        b.installArtifact(ffi_lib);
-
-        // Install the C header file
-        b.installFile("include/hif_core.h", "include/hif_core.h");
     }
 
     // Run step
@@ -135,17 +129,6 @@ pub fn build(b: *std.Build) void {
     });
     test_step.dependOn(&b.addRunArtifact(exe_unit_tests).step);
 
-    // FFI module tests
-    const ffi_tests = b.addTest(.{
-        .root_module = b.createModule(.{
-            .root_source_file = b.path("src/ffi.zig"),
-            .target = target,
-            .optimize = optimize,
-        }),
-    });
-    ffi_tests.linkLibC();
-    test_step.dependOn(&b.addRunArtifact(ffi_tests).step);
-
     // Integration tests
     const integration_tests = b.addTest(.{
         .root_module = b.createModule(.{
@@ -159,18 +142,75 @@ pub fn build(b: *std.Build) void {
     });
     test_step.dependOn(&b.addRunArtifact(integration_tests).step);
 
-    // Header sync tests (verify C header matches FFI exports)
-    const header_sync_mod = b.createModule(.{
-        .root_source_file = b.path("tests/header_sync.zig"),
-        .target = target,
-        .optimize = optimize,
+    // No FFI artifacts or header sync tests (CLI-first, no libhif-core).
+}
+
+const GrpcBuild = struct {
+    step: *std.Build.Step,
+    include_dir: std.Build.LazyPath,
+    lib_dir: std.Build.LazyPath,
+};
+
+fn addGrpc(b: *std.Build, optimize: std.builtin.OptimizeMode) GrpcBuild {
+    const grpc_source = b.path("vendor/grpc");
+    const grpc_build = b.path("zig-out/grpc/build");
+    const grpc_install = b.path("zig-out/grpc/install");
+
+    const build_type = switch (optimize) {
+        .Debug => "Debug",
+        .ReleaseSafe => "RelWithDebInfo",
+        .ReleaseFast => "Release",
+        .ReleaseSmall => "MinSizeRel",
+    };
+
+    const configure = b.addSystemCommand(&.{
+        "cmake",
+        "-S",
+        grpc_source.getPath(b),
+        "-B",
+        grpc_build.getPath(b),
+        "-DCMAKE_CXX_STANDARD=17",
+        "-DCMAKE_POSITION_INDEPENDENT_CODE=ON",
+        "-DBUILD_SHARED_LIBS=ON",
+        "-DgRPC_INSTALL=ON",
+        "-DgRPC_BUILD_TESTS=OFF",
+        "-DgRPC_BUILD_CODEGEN=OFF",
+        "-DgRPC_BUILD_GRPC_CSHARP_EXT=OFF",
+        "-DgRPC_BUILD_GRPC_CPP_PLUGIN=OFF",
+        "-DgRPC_BUILD_GRPC_NODE_PLUGIN=OFF",
+        "-DgRPC_BUILD_GRPC_PHP_PLUGIN=OFF",
+        "-DgRPC_BUILD_GRPC_PYTHON_PLUGIN=OFF",
+        "-DgRPC_BUILD_GRPC_RUBY_PLUGIN=OFF",
+        "-DgRPC_BUILD_GRPC_OBJECTIVE_C=OFF",
+        "-DgRPC_BUILD_GRPCPP=OFF",
+        "-DgRPC_SSL_PROVIDER=module",
+        "-DgRPC_ABSL_PROVIDER=module",
+        "-DgRPC_CARES_PROVIDER=module",
+        "-DgRPC_RE2_PROVIDER=module",
+        "-DgRPC_ZLIB_PROVIDER=module",
+        "-DgRPC_PROTOBUF_PROVIDER=module",
+        b.fmt("-DCMAKE_BUILD_TYPE={s}", .{build_type}),
+        b.fmt("-DCMAKE_INSTALL_PREFIX={s}", .{grpc_install.getPath(b)}),
     });
-    // Add include directory so @embedFile can find hif_core.h
-    header_sync_mod.addAnonymousImport("hif_core.h", .{
-        .root_source_file = b.path("include/hif_core.h"),
+
+    const fetch_deps = b.addSystemCommand(&.{
+        "sh",
+        b.path("scripts/fetch_grpc_deps.sh").getPath(b),
     });
-    const header_sync_tests = b.addTest(.{
-        .root_module = header_sync_mod,
+    configure.step.dependOn(&fetch_deps.step);
+
+    const build = b.addSystemCommand(&.{
+        "cmake",
+        "--build",
+        grpc_build.getPath(b),
+        "--target",
+        "install",
     });
-    test_step.dependOn(&b.addRunArtifact(header_sync_tests).step);
+    build.step.dependOn(&configure.step);
+
+    return .{
+        .step = &build.step,
+        .include_dir = b.path("zig-out/grpc/install/include"),
+        .lib_dir = b.path("zig-out/grpc/install/lib"),
+    };
 }

@@ -5,19 +5,18 @@ defmodule MicelioWeb.ProjectLive.Edit do
   alias Micelio.Projects
 
   @impl true
-  def mount(%{"organization_handle" => org_handle, "project_handle" => project_handle}, _session, socket) do
+  def mount(
+        %{"organization_handle" => org_handle, "project_handle" => project_handle},
+        _session,
+        socket
+      ) do
     case Projects.get_project_for_user_by_handle(
            socket.assigns.current_user,
            org_handle,
            project_handle
          ) do
       {:ok, project, organization} ->
-        if Authorization.authorize(:project_update, socket.assigns.current_user, project) != :ok do
-          {:ok,
-           socket
-           |> put_flash(:error, "You do not have access to this project.")
-           |> push_navigate(to: ~p"/projects")}
-        else
+        if Authorization.authorize(:project_update, socket.assigns.current_user, project) == :ok do
           form =
             project
             |> Projects.change_project()
@@ -31,6 +30,11 @@ defmodule MicelioWeb.ProjectLive.Edit do
             |> assign(:form, form)
 
           {:ok, socket}
+        else
+          {:ok,
+           socket
+           |> put_flash(:error, "You do not have access to this project.")
+           |> push_navigate(to: ~p"/projects")}
         end
 
       {:error, _reason} ->
@@ -53,7 +57,11 @@ defmodule MicelioWeb.ProjectLive.Edit do
 
   @impl true
   def handle_event("save", %{"project" => params}, socket) do
-    if Authorization.authorize(:project_update, socket.assigns.current_user, socket.assigns.project) ==
+    if Authorization.authorize(
+         :project_update,
+         socket.assigns.current_user,
+         socket.assigns.project
+       ) ==
          :ok do
       case Projects.update_project(socket.assigns.project, params) do
         {:ok, project} ->
@@ -134,9 +142,7 @@ defmodule MicelioWeb.ProjectLive.Edit do
               Save changes
             </button>
             <.link
-              navigate={
-                ~p"/projects/#{@organization.account.handle}/#{@project.handle}"
-              }
+              navigate={~p"/projects/#{@organization.account.handle}/#{@project.handle}"}
               class="project-button project-button-secondary"
               id="project-cancel"
             >

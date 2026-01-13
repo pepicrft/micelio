@@ -1,6 +1,6 @@
 defmodule MicelioWeb.LiveAuth do
-  import Phoenix.LiveView
   import Phoenix.Component, only: [assign: 2]
+  import Phoenix.LiveView
 
   alias Micelio.Accounts
 

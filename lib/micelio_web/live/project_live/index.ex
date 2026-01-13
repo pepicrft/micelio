@@ -8,7 +8,9 @@ defmodule MicelioWeb.ProjectLive.Index do
   @impl true
   def mount(_params, _session, socket) do
     projects = Projects.list_projects_for_user(socket.assigns.current_user)
-    owner_organizations = Accounts.list_organizations_for_user_with_role(socket.assigns.current_user, "owner")
+
+    owner_organizations =
+      Accounts.list_organizations_for_user_with_role(socket.assigns.current_user, "owner")
 
     socket =
       socket
@@ -36,8 +38,8 @@ defmodule MicelioWeb.ProjectLive.Index do
           {:noreply,
            socket
            |> stream_delete(:projects, project)
-          |> assign(:projects_count, projects_count)
-          |> put_flash(:info, "Project deleted successfully.")}
+           |> assign(:projects_count, projects_count)
+           |> put_flash(:info, "Project deleted successfully.")}
         else
           {:noreply, put_flash(socket, :error, "You do not have access to this project.")}
         end

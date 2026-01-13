@@ -31,7 +31,7 @@ defmodule MicelioWeb.SessionLiveTest do
           user_id: user.id
         })
 
-      {:ok, index_live, html} =
+      {:ok, _index_live, html} =
         live(conn, "/projects/#{organization.account.handle}/#{project.handle}/sessions")
 
       assert html =~ "Sessions"
@@ -45,7 +45,7 @@ defmodule MicelioWeb.SessionLiveTest do
       user: user,
       organization: organization
     } do
-      {:ok, session} =
+      {:ok, _session} =
         Sessions.create_session(%{
           session_id: "test-session",
           goal: "Test goal",
@@ -73,7 +73,7 @@ defmodule MicelioWeb.SessionLiveTest do
       user: user,
       organization: organization
     } do
-      {:ok, active_session} =
+      {:ok, _active_session} =
         Sessions.create_session(%{
           session_id: "active",
           goal: "Active session",

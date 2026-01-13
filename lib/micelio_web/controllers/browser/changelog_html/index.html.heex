@@ -9,7 +9,7 @@
       <p class="changelog-tagline">
         Stay up to date with the latest changes, improvements, and new features in Micelio.
       </p>
-      
+
       <div class="changelog-filters">
         <div class="changelog-categories">
           <span class="changelog-category-label">Filter by category:</span>
@@ -17,24 +17,24 @@
             All
           </.link>
           <%= for category <- @categories do %>
-            <.link 
-              navigate={~p"/changelog/category/#{category}"} 
+            <.link
+              navigate={~p"/changelog/category/#{category}"}
               class="changelog-category-link"
             >
-              <%= String.capitalize(category) %>
+              {String.capitalize(category)}
             </.link>
           <% end %>
         </div>
-        
+
         <div class="changelog-feeds">
-          <.link 
-            href={~p"/changelog/rss"} 
+          <.link
+            href={~p"/changelog/rss"}
             class="changelog-feed-link"
           >
             RSS
           </.link>
-          <.link 
-            href={~p"/changelog/atom"} 
+          <.link
+            href={~p"/changelog/atom"}
             class="changelog-feed-link"
           >
             Atom

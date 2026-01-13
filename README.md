@@ -15,6 +15,18 @@ The documentation for _users_, _contributors_, and _hosters_ is available at [`/
 > Micelio uses [libgit2](https://libgit2.org/) for Git operations via Zig NIFs. You'll need to install it before compiling:
 > - **macOS**: `brew install libgit2`
 > - **Debian/Ubuntu**: `apt-get install libgit2-dev`
+>
+> The `hif` CLI vendors gRPC C core version `v1.76.0` in `hif/vendor/grpc`.
+> Building the CLI fetches gRPC dependencies into `hif/vendor/grpc/third_party` (no git submodules).
+
+## hif CLI (early access)
+
+```
+hif auth login
+hif checkout <account>/<project>
+hif status
+hif land "your goal"
+```
 
 To start your Phoenix server:
 

@@ -45,6 +45,13 @@ defmodule Micelio.Projects do
   end
 
   @doc """
+  Lists all projects.
+  """
+  def list_projects do
+    Repo.all(Project)
+  end
+
+  @doc """
   Lists all projects for the organizations a user belongs to.
   Projects are ordered by organization handle and project name.
   """

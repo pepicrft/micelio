@@ -11,10 +11,6 @@ defmodule MicelioWeb.Router do
     plug MicelioWeb.AuthenticationPlug
   end
 
-  pipeline :api do
-    plug :accepts, ["json"]
-  end
-
   pipeline :require_auth do
     plug MicelioWeb.RequireAuthPlug
   end
@@ -39,38 +35,6 @@ defmodule MicelioWeb.Router do
       live_dashboard "/dashboard", metrics: MicelioWeb.Telemetry
       forward "/mailbox", Plug.Swoosh.MailboxPreview
     end
-  end
-
-  scope "/api", MicelioWeb.API do
-    pipe_through :api
-
-    get "/repositories", RepositoryController, :index
-    get "/releases", ReleaseController, :index
-
-    # OAuth2 Device Authentication Flow
-    post "/device/auth", DeviceAuthController, :create
-    post "/device/token", DeviceTokenController, :create
-    post "/device/client", DeviceClientController, :create
-
-    # Project Management (requires bearer token)
-    get "/projects", ProjectController, :index
-    post "/projects", ProjectController, :create
-    get "/projects/:organization/:handle", ProjectController, :show
-    put "/projects/:organization/:handle", ProjectController, :update
-    delete "/projects/:organization/:handle", ProjectController, :delete
-
-    # Session Management (requires bearer token)
-    post "/sessions", SessionController, :create
-    post "/sessions/start", SessionController, :start
-    post "/sessions/:session_id/land", SessionController, :land
-  end
-
-  scope "/device", MicelioWeb.API do
-    pipe_through :api
-
-    post "/register", DeviceClientController, :create
-    post "/auth", DeviceAuthController, :create
-    post "/token", DeviceTokenController, :create
   end
 
   # Blog routes (public)

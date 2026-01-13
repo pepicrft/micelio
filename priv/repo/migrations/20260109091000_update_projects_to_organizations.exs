@@ -34,7 +34,10 @@ defmodule Micelio.Repo.Migrations.UpdateProjectsToOrganizations do
            )
 
     drop index(:projects, [:organization_id])
-    drop index(:projects, [:organization_id, "lower(handle)"], name: :projects_organization_handle_index)
+
+    drop index(:projects, [:organization_id, "lower(handle)"],
+           name: :projects_organization_handle_index
+         )
 
     alter table(:projects) do
       remove :organization_id

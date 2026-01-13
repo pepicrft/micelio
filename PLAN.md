@@ -629,11 +629,9 @@ end
 
 ```elixir
 # mix.exs
-{:ex_aws, "~> 2.5"},
-{:ex_aws_s3, "~> 2.5"},
-{:hackney, "~> 1.20"},
-{:grpc, "~> 0.9"},
-{:protobuf, "~> 0.13"},
+{:req, "~> 0.5"},
+{:grpc, "~> 0.11"},
+{:protobuf, "~> 0.16"},
 {:oban, "~> 2.17"},  # for background jobs
 ```
 
@@ -643,7 +641,6 @@ end
 |------------|---------|
 | SQLite + Litestream | Auth storage (replicated to S3) |
 | S3 / R2 / MinIO | hif data storage |
-| libhif-core | Binary formats, bloom filters |
 
 ---
 
@@ -656,8 +653,7 @@ end
 | 3 | Session CRUD | Start, update, abandon sessions |
 | 4 | Landing | Coordinator-free with bloom rollups |
 | 5 | API | gRPC and REST endpoints |
-| 6 | NIFs | libhif-core integration |
-| 7 | Caching | Tiered caching with CDN |
+| 6 | Caching | Tiered caching with CDN |
 
 ---
 
@@ -667,11 +663,13 @@ end
 - [ ] SQLite + Litestream setup
 - [ ] Auth context
 - [ ] Binary storage layer
-- [ ] Session CRUD
-- [ ] Coordinator-free landing
+- [x] Session CRUD (database + REST endpoints)
+- [x] Storage abstraction with local + S3 backends
+- [x] Basic landing endpoint (non-conditional)
+- [ ] Coordinator-free landing with conditional writes
 - [ ] Bloom filter rollups
-- [ ] gRPC API
-- [ ] libhif-core NIFs
+- [x] gRPC API (projects service)
+- [ ] Session gRPC API
 
 ---
 
@@ -681,7 +679,6 @@ end
 2. Set up Litestream for S3 replication
 3. Implement `Micelio.Hif.Auth` context
 4. Implement `Micelio.Hif.Binary` serialization
-5. Implement `Micelio.Hif.Storage` with local adapter
-6. Implement `Micelio.Hif.Sessions` context
-7. Implement `Micelio.Hif.Landing` with conditional writes
-8. Add gRPC endpoints
+5. Implement coordinator-free landing with conditional writes
+6. Add gRPC endpoints for sessions
+7. Build bloom filter rollups for conflict detection

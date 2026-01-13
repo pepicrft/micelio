@@ -52,6 +52,42 @@ defmodule Micelio.Sessions.Conflict do
     end)
   end
 
+  @doc """
+  Merges multiple filters by OR-ing their bitsets.
+  """
+  def merge_filters(filters) when is_list(filters) do
+    Enum.reduce(filters, nil, fn filter, acc ->
+      merge_filter_pair(acc, filter)
+    end)
+  end
+
+  defp merge_filter_pair(nil, filter), do: filter
+  defp merge_filter_pair(filter, nil), do: filter
+
+  defp merge_filter_pair(%{"size" => size, "hash_count" => hash_count, "bits" => left_bits}, %{
+         "size" => size,
+         "hash_count" => hash_count,
+         "bits" => right_bits
+       }) do
+    left = Base.decode64!(left_bits)
+    right = Base.decode64!(right_bits)
+
+    merged =
+      left
+      |> :binary.bin_to_list()
+      |> Enum.zip(:binary.bin_to_list(right))
+      |> Enum.map(fn {l, r} -> :erlang.bor(l, r) end)
+      |> :binary.list_to_bin()
+
+    %{
+      "size" => size,
+      "hash_count" => hash_count,
+      "bits" => Base.encode64(merged)
+    }
+  end
+
+  defp merge_filter_pair(filter, _other), do: filter
+
   defp hash_indexes(path, hash_count, size) do
     for idx <- 0..(hash_count - 1) do
       :crypto.hash(:sha256, "#{idx}:#{path}")

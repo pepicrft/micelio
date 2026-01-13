@@ -26,6 +26,13 @@ defmodule Micelio.Storage do
   end
 
   @doc """
+  Retrieves a file with storage metadata (e.g., ETag).
+  """
+  def get_with_metadata(key) do
+    backend().get_with_metadata(key)
+  end
+
+  @doc """
   Deletes a file by key.
   """
   def delete(key) do
@@ -44,6 +51,27 @@ defmodule Micelio.Storage do
   """
   def exists?(key) do
     backend().exists?(key)
+  end
+
+  @doc """
+  Returns metadata for a key when available (e.g., ETag).
+  """
+  def head(key) do
+    backend().head(key)
+  end
+
+  @doc """
+  Stores a file only if the current ETag matches.
+  """
+  def put_if_match(key, content, etag) do
+    backend().put_if_match(key, content, etag)
+  end
+
+  @doc """
+  Stores a file only if it does not already exist.
+  """
+  def put_if_none_match(key, content) do
+    backend().put_if_none_match(key, content)
   end
 
   defp backend do

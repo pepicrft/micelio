@@ -666,7 +666,7 @@ defmodule Micelio.SessionsTest do
     end
 
     test "changes are deleted when session is deleted", %{session: session} do
-      {:ok, change} =
+      {:ok, _change} =
         Sessions.create_session_change(%{
           session_id: session.id,
           file_path: "src/test.ex",

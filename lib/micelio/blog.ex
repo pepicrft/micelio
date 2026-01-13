@@ -3,10 +3,8 @@ defmodule Micelio.Blog do
   The Blog context for managing blog posts using NimblePublisher.
   """
 
-  alias Micelio.Blog.Post
-
   use NimblePublisher,
-    build: Post,
+    build: Micelio.Blog.Post,
     from: Application.app_dir(:micelio, "priv/posts/**/*.md"),
     as: :posts,
     highlighters: [:makeup_elixir, :makeup_erlang]

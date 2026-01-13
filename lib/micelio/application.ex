@@ -10,7 +10,10 @@ defmodule Micelio.Application do
     children =
       [
         MicelioWeb.Telemetry,
+        Micelio.Hif.Telemetry,
+        Micelio.Hif.RollupScheduler,
         Micelio.Repo,
+        {Task.Supervisor, name: Micelio.Hif.RollupSupervisor},
         {DNSCluster, query: Application.get_env(:micelio, :dns_cluster_query) || :ignore},
         {Phoenix.PubSub, name: Micelio.PubSub},
         # Start a worker by calling: Micelio.Worker.start_link(arg)
@@ -39,13 +42,24 @@ defmodule Micelio.Application do
 
     if Keyword.get(grpc_config, :enabled, false) do
       port = Keyword.get(grpc_config, :port, 50_051)
-      children ++ [
-        {GRPC.Server.Supervisor,
-         %{
-           port: port,
-           servers: [Micelio.GRPC.Endpoint]
-         }}
-      ]
+      tls = Keyword.get(grpc_config, :tls, [])
+
+      if tls == [] do
+        raise """
+        Micelio.GRPC is enabled but TLS is not configured.
+        Configure MICELIO_GRPC_TLS_CERTFILE and MICELIO_GRPC_TLS_KEYFILE.
+        """
+      end
+
+      children ++
+        [
+          {GRPC.Server.Supervisor,
+           %{
+             port: port,
+             servers: [Micelio.GRPC.Endpoint],
+             cred: GRPC.Credential.new(ssl: tls)
+           }}
+        ]
     else
       children
     end

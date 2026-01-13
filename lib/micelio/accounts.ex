@@ -13,6 +13,7 @@ defmodule Micelio.Accounts do
     User,
     Token
   }
+
   alias Micelio.Repo
 
   @doc """
@@ -38,10 +39,14 @@ defmodule Micelio.Accounts do
     |> preload(:organization)
     |> Repo.one()
     |> case do
-      nil -> {:error, :not_found}
+      nil ->
+        {:error, :not_found}
+
       %Account{organization: %Organization{} = organization} = account ->
         {:ok, %{organization | account: account}}
-      %Account{} -> {:error, :not_found}
+
+      %Account{} ->
+        {:error, :not_found}
     end
   end
 

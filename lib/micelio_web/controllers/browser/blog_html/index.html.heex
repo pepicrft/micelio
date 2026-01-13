@@ -19,20 +19,20 @@
       <%= for post <- @posts do %>
         <article class="blog-post-preview">
           <h2 class="blog-post-title">
-            <a href={~p"/blog/#{post.id}"}><%= post.title %></a>
+            <a href={~p"/blog/#{post.id}"}>{post.title}</a>
           </h2>
           <div class="blog-post-meta">
-            <time datetime={post.date}><%= format_date(post.date) %></time>
-            <span class="blog-post-author">by <%= post.author %></span>
+            <time datetime={post.date}>{format_date(post.date)}</time>
+            <span class="blog-post-author">by {post.author}</span>
             <%= if length(post.tags) > 0 do %>
               <div class="blog-post-tags">
                 <%= for tag <- post.tags do %>
-                  <span class="blog-post-tag"><%= tag %></span>
+                  <span class="blog-post-tag">{tag}</span>
                 <% end %>
               </div>
             <% end %>
           </div>
-          <p class="blog-post-description"><%= post.description %></p>
+          <p class="blog-post-description">{post.description}</p>
         </article>
       <% end %>
     </div>

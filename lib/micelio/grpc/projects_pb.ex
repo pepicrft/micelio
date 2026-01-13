@@ -76,23 +76,33 @@ end
 defmodule Micelio.GRPC.Projects.V1.ProjectService.Service do
   use GRPC.Service, name: "micelio.projects.v1.ProjectService"
 
-  rpc :ListProjects,
-      Micelio.GRPC.Projects.V1.ListProjectsRequest,
-      Micelio.GRPC.Projects.V1.ListProjectsResponse
+  rpc(
+    :ListProjects,
+    Micelio.GRPC.Projects.V1.ListProjectsRequest,
+    Micelio.GRPC.Projects.V1.ListProjectsResponse
+  )
 
-  rpc :GetProject,
-      Micelio.GRPC.Projects.V1.GetProjectRequest,
-      Micelio.GRPC.Projects.V1.ProjectResponse
+  rpc(
+    :GetProject,
+    Micelio.GRPC.Projects.V1.GetProjectRequest,
+    Micelio.GRPC.Projects.V1.ProjectResponse
+  )
 
-  rpc :CreateProject,
-      Micelio.GRPC.Projects.V1.CreateProjectRequest,
-      Micelio.GRPC.Projects.V1.ProjectResponse
+  rpc(
+    :CreateProject,
+    Micelio.GRPC.Projects.V1.CreateProjectRequest,
+    Micelio.GRPC.Projects.V1.ProjectResponse
+  )
 
-  rpc :UpdateProject,
-      Micelio.GRPC.Projects.V1.UpdateProjectRequest,
-      Micelio.GRPC.Projects.V1.ProjectResponse
+  rpc(
+    :UpdateProject,
+    Micelio.GRPC.Projects.V1.UpdateProjectRequest,
+    Micelio.GRPC.Projects.V1.ProjectResponse
+  )
 
-  rpc :DeleteProject,
-      Micelio.GRPC.Projects.V1.DeleteProjectRequest,
-      Micelio.GRPC.Projects.V1.DeleteProjectResponse
+  rpc(
+    :DeleteProject,
+    Micelio.GRPC.Projects.V1.DeleteProjectRequest,
+    Micelio.GRPC.Projects.V1.DeleteProjectResponse
+  )
 end

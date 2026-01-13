@@ -1,16 +1,15 @@
 const std = @import("std");
-const http = @import("http.zig");
+const grpc_client = @import("grpc/client.zig");
+const grpc_endpoint = @import("grpc/endpoint.zig");
+const auth_proto = @import("grpc/auth_proto.zig");
 const xdg = @import("xdg.zig");
 
-pub const default_server = "http://localhost:4000";
+pub const default_server = "https://localhost:50051";
 const credentials_filename = "credentials.json";
-const device_grant_type = "urn:ietf:params:oauth:grant-type:device_code";
 
 const DeviceClientRegistration = struct {
     client_id: []const u8,
     client_secret: []const u8,
-    device_authorization_endpoint: []const u8,
-    token_endpoint: []const u8,
 };
 
 const DeviceAuthResponse = struct {
@@ -29,11 +28,6 @@ const TokenResponse = struct {
     expires_in: ?i64 = null,
 };
 
-const ErrorResponse = struct {
-    @"error": []const u8,
-    error_description: ?[]const u8 = null,
-};
-
 const Credentials = struct {
     server: []const u8,
     client_id: []const u8,
@@ -49,16 +43,14 @@ pub fn login(allocator: std.mem.Allocator, server: []const u8) !void {
     defer arena.deinit();
     const arena_alloc = arena.allocator();
 
-    var client = std.http.Client{ .allocator = arena_alloc };
-    defer client.deinit();
-
-    const registration = try ensureClientRegistration(arena_alloc, &client, server);
-    const auth = try requestDeviceAuthorization(arena_alloc, &client, registration);
+    const endpoint = try grpc_endpoint.parseServer(arena_alloc, server);
+    const registration = try ensureClientRegistration(arena_alloc, endpoint, server);
+    const auth = try requestDeviceAuthorization(arena_alloc, endpoint, registration);
 
     std.debug.print("Authorize this device at {s}\nCode: {s}\n", .{ auth.verification_uri_complete, auth.user_code });
     std.debug.print("Waiting for authorization...\n", .{});
 
-    const token = try pollForToken(arena_alloc, &client, registration, auth);
+    const token = try pollForToken(arena_alloc, endpoint, registration, auth);
 
     const credentials = Credentials{
         .server = server,
@@ -117,7 +109,7 @@ pub fn logout(allocator: std.mem.Allocator) !void {
 
 fn ensureClientRegistration(
     allocator: std.mem.Allocator,
-    client: *std.http.Client,
+    endpoint: grpc_endpoint.Endpoint,
     server: []const u8,
 ) !DeviceClientRegistration {
     const existing = try readCredentials(allocator);
@@ -126,80 +118,78 @@ fn ensureClientRegistration(
             return DeviceClientRegistration{
                 .client_id = value.client_id,
                 .client_secret = value.client_secret,
-                .device_authorization_endpoint = try std.fmt.allocPrint(allocator, "{s}/api/device/auth", .{server}),
-                .token_endpoint = try std.fmt.allocPrint(allocator, "{s}/api/device/token", .{server}),
             };
         }
     }
 
-    return try registerDeviceClient(allocator, client, server);
+    return try registerDeviceClient(allocator, endpoint);
 }
 
 fn registerDeviceClient(
     allocator: std.mem.Allocator,
-    client: *std.http.Client,
-    server: []const u8,
+    endpoint: grpc_endpoint.Endpoint,
 ) !DeviceClientRegistration {
-    const url = try std.fmt.allocPrint(allocator, "{s}/api/device/client", .{server});
-    defer allocator.free(url);
+    const request = try auth_proto.encodeDeviceClientRegistrationRequest(allocator, "hif");
+    defer allocator.free(request);
 
-    const payload_struct = struct {
-        name: []const u8,
-    }{ .name = "hif" };
+    const response = try grpc_client.unaryCall(
+        allocator,
+        endpoint.target,
+        endpoint.host,
+        "/micelio.auth.v1.DeviceAuthService/RegisterDevice",
+        request,
+        null,
+    );
+    defer allocator.free(response.bytes);
 
-    var payload_buf = std.Io.Writer.Allocating.init(allocator);
-    defer payload_buf.deinit();
-    const formatter = std.json.fmt(payload_struct, .{});
-    try formatter.format(&payload_buf.writer);
-    const payload = try payload_buf.toOwnedSlice();
-    defer allocator.free(payload);
+    const registration = try auth_proto.decodeDeviceClientRegistrationResponse(allocator, response.bytes);
 
-    const response = try http.postJson(allocator, client, url, payload);
-    
-    if (response.status != .ok and response.status != .created) {
-        return error.UnexpectedStatus;
-    }
-
-    // Don't free response.body - parseFromSliceLeaky uses it directly
-    return try std.json.parseFromSliceLeaky(DeviceClientRegistration, allocator, response.body, .{ .ignore_unknown_fields = true });
+    return DeviceClientRegistration{
+        .client_id = registration.client_id,
+        .client_secret = registration.client_secret,
+    };
 }
 
 fn requestDeviceAuthorization(
     allocator: std.mem.Allocator,
-    client: *std.http.Client,
+    endpoint: grpc_endpoint.Endpoint,
     registration: DeviceClientRegistration,
 ) !DeviceAuthResponse {
     const device_name = try deviceName(allocator);
-    const payload_struct = struct {
-        client_id: []const u8,
-        client_secret: []const u8,
-        device_name: []const u8,
-    }{
-        .client_id = registration.client_id,
-        .client_secret = registration.client_secret,
-        .device_name = device_name,
+    const request = try auth_proto.encodeDeviceAuthorizationRequest(
+        allocator,
+        registration.client_id,
+        registration.client_secret,
+        device_name,
+        null,
+    );
+    defer allocator.free(request);
+
+    const response = try grpc_client.unaryCall(
+        allocator,
+        endpoint.target,
+        endpoint.host,
+        "/micelio.auth.v1.DeviceAuthService/StartDeviceAuthorization",
+        request,
+        null,
+    );
+    defer allocator.free(response.bytes);
+
+    const auth = try auth_proto.decodeDeviceAuthorizationResponse(allocator, response.bytes);
+
+    return .{
+        .device_code = auth.device_code,
+        .user_code = auth.user_code,
+        .verification_uri = auth.verification_uri,
+        .verification_uri_complete = auth.verification_uri_complete,
+        .expires_in = auth.expires_in,
+        .interval = auth.interval,
     };
-
-    var payload_buf = std.Io.Writer.Allocating.init(allocator);
-    defer payload_buf.deinit();
-    const formatter = std.json.fmt(payload_struct, .{});
-    try formatter.format(&payload_buf.writer);
-    const payload = try payload_buf.toOwnedSlice();
-    defer allocator.free(payload);
-
-    const response = try http.postJson(allocator, client, registration.device_authorization_endpoint, payload);
-
-    if (response.status != .ok) {
-        return error.UnexpectedStatus;
-    }
-
-    // Don't free response.body - parseFromSliceLeaky uses it directly
-    return try std.json.parseFromSliceLeaky(DeviceAuthResponse, allocator, response.body, .{ .ignore_unknown_fields = true });
 }
 
 fn pollForToken(
     allocator: std.mem.Allocator,
-    client: *std.http.Client,
+    endpoint: grpc_endpoint.Endpoint,
     registration: DeviceClientRegistration,
     auth: DeviceAuthResponse,
 ) !TokenResponse {
@@ -209,55 +199,51 @@ fn pollForToken(
     while (true) {
         if (std.time.timestamp() >= deadline) return error.DeviceCodeExpired;
 
-        const payload_struct = struct {
-            grant_type: []const u8,
-            device_code: []const u8,
-            client_id: []const u8,
-            client_secret: []const u8,
-        }{
-            .grant_type = device_grant_type,
-            .device_code = auth.device_code,
-            .client_id = registration.client_id,
-            .client_secret = registration.client_secret,
-        };
+        const request = try auth_proto.encodeDeviceTokenRequest(
+            allocator,
+            registration.client_id,
+            registration.client_secret,
+            auth.device_code,
+        );
+        defer allocator.free(request);
 
-        var payload_buf = std.Io.Writer.Allocating.init(allocator);
-        defer payload_buf.deinit();
-        const formatter = std.json.fmt(payload_struct, .{});
-        try formatter.format(&payload_buf.writer);
-        const payload = try payload_buf.toOwnedSlice();
-        defer allocator.free(payload);
+        const result = try grpc_client.unaryCallResult(
+            allocator,
+            endpoint.target,
+            endpoint.host,
+            "/micelio.auth.v1.DeviceAuthService/ExchangeDeviceCode",
+            request,
+            null,
+        );
 
-        const response = try http.postJson(allocator, client, registration.token_endpoint, payload);
-
-        if (response.status == .ok) {
-            // Don't free response.body - parseFromSliceLeaky uses it directly
-            return try std.json.parseFromSliceLeaky(TokenResponse, allocator, response.body, .{ .ignore_unknown_fields = true });
+        switch (result) {
+            .ok => |response| {
+                defer allocator.free(response.bytes);
+                const token = try auth_proto.decodeDeviceTokenResponse(allocator, response.bytes);
+                return .{
+                    .token_type = token.token_type,
+                    .access_token = token.access_token,
+                    .refresh_token = if (token.refresh_token.len > 0) token.refresh_token else null,
+                    .expires_in = @intCast(token.expires_in),
+                };
+            },
+            .err => |message| {
+                defer allocator.free(message);
+                if (std.mem.eql(u8, message, "authorization_pending")) {
+                    try sleepSeconds(interval);
+                    continue;
+                }
+                if (std.mem.eql(u8, message, "slow_down")) {
+                    interval += 5;
+                    try sleepSeconds(interval);
+                    continue;
+                }
+                if (std.mem.eql(u8, message, "expired_token")) {
+                    return error.DeviceCodeExpired;
+                }
+                return error.AuthorizationFailed;
+            },
         }
-
-        // Handle error responses (typically 400 Bad Request for OAuth2 errors)
-        const parsed_error = std.json.parseFromSliceLeaky(ErrorResponse, allocator, response.body, .{ .ignore_unknown_fields = true }) catch |err| {
-            std.debug.print("ERROR: Failed to parse error response (status={}, error={})\n", .{ response.status, err });
-            std.debug.print("Response body: {s}\n", .{response.body});
-            return error.UnexpectedStatus;
-        };
-
-        if (std.mem.eql(u8, parsed_error.@"error", "authorization_pending")) {
-            try sleepSeconds(interval);
-            continue;
-        }
-
-        if (std.mem.eql(u8, parsed_error.@"error", "slow_down")) {
-            interval += 5;
-            try sleepSeconds(interval);
-            continue;
-        }
-
-        if (std.mem.eql(u8, parsed_error.@"error", "expired_token")) {
-            return error.DeviceCodeExpired;
-        }
-
-        return error.AuthorizationFailed;
     }
 }
 

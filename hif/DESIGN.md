@@ -36,17 +36,13 @@ hif has three components that work together:
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                               CLIENT (Zig)                                   │
 │                                                                             │
-│  ┌─────────────────────────────────────────────────────────────────────┐   │
-│  │                      libhif-core (native Zig)                       │   │
-│  │   Trees · Bloom Filters · Segmented Changelog · HLC · Hash          │   │
-│  │   Binary serialization · Conflict detection                         │   │
-│  └─────────────────────────────────────────────────────────────────────┘   │
-│                                   │                                         │
+│  Core modules (hash · bloom · HLC · tree) are embedded in the CLI.          │
+│                                                                             │
 │  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐                  │
 │  │   hif CLI     │  │   hif-fs      │  │  Tiered Cache │                  │
 │  │               │  │  (Phase 2)    │  │               │                  │
-│  │ session start │  │  NFS daemon   │  │  RAM → SSD    │                  │
-│  │ session land  │  │  Mount point  │  │  → S3         │                  │
+│  │ checkout      │  │  NFS daemon   │  │  RAM → SSD    │                  │
+│  │ land          │  │  Mount point  │  │  → S3         │                  │
 │  └───────────────┘  └───────────────┘  └───────────────┘                  │
 └─────────────────────────────────────────────────────────────────────────────┘
                                     │
@@ -95,7 +91,6 @@ hif has three components that work together:
 
 | Component | Language | Runs | Responsibility |
 |-----------|----------|------|----------------|
-| **libhif-core** | Zig (C ABI) | Anywhere | Algorithms: trees, bloom, changelog, hashing, binary serialization |
 | **Forge Agents** | Any (Elixir, Go, etc.) | Cloud | Stateless API handlers, any agent handles any request |
 | **hif CLI** | Zig | Local | User/agent interface |
 | **hif-fs** | Zig | Local | Virtual filesystem (Phase 2) |
@@ -127,7 +122,7 @@ hif has three components that work together:
 
 **Binary everywhere (not JSON):**
 - All data structures serialize to compact binary
-- libhif-core handles all serialization
+- Core modules handle serialization
 - Trees, blooms, sessions: all binary
 - Fast to parse, small on disk
 - Zero-copy where possible
@@ -209,214 +204,11 @@ For hif:
 
 ---
 
-## libhif-core
+## Core Modules
 
-The algorithmic core, shared between forge and client.
-
-### C API
-
-```c
-// hif_core.h
-
-#include <stdint.h>
-#include <stddef.h>
-
-// Allocator (caller provides memory management)
-typedef struct {
-    void* (*alloc)(void* ctx, size_t size);
-    void (*free)(void* ctx, void* ptr, size_t size);
-    void* ctx;
-} HifAllocator;
-
-// ============================================================================
-// Content Hashing (Blake3)
-// ============================================================================
-
-// Hash a blob, returns 32-byte hash
-void hif_hash_blob(const uint8_t* data, size_t len, uint8_t out[32]);
-
-// Chunked hashing for large files
-typedef struct HifChunker HifChunker;
-
-HifChunker* hif_chunker_new(HifAllocator* alloc, size_t target_chunk_size);
-void hif_chunker_free(HifChunker* chunker);
-
-// Returns number of chunks, fills hashes array
-size_t hif_chunker_chunk(
-    HifChunker* chunker,
-    const uint8_t* data,
-    size_t len,
-    uint8_t (*hashes)[32],
-    size_t max_chunks
-);
-
-// ============================================================================
-// Bloom Filters
-// ============================================================================
-
-typedef struct HifBloom HifBloom;
-
-// Create bloom filter for n items with false positive rate fp_rate
-HifBloom* hif_bloom_new(HifAllocator* alloc, size_t n, double fp_rate);
-void hif_bloom_free(HifBloom* bloom);
-
-void hif_bloom_add(HifBloom* bloom, const uint8_t* data, size_t len);
-int hif_bloom_check(const HifBloom* bloom, const uint8_t* data, size_t len);
-int hif_bloom_intersects(const HifBloom* a, const HifBloom* b);
-
-// Serialization
-size_t hif_bloom_serialized_size(const HifBloom* bloom);
-void hif_bloom_serialize(const HifBloom* bloom, uint8_t* out);
-HifBloom* hif_bloom_deserialize(HifAllocator* alloc, const uint8_t* data, size_t len);
-
-// ============================================================================
-// Prolly Trees (content-addressed B-trees)
-// ============================================================================
-
-typedef struct HifTree HifTree;
-typedef struct HifTreeDiff HifTreeDiff;
-
-HifTree* hif_tree_new(HifAllocator* alloc);
-void hif_tree_free(HifTree* tree);
-
-// Mutations (returns new tree, original unchanged)
-HifTree* hif_tree_insert(const HifTree* tree, const char* path, const uint8_t hash[32]);
-HifTree* hif_tree_delete(const HifTree* tree, const char* path);
-
-// Queries
-int hif_tree_get(const HifTree* tree, const char* path, uint8_t out[32]);
-void hif_tree_hash(const HifTree* tree, uint8_t out[32]);
-
-// Diffing
-HifTreeDiff* hif_tree_diff(const HifTree* a, const HifTree* b);
-void hif_tree_diff_free(HifTreeDiff* diff);
-
-typedef struct {
-    const char* path;
-    uint8_t old_hash[32];  // zero if added
-    uint8_t new_hash[32];  // zero if deleted
-} HifDiffEntry;
-
-size_t hif_tree_diff_count(const HifTreeDiff* diff);
-const HifDiffEntry* hif_tree_diff_get(const HifTreeDiff* diff, size_t index);
-
-// Serialization
-size_t hif_tree_serialized_size(const HifTree* tree);
-void hif_tree_serialize(const HifTree* tree, uint8_t* out);
-HifTree* hif_tree_deserialize(HifAllocator* alloc, const uint8_t* data, size_t len);
-
-// ============================================================================
-// Hybrid Logical Clock
-// ============================================================================
-
-typedef struct {
-    int64_t physical;   // milliseconds since epoch
-    uint32_t logical;   // logical counter
-    uint32_t node_id;   // node identifier
-} HifHLC;
-
-void hif_hlc_init(HifHLC* hlc, uint32_t node_id);
-void hif_hlc_now(HifHLC* hlc, int64_t wall_time);
-void hif_hlc_update(HifHLC* hlc, const HifHLC* received, int64_t wall_time);
-int hif_hlc_compare(const HifHLC* a, const HifHLC* b);
-
-void hif_hlc_serialize(const HifHLC* hlc, uint8_t out[16]);
-void hif_hlc_deserialize(const uint8_t data[16], HifHLC* out);
-
-// ============================================================================
-// Segmented Changelog (ancestry queries)
-// ============================================================================
-
-typedef struct HifChangelog HifChangelog;
-
-HifChangelog* hif_changelog_new(HifAllocator* alloc);
-void hif_changelog_free(HifChangelog* cl);
-
-// Add a session with its parent positions
-void hif_changelog_add(
-    HifChangelog* cl,
-    int64_t position,
-    const uint8_t session_id[16],
-    const int64_t* parent_positions,
-    size_t parent_count
-);
-
-// Queries
-int hif_changelog_is_ancestor(const HifChangelog* cl, int64_t ancestor, int64_t descendant);
-int64_t hif_changelog_common_ancestor(const HifChangelog* cl, int64_t a, int64_t b);
-
-// Serialization
-size_t hif_changelog_serialized_size(const HifChangelog* cl);
-void hif_changelog_serialize(const HifChangelog* cl, uint8_t* out);
-HifChangelog* hif_changelog_deserialize(HifAllocator* alloc, const uint8_t* data, size_t len);
-```
-
-### Usage from Elixir (via Zigler)
-
-```elixir
-defmodule Hif.Core do
-  use Zig, otp_app: :hif_forge, sources: ["c_src/libhif_core.a"]
-
-  # Bloom filters
-  def bloom_new(n, fp_rate), do: :erlang.nif_error(:not_loaded)
-  def bloom_add(bloom, data), do: :erlang.nif_error(:not_loaded)
-  def bloom_check(bloom, data), do: :erlang.nif_error(:not_loaded)
-  def bloom_intersects(a, b), do: :erlang.nif_error(:not_loaded)
-
-  # Trees
-  def tree_new(), do: :erlang.nif_error(:not_loaded)
-  def tree_insert(tree, path, hash), do: :erlang.nif_error(:not_loaded)
-  def tree_hash(tree), do: :erlang.nif_error(:not_loaded)
-  def tree_diff(a, b), do: :erlang.nif_error(:not_loaded)
-
-  # Hashing
-  def hash_blob(data), do: :erlang.nif_error(:not_loaded)
-end
-
-defmodule Hif.ConflictDetector do
-  alias Hif.Core
-
-  def check(session, landed_since_base) do
-    our_bloom = session.bloom_filter
-
-    Enum.find_value(landed_since_base, fn landed ->
-      if Core.bloom_intersects(our_bloom, landed.bloom_filter) do
-        find_actual_conflicts(session.paths, landed.paths)
-      end
-    end)
-  end
-end
-```
-
-### Usage from Go
-
-```go
-// #cgo LDFLAGS: -lhif_core
-// #include <hif_core.h>
-import "C"
-import "unsafe"
-
-type Tree struct {
-    ptr *C.HifTree
-}
-
-func NewTree() *Tree {
-    return &Tree{ptr: C.hif_tree_new(defaultAllocator)}
-}
-
-func (t *Tree) Insert(path string, hash [32]byte) *Tree {
-    cpath := C.CString(path)
-    defer C.free(unsafe.Pointer(cpath))
-    newPtr := C.hif_tree_insert(t.ptr, cpath, (*C.uint8_t)(&hash[0]))
-    return &Tree{ptr: newPtr}
-}
-
-func (t *Tree) Hash() [32]byte {
-    var out [32]byte
-    C.hif_tree_hash(t.ptr, (*C.uint8_t)(&out[0]))
-    return out
-}
-```
+The CLI embeds the core primitives directly (hashing, bloom filters, HLC, trees,
+and changelog). These stay internal to the Zig codebase for now, keeping the
+surface area minimal while the forge and CLI iterate in lockstep.
 
 ---
 
@@ -497,7 +289,7 @@ Landing integrates a session's changes:
 3. **Non-blocking** - conflicts are recorded, not fatal
 
 ```bash
-$ hif session land
+$ hif land
 
 Landing session ses_7f3a2b1c...
 Position in queue: 3
@@ -508,7 +300,7 @@ Landed at position 847293
 If conflicts are detected:
 
 ```bash
-$ hif session land
+$ hif land
 
 Landing session ses_7f3a2b1c...
 Conflict detected with ses_2d4e6f8a (landed 3s ago)
@@ -899,10 +691,7 @@ The client is thin. It caches aggressively but trusts the forge.
 │  │ operations  │  │ streaming   │  │ LRU evict   │             │
 │  └─────────────┘  └─────────────┘  └─────────────┘             │
 │         │               │               │                       │
-│  ┌──────────────────────────────────────────────────────────┐  │
-│  │                     libhif-core                          │  │
-│  │              (native Zig, no FFI overhead)              │  │
-│  └──────────────────────────────────────────────────────────┘  │
+│  Core modules are embedded directly in the CLI.                │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -961,13 +750,17 @@ NFS operations:
 # Setup
 hif auth login                    # Authenticate with forge
 hif project create <name>         # Create new project on forge
+hif checkout <account>/<project>  # Create local workspace
 hif clone <project>               # Clone project locally
 
-# Sessions
+# Workspace
+hif status                        # Workspace status
+hif land <goal>                   # Land workspace changes
+
+# Sessions (advanced)
 hif session start "goal"          # Start new session
 hif session status                # Current session info
 hif session list                  # List sessions
-hif session land                  # Land current session
 hif session abandon               # Abandon current session
 hif session resolve               # Resolve conflicts
 hif session claim <id>            # Claim orphaned session
@@ -1322,13 +1115,12 @@ Inspired by [Microsoft Scalar](https://github.blog/2022-10-13-the-story-of-scala
 ```
 hif/
 ├── src/
-│   ├── core/                    # libhif-core
+│   ├── core/                    # Core primitives
 │   │   ├── hash.zig            # Blake3 hashing, chunking
 │   │   ├── bloom.zig           # Bloom filters
 │   │   ├── tree.zig            # Prolly trees
 │   │   ├── changelog.zig       # Segmented changelog
 │   │   ├── hlc.zig             # Hybrid logical clock
-│   │   └── c_api.zig           # C ABI exports
 │   │
 │   ├── client/                  # hif CLI
 │   │   ├── main.zig            # Entry point
@@ -1347,9 +1139,6 @@ hif/
 │   │
 │   └── root.zig                 # Library entry
 │
-├── include/
-│   └── hif_core.h               # C header
-│
 ├── build.zig
 └── DESIGN.md
 ```
@@ -1363,11 +1152,6 @@ zig-out/
 ├── bin/
 │   ├── hif                      # CLI binary
 │   └── hif-fs                   # FS daemon (Phase 2)
-├── lib/
-│   ├── libhif_core.a           # Static library
-│   └── libhif_core.so          # Shared library
-└── include/
-    └── hif_core.h              # C header
 ```
 
 ---
@@ -1376,12 +1160,11 @@ zig-out/
 
 ### Phase 1: Foundation
 
-**libhif-core:**
+**Core modules:**
 - [x] Blake3 hashing
 - [x] Bloom filters
 - [x] Basic tree (insert, delete, hash)
 - [x] HLC timestamps
-- [x] C API + header
 - [ ] Binary serialization for all types
 - [ ] Bloom filter merge/rollup operations
 
@@ -1413,12 +1196,12 @@ zig-out/
 - [ ] Binary head file updates
 - [ ] Landing log segments
 
-**libhif-core:**
+**Core modules:**
 - [ ] Bloom filter rollup builder
 - [ ] Hierarchical bloom index queries
 
 **hif CLI:**
-- [ ] session land command
+- [ ] land command
 - [ ] Conflict resolution flow
 - [ ] cat, write, edit, ls (sparse checkout)
 

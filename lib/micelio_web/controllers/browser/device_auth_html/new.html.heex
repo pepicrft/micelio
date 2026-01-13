@@ -9,7 +9,12 @@
       <p>Enter the code shown on your CLI to connect it to your account.</p>
     </header>
 
-    <.form for={@form} id="device-auth-form" action={~p"/device/auth/verify"} class="device-auth-form">
+    <.form
+      for={@form}
+      id="device-auth-form"
+      action={~p"/device/auth/verify"}
+      class="device-auth-form"
+    >
       <div class="device-auth-form-group">
         <.input
           field={@form[:user_code]}

@@ -13,14 +13,13 @@ Micelio's session system implements the hif philosophy where development is orga
 
 Unlike Git commits which are snapshots of code at a point in time, session changes capture file modifications with their reasoning context.
 
-## Session Lifecycle (API + CLI)
+## Session Lifecycle (gRPC + CLI)
 
-- Start without landing: `POST /api/sessions/start`
-- Land with artifacts: `POST /api/sessions/:session_id/land`
-- Single-shot land (start + land): `POST /api/sessions`
-- CLI helpers:
-  - `mix micelio.session.start --session-id ... --goal ... --organization ... --project ...`
-  - `mix micelio.session.land --session-id ... [--file path[:change_type]] [--metadata key=value,...]`
+- Start session: `SessionService.StartSession`
+- Land session: `SessionService.LandSession`
+- CLI flow:
+  - `hif session start <organization> <project> <goal>`
+  - `hif session land`
 
 ### Key Differences
 
@@ -59,69 +58,10 @@ Files are stored based on size:
 
 Storage path pattern: `sessions/{session_id}/changes/{file_path}`
 
-## API Usage
+## gRPC Usage
 
-### Creating a Session with Changes
-
-```bash
-POST /api/sessions
-{
-  "session_id": "unique-id",
-  "goal": "Add authentication system",
-  "organization": "myorg",
-  "project": "myapp",
-  "conversation": [
-    {"role": "user", "content": "We need JWT-based auth"},
-    {"role": "assistant", "content": "I'll implement with bcrypt for passwords"}
-  ],
-  "decisions": [
-    {
-      "decision": "Use JWT tokens for stateless auth",
-      "reasoning": "Keeps the system scalable and cloud-friendly"
-    }
-  ],
-  "files": [
-    {
-      "path": "src/auth/jwt.ex",
-      "change_type": "added",
-      "content": "defmodule Auth.JWT do..."
-    },
-    {
-      "path": "src/main.ex",
-      "change_type": "modified",
-      "content": "# Updated with auth routes..."
-    },
-    {
-      "path": "src/old_auth.ex",
-      "change_type": "deleted"
-    }
-  ]
-}
-```
-
-### Response Format
-
-```json
-{
-  "session": {
-    "id": "...",
-    "session_id": "unique-id",
-    "goal": "Add authentication system",
-    "project": "myorg/myapp",
-    "status": "landed",
-    "conversation_count": 2,
-    "decisions_count": 1,
-    "changes": {
-      "total": 3,
-      "added": 1,
-      "modified": 1,
-      "deleted": 1
-    },
-    "started_at": "2026-01-12T07:30:00Z",
-    "landed_at": "2026-01-12T07:32:00Z"
-  }
-}
-```
+Sessions are accessed via gRPC and the hif CLI. The server stores session
+metadata in SQLite and lands file changes into object storage.
 
 ## Programmatic Access
 
@@ -209,4 +149,4 @@ A migration tool is planned for the roadmap.
 
 - [DESIGN.md](/DESIGN.md) - Complete hif + Micelio vision
 - [hif/DESIGN.md](/hif/DESIGN.md) - Technical architecture
-- [API Documentation](/docs/API.md) - Full API reference
+- gRPC reference lives in `priv/protos`

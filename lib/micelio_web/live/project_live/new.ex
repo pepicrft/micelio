@@ -10,7 +10,8 @@ defmodule MicelioWeb.ProjectLive.New do
   def mount(_params, _session, socket) do
     organizations =
       Accounts.list_organizations_for_user_with_role(socket.assigns.current_user, "owner")
-    default_org_id = organizations |> List.first() |> then(& &1 && &1.id)
+
+    default_org_id = organizations |> List.first() |> then(&(&1 && &1.id))
 
     form =
       %Project{}
@@ -50,7 +51,8 @@ defmodule MicelioWeb.ProjectLive.New do
         {:noreply, assign(socket, form: to_form(changeset, as: :project))}
 
       organization ->
-        if Authorization.authorize(:project_create, socket.assigns.current_user, organization) == :ok do
+        if Authorization.authorize(:project_create, socket.assigns.current_user, organization) ==
+             :ok do
           attrs = Map.put(params, "organization_id", organization.id)
 
           case Projects.create_project(attrs) do

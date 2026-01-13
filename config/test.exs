@@ -1,24 +1,28 @@
 import Config
 
-# Print only warnings and errors during test
-config :logger, level: :warning
+test_partition = System.get_env("MIX_TEST_PARTITION")
 
 # Configure your database
 #
 # The MIX_TEST_PARTITION environment variable can be used
 
+# Print only warnings and errors during test
 # In test we don't send emails
 # to provide built-in test partitioning in CI environment.
 # Run `mix help test` for more information.
+config :logger, level: :warning
+
+# We don't run a server during test. If one is required,
+# you can enable the server option below.
+config :micelio, Micelio.GRPC, enabled: false
+config :micelio, Micelio.Hif.RollupScheduler, enabled: false
 config :micelio, Micelio.Mailer, adapter: Swoosh.Adapters.Test
 
 config :micelio, Micelio.Repo,
-  username: "postgres",
-  password: "postgres",
-  hostname: "localhost",
-  database: "micelio_test#{System.get_env("MIX_TEST_PARTITION")}",
-  # We don't run a server during test. If one is required,
-  # you can enable the server option below.
+  database: Path.join([System.tmp_dir!(), "micelio", "micelio_test#{test_partition}.sqlite3"]),
+  journal_mode: :wal,
+  synchronous: :normal,
+  busy_timeout: 60_000,
   pool: Ecto.Adapters.SQL.Sandbox,
   pool_size: System.schedulers_online() * 2
 
@@ -26,8 +30,6 @@ config :micelio, MicelioWeb.Endpoint,
   http: [ip: {127, 0, 0, 1}, port: 4002],
   secret_key_base: "7CasJHWDMv4jqFHNq+m+JV10UTi5t6g4FH0RJBPjOPwTEbBg2vI/VDZknktJ4B4/",
   server: false
-
-config :micelio, Micelio.GRPC, enabled: false
 
 # Initialize plugs at runtime for faster test compilation
 config :phoenix, :plug_init_mode, :runtime

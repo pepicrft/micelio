@@ -51,23 +51,41 @@ storage_config =
       ]
   end
 
+grpc_enabled = System.get_env("MICELIO_GRPC_ENABLED") == "true"
+grpc_tls_certfile = System.get_env("MICELIO_GRPC_TLS_CERTFILE")
+grpc_tls_keyfile = System.get_env("MICELIO_GRPC_TLS_KEYFILE")
+grpc_tls_cacertfile = System.get_env("MICELIO_GRPC_TLS_CACERTFILE")
+
+grpc_tls =
+  case {grpc_tls_certfile, grpc_tls_keyfile} do
+    {nil, nil} ->
+      []
+
+    {certfile, keyfile} ->
+      tls_base = [certfile: certfile, keyfile: keyfile]
+
+      case grpc_tls_cacertfile do
+        nil -> tls_base
+        cacertfile -> tls_base ++ [cacertfile: cacertfile]
+      end
+  end
+
 config :micelio, Micelio.Storage, storage_config
+
+if grpc_enabled do
+  config :micelio, Micelio.GRPC,
+    enabled: true,
+    port: String.to_integer(System.get_env("MICELIO_GRPC_PORT", "50051")),
+    tls: grpc_tls
+end
 
 config :micelio, MicelioWeb.Endpoint,
   http: [port: String.to_integer(System.get_env("PORT", "4000"))]
 
 if config_env() == :prod do
-  # Build DATABASE_URL from individual environment variables
-  database_user = System.get_env("DATABASE_USER") || "micelio"
-  database_password = System.get_env("POSTGRES_PASSWORD") || raise "POSTGRES_PASSWORD is missing"
-  database_host = System.get_env("DATABASE_HOST") || "localhost"
-  database_name = System.get_env("DATABASE_NAME") || "micelio_production"
-
-  database_url =
-    System.get_env("DATABASE_URL") ||
-      "postgres://#{database_user}:#{database_password}@#{database_host}/#{database_name}"
-
-  maybe_ipv6 = if System.get_env("ECTO_IPV6") in ~w(true 1), do: [:inet6], else: []
+  database_path =
+    System.get_env("DATABASE_PATH") ||
+      "/var/micelio/micelio.sqlite3"
 
   # The secret key base is used to sign/encrypt cookies and other secrets.
   # A default value is used in config/dev.exs and config/test.exs but you
@@ -100,12 +118,11 @@ if config_env() == :prod do
     |> Enum.map(fn {name, _} -> name end)
 
   config :micelio, Micelio.Repo,
-    # ssl: true,
-    url: database_url,
-    pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
-    # For machines with several cores, consider starting multiple pools of `pool_size`
-    # pool_count: 4,
-    socket_options: maybe_ipv6
+    database: database_path,
+    journal_mode: :wal,
+    synchronous: :normal,
+    busy_timeout: 5_000,
+    pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10")
 
   config :micelio, MicelioWeb.Endpoint,
     url: [host: host, port: 443, scheme: "https"],

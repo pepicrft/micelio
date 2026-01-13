@@ -2,6 +2,8 @@ defmodule Micelio.GRPC.ProjectsServerTest do
   use Micelio.DataCase, async: true
 
   alias Micelio.Accounts
+  alias Micelio.GRPC.Projects.V1.ProjectService.Server
+
   alias Micelio.GRPC.Projects.V1.{
     CreateProjectRequest,
     DeleteProjectRequest,
@@ -11,7 +13,7 @@ defmodule Micelio.GRPC.ProjectsServerTest do
     ProjectResponse,
     UpdateProjectRequest
   }
-  alias Micelio.GRPC.Projects.V1.ProjectService.Server
+
   alias Micelio.Projects
 
   test "list_projects returns projects for authorized user" do

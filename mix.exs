@@ -43,7 +43,7 @@ defmodule Micelio.MixProject do
       {:phoenix, "~> 1.8.3"},
       {:phoenix_ecto, "~> 4.5"},
       {:ecto_sql, "~> 3.13"},
-      {:postgrex, ">= 0.0.0"},
+      {:ecto_sqlite3, "~> 0.15"},
       {:phoenix_html, "~> 4.1"},
       {:phoenix_live_reload, "~> 1.2", only: :dev},
       {:phoenix_live_view, "~> 1.1.0"},
@@ -81,6 +81,11 @@ defmodule Micelio.MixProject do
       "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
       "ecto.reset": ["ecto.drop", "ecto.setup"],
       test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"],
+      "test.parallel": [
+        "ecto.create --quiet",
+        "ecto.migrate --quiet",
+        "test --partitions #{System.schedulers_online()}"
+      ],
       "assets.setup": ["esbuild.install --if-missing"],
       "assets.build": ["compile", "esbuild micelio"],
       "assets.deploy": [

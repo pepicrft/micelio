@@ -4,10 +4,31 @@ image: micelio/micelio
 
 servers:
   web:
-    - 91.98.64.68
+    hosts:
+      - 91.98.64.68
+    env:
+      clear:
+        PHX_SERVER: "true"
+        MICELIO_GRPC_ENABLED: "false"
+  grpc:
+    hosts:
+      - 91.98.64.68
+    proxy:
+      host: api.micelio.dev
+      app_port: 50051
+      ssl:
+        certificate_pem: TLS_CERT_PEM
+        private_key_pem: TLS_KEY_PEM
+    env:
+      clear:
+        PHX_SERVER: "false"
+        MICELIO_GRPC_ENABLED: "true"
+        MICELIO_GRPC_PORT: "50051"
 
 proxy:
-  ssl: true
+  ssl:
+    certificate_pem: TLS_CERT_PEM
+    private_key_pem: TLS_KEY_PEM
   host: micelio.dev
   app_port: 4000
 
@@ -24,20 +45,21 @@ builder:
 env:
   clear:
     PHX_HOST: micelio.dev
-    DATABASE_HOST: micelio-db
-    DATABASE_USER: micelio
-    DATABASE_NAME: micelio_production
+    DATABASE_PATH: /var/micelio/micelio.sqlite3
+    STORAGE_BACKEND: s3
     SMTP_PORT: "465"
     SMTP_SSL: "true"
     SMTP_TLS: "false"
   secret:
     - SECRET_KEY_BASE
-    - POSTGRES_PASSWORD
     - SMTP_HOST
     - SMTP_USERNAME
     - SMTP_PASSWORD
     - SMTP_FROM_EMAIL
     - SMTP_FROM_NAME
+    - S3_BUCKET
+    - TLS_CERT_PEM
+    - TLS_KEY_PEM
 
 accessories:
   registry:
@@ -46,15 +68,3 @@ accessories:
     port: 5000
     directories:
       - data:/var/lib/registry
-  db:
-    image: postgres:17
-    host: 91.98.64.68
-    port: 5432
-    env:
-      clear:
-        POSTGRES_USER: micelio
-        POSTGRES_DB: micelio_production
-      secret:
-        - POSTGRES_PASSWORD
-    directories:
-      - data:/var/lib/postgresql/data

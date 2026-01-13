@@ -3,10 +3,8 @@ defmodule Micelio.Changelog do
   The Changelog context for managing changelog entries using NimblePublisher.
   """
 
-  alias Micelio.Changelog.Entry
-
   use NimblePublisher,
-    build: Entry,
+    build: Micelio.Changelog.Entry,
     from: Application.app_dir(:micelio, "priv/changelog/**/*.md"),
     as: :entries,
     highlighters: [:makeup_elixir, :makeup_erlang]

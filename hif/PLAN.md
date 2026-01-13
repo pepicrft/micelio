@@ -8,7 +8,7 @@ This document breaks down the implementation into concrete, actionable steps. Ea
 
 **Goal:** Working end-to-end flow for a single user starting, editing, and landing a session.
 
-### 1.1 libhif-core Basics
+### 1.1 Core Primitives
 
 Complete the core algorithmic primitives.
 
@@ -18,16 +18,13 @@ Complete the core algorithmic primitives.
 | `core/bloom.zig` | Bloom filters for conflict detection | hash.zig |
 | `core/hlc.zig` | Hybrid Logical Clock for timestamps | None |
 | `core/tree.zig` | Basic prolly tree (insert, delete, get, hash) | hash.zig |
-| `core/c_api.zig` | C ABI exports for all modules | All above |
-| `include/hif_core.h` | Generated C header | c_api.zig |
 
 **Tests:**
 - Bloom filter false positive rate within bounds
 - HLC monotonicity and causality
 - Tree deterministic hashing
-- C API roundtrip from test harness
 
-**Deliverable:** `libhif_core.a` and `libhif_core.so` with C header
+**Deliverable:** Stable core modules for CLI usage
 
 ### 1.2 Forge Skeleton (Separate Repo)
 
@@ -37,7 +34,6 @@ Minimal forge that can store and retrieve data.
 |------|-------------|--------------|
 | Project setup | Elixir/Phoenix or Go project structure | None |
 | Database schema | Sessions, operations, trees tables | None |
-| libhif-core FFI | Integrate via Zigler/cgo | libhif-core |
 | gRPC server | Basic protobuf + server skeleton | None |
 | Session CRUD | StartSession, GetSession, AbandonSession | Schema |
 | Blob storage | S3/MinIO integration | None |
@@ -58,6 +54,9 @@ Basic CLI that talks to the forge.
 |------|-------------|--------------|
 | gRPC client | Connect to forge, handle auth | Forge gRPC |
 | `hif auth login` | Token-based authentication | gRPC client |
+| `hif checkout <account>/<project>` | Create local workspace | Content gRPC |
+| `hif status` | Show workspace changes | Local manifest |
+| `hif land <goal>` | Land workspace changes | Sessions gRPC |
 | `hif session start` | Create session with goal | gRPC client |
 | `hif session status` | Show current session | gRPC client |
 | `hif session abandon` | Abandon current session | gRPC client |
@@ -65,6 +64,9 @@ Basic CLI that talks to the forge.
 | `hif write <path>` | Write stdin to blob, record op | Blob storage |
 | `hif ls [path]` | List tree contents | Tree storage |
 | Local config | Store forge URL, token, current session | None |
+
+Notes:
+- gRPC client uses vendored gRPC C core `v1.76.0` (TLS required) via `hif/vendor/grpc`.
 
 **Tests:**
 - Full session lifecycle via CLI
@@ -79,7 +81,7 @@ Single-threaded landing without conflict detection.
 
 | Task | Description | Dependencies |
 |------|-------------|--------------|
-| `hif session land` | Request landing from CLI | CLI foundation |
+| `hif land <goal>` | Request landing from CLI | CLI foundation |
 | Landing endpoint | Process land request on forge | Forge skeleton |
 | Position assignment | Atomic counter for global position | Database |
 | Tree update | Apply operations to build new tree | tree.zig |
@@ -312,7 +314,7 @@ Single-threaded landing without conflict detection.
 
 | Task | Description | Dependencies |
 |------|-------------|--------------|
-| WASM target | Build libhif-core for wasm32 | build.zig |
+| WASM target | Build hif core modules for wasm32 | build.zig |
 | JS bindings | JavaScript wrapper for WASM | WASM build |
 | IndexedDB cache | Browser-based blob cache | JS bindings |
 
@@ -402,9 +404,6 @@ Single-threaded landing without conflict detection.
 - [x] `core/bloom.zig` - Bloom filters for conflict detection
 - [x] `core/hlc.zig` - Hybrid Logical Clock for distributed timestamps
 - [x] `core/tree.zig` - B+ tree for directory structures
-- [x] `src/ffi.zig` - C ABI exports for all core modules
-- [x] `include/hif_core.h` - C header with documentation
-- [x] Header sync tests - Verify header matches FFI exports
 - [x] Integration tests - End-to-end workflow tests
 - [ ] Forge skeleton
 - [ ] Basic CLI commands
@@ -428,14 +427,6 @@ End-to-end scenarios to be added:
 - Full session workflow: start -> edit -> land
 - Concurrent session conflict detection
 - CLI command sequences
-- FFI roundtrip from C test harness
-
-### FFI Testing
-The C API (`c_api.zig` + `hif_core.h`) will include:
-- All core module operations exposed via C ABI
-- Error message retrieval API
-- Version and capability checking
-- Test harness in C for validation
 
 ---
 
