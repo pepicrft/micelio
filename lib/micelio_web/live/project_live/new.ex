@@ -9,7 +9,7 @@ defmodule MicelioWeb.ProjectLive.New do
   @impl true
   def mount(_params, _session, socket) do
     organizations =
-      Accounts.list_organizations_for_user_with_role(socket.assigns.current_user, "owner")
+      Accounts.list_organizations_for_user_with_role(socket.assigns.current_user, "admin")
 
     default_org_id = organizations |> List.first() |> then(&(&1 && &1.id))
 

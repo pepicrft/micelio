@@ -6,10 +6,10 @@ defmodule Micelio.Accounts.OrganizationMembership do
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
 
-  @roles ["owner", "member"]
+  @roles ["admin", "user"]
 
   schema "organization_memberships" do
-    field :role, :string, default: "member"
+    field :role, :string, default: "user"
 
     belongs_to :user, Micelio.Accounts.User
     belongs_to :organization, Micelio.Accounts.Organization

@@ -329,7 +329,7 @@ defmodule Micelio.Accounts do
              create_organization_membership(%{
                user_id: user.id,
                organization_id: org.id,
-               role: "owner"
+               role: "admin"
              }) do
         %{org | account: account}
       else

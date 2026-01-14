@@ -14,11 +14,11 @@ defmodule Micelio.Authorization do
     end
 
     action :update do
-      allow(:organization_owner)
+      allow(:organization_admin)
     end
 
     action :delete do
-      allow(:organization_owner)
+      allow(:organization_admin)
     end
   end
 
@@ -28,21 +28,21 @@ defmodule Micelio.Authorization do
     end
 
     action :create do
-      allow(:organization_owner)
+      allow(:organization_admin)
     end
 
     action :update do
-      allow(:organization_owner)
+      allow(:organization_admin)
     end
 
     action :delete do
-      allow(:organization_owner)
+      allow(:organization_admin)
     end
   end
 
   object :project do
     action :create do
-      allow(:organization_owner)
+      allow(:organization_admin)
     end
 
     action :read do
@@ -50,11 +50,11 @@ defmodule Micelio.Authorization do
     end
 
     action :update do
-      allow(:organization_owner)
+      allow(:organization_admin)
     end
 
     action :delete do
-      allow(:organization_owner)
+      allow(:organization_admin)
     end
   end
 
@@ -64,7 +64,7 @@ defmodule Micelio.Authorization do
     end
 
     action :write do
-      allow(:repository_owner)
+      allow(:repository_admin)
     end
   end
 end

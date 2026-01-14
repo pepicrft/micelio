@@ -9,14 +9,14 @@ defmodule MicelioWeb.ProjectLive.Index do
   def mount(_params, _session, socket) do
     projects = Projects.list_projects_for_user(socket.assigns.current_user)
 
-    owner_organizations =
-      Accounts.list_organizations_for_user_with_role(socket.assigns.current_user, "owner")
+    admin_organizations =
+      Accounts.list_organizations_for_user_with_role(socket.assigns.current_user, "admin")
 
     socket =
       socket
       |> assign(:page_title, "Projects")
       |> assign(:projects_count, length(projects))
-      |> assign(:can_create_project, owner_organizations != [])
+      |> assign(:can_create_project, admin_organizations != [])
       |> stream(:projects, projects)
 
     {:ok, socket}
