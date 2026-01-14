@@ -325,7 +325,7 @@ defmodule Micelio.Storage.S3 do
 
   defp build_url(config, key) do
     base_uri = config.endpoint |> String.trim_trailing("/") |> URI.parse()
-    encoded_key = URI.encode(key, &URI.char_unreserved?/1)
+    encoded_key = encode_key(key)
 
     uri =
       case config.url_style do
@@ -340,6 +340,13 @@ defmodule Micelio.Storage.S3 do
       end
 
     URI.to_string(uri)
+  end
+
+  defp encode_key(key) when is_binary(key) do
+    key
+    |> String.split("/", trim: false)
+    |> Enum.map(&URI.encode(&1, &URI.char_unreserved?/1))
+    |> Enum.join("/")
   end
 
   defp build_headers(content) when is_binary(content) do
