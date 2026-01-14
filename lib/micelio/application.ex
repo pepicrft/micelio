@@ -11,9 +11,9 @@ defmodule Micelio.Application do
       [
         MicelioWeb.Telemetry,
         Micelio.Hif.Telemetry,
-        Micelio.Hif.RollupScheduler,
         Micelio.Repo,
         {Task.Supervisor, name: Micelio.Hif.RollupSupervisor},
+        Micelio.Hif.RollupScheduler,
         {DNSCluster, query: Application.get_env(:micelio, :dns_cluster_query) || :ignore},
         {Phoenix.PubSub, name: Micelio.PubSub},
         # Start a worker by calling: Micelio.Worker.start_link(arg)
@@ -54,11 +54,12 @@ defmodule Micelio.Application do
       children ++
         [
           {GRPC.Server.Supervisor,
-           %{
+           [
              port: port,
              servers: [Micelio.GRPC.Endpoint],
-             cred: GRPC.Credential.new(ssl: tls)
-           }}
+             cred: GRPC.Credential.new(ssl: tls),
+             start_server: true
+           ]}
         ]
     else
       children
