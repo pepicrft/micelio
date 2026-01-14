@@ -27,7 +27,7 @@ defmodule Micelio.Storage.S3Test do
       expect(Req, :request, fn opts ->
         assert opts[:method] == :put
         assert opts[:url] =~ "test-bucket"
-        assert opts[:url] =~ URI.encode(key, &URI.char_unreserved?/1)
+        assert opts[:url] =~ key
         assert opts[:body] == content
         assert has_auth_headers?(opts[:headers])
 
@@ -65,7 +65,7 @@ defmodule Micelio.Storage.S3Test do
 
       expect(Req, :request, fn opts ->
         # Verify the key is properly encoded
-        assert opts[:url] =~ "sessions%2Ftest%20123%2Ffile%20%281%29.txt"
+        assert opts[:url] =~ "sessions/test%20123/file%20%281%29.txt"
         {:ok, %{status: 200, body: ""}}
       end)
 
@@ -86,7 +86,7 @@ defmodule Micelio.Storage.S3Test do
       expect(Req, :request, fn opts ->
         assert opts[:method] == :get
         assert opts[:url] =~ "test-bucket"
-        assert opts[:url] =~ URI.encode(key, &URI.char_unreserved?/1)
+        assert opts[:url] =~ key
         assert has_auth_headers?(opts[:headers])
 
         {:ok, %{status: 200, body: content}}
@@ -128,7 +128,7 @@ defmodule Micelio.Storage.S3Test do
       expect(Req, :request, fn opts ->
         assert opts[:method] == :delete
         assert opts[:url] =~ "test-bucket"
-        assert opts[:url] =~ URI.encode(key, &URI.char_unreserved?/1)
+        assert opts[:url] =~ key
         {:ok, %{status: 204, body: ""}}
       end)
 
@@ -168,7 +168,7 @@ defmodule Micelio.Storage.S3Test do
       expect(Req, :request, fn opts ->
         assert opts[:method] == :head
         assert opts[:url] =~ "test-bucket"
-        assert opts[:url] =~ URI.encode(key, &URI.char_unreserved?/1)
+        assert opts[:url] =~ key
         {:ok, %{status: 200, body: ""}}
       end)
 
