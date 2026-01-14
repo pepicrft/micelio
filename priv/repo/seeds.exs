@@ -1,51 +1,87 @@
-# Create test user for OAuth2 device flow testing
-alias Micelio.Accounts
+# Seeds for local development
+alias Micelio.Accounts.{Account, Organization, OrganizationMembership, User}
+alias Micelio.Projects.Project
 alias Micelio.Repo
+import Ecto.Changeset
 
-# Create user
-case Repo.insert(%Micelio.Accounts.User{email: "test@example.com"}) do
-  {:ok, user} ->
-    IO.puts("✅ Created test user: #{user.email}")
+# Create micelio user
+micelio_user =
+  case Repo.get_by(User, email: "micelio@micelio.dev") do
+    nil ->
+      {:ok, user} = Repo.insert(%User{email: "micelio@micelio.dev"})
+      IO.puts("Created user: micelio@micelio.dev")
+      user
 
-    # Create account for user
-    case Accounts.create_user_account(%{
-           handle: "testuser",
-           user_id: user.id
-         }) do
-      {:ok, account} ->
-        IO.puts("✅ Created account: #{account.handle}")
+    user ->
+      IO.puts("User micelio@micelio.dev already exists")
+      user
+  end
 
-      {:error, changeset} ->
-        IO.puts("❌ Failed to create account:")
-        IO.inspect(changeset.errors)
-    end
+# Create micelio organization with account
+micelio_org =
+  case Repo.get_by(Account, handle: "micelio") |> Repo.preload(:organization) do
+    nil ->
+      # Create organization
+      {:ok, org} =
+        %Organization{}
+        |> Organization.changeset(%{name: "Micelio"})
+        |> Repo.insert()
 
-  {:error, %Ecto.Changeset{} = changeset} ->
-    if Enum.any?(changeset.errors, fn {field, {msg, _}} ->
-         field == :email and String.contains?(msg, "has already been taken")
-       end) do
-      IO.puts("ℹ️  Test user already exists")
+      # Create account with handle (bypassing reserved validation)
+      {:ok, account} =
+        %Account{}
+        |> cast(%{organization_id: org.id}, [:organization_id])
+        |> force_change(:handle, "micelio")
+        |> unique_constraint(:handle, name: :accounts_handle_index)
+        |> Repo.insert()
 
-      # Try to find and use existing user
-      user = Repo.get_by(Micelio.Accounts.User, email: "test@example.com")
+      IO.puts("Created organization: Micelio (@micelio)")
+      %{org | account: account}
 
-      if user && !Repo.preload(user, :account).account do
-        case Accounts.create_user_account(%{
-               handle: "testuser",
-               user_id: user.id
-             }) do
-          {:ok, account} ->
-            IO.puts("✅ Created account: #{account.handle}")
+    account ->
+      IO.puts("Organization @micelio already exists")
+      account.organization |> Repo.preload(:account)
+  end
 
-          {:error, changeset} ->
-            IO.puts("ℹ️  Account might already exist or:")
-            IO.inspect(changeset.errors)
-        end
-      else
-        IO.puts("ℹ️  User and account already configured")
-      end
-    else
-      IO.puts("❌ Failed to create test user:")
-      IO.inspect(changeset.errors)
-    end
+# Create membership for micelio user as admin
+case Repo.get_by(OrganizationMembership,
+       user_id: micelio_user.id,
+       organization_id: micelio_org.id
+     ) do
+  nil ->
+    {:ok, _membership} =
+      %OrganizationMembership{}
+      |> OrganizationMembership.changeset(%{
+        user_id: micelio_user.id,
+        organization_id: micelio_org.id,
+        role: "admin"
+      })
+      |> Repo.insert()
+
+    IO.puts("Added micelio@micelio.dev as admin of Micelio org")
+
+  _membership ->
+    IO.puts("micelio@micelio.dev is already a member of Micelio org")
 end
+
+# Create micelio project
+case Repo.get_by(Project, handle: "micelio", organization_id: micelio_org.id) do
+  nil ->
+    {:ok, _project} =
+      %Project{}
+      |> Project.changeset(%{
+        handle: "micelio",
+        name: "Micelio",
+        description: "The Micelio platform",
+        organization_id: micelio_org.id
+      })
+      |> Repo.insert()
+
+    IO.puts("Created project: micelio/micelio")
+
+  _project ->
+    IO.puts("Project micelio/micelio already exists")
+end
+
+IO.puts("\nLocal development setup complete!")
+IO.puts("Login with: micelio@micelio.dev")
