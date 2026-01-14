@@ -83,6 +83,86 @@ function setupProjectHandleGeneration() {
 // Setup project handle generation when DOM is ready
 document.addEventListener('DOMContentLoaded', setupProjectHandleGeneration);
 
+function getPreferredTheme() {
+  try {
+    const stored = localStorage.getItem("micelio:theme");
+    if (stored === "light" || stored === "dark") return stored;
+  } catch (_e) {}
+
+  return "system";
+}
+
+function getEffectiveTheme() {
+  const explicit = document.documentElement.getAttribute("data-theme");
+  if (explicit === "light" || explicit === "dark") return explicit;
+
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
+function applyThemePreference(preference) {
+  if (preference === "light" || preference === "dark") {
+    document.documentElement.setAttribute("data-theme", preference);
+  } else {
+    document.documentElement.removeAttribute("data-theme");
+  }
+
+  const toggle = document.getElementById("theme-toggle");
+  if (toggle) {
+    const effective = getEffectiveTheme();
+    toggle.textContent = effective === "dark" ? "light" : "dark";
+    toggle.setAttribute(
+      "aria-label",
+      effective === "dark" ? "Switch to light mode" : "Switch to dark mode",
+    );
+  }
+}
+
+function persistThemePreference(preference) {
+  try {
+    if (preference === "light" || preference === "dark") {
+      localStorage.setItem("micelio:theme", preference);
+    } else {
+      localStorage.removeItem("micelio:theme");
+    }
+  } catch (_e) {}
+}
+
+function initTheme() {
+  const preference = getPreferredTheme();
+  applyThemePreference(preference);
+
+  window
+    .matchMedia("(prefers-color-scheme: dark)")
+    .addEventListener("change", () => {
+      if (getPreferredTheme() === "system") applyThemePreference("system");
+    });
+}
+
+function setupThemeToggle() {
+  document.addEventListener("click", (event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    if (target.id !== "theme-toggle") return;
+
+    if (event.altKey || event.metaKey) {
+      persistThemePreference("system");
+      applyThemePreference("system");
+      return;
+    }
+
+    const next = getEffectiveTheme() === "dark" ? "light" : "dark";
+    persistThemePreference(next);
+    applyThemePreference(next);
+  });
+
+  window.addEventListener("phx:page-loading-stop", () => {
+    applyThemePreference(getPreferredTheme());
+  });
+}
+
+initTheme();
+setupThemeToggle();
+
 // The lines below enable quality of life phoenix_live_reload
 // development features:
 //

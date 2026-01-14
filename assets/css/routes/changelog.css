@@ -163,6 +163,12 @@
   opacity: 0.5;
 }
 
+.changelog-empty-icon svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
 .changelog-empty-title {
   font-weight: var(--theme-ui-fontWeights-bold);
   color: var(--theme-ui-colors-text);
@@ -202,7 +208,7 @@
 .changelog-detail-content ul,
 .changelog-detail-content ol {
   margin: var(--theme-ui-space-2) 0;
-  padding-left: var(--theme-ui-space-3);
+  padding-left: var(--theme-ui-space-2);
 }
 
 .changelog-detail-content li {

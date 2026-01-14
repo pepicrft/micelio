@@ -1,5 +1,7 @@
 This is a web application written using the Phoenix web framework.
 
+See [NEXT.md](NEXT.md) for upcoming features and improvements.
+
 ## Project guidelines
 
 - Use `mix precommit` alias when you are done with all changes and fix any pending issues
@@ -150,6 +152,7 @@ custom classes must fully style the input
 - **Never** use Tailwind CSS classes in templates
 - Use vanilla modern CSS only
 - **UI Design Philosophy**: Keep the interface minimal and functional like [SourceHut](https://sourcehut.org) - clean typography, generous whitespace, clear hierarchy, no unnecessary decoration
+- **No emojis in UI or posts**: Avoid emoji characters in the UI and in `priv/posts/**` / `priv/changelog/**` content.
 
 ### Theme-UI Specification
 

@@ -1,8 +1,8 @@
+import Ecto.Changeset
 # Seeds for local development
 alias Micelio.Accounts.{Account, Organization, OrganizationMembership, User}
 alias Micelio.Projects.Project
 alias Micelio.Repo
-import Ecto.Changeset
 
 # Create micelio user
 micelio_user =

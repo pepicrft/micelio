@@ -41,42 +41,50 @@ defmodule MicelioWeb.Layouts do
     ~H"""
     <div>
       <nav class="navbar">
-        <span class="brand">
-          <span class="icon">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-              <path d="M256 8C119 8 8 119 8 256s111 248 248 248 248-111 248-248S393 8 256 8zm0 448c-110.5 0-200-89.5-200-200S145.5 56 256 56s200 89.5 200 200-89.5 200-200 200z" />
-            </svg>
-          </span>
-          <a href="/">micelio</a>
-        </span>
-
-        <a href={~p"/blog"}>blog</a>
-        <a href={~p"/changelog"}>changelog</a>
-        <a href="https://discord.gg/3SZU3aEQP" target="_blank" rel="noopener noreferrer">discord</a>
-
-        <%= if assigns[:current_user] do %>
-          <a href={~p"/projects"}>projects</a>
-          <a href={~p"/account/devices"}>devices</a>
-          <form action={~p"/auth/logout"} method="post" style="display: inline; margin-left: 1rem;">
-            <input type="hidden" name="_csrf_token" value={Phoenix.Controller.get_csrf_token()} />
-            <input type="hidden" name="_method" value="delete" />
-            <button
-              type="submit"
-              style="border: none; background: transparent; cursor: pointer; color: #666; font-size: inherit; text-decoration: none;"
-            >
-              logout
-            </button>
-          </form>
-        <% else %>
-          <a href={~p"/auth/login"} class="btn pull-right hidden-small">
-            Get started
+        <div class="navbar-left">
+          <span class="brand">
             <span class="icon">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 512">
-                <path d="M0 384.662V127.338c0-17.818 21.543-26.741 34.142-14.142l128.662 128.662c7.81 7.81 7.81 20.474 0 28.284L34.142 398.804C21.543 411.404 0 402.48 0 384.662z" />
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+                <path d="M256 8C119 8 8 119 8 256s111 248 248 248 248-111 248-248S393 8 256 8zm0 448c-110.5 0-200-89.5-200-200S145.5 56 256 56s200 89.5 200 200-89.5 200-200 200z" />
               </svg>
             </span>
-          </a>
-        <% end %>
+            <a href="/">micelio</a>
+          </span>
+
+          <a href={~p"/blog"}>blog</a>
+          <a href={~p"/changelog"}>changelog</a>
+          <a href="https://discord.gg/3SZU3aEQP" target="_blank" rel="noopener noreferrer">discord</a>
+        </div>
+
+        <div class="navbar-right">
+          <button
+            id="theme-toggle"
+            type="button"
+            class="navbar-theme-toggle"
+            aria-label="Toggle theme"
+          >
+            theme
+          </button>
+
+          <%= if assigns[:current_user] do %>
+            <a href={~p"/projects"}>projects</a>
+            <a href={~p"/account/devices"}>devices</a>
+            <form action={~p"/auth/logout"} method="post" class="navbar-logout-form">
+              <input type="hidden" name="_csrf_token" value={Phoenix.Controller.get_csrf_token()} />
+              <input type="hidden" name="_method" value="delete" />
+              <button type="submit" class="navbar-link-button">logout</button>
+            </form>
+          <% else %>
+            <a href={~p"/auth/login"} class="navbar-cta hidden-small">
+              Get started
+              <span class="icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 512">
+                  <path d="M0 384.662V127.338c0-17.818 21.543-26.741 34.142-14.142l128.662 128.662c7.81 7.81 7.81 20.474 0 28.284L34.142 398.804C21.543 411.404 0 402.48 0 384.662z" />
+                </svg>
+              </span>
+            </a>
+          <% end %>
+        </div>
       </nav>
     </div>
 

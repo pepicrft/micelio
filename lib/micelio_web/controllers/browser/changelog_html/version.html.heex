@@ -27,7 +27,16 @@
 
     <%= if Enum.empty?(@entries) do %>
       <div class="changelog-empty">
-        <div class="changelog-empty-icon">📝</div>
+        <div class="changelog-empty-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path
+              d="M7 3h7l3 3v15a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"
+              stroke-linejoin="round"
+            />
+            <path d="M14 3v4h4" stroke-linejoin="round" />
+            <path d="M8 11h8M8 15h8M8 19h6" stroke-linecap="round" />
+          </svg>
+        </div>
         <h3 class="changelog-empty-title">No entries for this version</h3>
         <p class="changelog-empty-message">
           No changelog entries found for version {@version}.

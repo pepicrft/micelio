@@ -45,8 +45,8 @@
         <div class="home-main">
           <div class="home-overview">
             <p>
-              <strong>Welcome to micelio!</strong> This is the version control system
-              the agent-first world has been waiting for.
+              <strong>Welcome to micelio!</strong> micelio is the forge built for hif, the
+              agent-first version control system the future has been waiting for.
             </p>
             <ul>
               <li>
@@ -56,7 +56,8 @@
               <li>Forge-first architecture with object storage at the core</li>
               <li>Scales to billions of files and hundreds of thousands of landings per day</li>
               <li>
-                Inspired by Google Piper, Meta Sapling, Turbopuffer, and WarpStream
+                Inspired by <a href="https://ai.google/research/pubs/pub45424">Google Piper</a>, <a href="https://engineering.fb.com/2019/05/06/developer-tools/making-monorepo-development-faster/">Meta Sapling</a>, <a href="https://www.turbopuffer.com/">Turbopuffer</a>, and
+                <a href="https://www.warpstream.com/">WarpStream</a>
               </li>
             </ul>
           </div>
@@ -67,6 +68,15 @@
               Sessions capture goal, reasoning, and changes together. Built for hundreds
               of AI agents working concurrently, with stateless compute that auto-scales
               based on demand.
+            </p>
+          </div>
+
+          <div class="home-feature">
+            <h3 class="home-feature-title">Checks</h3>
+            <p class="home-feature-description">
+              Nix-native checks run locally with the exact derivations that power remote execution.
+              Content-addressed caches keep results consistent and fast, so a green check locally is the
+              same check everywhere—no centralized queue required.
             </p>
           </div>
 
@@ -92,8 +102,8 @@
           <div class="home-feature">
             <h3 class="home-feature-title">Forge-First</h3>
             <p class="home-feature-description">
-              The server is the source of truth, not local disk. Coordinator-free
-              landing with S3 conditional writes. No single bottleneck.
+              The forge is the source of truth, with optional local disk mirrors. Coordinator-free
+              landing with content-addressed conditional writes. No single bottleneck.
             </p>
           </div>
         </div>

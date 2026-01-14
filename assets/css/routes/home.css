@@ -20,7 +20,7 @@
 }
 
 .home-tagline {
-  color: var(--theme-ui-colors-muted);
+  color: var(--theme-ui-colors-secondary);
   margin-bottom: var(--theme-ui-space-3);
 }
 
@@ -108,4 +108,16 @@
 
 .home-overview p {
   margin: var(--theme-ui-space-2) 0;
+}
+
+.home-overview a {
+  color: var(--theme-ui-colors-primary);
+  text-decoration: underline;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.15em;
+}
+
+.home-overview a:hover {
+  color: var(--theme-ui-colors-secondary);
+  text-decoration-color: var(--theme-ui-colors-secondary);
 }

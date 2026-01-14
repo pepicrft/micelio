@@ -201,12 +201,12 @@ Let's trace through a complete example:
 
 **Verification:**
 1. Reviewer sees attestation claims derivation `deriv-789`
-2. Checks that `deriv-789` derives from tree state `tree-xyz` ✓
-3. Checks derivation includes all lockfile dependencies ✓
+2. Checks that `deriv-789` derives from tree state `tree-xyz` (ok)
+3. Checks derivation includes all lockfile dependencies (ok)
 4. Rebuilds derivation `deriv-789` locally
-5. Output hash matches `output-012` ✓
-6. Inspects execution log: ran 147 tests, all passed ✓
-7. Signature valid ✓
+5. Output hash matches `output-012` (ok)
+6. Inspects execution log: ran 147 tests, all passed (ok)
+7. Signature valid (ok)
 
 **What this proves:**
 - The agent used tree state `tree-xyz`'s source code
@@ -449,11 +449,11 @@ Cloud deployments can optionally use object storage (S3, etc.) for the same cont
 
 ### What You Don't Need
 
-❌ Dedicated CI servers  
-❌ Build queue management  
-❌ Complex caching layers  
-❌ Artifact storage systems  
-❌ CI/CD pipeline orchestration
+- No dedicated CI servers
+- No build queue management
+- No complex caching layers
+- No artifact storage systems
+- No CI/CD pipeline orchestration
 
 The architecture is **radically simpler** because we leverage:
 - Nix for reproducibility (free, open source)

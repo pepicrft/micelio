@@ -5,32 +5,90 @@ nav,
   padding: var(--theme-ui-space-1) var(--theme-ui-space-2);
   max-width: var(--theme-ui-sizes-container);
   margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--theme-ui-space-2);
 }
 
-nav a:not(:first-child):not(.btn),
-.navbar a:not(:first-child):not(.btn) {
-  margin-left: var(--theme-ui-space-2);
-  color: var(--theme-ui-colors-secondary);
+.navbar-left,
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: var(--theme-ui-space-2);
+}
+
+nav a,
+.navbar a {
+  color: var(--theme-ui-colors-text);
   text-decoration: none;
 }
 
-nav a:not(.btn):hover,
-.navbar a:not(.btn):hover {
-  color: var(--theme-ui-colors-primary);
+nav a:hover,
+.navbar a:hover {
   text-decoration: underline;
 }
 
 nav .brand,
 .navbar .brand {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--theme-ui-space-1);
 }
 
 nav .brand a,
 .navbar .brand a {
   text-decoration: none;
   color: var(--theme-ui-colors-text);
-  margin-left: 0;
   font-weight: var(--theme-ui-fontWeights-bold);
+}
+
+.navbar-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--theme-ui-space-1);
+  padding: var(--theme-ui-space-1) var(--theme-ui-space-2);
+  border: var(--theme-ui-borders-thin);
+  border-radius: var(--theme-ui-radii-default);
+  background: var(--theme-ui-colors-background);
+}
+
+.navbar-cta:hover {
+  text-decoration: none;
+  background: var(--theme-ui-colors-border);
+}
+
+.navbar-logout-form {
+  display: inline-flex;
+  margin: 0;
+}
+
+.navbar-link-button {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--theme-ui-colors-text);
+  font: inherit;
+  text-decoration: none;
+  padding: 0;
+}
+
+.navbar-link-button:hover {
+  text-decoration: underline;
+}
+
+.navbar-theme-toggle {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--theme-ui-colors-text);
+  font: inherit;
+  text-decoration: none;
+  padding: 0;
+}
+
+.navbar-theme-toggle:hover {
+  text-decoration: underline;
 }
 
 .icon {
@@ -47,10 +105,6 @@ nav .brand a,
 .icon svg {
   width: 100%;
   height: 100%;
-}
-
-.pull-right {
-  float: right;
 }
 
 @media (max-width: 60rem) {

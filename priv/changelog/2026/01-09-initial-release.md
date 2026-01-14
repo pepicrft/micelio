@@ -12,7 +12,7 @@
 
 We're excited to announce the first release of Micelio! This initial version lays the groundwork for an agent-first forge designed for massive scale and human-AI collaboration.
 
-## 🚀 New Features
+## New Features
 
 ### Core Infrastructure
 - **Agent-first architecture** - Built from the ground up for AI agent collaboration
@@ -35,14 +35,14 @@ We're excited to announce the first release of Micelio! This initial version lay
 - **Authentication system** - Secure access with magic links
 - **Project organization** - Manage multiple repositories efficiently
 
-## 🔧 Technical Highlights
+## Technical Highlights
 
 - **Elixir/Phoenix** - Reliable, concurrent backend
 - **NimblePublisher** - Static content management for blog and changelog
 - **PostgreSQL** - Robust data persistence
 - **Modern CSS** - Responsive, accessible interface
 
-## 🌟 What's Next
+## What's Next
 
 This is just the beginning! Coming soon:
 
@@ -51,14 +51,14 @@ This is just the beginning! Coming soon:
 - **Performance optimizations** - Even faster at massive scale
 - **Extended API coverage** - More Git operations and webhooks
 
-## 📚 Getting Started
+## Getting Started
 
 Visit our [documentation](https://micelio.dev) to learn more about:
 - Setting up your first repository
 - Understanding the agent-first development model
 - Best practices for human-AI collaboration
 
-## 🙏 Thank You
+## Thank You
 
 Special thanks to the early adopters and contributors who helped shape this initial release. Your feedback has been invaluable!
 

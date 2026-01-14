@@ -178,6 +178,8 @@ Git was revolutionary for its time, enabling distributed human collaboration at 
 
 **Core insight:** Agents need local validation they can trust, but the forge needs stateless, scalable execution and caching.
 
+**Terminology:** We call the full suite of automated validation (tests, linting, formatting, static analysis, builds, scans) **checks**. A check is “the same everywhere” when it’s expressed as a reproducible Nix derivation, so passing locally matches remote execution.
+
 #### Nix's Role: Environment Reproducibility
 - **flake.nix defines everything:** dependencies, build steps, test environments
 - **Local agent validation:** `nix develop --command make test` gives instant feedback
