@@ -21,7 +21,7 @@ defmodule Micelio.MixProject do
   def application do
     [
       mod: {Micelio.Application, []},
-      extra_applications: [:logger, :runtime_tools]
+      extra_applications: [:logger, :runtime_tools, :crypto, :ssl, :public_key]
     ]
   end
 
