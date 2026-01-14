@@ -12,7 +12,8 @@ defmodule Micelio.Storage.S3 do
         s3_region: "us-east-1",
         s3_access_key_id: "your-access-key",      # Optional if using IAM roles
         s3_secret_access_key: "your-secret-key",  # Optional if using IAM roles
-        s3_endpoint: "https://s3.amazonaws.com"   # Optional, for S3-compatible services
+        s3_endpoint: "https://s3.amazonaws.com",  # Optional, for S3-compatible services
+        s3_url_style: :virtual                    # Optional (:virtual or :path)
 
   ## AWS Credentials
 
@@ -286,6 +287,20 @@ defmodule Micelio.Storage.S3 do
         System.get_env("S3_ENDPOINT") ||
         "https://s3.#{region}.amazonaws.com"
 
+    url_style =
+      Keyword.get(config, :s3_url_style) ||
+        System.get_env("S3_URL_STYLE") ||
+        :virtual
+
+    url_style =
+      case url_style do
+        :path -> :path
+        "path" -> :path
+        :virtual -> :virtual
+        "virtual" -> :virtual
+        _ -> :virtual
+      end
+
     cond do
       is_nil(bucket) ->
         {:error, :missing_s3_bucket}
@@ -302,16 +317,29 @@ defmodule Micelio.Storage.S3 do
            region: region,
            access_key: access_key,
            secret_key: secret_key,
-           endpoint: endpoint
+           endpoint: endpoint,
+           url_style: url_style
          }}
     end
   end
 
   defp build_url(config, key) do
-    # Use path-style URLs for better compatibility
-    base_url = String.trim_trailing(config.endpoint, "/")
+    base_uri = config.endpoint |> String.trim_trailing("/") |> URI.parse()
     encoded_key = URI.encode(key, &URI.char_unreserved?/1)
-    "#{base_url}/#{config.bucket}/#{encoded_key}"
+
+    uri =
+      case config.url_style do
+        :path ->
+          bucket_path = "/" <> config.bucket
+          key_path = "/" <> encoded_key
+          %{base_uri | path: (bucket_path <> key_path)}
+
+        :virtual ->
+          key_path = "/" <> encoded_key
+          %{base_uri | host: "#{config.bucket}.#{base_uri.host}", path: key_path}
+      end
+
+    URI.to_string(uri)
   end
 
   defp build_headers(content) when is_binary(content) do
@@ -443,7 +471,7 @@ defmodule Micelio.Storage.S3 do
 
   defp list_objects(config, prefix, continuation_token, accumulated_keys) do
     query_params = build_list_query_params(prefix, continuation_token)
-    url = "#{String.trim_trailing(config.endpoint, "/")}/#{config.bucket}?#{query_params}"
+    url = build_list_url(config, query_params)
 
     with {:ok, req} <- build_signed_request(config, :get, url),
          {:ok, response} <- Req.request(req) do
@@ -456,6 +484,21 @@ defmodule Micelio.Storage.S3 do
           {:error, {:s3_error, status, response.body}}
       end
     end
+  end
+
+  defp build_list_url(config, query_params) do
+    base_uri = config.endpoint |> String.trim_trailing("/") |> URI.parse()
+
+    uri =
+      case config.url_style do
+        :path ->
+          %{base_uri | path: "/" <> config.bucket, query: query_params}
+
+        :virtual ->
+          %{base_uri | host: "#{config.bucket}.#{base_uri.host}", path: "/", query: query_params}
+      end
+
+    URI.to_string(uri)
   end
 
   defp build_list_query_params(prefix, continuation_token) do
