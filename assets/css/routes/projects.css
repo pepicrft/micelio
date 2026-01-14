@@ -23,6 +23,11 @@
   align-items: center;
 }
 
+.projects-header-actions .project-button {
+  width: auto;
+  white-space: nowrap;
+}
+
 .projects-list {
   display: flex;
   flex-direction: column;
