@@ -118,3 +118,58 @@
   color: var(--theme-ui-colors-secondary);
   text-decoration-color: var(--theme-ui-colors-secondary);
 }
+
+.home-pricing {
+  margin-top: var(--theme-ui-space-4);
+  padding-top: var(--theme-ui-space-4);
+  border-top: var(--theme-ui-borders-thin);
+}
+
+.home-pricing-header {
+  margin-bottom: var(--theme-ui-space-3);
+}
+
+.home-section-title {
+  font-weight: var(--theme-ui-fontWeights-bold);
+  color: var(--theme-ui-colors-text);
+  margin-bottom: var(--theme-ui-space-1);
+  border-bottom: var(--theme-ui-borders-thin);
+  padding-bottom: var(--theme-ui-space-1);
+}
+
+.home-section-subtitle {
+  color: var(--theme-ui-colors-secondary);
+}
+
+.home-pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--theme-ui-space-2);
+}
+
+@media (max-width: 60rem) {
+  .home-pricing-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.home-pricing-tier {
+  border: var(--theme-ui-borders-thin);
+  padding: var(--theme-ui-space-2);
+  background: var(--theme-ui-colors-background);
+}
+
+.home-pricing-title {
+  font-weight: var(--theme-ui-fontWeights-bold);
+  margin-bottom: var(--theme-ui-space-1);
+}
+
+.home-pricing-price {
+  font-weight: var(--theme-ui-fontWeights-bold);
+  color: var(--theme-ui-colors-text);
+  margin-bottom: var(--theme-ui-space-1);
+}
+
+.home-pricing-detail {
+  color: var(--theme-ui-colors-secondary);
+}
