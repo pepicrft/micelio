@@ -140,7 +140,7 @@ The derivation hash cryptographically binds these together. You cannot substitut
 
 For example, if your repository defines:
 
-```
+```elixir
 # In mix.exs
 defp aliases do
   [

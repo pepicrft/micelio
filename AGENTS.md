@@ -150,11 +150,25 @@ custom classes must fully style the input
 - **Never** use Tailwind CSS classes in templates
 - Use vanilla modern CSS only
 - **UI Design Philosophy**: Keep the interface minimal and functional like [SourceHut](https://sourcehut.org) - clean typography, generous whitespace, clear hierarchy, no unnecessary decoration
-- Define a theme following the [theme-ui specification](https://theme-ui.com/) modeled with CSS variables in `assets/css/theme/tokens.css`
-- CSS variables are **required** for all values (colors, spacing, typography, etc.). Hardcoded values are exceptions and should be avoided
-- CSS files must mirror the pages structure:
-  - `assets/css/theme/tokens.css`: Design tokens as CSS variables (colors, spacing, typography, shadows, radii)
-  - `assets/css/routes/<page>.css`: Page-specific styles that consume the design tokens
+
+### Theme-UI Specification
+
+Styling **must** adhere to the [theme-ui specification](https://theme-ui.com/theme-spec) using CSS variables. All styles should use these variables instead of one-off hardcoded values.
+
+- **Design tokens file**: `assets/css/theme/tokens.css` - Contains all CSS variables following theme-ui naming conventions
+- **Variable naming**: Use `--theme-ui-<category>-<value>` pattern (e.g., `--theme-ui-colors-primary`, `--theme-ui-space-2`, `--theme-ui-fontSizes-body`)
+- **Required variable usage**: CSS variables are **required** for all values:
+  - Colors: `var(--theme-ui-colors-primary)`, `var(--theme-ui-colors-text)`, `var(--theme-ui-colors-background)`
+  - Spacing: `var(--theme-ui-space-1)`, `var(--theme-ui-space-2)`, etc.
+  - Typography: `var(--theme-ui-fonts-body)`, `var(--theme-ui-fontSizes-body)`, `var(--theme-ui-fontWeights-bold)`
+  - Borders: `var(--theme-ui-borders-thin)`
+  - Sizes: `var(--theme-ui-sizes-container)`
+- **Hardcoded values are exceptions** and should be avoided unless absolutely necessary
+
+### File Structure
+
+- `assets/css/theme/tokens.css`: Design tokens as CSS variables
+- `assets/css/routes/<page>.css`: Page-specific styles that consume the design tokens
 - Use semantic class names that describe purpose (e.g., `.auth-container`, `.auth-button`) rather than utility classes
 
 <!-- phoenix:html-start -->
