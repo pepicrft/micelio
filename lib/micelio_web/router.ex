@@ -4,6 +4,7 @@ defmodule MicelioWeb.Router do
   pipeline :browser do
     plug :accepts, ["html"]
     plug :fetch_session
+    plug :fetch_flash
     plug :fetch_live_flash
     plug :put_root_layout, html: {MicelioWeb.Layouts, :root}
     plug :protect_from_forgery
@@ -102,6 +103,7 @@ defmodule MicelioWeb.Router do
   scope "/account", MicelioWeb.Browser do
     pipe_through [:browser, :require_auth]
 
+    get "/", ProfileController, :show
     get "/devices", DeviceController, :index
     delete "/devices/:id", DeviceController, :delete
   end
@@ -112,6 +114,8 @@ defmodule MicelioWeb.Router do
     get "/", PageController, :home
 
     get "/:account", AccountController, :show
+    get "/:account/:repository/tree/*path", RepositoryController, :tree
+    get "/:account/:repository/blob/*path", RepositoryController, :blob
     get "/:account/:repository", RepositoryController, :show
   end
 end

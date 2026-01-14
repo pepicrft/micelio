@@ -1,6 +1,40 @@
-This is a web application written using the Phoenix web framework.
+This is a monorepo containing:
+- **Forge** (Elixir/Phoenix) - The web application and gRPC server
+- **CLI** (Zig) - The `mic` command-line interface
 
 See [NEXT.md](NEXT.md) for upcoming features and improvements.
+
+---
+
+## CLI (Zig)
+
+The CLI is located in `cli/` and is built with Zig 0.15.
+
+### Module Structure
+
+- `cli/src/core/hash.zig` - Blake3 hashing for content-addressed storage
+- `cli/src/core/bloom.zig` - Bloom filters for conflict detection
+- `cli/src/core/hlc.zig` - Hybrid Logical Clocks for distributed timestamps
+- `cli/src/core/tree.zig` - B+ tree for directory structures
+- `cli/src/root.zig` - Library entry point and re-exports
+
+### Testing
+
+Run all CLI tests with:
+
+```bash
+cd cli && zig build test
+```
+
+Tests are organized by module. Each core module includes comprehensive unit tests covering normal operation, edge cases, and error conditions.
+
+---
+
+## Forge (Elixir/Phoenix)
+
+### Static Assets
+
+- **SKILL.md** (`priv/static/SKILL.md`) - Documentation for the mic CLI served at `/SKILL.md`. Keep this file up to date when adding or changing mic CLI commands.
 
 ## Project guidelines
 

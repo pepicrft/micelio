@@ -1,0 +1,120 @@
+/* Repository show styles */
+
+.repository-container {
+}
+
+.repository-description {
+  color: var(--theme-ui-colors-secondary);
+}
+
+.repository-url {
+  word-break: break-word;
+}
+
+.repository-url a {
+  color: var(--theme-ui-colors-primary);
+  text-decoration: underline;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.15em;
+}
+
+.repository-url a:hover {
+  color: var(--theme-ui-colors-secondary);
+  text-decoration-color: var(--theme-ui-colors-secondary);
+}
+
+.repository-browser {
+  margin-top: var(--theme-ui-space-2);
+}
+
+.repository-breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: calc(var(--theme-ui-space-1) / 2);
+  margin-bottom: var(--theme-ui-space-1);
+  color: var(--theme-ui-colors-secondary);
+}
+
+.repository-breadcrumb a {
+  color: var(--theme-ui-colors-primary);
+  text-decoration: none;
+}
+
+.repository-breadcrumb a:hover {
+  text-decoration: underline;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.15em;
+}
+
+.repository-breadcrumb-sep {
+  color: var(--theme-ui-colors-muted);
+}
+
+.repository-empty {
+  color: var(--theme-ui-colors-secondary);
+}
+
+.repository-tree {
+  list-style: none;
+  border-top: var(--theme-ui-borders-thin);
+  border-bottom: var(--theme-ui-borders-thin);
+}
+
+.repository-tree-item + .repository-tree-item {
+  border-top: var(--theme-ui-borders-thin);
+}
+
+.repository-tree-link {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--theme-ui-space-2);
+  padding: var(--theme-ui-space-1) 0;
+  color: var(--theme-ui-colors-text);
+  text-decoration: none;
+}
+
+.repository-tree-link:hover {
+  background: var(--theme-ui-colors-border);
+}
+
+.repository-tree-name {
+  font-family: var(--theme-ui-fonts-mono);
+}
+
+.repository-tree-kind {
+  color: var(--theme-ui-colors-muted);
+  font-family: var(--theme-ui-fonts-mono);
+  font-size: 0.875em;
+}
+
+.repository-file-path {
+  font-family: var(--theme-ui-fonts-mono);
+  color: var(--theme-ui-colors-secondary);
+}
+
+.repository-file-back {
+  color: var(--theme-ui-colors-primary);
+  text-decoration: none;
+  border: var(--theme-ui-borders-thin);
+  padding: calc(var(--theme-ui-space-1) / 2) var(--theme-ui-space-1);
+}
+
+.repository-file-back:hover {
+  background: var(--theme-ui-colors-border);
+}
+
+.repository-file-content {
+  border: var(--theme-ui-borders-thin);
+  padding: var(--theme-ui-space-2);
+  overflow: auto;
+  font-family: var(--theme-ui-fonts-mono);
+  white-space: pre;
+}
+
+.repository-file-binary {
+  border: var(--theme-ui-borders-thin);
+  padding: var(--theme-ui-space-2);
+  color: var(--theme-ui-colors-secondary);
+}

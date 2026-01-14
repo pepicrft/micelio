@@ -4,50 +4,42 @@
   current_user={assigns[:current_user]}
 >
   <div class="changelog-container">
-    <div class="changelog-nav">
-      <.link navigate={~p"/changelog"} class="changelog-nav-link">
-        ← Back to Changelog
-      </.link>
-    </div>
-
     <article class="changelog-detail">
-      <header class="changelog-detail-header">
-        <h1 class="changelog-title">{@entry.title}</h1>
+      <.header>
+        {@entry.title}
+        <:subtitle>
+          <div class="changelog-entry-meta">
+            <time datetime={Date.to_iso8601(@entry.date)}>
+              {Calendar.strftime(@entry.date, "%B %d, %Y")}
+            </time>
 
-        <div class="changelog-entry-meta">
-          <time datetime={Date.to_iso8601(@entry.date)}>
-            {Calendar.strftime(@entry.date, "%B %d, %Y")}
-          </time>
+            <.badge mono>v{@entry.version}</.badge>
 
-          <.badge mono>v{@entry.version}</.badge>
+            <%= if @entry.author do %>
+              <span class="changelog-entry-author">by {@entry.author}</span>
+            <% end %>
 
-          <%= if @entry.author do %>
-            <span class="changelog-entry-author">by {@entry.author}</span>
+            <%= for category <- @entry.categories do %>
+              <.badge navigate={~p"/changelog/category/#{category}"} variant={:solid} caps>
+                {category}
+              </.badge>
+            <% end %>
+          </div>
+
+          <%= if @entry.description && @entry.description != "" do %>
+            <p class="changelog-entry-description">
+              {@entry.description}
+            </p>
           <% end %>
-
-          <%= for category <- @entry.categories do %>
-            <.badge navigate={~p"/changelog/category/#{category}"} variant={:solid} caps>
-              {category}
-            </.badge>
-          <% end %>
-        </div>
-
-        <%= if @entry.description && @entry.description != "" do %>
-          <p class="changelog-tagline">
-            {@entry.description}
-          </p>
-        <% end %>
-      </header>
+        </:subtitle>
+        <:actions>
+          <.badge navigate={~p"/changelog"}>Back</.badge>
+        </:actions>
+      </.header>
 
       <div class="changelog-detail-content">
         {raw(@entry.body)}
       </div>
     </article>
-
-    <div class="changelog-nav">
-      <.link navigate={~p"/changelog"} class="changelog-nav-link">
-        ← All Changelog Entries
-      </.link>
-    </div>
   </div>
 </Layouts.app>

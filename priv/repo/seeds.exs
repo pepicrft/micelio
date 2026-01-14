@@ -73,14 +73,31 @@ case Repo.get_by(Project, handle: "micelio", organization_id: micelio_org.id) do
         handle: "micelio",
         name: "Micelio",
         description: "The Micelio platform",
+        url: "https://micelio.dev",
         organization_id: micelio_org.id
       })
       |> Repo.insert()
 
     IO.puts("Created project: micelio/micelio")
 
-  _project ->
-    IO.puts("Project micelio/micelio already exists")
+  project ->
+    desired = %{description: "The Micelio platform", url: "https://micelio.dev"}
+
+    attrs =
+      Enum.reduce(desired, %{}, fn {key, value}, acc ->
+        if Map.get(project, key) in [nil, ""], do: Map.put(acc, key, value), else: acc
+      end)
+
+    if attrs == %{} do
+      IO.puts("Project micelio/micelio already exists")
+    else
+      {:ok, _project} =
+        project
+        |> Project.changeset(attrs)
+        |> Repo.update()
+
+      IO.puts("Updated project: micelio/micelio")
+    end
 end
 
 IO.puts("\nLocal development setup complete!")

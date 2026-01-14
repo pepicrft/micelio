@@ -1,6 +1,6 @@
-# Micelio hif Forge - Implementation Plan
+# Micelio mic Forge - Implementation Plan
 
-This document outlines the implementation plan for adding hif forge capabilities to Micelio. The forge uses stateless agents with S3 as the source of truth, inspired by [Turbopuffer](https://turbopuffer.com/), [WarpStream](https://www.warpstream.com/), and [Calvin](https://cs.yale.edu/homes/thomson/publications/calvin-sigmod12.pdf).
+This document outlines the implementation plan for adding mic forge capabilities to Micelio. The forge uses stateless agents with S3 as the source of truth, inspired by [Turbopuffer](https://turbopuffer.com/), [WarpStream](https://www.warpstream.com/), and [Calvin](https://cs.yale.edu/homes/thomson/publications/calvin-sigmod12.pdf).
 
 ---
 
@@ -124,7 +124,7 @@ Use `exqlite` or `ecto_sqlite3` for SQLite access:
 ### 1.3 Auth Context
 
 ```elixir
-defmodule Micelio.Hif.Auth do
+defmodule Micelio.Mic.Auth do
   def create_user(attrs)
   def get_user(id)
   def create_token(user, name)
@@ -138,10 +138,10 @@ end
 ```yaml
 # litestream.yml
 dbs:
-  - path: /data/hif_auth.db
+  - path: /data/mic_auth.db
     replicas:
       - type: s3
-        bucket: micelio-hif
+        bucket: micelio-mic
         path: auth/litestream
         region: auto
 ```
@@ -152,12 +152,12 @@ dbs:
 
 ## Phase 2: S3 Storage Layer (Binary)
 
-**Goal:** Read/write hif data to S3 using binary formats.
+**Goal:** Read/write mic data to S3 using binary formats.
 
 ### 2.1 S3 Structure
 
 ```
-s3://micelio-hif/
+s3://micelio-mic/
 └── projects/
     └── {project_id}/
         │
@@ -216,8 +216,8 @@ s3://micelio-hif/
 ### 2.3 Storage Module
 
 ```elixir
-defmodule Micelio.Hif.Storage do
-  @moduledoc "S3 storage for hif data (binary formats)"
+defmodule Micelio.Mic.Storage do
+  @moduledoc "S3 storage for mic data (binary formats)"
 
   # Head (48 bytes binary)
   def get_head(project_id)
@@ -249,8 +249,8 @@ end
 ### 2.4 Binary Serialization
 
 ```elixir
-defmodule Micelio.Hif.Binary do
-  @moduledoc "Binary serialization for hif data structures"
+defmodule Micelio.Mic.Binary do
+  @moduledoc "Binary serialization for mic data structures"
 
   # Head
   def encode_head(position, tree_hash, hlc)
@@ -264,7 +264,7 @@ defmodule Micelio.Hif.Binary do
   def encode_landing(landing)
   def decode_landing(binary)
 
-  # Bloom filter (delegated to libhif-core or pure Elixir)
+  # Bloom filter (delegated to libmic-core or pure Elixir)
   def encode_bloom(bloom)
   def decode_bloom(binary)
 end
@@ -274,13 +274,13 @@ end
 
 ```elixir
 # config/dev.exs - local filesystem
-config :micelio, Micelio.Hif.Storage,
-  adapter: Micelio.Hif.Storage.Local,
-  path: "priv/hif_storage"
+config :micelio, Micelio.Mic.Storage,
+  adapter: Micelio.Mic.Storage.Local,
+  path: "priv/mic_storage"
 
 # config/runtime.exs - S3
-config :micelio, Micelio.Hif.Storage,
-  adapter: Micelio.Hif.Storage.S3,
+config :micelio, Micelio.Mic.Storage,
+  adapter: Micelio.Mic.Storage.S3,
   bucket: System.get_env("HIF_S3_BUCKET"),
   region: System.get_env("AWS_REGION", "auto")
 ```
@@ -296,8 +296,8 @@ config :micelio, Micelio.Hif.Storage,
 ### 3.1 Sessions Context
 
 ```elixir
-defmodule Micelio.Hif.Sessions do
-  alias Micelio.Hif.Storage
+defmodule Micelio.Mic.Sessions do
+  alias Micelio.Mic.Storage
 
   def start_session(project_id, goal, owner_id) do
     {head, _etag} = Storage.get_head(project_id)
@@ -340,7 +340,7 @@ end
 ### 4.1 Landing Protocol
 
 ```elixir
-defmodule Micelio.Hif.Landing do
+defmodule Micelio.Mic.Landing do
   @moduledoc """
   Coordinator-free landing using S3 conditional writes.
 
@@ -398,7 +398,7 @@ end
 ### 4.2 Bloom Filter Rollups (O(log n) Conflict Detection)
 
 ```elixir
-defmodule Micelio.Hif.ConflictDetection do
+defmodule Micelio.Mic.ConflictDetection do
   @moduledoc """
   O(log n) conflict detection using hierarchical bloom rollups.
 
@@ -463,7 +463,7 @@ end
 ### 4.3 Async Post-Landing Tasks
 
 ```elixir
-defmodule Micelio.Hif.LandingWorker do
+defmodule Micelio.Mic.LandingWorker do
   @moduledoc "Background tasks after landing"
 
   use Oban.Worker
@@ -486,7 +486,7 @@ end
 
 ## Phase 5: API Endpoints
 
-**Goal:** gRPC/HTTP endpoints for hif CLI.
+**Goal:** gRPC/HTTP endpoints for mic CLI.
 
 ### 5.1 gRPC Service
 
@@ -510,11 +510,11 @@ service HifService {
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/hif/projects/:id/sessions` | POST | Start session |
-| `/api/hif/projects/:id/sessions/:sid` | GET | Get session |
-| `/api/hif/projects/:id/sessions/:sid/land` | POST | Land session |
-| `/api/hif/projects/:id/blobs` | POST | Upload blob |
-| `/api/hif/projects/:id/blobs/:hash` | GET | Download blob |
+| `/api/mic/projects/:id/sessions` | POST | Start session |
+| `/api/mic/projects/:id/sessions/:sid` | GET | Get session |
+| `/api/mic/projects/:id/sessions/:sid/land` | POST | Land session |
+| `/api/mic/projects/:id/blobs` | POST | Upload blob |
+| `/api/mic/projects/:id/blobs/:hash` | GET | Download blob |
 
 ### 5.3 Authentication
 
@@ -522,7 +522,7 @@ service HifService {
 defmodule MicelioWeb.Hif.AuthPlug do
   def call(conn, _opts) do
     with {:ok, token} <- extract_bearer_token(conn),
-         {:ok, account} <- Micelio.Hif.Auth.verify_token(token) do
+         {:ok, account} <- Micelio.Mic.Auth.verify_token(token) do
       assign(conn, :current_account, account)
     else
       _ -> send_resp(conn, 401, "Unauthorized") |> halt()
@@ -531,26 +531,26 @@ defmodule MicelioWeb.Hif.AuthPlug do
 end
 ```
 
-**Deliverable:** gRPC and REST API for hif operations
+**Deliverable:** gRPC and REST API for mic operations
 
 ---
 
-## Phase 6: libhif-core Integration
+## Phase 6: libmic-core Integration
 
 **Goal:** Use Zig NIFs for binary serialization and bloom filters.
 
 ### 6.1 Why NIFs?
 
 - Binary formats are complex (B+ trees, bloom filters)
-- libhif-core already implements them correctly
+- libmic-core already implements them correctly
 - 100x faster than pure Elixir for serialization
 - Shared code between client and server
 
 ### 6.2 NIF Wrapper
 
 ```elixir
-defmodule Micelio.Hif.Core do
-  use Zig, otp_app: :micelio, link_lib: "hif_core"
+defmodule Micelio.Mic.Core do
+  use Zig, otp_app: :micelio, link_lib: "mic_core"
 
   # Bloom filters
   def bloom_new(n, fp_rate)
@@ -596,8 +596,8 @@ Tier 3: S3             (PB)    - everything, ~100ms
 ### 7.2 Cache Module
 
 ```elixir
-defmodule Micelio.Hif.Cache do
-  @moduledoc "Tiered caching for hif data"
+defmodule Micelio.Mic.Cache do
+  @moduledoc "Tiered caching for mic data"
 
   # RAM cache (ETS)
   def get_cached(key)
@@ -640,7 +640,7 @@ end
 | Dependency | Purpose |
 |------------|---------|
 | SQLite + Litestream | Auth storage (replicated to S3) |
-| S3 / R2 / MinIO | hif data storage |
+| S3 / R2 / MinIO | mic data storage |
 
 ---
 
@@ -677,8 +677,8 @@ end
 
 1. Add `ecto_sqlite3` dependency and configure SQLite
 2. Set up Litestream for S3 replication
-3. Implement `Micelio.Hif.Auth` context
-4. Implement `Micelio.Hif.Binary` serialization
+3. Implement `Micelio.Mic.Auth` context
+4. Implement `Micelio.Mic.Binary` serialization
 5. Implement coordinator-free landing with conditional writes
 6. Add gRPC endpoints for sessions
 7. Build bloom filter rollups for conflict detection

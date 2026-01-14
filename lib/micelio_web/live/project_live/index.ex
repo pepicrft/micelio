@@ -55,9 +55,9 @@ defmodule MicelioWeb.ProjectLive.Index do
       current_user={@current_user}
     >
       <div class="projects-container">
-        <header class="projects-header">
-          <h1>Projects</h1>
-          <div class="projects-header-actions">
+        <.header>
+          Projects
+          <:actions>
             <.link
               navigate={~p"/organizations/new"}
               class="project-button project-button-secondary"
@@ -70,8 +70,8 @@ defmodule MicelioWeb.ProjectLive.Index do
                 New project
               </.link>
             <% end %>
-          </div>
-        </header>
+          </:actions>
+        </.header>
 
         <%= if @projects_count == 0 do %>
           <div class="projects-empty">
@@ -92,6 +92,13 @@ defmodule MicelioWeb.ProjectLive.Index do
               </div>
               <%= if project.description do %>
                 <div class="project-card-description">{project.description}</div>
+              <% end %>
+              <%= if project.url do %>
+                <div class="project-card-url">
+                  <a href={project.url} target="_blank" rel="noopener noreferrer">
+                    {project.url}
+                  </a>
+                </div>
               <% end %>
               <div class="project-card-actions">
                 <.link

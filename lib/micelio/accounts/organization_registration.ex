@@ -29,7 +29,19 @@ defmodule Micelio.Accounts.OrganizationRegistration do
   """
   def merge_errors(changeset, other_changeset) do
     Enum.reduce(other_changeset.errors, changeset, fn {field, {message, opts}}, acc ->
-      add_error(acc, field, message, opts)
+      opts = Enum.sort(opts)
+
+      already_present? =
+        Enum.any?(acc.errors, fn
+          {^field, {^message, existing_opts}} -> Enum.sort(existing_opts) == opts
+          _ -> false
+        end)
+
+      if already_present? do
+        acc
+      else
+        add_error(acc, field, message, opts)
+      end
     end)
   end
 

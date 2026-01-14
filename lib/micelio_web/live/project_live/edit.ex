@@ -89,12 +89,14 @@ defmodule MicelioWeb.ProjectLive.Edit do
       current_user={@current_user}
     >
       <div class="project-form-container">
-        <header class="project-form-header">
-          <h1>Edit project</h1>
-          <p>
-            {@organization.account.handle}/{@project.handle}
-          </p>
-        </header>
+        <.header>
+          Edit project
+          <:subtitle>
+            <p>
+              {@organization.account.handle}/{@project.handle}
+            </p>
+          </:subtitle>
+        </.header>
 
         <.form
           for={@form}
@@ -135,6 +137,18 @@ defmodule MicelioWeb.ProjectLive.Edit do
               class="project-input project-textarea"
               error_class="project-input project-input-error"
             />
+          </div>
+
+          <div class="project-form-group">
+            <.input
+              field={@form[:url]}
+              type="url"
+              label="URL"
+              placeholder="https://example.com"
+              class="project-input"
+              error_class="project-input project-input-error"
+            />
+            <p class="project-form-hint">Optional homepage or repository URL.</p>
           </div>
 
           <div class="project-form-actions">

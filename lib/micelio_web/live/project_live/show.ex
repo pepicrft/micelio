@@ -74,15 +74,44 @@ defmodule MicelioWeb.ProjectLive.Show do
       current_user={@current_user}
     >
       <div class="project-show-container">
-        <header class="project-show-header">
-          <h1>{@project.name}</h1>
-          <div class="project-show-handle">
-            {@organization.account.handle}/{@project.handle}
-          </div>
-          <%= if @project.description do %>
-            <p class="project-show-description">{@project.description}</p>
-          <% end %>
-        </header>
+        <.header>
+          {@project.name}
+          <:subtitle>
+            <div class="project-show-handle">
+              {@organization.account.handle}/{@project.handle}
+            </div>
+            <%= if @project.description do %>
+              <p class="project-show-description">{@project.description}</p>
+            <% end %>
+            <%= if @project.url do %>
+              <p class="project-show-url">
+                <a href={@project.url} target="_blank" rel="noopener noreferrer">
+                  {@project.url}
+                </a>
+              </p>
+            <% end %>
+          </:subtitle>
+          <:actions>
+            <%= if Authorization.authorize(:project_update, @current_user, @project) == :ok do %>
+              <.link
+                navigate={~p"/projects/#{@organization.account.handle}/#{@project.handle}/edit"}
+                class="project-show-action project-show-action-edit"
+                id="project-edit"
+              >
+                Edit
+              </.link>
+              <button
+                type="button"
+                class="project-show-action project-show-action-delete"
+                id="project-delete"
+                phx-click="delete"
+                phx-confirm="Delete this project?"
+              >
+                Delete
+              </button>
+            <% end %>
+          </:actions>
+        </.header>
 
         <div class="project-show-navigation">
           <.link
@@ -121,27 +150,6 @@ defmodule MicelioWeb.ProjectLive.Show do
             </.link>
           </div>
         <% end %>
-
-        <div class="project-show-actions">
-          <%= if Authorization.authorize(:project_update, @current_user, @project) == :ok do %>
-            <.link
-              navigate={~p"/projects/#{@organization.account.handle}/#{@project.handle}/edit"}
-              class="project-show-action project-show-action-edit"
-              id="project-edit"
-            >
-              Edit project
-            </.link>
-            <button
-              type="button"
-              class="project-show-action project-show-action-delete"
-              id="project-delete"
-              phx-click="delete"
-              phx-confirm="Delete this project?"
-            >
-              Delete project
-            </button>
-          <% end %>
-        </div>
       </div>
     </Layouts.app>
     """

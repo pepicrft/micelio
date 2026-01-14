@@ -1,9 +1,6 @@
 /* Device auth styles */
 
 .device-auth-container {
-  max-width: var(--theme-ui-sizes-container);
-  margin: var(--theme-ui-space-4) auto;
-  padding: 0 var(--theme-ui-space-2);
 }
 
 .device-auth-header h1 {

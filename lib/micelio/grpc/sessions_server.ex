@@ -14,8 +14,8 @@ defmodule Micelio.GRPC.Sessions.V1.SessionService.Server do
     StartSessionRequest
   }
 
-  alias Micelio.Hif.Binary
-  alias Micelio.Hif.Landing
+  alias Micelio.Mic.Binary
+  alias Micelio.Mic.Landing
   alias Micelio.OAuth.AccessTokens
   alias Micelio.Projects
   alias Micelio.Sessions

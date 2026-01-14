@@ -15,7 +15,7 @@
         <link>https://micelio.dev/blog/<%= post.id %></link>
         <guid>https://micelio.dev/blog/<%= post.id %></guid>
         <pubDate><%= DateTime.new!(post.date, ~T[00:00:00]) |> DateTime.to_iso8601() %></pubDate>
-        <author><%= post.author %></author>
+        <author><%= author_name(post.author) %></author>
         <%= for tag <- post.tags do %>
           <category><%= tag %></category>
         <% end %>

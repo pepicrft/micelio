@@ -5,28 +5,32 @@
 >
   <div class="blog-container">
     <div class="blog-post">
-      <div class="blog-post-header">
-        <h1 class="blog-post-title">{@post.title}</h1>
-        <div class="blog-post-meta">
-          <time datetime={@post.date}>{format_date(@post.date)}</time>
-          <span class="blog-post-author">by {@post.author}</span>
-          <%= if length(@post.tags) > 0 do %>
-            <div class="blog-post-tags">
-              <%= for tag <- @post.tags do %>
-                <.badge>{tag}</.badge>
-              <% end %>
-            </div>
-          <% end %>
-        </div>
-      </div>
+      <.header>
+        {@post.title}
+        <:subtitle>
+          <div class="blog-post-meta">
+            <time datetime={@post.date}>{format_date(@post.date)}</time>
+            <span class="blog-post-author">by {author_name(@post.author)}</span>
+            <%= if @post.model do %>
+              <span class="blog-post-model">with {model_name(@post.model)}</span>
+            <% end %>
+            <%= if length(@post.tags) > 0 do %>
+              <div class="blog-post-tags">
+                <%= for tag <- @post.tags do %>
+                  <.badge>{tag}</.badge>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+        </:subtitle>
+        <:actions>
+          <.badge navigate={~p"/blog"}>Back</.badge>
+        </:actions>
+      </.header>
 
       <div class="blog-post-content">
         {raw(@post.body)}
       </div>
-
-      <nav class="blog-post-nav">
-        <a href={~p"/blog"} class="blog-nav-link">← Back to Blog</a>
-      </nav>
     </div>
   </div>
 </Layouts.app>

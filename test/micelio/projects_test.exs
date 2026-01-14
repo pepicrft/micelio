@@ -137,6 +137,30 @@ defmodule Micelio.ProjectsTest do
       assert project.description == "A project with a description"
     end
 
+    test "creates a project with url", %{organization: organization} do
+      attrs = %{
+        handle: "linked-project",
+        name: "Linked Project",
+        url: "https://example.com/linked-project",
+        organization_id: organization.id
+      }
+
+      assert {:ok, %Project{} = project} = Projects.create_project(attrs)
+      assert project.url == "https://example.com/linked-project"
+    end
+
+    test "rejects invalid url schemes", %{organization: organization} do
+      changeset =
+        Project.changeset(%Project{}, %{
+          organization_id: organization.id,
+          handle: "bad-url",
+          name: "Bad Url",
+          url: "javascript:alert(1)"
+        })
+
+      assert "must be a valid http(s) URL" in errors_on(changeset).url
+    end
+
     test "fails with duplicate handle for same organization", %{organization: organization} do
       attrs = %{handle: "duplicate", name: "First", organization_id: organization.id}
       assert {:ok, _} = Projects.create_project(attrs)
@@ -355,6 +379,14 @@ defmodule Micelio.ProjectsTest do
     test "updates project handle", %{project: project} do
       assert {:ok, updated} = Projects.update_project(project, %{handle: "new-handle"})
       assert updated.handle == "new-handle"
+    end
+
+    test "allows clearing project url", %{project: project} do
+      assert {:ok, updated} = Projects.update_project(project, %{url: "https://example.com/repo"})
+      assert updated.url == "https://example.com/repo"
+
+      assert {:ok, cleared} = Projects.update_project(updated, %{url: nil})
+      assert cleared.url == nil
     end
 
     test "fails with invalid handle", %{project: project} do

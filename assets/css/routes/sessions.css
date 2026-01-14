@@ -13,9 +13,6 @@
 /* Sessions list styles */
 
 .sessions-container {
-  max-width: var(--theme-ui-sizes-container);
-  margin: 0 auto;
-  padding: var(--theme-ui-space-2);
 }
 
 .sessions-header {
@@ -169,9 +166,6 @@
 /* Session show styles */
 
 .session-show-container {
-  max-width: var(--theme-ui-sizes-container);
-  margin: 0 auto;
-  padding: var(--theme-ui-space-2);
 }
 
 .session-show-header {

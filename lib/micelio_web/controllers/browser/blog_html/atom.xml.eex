@@ -15,7 +15,7 @@
       <updated><%= DateTime.new!(post.date, ~T[00:00:00]) |> DateTime.to_iso8601() %></updated>
       <summary><%= post.description %></summary>
       <author>
-        <name><%= post.author %></name>
+        <name><%= author_name(post.author) %></name>
       </author>
       <%= for tag <- post.tags do %>
         <category term="<%= tag %>"/>

@@ -1,18 +1,33 @@
 defmodule MicelioWeb.ReesourcePlug do
   import Plug.Conn
 
+  alias Micelio.Accounts
+  alias Micelio.Projects
+
   def init(opts) do
     opts
   end
 
   def call(%{params: %{"account" => account_handle}} = conn, :load_account) do
-    account = Micelio.Accounts.get_account_by_handle(account_handle)
-    conn |> assign(:selected_account, account)
+    account = Accounts.get_account_by_handle(account_handle)
+    assign(conn, :selected_account, account)
   end
 
   def call(conn, :load_account), do: conn
 
   def call(conn, :load_repository) do
-    conn
+    case conn do
+      %{params: %{"repository" => repository_handle}, assigns: %{selected_account: account}}
+      when not is_nil(account) ->
+        repository =
+          if is_binary(account.organization_id) do
+            Projects.get_project_by_handle(account.organization_id, repository_handle)
+          end
+
+        assign(conn, :selected_repository, repository)
+
+      _ ->
+        assign(conn, :selected_repository, nil)
+    end
   end
 end

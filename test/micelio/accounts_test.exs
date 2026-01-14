@@ -137,7 +137,7 @@ defmodule Micelio.AccountsTest do
     test "handle_available?/1 returns false for reserved handles" do
       refute Accounts.handle_available?("admin")
       refute Accounts.handle_available?("settings")
-      refute Accounts.handle_available?("pedro")
+      refute Accounts.handle_available?("ruby")
       refute Accounts.handle_available?("micelio")
     end
 

@@ -1,9 +1,6 @@
 /* Home page styles */
 
 .home-container {
-  max-width: var(--theme-ui-sizes-container);
-  margin: 0 auto;
-  padding: var(--theme-ui-space-3) var(--theme-ui-space-2);
 }
 
 .home-header {

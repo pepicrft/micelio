@@ -82,10 +82,12 @@ defmodule MicelioWeb.ProjectLive.New do
       current_user={@current_user}
     >
       <div class="project-form-container">
-        <header class="project-form-header">
-          <h1>New project</h1>
-          <p>Create a project under one of your organizations.</p>
-        </header>
+        <.header>
+          New project
+          <:subtitle>
+            <p>Create a project under one of your organizations.</p>
+          </:subtitle>
+        </.header>
 
         <%= if Enum.empty?(@organizations) do %>
           <div class="projects-empty">
@@ -150,6 +152,18 @@ defmodule MicelioWeb.ProjectLive.New do
                 class="project-input project-textarea"
                 error_class="project-input project-input-error"
               />
+            </div>
+
+            <div class="project-form-group">
+              <.input
+                field={@form[:url]}
+                type="url"
+                label="URL"
+                placeholder="https://example.com"
+                class="project-input"
+                error_class="project-input project-input-error"
+              />
+              <p class="project-form-hint">Optional homepage or repository URL.</p>
             </div>
 
             <div class="project-form-actions">

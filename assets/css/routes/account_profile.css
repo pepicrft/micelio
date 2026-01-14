@@ -1,0 +1,28 @@
+/* Account profile styles */
+
+.account-profile {
+}
+
+.account-profile-meta {
+  color: var(--theme-ui-colors-muted);
+}
+
+.account-profile-nav {
+  margin: 0;
+}
+
+.account-profile-nav-list {
+  list-style: none;
+  display: grid;
+  gap: var(--theme-ui-space-1);
+}
+
+.account-profile-link {
+  text-decoration: none;
+  color: var(--theme-ui-colors-text);
+  display: inline-block;
+}
+
+.account-profile-link:hover {
+  text-decoration: underline;
+}

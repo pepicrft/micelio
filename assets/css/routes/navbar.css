@@ -1,6 +1,5 @@
 /* Navbar */
 
-nav,
 .navbar {
   padding: var(--theme-ui-space-1) var(--theme-ui-space-2);
   max-width: var(--theme-ui-sizes-container);
@@ -18,25 +17,37 @@ nav,
   gap: var(--theme-ui-space-2);
 }
 
-nav a,
 .navbar a {
   color: var(--theme-ui-colors-text);
   text-decoration: none;
 }
 
-nav a:hover,
 .navbar a:hover {
   text-decoration: underline;
 }
 
-nav .brand,
+.navbar-user-avatar {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 9999px;
+  border: var(--theme-ui-borders-thin);
+  display: inline-block;
+  overflow: hidden;
+}
+
+.navbar-user-avatar img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
 .navbar .brand {
   display: inline-flex;
   align-items: center;
   gap: var(--theme-ui-space-1);
 }
 
-nav .brand a,
 .navbar .brand a {
   text-decoration: none;
   color: var(--theme-ui-colors-text);
@@ -108,7 +119,6 @@ nav .brand a,
 }
 
 @media (max-width: 60rem) {
-  nav .hidden-small,
   .navbar .hidden-small {
     display: none;
   }

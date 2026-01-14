@@ -1,1 +1,0 @@
-- Use semantic commit message style for PR titles

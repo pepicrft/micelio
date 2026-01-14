@@ -14,7 +14,7 @@ defmodule Micelio.GRPC.AuthServerTest do
 
   test "registers a device client and starts authorization" do
     registration =
-      Server.register_device(%DeviceClientRegistrationRequest{name: "hif"}, nil)
+      Server.register_device(%DeviceClientRegistrationRequest{name: "mic"}, nil)
 
     assert registration.client_id != ""
     assert registration.client_secret != ""
@@ -39,7 +39,7 @@ defmodule Micelio.GRPC.AuthServerTest do
     {:ok, user} = Accounts.get_or_create_user_by_email("grpc-auth@example.com")
 
     registration =
-      Server.register_device(%DeviceClientRegistrationRequest{name: "hif"}, nil)
+      Server.register_device(%DeviceClientRegistrationRequest{name: "mic"}, nil)
 
     auth =
       Server.start_device_authorization(

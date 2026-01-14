@@ -1,41 +1,10 @@
 /* Changelog styles */
 
 .changelog-container {
-  max-width: var(--theme-ui-sizes-container);
-  margin: 0 auto;
-  padding: var(--theme-ui-space-3) var(--theme-ui-space-2);
-}
-
-.changelog-header {
-  margin-bottom: var(--theme-ui-space-4);
-}
-
-.changelog-title {
-  font-weight: var(--theme-ui-fontWeights-bold);
-  color: var(--theme-ui-colors-text);
-  margin-bottom: var(--theme-ui-space-2);
-  border-bottom: var(--theme-ui-borders-thin);
-  padding-bottom: var(--theme-ui-space-1);
-}
-
-.changelog-tagline {
-  color: var(--theme-ui-colors-secondary);
-  margin-bottom: var(--theme-ui-space-2);
 }
 
 .changelog-filters {
-  display: flex;
-  flex-direction: column;
-  gap: var(--theme-ui-space-2);
-  align-items: flex-start;
-  justify-content: space-between;
-}
-
-@media (min-width: 40rem) {
-  .changelog-filters {
-    flex-direction: row;
-    align-items: center;
-  }
+  margin-bottom: var(--theme-ui-space-3);
 }
 
 .changelog-categories {
@@ -47,11 +16,6 @@
 
 .changelog-category-label {
   color: var(--theme-ui-colors-secondary);
-}
-
-.changelog-feeds {
-  display: flex;
-  gap: var(--theme-ui-space-1);
 }
 
 .changelog-entries {
@@ -131,7 +95,6 @@
 
 /* Individual changelog entry page */
 .changelog-detail {
-  max-width: var(--theme-ui-sizes-container);
 }
 
 .changelog-detail-header {
@@ -189,20 +152,4 @@
 .changelog-detail-content pre code {
   background: none;
   padding: 0;
-}
-
-.changelog-nav {
-  margin-top: var(--theme-ui-space-4);
-  padding-top: var(--theme-ui-space-2);
-  border-top: var(--theme-ui-borders-thin);
-}
-
-.changelog-nav-link {
-  color: var(--theme-ui-colors-muted);
-  text-decoration: none;
-}
-
-.changelog-nav-link:hover {
-  color: var(--theme-ui-colors-primary);
-  text-decoration: underline;
 }

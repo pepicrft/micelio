@@ -1,9 +1,6 @@
 /* Organizations styles */
 
 .organization-form-container {
-  max-width: var(--theme-ui-sizes-container);
-  margin: 0 auto;
-  padding: var(--theme-ui-space-2);
 }
 
 .organization-form-header {
@@ -58,6 +55,14 @@
 
 .organization-input::placeholder {
   color: var(--theme-ui-colors-muted);
+}
+
+.organization-input-error {
+  border-color: var(--theme-ui-colors-danger);
+}
+
+.organization-input-error:focus {
+  border-color: var(--theme-ui-colors-danger);
 }
 
 .organization-form-hint {

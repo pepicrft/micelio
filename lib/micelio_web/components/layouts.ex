@@ -68,12 +68,29 @@ defmodule MicelioWeb.Layouts do
 
           <%= if assigns[:current_user] do %>
             <a href={~p"/projects"}>projects</a>
-            <a href={~p"/account/devices"}>devices</a>
             <form action={~p"/auth/logout"} method="post" class="navbar-logout-form">
               <input type="hidden" name="_csrf_token" value={Phoenix.Controller.get_csrf_token()} />
               <input type="hidden" name="_method" value="delete" />
               <button type="submit" class="navbar-link-button">logout</button>
             </form>
+
+            <a
+              href={~p"/account"}
+              class="navbar-user-avatar"
+              id="navbar-user"
+              aria-label={"Account (@#{assigns.current_user.account.handle})"}
+              title={"@#{assigns.current_user.account.handle}"}
+            >
+              <img
+                src={gravatar_url(assigns.current_user.email)}
+                width="24"
+                height="24"
+                alt=""
+                loading="lazy"
+                decoding="async"
+                referrerpolicy="no-referrer"
+              />
+            </a>
           <% else %>
             <a href={~p"/auth/login"} class="navbar-cta hidden-small">
               Get started
@@ -86,13 +103,21 @@ defmodule MicelioWeb.Layouts do
           <% end %>
         </div>
       </nav>
+      <.flash_group flash={@flash} />
     </div>
 
     <main>
-      <.flash_group flash={@flash} />
-      {render_slot(@inner_block)}
+      <div class="page-content">
+        {render_slot(@inner_block)}
+      </div>
     </main>
     """
+  end
+
+  defp gravatar_url(email) when is_binary(email) do
+    email = email |> String.trim() |> String.downcase()
+    hash = :crypto.hash(:md5, email) |> Base.encode16(case: :lower)
+    "https://www.gravatar.com/avatar/#{hash}?s=48&d=mp&r=g"
   end
 
   @doc """
@@ -107,7 +132,7 @@ defmodule MicelioWeb.Layouts do
 
   def flash_group(assigns) do
     ~H"""
-    <div id={@id} aria-live="polite">
+    <div id={@id} class="flash-stack" aria-live="polite">
       <.flash kind={:info} flash={@flash} />
       <.flash kind={:error} flash={@flash} />
 
@@ -115,24 +140,16 @@ defmodule MicelioWeb.Layouts do
         id="client-error"
         kind={:error}
         title={gettext("We can't find the internet")}
-        phx-disconnected={show(".phx-client-error #client-error") |> JS.remove_attribute("hidden")}
-        phx-connected={hide("#client-error") |> JS.set_attribute({"hidden", ""})}
-        hidden
       >
         {gettext("Attempting to reconnect")}
-        <.icon name="hero-arrow-path" class="ml-1 size-3 motion-safe:animate-spin" />
       </.flash>
 
       <.flash
         id="server-error"
         kind={:error}
         title={gettext("Something went wrong!")}
-        phx-disconnected={show(".phx-server-error #server-error") |> JS.remove_attribute("hidden")}
-        phx-connected={hide("#server-error") |> JS.set_attribute({"hidden", ""})}
-        hidden
       >
         {gettext("Attempting to reconnect")}
-        <.icon name="hero-arrow-path" class="ml-1 size-3 motion-safe:animate-spin" />
       </.flash>
     </div>
     """

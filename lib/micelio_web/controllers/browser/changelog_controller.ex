@@ -2,6 +2,7 @@ defmodule MicelioWeb.Browser.ChangelogController do
   use MicelioWeb, :controller
 
   alias Micelio.Changelog
+  alias MicelioWeb.PageMeta
 
   def index(conn, _params) do
     entries = Changelog.all_entries()
@@ -9,7 +10,12 @@ defmodule MicelioWeb.Browser.ChangelogController do
     versions = Changelog.all_versions()
 
     conn
-    |> assign(:page_title, "Changelog")
+    |> PageMeta.put(
+      title_parts: ["Changelog"],
+      description:
+        "Stay up to date with the latest changes, improvements, and new features in Micelio.",
+      canonical_url: url(~p"/changelog")
+    )
     |> assign(:entries, entries)
     |> assign(:categories, categories)
     |> assign(:versions, versions)
@@ -20,7 +26,13 @@ defmodule MicelioWeb.Browser.ChangelogController do
     entry = Changelog.get_entry_by_id!(id)
 
     conn
-    |> assign(:page_title, entry.title)
+    |> PageMeta.put(
+      title_parts: [entry.title, "Changelog"],
+      description: entry.description,
+      canonical_url: url(~p"/changelog/#{entry.id}"),
+      type: "article",
+      open_graph: %{"article:published_time" => Date.to_iso8601(entry.date)}
+    )
     |> assign(:entry, entry)
     |> render(:show)
   end
@@ -29,7 +41,11 @@ defmodule MicelioWeb.Browser.ChangelogController do
     entries = Changelog.get_entries_by_version!(version)
 
     conn
-    |> assign(:page_title, "Changelog - Version #{version}")
+    |> PageMeta.put(
+      title_parts: ["Version #{version}", "Changelog"],
+      description: "All changes included in version #{version}.",
+      canonical_url: url(~p"/changelog/version/#{version}")
+    )
     |> assign(:entries, entries)
     |> assign(:version, version)
     |> render(:version)
@@ -38,9 +54,14 @@ defmodule MicelioWeb.Browser.ChangelogController do
   def category(conn, %{"category" => category}) do
     entries = Changelog.get_entries_by_category!(category)
     categories = Changelog.all_categories()
+    category_label = String.capitalize(category)
 
     conn
-    |> assign(:page_title, "Changelog - #{String.capitalize(category)}")
+    |> PageMeta.put(
+      title_parts: [category_label, "Changelog"],
+      description: "Changelog entries in the #{category_label} category.",
+      canonical_url: url(~p"/changelog/category/#{category}")
+    )
     |> assign(:entries, entries)
     |> assign(:category, category)
     |> assign(:categories, categories)

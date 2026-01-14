@@ -1,13 +1,11 @@
 %{
   title: "A Vision for Agent-First Development",
-  author: "Pedro Piñera",
+  author: :ruby,
   tags: ~w(vision exploration),
-  description: "Why I'm building Micelio and hif: rethinking version control for an AI-native world where humans and agents collaborate as peers."
+  description: "Why I'm building Micelio and mic: rethinking version control for an AI-native world where humans and agents collaborate as peers."
 }
 
 ---
-
-# A Vision for Agent-First Development
 
 The future of software development is already here, scattered unevenly across our industry. At OpenAI, hundreds of AI agents collaborate on massive codebases. At Google, billions of files live in monorepos that dwarf anything Git was designed for. At Meta, thousands of engineers land hundreds of changes daily in systems that prioritize scale over the traditional commit model.
 
@@ -21,23 +19,23 @@ Consider this scenario: An agent is tasked with "add authentication to the API."
 
 I think going back to first principles is worth exploring. Rather than incrementally building from Git or existing forges, LLMs present new capabilities that didn't exist before. It feels easier to design something from the ground up with no legacy constraints than trying to move incrementally from an existing foundation that was never designed for this reality.
 
-## What I'm Building: hif and Micelio
+## What I'm Building: mic and Micelio
 
-This is where **hif** and **Micelio** come in—an experiment in rethinking version control and forges from scratch.
+This is where **mic** and **Micelio** come in—an experiment in rethinking version control and forges from scratch.
 
-**hif** is a new version control protocol I'm designing from the ground up for AI-native development. Instead of commits, hif has sessions—complete units of work that capture not just what happened, but why it happened and how decisions were made. Imagine having a conversation with an agent about implementing a feature, and that entire reasoning process becomes part of the version history, not just the final code changes.
+**mic** is a new version control protocol I'm designing from the ground up for AI-native development. Instead of commits, mic has sessions—complete units of work that capture not just what happened, but why it happened and how decisions were made. Imagine having a conversation with an agent about implementing a feature, and that entire reasoning process becomes part of the version history, not just the final code changes.
 
-**Micelio** is the forge that makes hif accessible and useful for teams where humans and agents work as peers. I'm aiming for the scale that companies like Shopify or Meta need, with modern infrastructure patterns that avoid the bottlenecks of traditional forges. Session-based interfaces let you browse reasoning and decision-making, not just code changes.
+**Micelio** is the forge that makes mic accessible and useful for teams where humans and agents work as peers. I'm aiming for the scale that companies like Shopify or Meta need, with modern infrastructure patterns that avoid the bottlenecks of traditional forges. Session-based interfaces let you browse reasoning and decision-making, not just code changes.
 
 ## How I'm Approaching It: Open Source and Self-Hostable
 
-Unlike the GitHub model where a closed platform controls the infrastructure, I'm building both hif and Micelio as fully open source projects designed for anyone to run in their own infrastructure.
+Unlike the GitHub model where a closed platform controls the infrastructure, I'm building both mic and Micelio as fully open source projects designed for anyone to run in their own infrastructure.
 
 Whether you run Micelio on your own servers, in your private cloud, or use a hosted version, you maintain ownership of your data and processes. This isn't just about open source licensing—it's about architectural decisions that prioritize portability, standard protocols, and avoiding vendor lock-in.
 
-### hif: The Protocol
+### mic: The Protocol
 
-hif follows the same pattern as Git—it's the core protocol that will become a standalone piece mixing CLI tools with communication protocols. I'm currently developing it together with Micelio for fast iteration and prototyping, but it will eventually become its own independent foundation that anyone can build upon.
+mic follows the same pattern as Git—it's the core protocol that will become a standalone piece mixing CLI tools with communication protocols. I'm currently developing it together with Micelio for fast iteration and prototyping, but it will eventually become its own independent foundation that anyone can build upon.
 
 This approach enables possibilities that traditional version control simply can't handle. I want to explore problems like reproducing environments easily with something like Nix, so developers can be trusted to run checks locally before pushing. I'm investigating how to make those checks run faster so that code can be continuously pushed, exploring what a world post-CI/CD might look like.
 
@@ -65,10 +63,10 @@ If this excites you, I'd love to build it together. I'm working on something I t
 
 The future of software development is collaborative intelligence: humans and AI agents working together as peers. This requires new tools designed from the ground up for this reality—tools you can own, modify, and deploy on your own terms. Git was revolutionary for its time. I think it's time for what comes next.
 
-**Micelio + hif is my bet on that future. Open source, self-hostable, built for the age of AI agents.**
+**Micelio + mic is my bet on that future. Open source, self-hostable, built for the age of AI agents.**
 
 Join the conversation on [Discord](https://discord.gg/3SZU3aEQP) and help shape where this goes.
 
 ---
 
-*Pedro Piñera is building Micelio and hif as open source projects. Follow the project at [micelio.dev](https://micelio.dev), contribute on [GitHub](https://github.com/pepicrft/micelio), or join our [Discord community](https://discord.gg/3SZU3aEQP).*
+*Ruby is building Micelio and mic as open source projects. Follow the project at [micelio.dev](https://micelio.dev), contribute on [GitHub](https://github.com/ruby/micelio), or join our [Discord community](https://discord.gg/3SZU3aEQP).*

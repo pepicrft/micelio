@@ -17,13 +17,13 @@ defmodule Micelio.GRPC.Content.V1.ContentService.Server do
     TreeEntry
   }
 
-  alias Micelio.Hif.Binary
-  alias Micelio.Hif.Tree, as: HifTree
+  alias Micelio.Mic.Binary
+  alias Micelio.Mic.Tree, as: MicTree
   alias Micelio.OAuth.AccessTokens
   alias Micelio.Projects
   alias Micelio.Storage
 
-  @zero_hash Binary.zero_hash()
+  @zero_hash <<0::size(256)>>
 
   def get_head_tree(%GetHeadTreeRequest{} = request, stream) do
     with :ok <- require_field(request.account_handle, "account_handle"),
@@ -116,19 +116,19 @@ defmodule Micelio.GRPC.Content.V1.ContentService.Server do
         end
 
       {:error, :not_found} ->
-        {:ok, Binary.zero_hash(), HifTree.empty()}
+        {:ok, Binary.zero_hash(), MicTree.empty()}
 
       {:error, _reason} ->
         {:error, internal_status("Failed to load head.")}
     end
   end
 
-  defp load_tree(_project_id, tree_hash) when tree_hash == @zero_hash, do: {:ok, HifTree.empty()}
+  defp load_tree(_project_id, tree_hash) when tree_hash == @zero_hash, do: {:ok, MicTree.empty()}
 
   defp load_tree(project_id, tree_hash) do
     case Storage.get(tree_key(project_id, tree_hash)) do
       {:ok, content} ->
-        case HifTree.decode(content) do
+        case MicTree.decode(content) do
           {:ok, tree} -> {:ok, tree}
           {:error, _} -> {:error, internal_status("Failed to decode tree.")}
         end

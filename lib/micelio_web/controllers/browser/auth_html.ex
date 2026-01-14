@@ -5,7 +5,5 @@ defmodule MicelioWeb.Browser.AuthHTML do
 
   use MicelioWeb, :html
 
-  import MicelioWeb.CoreComponents
-
   embed_templates "auth_html/*"
 end

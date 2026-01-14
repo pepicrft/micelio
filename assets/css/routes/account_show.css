@@ -1,27 +1,60 @@
 /* Account show styles */
 
-.account-overview {
-  max-width: var(--theme-ui-sizes-container);
-  margin: var(--theme-ui-space-4) auto;
-  padding: 0 var(--theme-ui-space-2);
+.account-page {
 }
 
-.account-overview h1 {
+.account-handle {
+  color: var(--theme-ui-colors-muted);
+}
+
+.account-projects {
+  display: flex;
+  flex-direction: column;
+  gap: var(--theme-ui-space-2);
+}
+
+.account-project {
+  padding: var(--theme-ui-space-2);
+  border: var(--theme-ui-borders-thin);
+  background-color: var(--theme-ui-colors-background);
+}
+
+.account-project-title {
   font-weight: var(--theme-ui-fontWeights-bold);
   margin-bottom: var(--theme-ui-space-1);
 }
 
-.account-overview p {
-  color: var(--theme-ui-colors-muted);
-  margin-bottom: var(--theme-ui-space-2);
-}
-
-.account-device-link {
-  color: var(--theme-ui-colors-primary);
+.account-project-title a {
+  color: var(--theme-ui-colors-text);
   text-decoration: none;
-  font-weight: var(--theme-ui-fontWeights-bold);
 }
 
-.account-device-link:hover {
+.account-project-title a:hover {
   text-decoration: underline;
+}
+
+.account-project-handle {
+  color: var(--theme-ui-colors-muted);
+  margin-bottom: var(--theme-ui-space-1);
+}
+
+.account-project-description {
+  color: var(--theme-ui-colors-secondary);
+}
+
+.account-project-url {
+  margin-top: var(--theme-ui-space-1);
+  word-break: break-word;
+}
+
+.account-project-url a {
+  color: var(--theme-ui-colors-primary);
+  text-decoration: underline;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.15em;
+}
+
+.account-project-url a:hover {
+  color: var(--theme-ui-colors-secondary);
+  text-decoration-color: var(--theme-ui-colors-secondary);
 }

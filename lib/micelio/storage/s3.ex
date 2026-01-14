@@ -332,7 +332,7 @@ defmodule Micelio.Storage.S3 do
         :path ->
           bucket_path = "/" <> config.bucket
           key_path = "/" <> encoded_key
-          %{base_uri | path: (bucket_path <> key_path)}
+          %{base_uri | path: bucket_path <> key_path}
 
         :virtual ->
           key_path = "/" <> encoded_key
@@ -345,8 +345,9 @@ defmodule Micelio.Storage.S3 do
   defp encode_key(key) when is_binary(key) do
     key
     |> String.split("/", trim: false)
-    |> Enum.map(fn segment -> URI.encode(segment, fn ch -> URI.char_unreserved?(ch) end) end)
-    |> Enum.join("/")
+    |> Enum.map_join("/", fn segment ->
+      URI.encode(segment, fn ch -> URI.char_unreserved?(ch) end)
+    end)
   end
 
   defp build_headers(content) when is_binary(content) do

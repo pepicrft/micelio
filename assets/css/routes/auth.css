@@ -1,14 +1,24 @@
 /* Auth styles */
 
+.auth-screen {
+  min-height: calc(100vh - var(--theme-ui-space-4));
+  display: grid;
+  place-items: center;
+  padding: var(--theme-ui-space-3) var(--theme-ui-space-2);
+}
+
 .auth-container {
-  max-width: var(--theme-ui-sizes-container);
-  margin: 0 auto;
-  padding: var(--theme-ui-space-2);
+  width: min(24rem, 90vw, calc(100vh - var(--theme-ui-space-4)));
+  aspect-ratio: 1 / 1;
+  display: grid;
+  align-content: center;
+  gap: var(--theme-ui-space-2);
+  padding: var(--theme-ui-space-3);
 }
 
 .auth-header {
   text-align: center;
-  margin-bottom: var(--theme-ui-space-4);
+  margin-bottom: var(--theme-ui-space-2);
 }
 
 .auth-header h1 {
@@ -17,7 +27,7 @@
 }
 
 .auth-header p {
-  color: var(--theme-ui-colors-muted);
+  color: var(--theme-ui-colors-secondary);
 }
 
 .auth-form {
@@ -68,4 +78,25 @@
 
 .auth-button:focus {
   outline: none;
+}
+
+.auth-body {
+  text-align: center;
+  color: var(--theme-ui-colors-secondary);
+}
+
+.auth-actions {
+  text-align: center;
+}
+
+.auth-link {
+  color: var(--theme-ui-colors-primary);
+  text-decoration: underline;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.15em;
+}
+
+.auth-link:hover {
+  color: var(--theme-ui-colors-secondary);
+  text-decoration-color: var(--theme-ui-colors-secondary);
 }

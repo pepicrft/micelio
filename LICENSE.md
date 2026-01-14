@@ -1,10 +1,6 @@
 Mozilla Public License Version 2.0
 ==================================
 
-Additional License Notice
--------------------------
-The `hif/` directory is licensed under the MIT License. See `hif/LICENSE.md`.
-
 ### 1. Definitions
 
 **1.1. “Contributor”**  

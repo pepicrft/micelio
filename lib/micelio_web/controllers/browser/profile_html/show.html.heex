@@ -1,0 +1,29 @@
+<Layouts.app
+  flash={@flash}
+  current_scope={assigns[:current_scope]}
+  current_user={assigns[:current_user]}
+>
+  <div class="account-profile">
+    <.header>
+      {@user.account.handle}
+      <:subtitle>
+        <p class="account-profile-meta">{@user.email}</p>
+      </:subtitle>
+    </.header>
+
+    <nav class="account-profile-nav" aria-label="Account">
+      <ul class="account-profile-nav-list">
+        <li>
+          <a id="account-devices-link" class="account-profile-link" href={~p"/account/devices"}>
+            Devices
+          </a>
+        </li>
+        <li>
+          <a id="account-projects-link" class="account-profile-link" href={~p"/projects"}>
+            Projects
+          </a>
+        </li>
+      </ul>
+    </nav>
+  </div>
+</Layouts.app>

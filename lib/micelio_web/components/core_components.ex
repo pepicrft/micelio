@@ -54,25 +54,32 @@ defmodule MicelioWeb.CoreComponents do
     <div
       :if={msg = render_slot(@inner_block) || Phoenix.Flash.get(@flash, @kind)}
       id={@id}
-      phx-click={JS.push("lv:clear-flash", value: %{key: @kind}) |> hide("##{@id}")}
-      role="alert"
-      class="toast toast-top toast-end z-50"
+      role={if @kind == :error, do: "alert", else: "status"}
+      class={[
+        "flash-bar",
+        @kind == :info && "flash-bar--info",
+        @kind == :error && "flash-bar--error"
+      ]}
       {@rest}
     >
-      <div class={[
-        "alert w-80 sm:w-96 max-w-80 sm:max-w-96 text-wrap",
-        @kind == :info && "alert-info",
-        @kind == :error && "alert-error"
-      ]}>
-        <.icon :if={@kind == :info} name="hero-information-circle" class="size-5 shrink-0" />
-        <.icon :if={@kind == :error} name="hero-exclamation-circle" class="size-5 shrink-0" />
-        <div>
-          <p :if={@title} class="font-semibold">{@title}</p>
-          <p>{msg}</p>
+      <div class="flash-bar-inner">
+        <div class="flash-bar-text">
+          <%= if @title do %>
+            <strong>{@title}</strong>
+            <span class="flash-bar-separator" aria-hidden="true"> · </span>
+          <% end %>
+          {msg}
         </div>
-        <div class="flex-1" />
-        <button type="button" class="group self-start cursor-pointer" aria-label={gettext("close")}>
-          <.icon name="hero-x-mark" class="size-5 opacity-40 group-hover:opacity-70" />
+
+        <button
+          type="button"
+          class="flash-bar-dismiss"
+          data-flash-dismiss
+          data-flash-target={@id}
+          phx-click={JS.push("lv:clear-flash", value: %{key: @kind}) |> JS.hide(to: "##{@id}")}
+          aria-label={gettext("close")}
+        >
+          <span aria-hidden="true">×</span>
         </button>
       </div>
     </div>
@@ -298,8 +305,7 @@ defmodule MicelioWeb.CoreComponents do
   # Helper used by inputs to generate form errors
   defp error(assigns) do
     ~H"""
-    <p class="mt-1.5 flex gap-2 items-center text-sm text-error">
-      <.icon name="hero-exclamation-circle" class="size-5" />
+    <p class="form-error">
       {render_slot(@inner_block)}
     </p>
     """
@@ -314,16 +320,17 @@ defmodule MicelioWeb.CoreComponents do
 
   def header(assigns) do
     ~H"""
-    <header class={[@actions != [] && "flex items-center justify-between gap-6", "pb-4"]}>
-      <div>
-        <h1 class="text-lg font-semibold leading-8">
-          {render_slot(@inner_block)}
-        </h1>
-        <p :if={@subtitle != []} class="text-sm text-base-content/70">
+    <header class="page-header">
+      <div class="page-header-main">
+        <h1 class="page-header-title">{render_slot(@inner_block)}</h1>
+        <div :if={@subtitle != []} class="page-header-subtitle">
           {render_slot(@subtitle)}
-        </p>
+        </div>
       </div>
-      <div class="flex-none">{render_slot(@actions)}</div>
+
+      <div :if={@actions != []} class="page-header-actions">
+        {render_slot(@actions)}
+      </div>
     </header>
     """
   end
