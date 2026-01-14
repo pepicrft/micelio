@@ -69,7 +69,7 @@ grpc_tls_mode =
       cert_pem = System.get_env("TLS_CERT_PEM")
       key_pem = System.get_env("TLS_KEY_PEM")
 
-      if is_binary(cert_pem) and is_binary(key_pem) do
+      if grpc_tls_mode != :proxy and is_binary(cert_pem) and is_binary(key_pem) do
         tls_dir = Path.join([System.tmp_dir!(), "micelio", "grpc-tls"])
         File.mkdir_p!(tls_dir)
 
