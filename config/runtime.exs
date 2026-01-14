@@ -260,6 +260,13 @@ if config_env() == :prod do
         []
     end
 
+  smtp_sockopts =
+    if smtp_ssl do
+      smtp_tls_options
+    else
+      []
+    end
+
   config :micelio, Micelio.Mailer,
     adapter: Swoosh.Adapters.SMTP,
     relay: smtp_host,
@@ -269,6 +276,7 @@ if config_env() == :prod do
     tls: smtp_tls,
     ssl: smtp_ssl,
     tls_options: smtp_tls_options,
+    sockopts: smtp_sockopts,
     auth: :always,
     from: {smtp_from_name, smtp_from_email}
 
