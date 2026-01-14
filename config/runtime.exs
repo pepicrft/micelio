@@ -56,6 +56,33 @@ grpc_tls_certfile = System.get_env("MICELIO_GRPC_TLS_CERTFILE")
 grpc_tls_keyfile = System.get_env("MICELIO_GRPC_TLS_KEYFILE")
 grpc_tls_cacertfile = System.get_env("MICELIO_GRPC_TLS_CACERTFILE")
 
+{grpc_tls_certfile, grpc_tls_keyfile} =
+  case {grpc_tls_certfile, grpc_tls_keyfile} do
+    {nil, nil} ->
+      cert_pem = System.get_env("TLS_CERT_PEM")
+      key_pem = System.get_env("TLS_KEY_PEM")
+
+      if is_binary(cert_pem) and is_binary(key_pem) do
+        tls_dir = Path.join([System.tmp_dir!(), "micelio", "grpc-tls"])
+        File.mkdir_p!(tls_dir)
+
+        certfile = Path.join(tls_dir, "cert.pem")
+        keyfile = Path.join(tls_dir, "key.pem")
+
+        File.write!(certfile, String.replace(cert_pem, "\\n", "\n"))
+        File.write!(keyfile, String.replace(key_pem, "\\n", "\n"))
+        File.chmod!(certfile, 0o600)
+        File.chmod!(keyfile, 0o600)
+
+        {certfile, keyfile}
+      else
+        {nil, nil}
+      end
+
+    {certfile, keyfile} ->
+      {certfile, keyfile}
+  end
+
 grpc_tls =
   case {grpc_tls_certfile, grpc_tls_keyfile} do
     {nil, nil} ->
