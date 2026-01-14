@@ -56,7 +56,7 @@ defmodule Micelio.Application do
           {GRPC.Server.Supervisor,
            [
              port: port,
-             servers: [Micelio.GRPC.Endpoint],
+             endpoint: Micelio.GRPC.Endpoint,
              adapter_opts: [cred: GRPC.Credential.new(ssl: tls)],
              start_server: true
            ]}
