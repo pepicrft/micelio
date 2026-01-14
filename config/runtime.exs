@@ -219,15 +219,32 @@ if config_env() == :prod do
   # Default to peer verification and allow optional CA overrides.
   smtp_tls_verify = System.get_env("SMTP_TLS_VERIFY", "true") != "false"
   smtp_tls_ca_cert_path = System.get_env("SMTP_TLS_CA_CERTS_PATH")
+
+  smtp_default_cacerts =
+    case :public_key.cacerts_get() do
+      :undefined -> nil
+      cacerts when is_list(cacerts) -> cacerts
+    end
+
+  smtp_system_ca_path = "/etc/ssl/certs/ca-certificates.crt"
   smtp_tls_server_name = System.get_env("SMTP_TLS_SERVER_NAME") || smtp_host
 
   smtp_tls_options =
     cond do
       (smtp_ssl or smtp_tls in [:always, :if_available]) and smtp_tls_verify ->
         ca_options =
-          case smtp_tls_ca_cert_path do
-            nil -> [cacerts: :public_key.cacerts_get()]
-            path -> [cacertfile: path]
+          cond do
+            smtp_tls_ca_cert_path ->
+              [cacertfile: smtp_tls_ca_cert_path]
+
+            is_list(smtp_default_cacerts) ->
+              [cacerts: smtp_default_cacerts]
+
+            File.exists?(smtp_system_ca_path) ->
+              [cacertfile: smtp_system_ca_path]
+
+            true ->
+              []
           end
 
         [
