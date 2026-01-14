@@ -54,8 +54,14 @@ defmodule Micelio.Application do
 
       adapter_opts =
         case tls do
-          [] -> []
-          _ -> [cred: GRPC.Credential.new(ssl: tls)]
+          [] ->
+            [status_handler: {"/", Micelio.GRPC.StatusHandler, []}]
+
+          _ ->
+            [
+              cred: GRPC.Credential.new(ssl: tls),
+              status_handler: {"/", Micelio.GRPC.StatusHandler, []}
+            ]
         end
 
       children ++
