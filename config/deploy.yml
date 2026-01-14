@@ -2,6 +2,9 @@ service: micelio
 
 image: micelio/micelio
 
+volumes:
+  - /var/micelio:/var/micelio
+
 servers:
   web:
     hosts:
