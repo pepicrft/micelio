@@ -10,8 +10,8 @@
         Updates and insights from the Micelio team about building the future of agent-first software development.
       </p>
       <div class="blog-feeds">
-        <a href={~p"/blog/rss"} class="blog-feed-link">RSS</a>
-        <a href={~p"/blog/atom"} class="blog-feed-link">Atom</a>
+        <.badge href={~p"/blog/rss"}>RSS</.badge>
+        <.badge href={~p"/blog/atom"}>Atom</.badge>
       </div>
     </div>
 
@@ -27,7 +27,7 @@
             <%= if length(post.tags) > 0 do %>
               <div class="blog-post-tags">
                 <%= for tag <- post.tags do %>
-                  <span class="blog-post-tag">{tag}</span>
+                  <.badge>{tag}</.badge>
                 <% end %>
               </div>
             <% end %>

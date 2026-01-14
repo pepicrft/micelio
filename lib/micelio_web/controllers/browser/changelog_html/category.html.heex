@@ -21,23 +21,15 @@
       <div class="changelog-filters">
         <div class="changelog-categories">
           <span class="changelog-category-label">Other categories:</span>
-          <.link navigate={~p"/changelog"} class="changelog-category-link">
-            All
-          </.link>
+          <.badge navigate={~p"/changelog"}>All</.badge>
           <%= for category <- @categories do %>
-            <.link
+            <.badge
               navigate={~p"/changelog/category/#{category}"}
-              class={[
-                "changelog-category-link",
-                if category == @category do
-                  "active"
-                else
-                  ""
-                end
-              ]}
+              active={category == @category}
+              caps
             >
-              {String.capitalize(category)}
-            </.link>
+              {category}
+            </.badge>
           <% end %>
         </div>
       </div>

@@ -21,16 +21,11 @@ defmodule MicelioWeb.Browser.ChangelogHTML do
           <time datetime={Date.to_iso8601(@entry.date)}>
             {Calendar.strftime(@entry.date, "%B %d, %Y")}
           </time>
-          <span class="changelog-entry-version">
-            v{@entry.version}
-          </span>
+          <.badge mono>v{@entry.version}</.badge>
           <%= for category <- @entry.categories do %>
-            <.link
-              navigate={~p"/changelog/category/#{category}"}
-              class="changelog-entry-category"
-            >
+            <.badge navigate={~p"/changelog/category/#{category}"} variant={:solid} caps>
               {category}
-            </.link>
+            </.badge>
           <% end %>
         </div>
       </header>

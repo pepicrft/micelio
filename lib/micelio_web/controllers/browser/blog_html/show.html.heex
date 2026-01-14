@@ -13,7 +13,7 @@
           <%= if length(@post.tags) > 0 do %>
             <div class="blog-post-tags">
               <%= for tag <- @post.tags do %>
-                <span class="blog-post-tag">{tag}</span>
+                <.badge>{tag}</.badge>
               <% end %>
             </div>
           <% end %>

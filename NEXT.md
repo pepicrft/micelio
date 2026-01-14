@@ -2,6 +2,10 @@
 
 This file tracks upcoming features and improvements for Micelio.
 
+## Documentation
+
+- [ ] **SKILL.md** - Create a Claude Code skill file for project-specific commands and workflows
+
 ## UI Enhancements
 
 - [ ] **Activity graph** - GitHub-style contribution/activity visualization showing user or project activity over time

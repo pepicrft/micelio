@@ -419,6 +419,65 @@ defmodule MicelioWeb.CoreComponents do
   end
 
   @doc """
+  Renders a small badge (optionally as a link).
+
+  ## Examples
+
+      <.badge>v0.1.0</.badge>
+      <.badge variant={:solid} caps>release</.badge>
+      <.badge href={~p"/blog/rss"}>RSS</.badge>
+  """
+  attr :variant, :atom, values: [:soft, :solid], default: :soft
+  attr :mono, :boolean, default: false
+  attr :caps, :boolean, default: false
+  attr :active, :boolean, default: false
+  attr :href, :string, default: nil
+  attr :navigate, :string, default: nil
+  attr :patch, :string, default: nil
+  attr :class, :string, default: nil
+  attr :rest, :global
+
+  slot :inner_block, required: true
+
+  def badge(assigns) do
+    interactive? =
+      not is_nil(assigns.href) or not is_nil(assigns.navigate) or not is_nil(assigns.patch)
+
+    assigns = assign(assigns, :interactive?, interactive?)
+
+    ~H"""
+    <%= if @interactive? do %>
+      <.link
+        href={@href}
+        navigate={@navigate}
+        patch={@patch}
+        class={badge_classes(@variant, @mono, @caps, @active, @class, true)}
+        {@rest}
+      >
+        {render_slot(@inner_block)}
+      </.link>
+    <% else %>
+      <span class={badge_classes(@variant, @mono, @caps, @active, @class, false)} {@rest}>
+        {render_slot(@inner_block)}
+      </span>
+    <% end %>
+    """
+  end
+
+  defp badge_classes(variant, mono?, caps?, active?, extra_class, interactive?) do
+    [
+      "badge",
+      variant == :solid && "badge--solid",
+      variant == :soft && "badge--soft",
+      mono? && "badge--mono",
+      caps? && "badge--caps",
+      active? && "is-active",
+      interactive? && "badge--interactive",
+      extra_class
+    ]
+  end
+
+  @doc """
   Renders a [Heroicon](https://heroicons.com).
 
   Heroicons come in three styles – outline, solid, and mini.

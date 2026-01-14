@@ -13,32 +13,15 @@
       <div class="changelog-filters">
         <div class="changelog-categories">
           <span class="changelog-category-label">Filter by category:</span>
-          <.link navigate={~p"/changelog"} class="changelog-category-link">
-            All
-          </.link>
+          <.badge navigate={~p"/changelog"} active={true}>All</.badge>
           <%= for category <- @categories do %>
-            <.link
-              navigate={~p"/changelog/category/#{category}"}
-              class="changelog-category-link"
-            >
-              {String.capitalize(category)}
-            </.link>
+            <.badge navigate={~p"/changelog/category/#{category}"} caps>{category}</.badge>
           <% end %>
         </div>
 
         <div class="changelog-feeds">
-          <.link
-            href={~p"/changelog/rss"}
-            class="changelog-feed-link"
-          >
-            RSS
-          </.link>
-          <.link
-            href={~p"/changelog/atom"}
-            class="changelog-feed-link"
-          >
-            Atom
-          </.link>
+          <.badge href={~p"/changelog/rss"}>RSS</.badge>
+          <.badge href={~p"/changelog/atom"}>Atom</.badge>
         </div>
       </div>
     </div>

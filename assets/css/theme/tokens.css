@@ -88,6 +88,43 @@ main ol:not(.list) {
   padding-left: var(--theme-ui-space-2);
 }
 
+/* Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--theme-ui-space-1) / 2);
+  padding: calc(var(--theme-ui-space-1) / 2) var(--theme-ui-space-1);
+  border: var(--theme-ui-borders-thin);
+  border-radius: var(--theme-ui-radii-small);
+  background: var(--theme-ui-colors-border);
+  color: var(--theme-ui-colors-secondary);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.badge--mono {
+  font-family: var(--theme-ui-fonts-mono);
+}
+
+.badge--caps {
+  text-transform: capitalize;
+}
+
+.badge--solid,
+.badge.is-active {
+  background: var(--theme-ui-colors-primary);
+  border-color: var(--theme-ui-colors-primary);
+  color: var(--theme-ui-colors-background);
+}
+
+.badge--interactive:hover {
+  background: var(--theme-ui-colors-primary);
+  border-color: var(--theme-ui-colors-primary);
+  color: var(--theme-ui-colors-background);
+  text-decoration: none;
+}
+
 /* Single font size for all elements */
 h1, h2, h3, h4, h5, h6,
 p, li, a, button, input, textarea, select {

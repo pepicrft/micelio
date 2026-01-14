@@ -19,21 +19,16 @@
             {Calendar.strftime(@entry.date, "%B %d, %Y")}
           </time>
 
-          <span class="changelog-entry-version">
-            v{@entry.version}
-          </span>
+          <.badge mono>v{@entry.version}</.badge>
 
           <%= if @entry.author do %>
             <span class="changelog-entry-author">by {@entry.author}</span>
           <% end %>
 
           <%= for category <- @entry.categories do %>
-            <.link
-              navigate={~p"/changelog/category/#{category}"}
-              class="changelog-entry-category"
-            >
+            <.badge navigate={~p"/changelog/category/#{category}"} variant={:solid} caps>
               {category}
-            </.link>
+            </.badge>
           <% end %>
         </div>
 

@@ -28,18 +28,6 @@
   gap: var(--theme-ui-space-1);
 }
 
-.blog-feed-link {
-  color: var(--theme-ui-colors-secondary);
-  text-decoration: none;
-  border: var(--theme-ui-borders-thin);
-  padding: var(--theme-ui-space-1);
-}
-
-.blog-feed-link:hover {
-  color: var(--theme-ui-colors-primary);
-  text-decoration: underline;
-}
-
 .blog-posts {
   display: flex;
   flex-direction: column;
@@ -86,12 +74,6 @@
 .blog-post-tags {
   display: flex;
   gap: var(--theme-ui-space-1);
-}
-
-.blog-post-tag {
-  background: var(--theme-ui-colors-border);
-  color: var(--theme-ui-colors-secondary);
-  padding: 0.125rem 0.375rem;
 }
 
 .blog-post-description {

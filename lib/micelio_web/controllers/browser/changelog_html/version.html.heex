@@ -17,6 +17,18 @@
       <p class="changelog-tagline">
         All changes included in version {@version}.
       </p>
+
+      <div class="changelog-filters">
+        <div class="changelog-categories">
+          <span class="changelog-category-label">Categories:</span>
+          <.badge navigate={~p"/changelog"}>All</.badge>
+          <%= for category <- @categories do %>
+            <.badge navigate={~p"/changelog/category/#{category}"} caps>
+              {category}
+            </.badge>
+          <% end %>
+        </div>
+      </div>
     </div>
 
     <div class="changelog-entries">
