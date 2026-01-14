@@ -27,6 +27,7 @@ servers:
         PHX_SERVER: "false"
         MICELIO_GRPC_ENABLED: "true"
         MICELIO_GRPC_PORT: "50051"
+        MICELIO_GRPC_TLS_MODE: "proxy"
 
 proxy:
   ssl:

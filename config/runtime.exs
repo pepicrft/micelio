@@ -56,6 +56,13 @@ grpc_tls_certfile = System.get_env("MICELIO_GRPC_TLS_CERTFILE")
 grpc_tls_keyfile = System.get_env("MICELIO_GRPC_TLS_KEYFILE")
 grpc_tls_cacertfile = System.get_env("MICELIO_GRPC_TLS_CACERTFILE")
 
+grpc_tls_mode =
+  case System.get_env("MICELIO_GRPC_TLS_MODE") do
+    "proxy" -> :proxy
+    "insecure" -> :insecure
+    _ -> :required
+  end
+
 {grpc_tls_certfile, grpc_tls_keyfile} =
   case {grpc_tls_certfile, grpc_tls_keyfile} do
     {nil, nil} ->
@@ -103,6 +110,7 @@ if grpc_enabled do
   config :micelio, Micelio.GRPC,
     enabled: true,
     port: String.to_integer(System.get_env("MICELIO_GRPC_PORT", "50051")),
+    tls_mode: grpc_tls_mode,
     tls: grpc_tls
 end
 

@@ -43,13 +43,20 @@ defmodule Micelio.Application do
     if Keyword.get(grpc_config, :enabled, false) do
       port = Keyword.get(grpc_config, :port, 50_051)
       tls = Keyword.get(grpc_config, :tls, [])
+      tls_mode = Keyword.get(grpc_config, :tls_mode, :required)
 
-      if tls == [] do
+      if tls == [] and tls_mode == :required do
         raise """
         Micelio.GRPC is enabled but TLS is not configured.
         Configure MICELIO_GRPC_TLS_CERTFILE and MICELIO_GRPC_TLS_KEYFILE.
         """
       end
+
+      adapter_opts =
+        case tls do
+          [] -> []
+          _ -> [cred: GRPC.Credential.new(ssl: tls)]
+        end
 
       children ++
         [
@@ -57,7 +64,7 @@ defmodule Micelio.Application do
            [
              port: port,
              endpoint: Micelio.GRPC.Endpoint,
-             adapter_opts: [cred: GRPC.Credential.new(ssl: tls)],
+             adapter_opts: adapter_opts,
              start_server: true
            ]}
         ]
