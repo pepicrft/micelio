@@ -64,6 +64,9 @@ defmodule Micelio.MixProject do
       {:quokka, "~> 2.11", only: [:dev, :test], runtime: false},
       {:mimic, "~> 2.0", only: :test},
       {:nimble_publisher, "~> 1.0"},
+      {:makeup, "~> 1.1"},
+      {:makeup_elixir, "~> 0.16"},
+      {:makeup_erlang, "~> 1.0"},
       {:let_me, "~> 1.2"},
       {:boruta, git: "https://github.com/malach-it/boruta_auth", branch: "master"}
     ]
