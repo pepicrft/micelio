@@ -62,6 +62,7 @@ defmodule Micelio.MixProject do
       {:dns_cluster, "~> 0.2.0"},
       {:bandit, "~> 1.5"},
       {:quokka, "~> 2.11", only: [:dev, :test], runtime: false},
+      {:tidewave, "~> 0.5", only: :dev},
       {:mimic, "~> 2.0", only: :test},
       {:nimble_publisher, "~> 1.0"},
       {:makeup, "~> 1.1"},
