@@ -345,7 +345,7 @@ defmodule Micelio.Storage.S3 do
   defp encode_key(key) when is_binary(key) do
     key
     |> String.split("/", trim: false)
-    |> Enum.map(&URI.encode(&1, &URI.char_unreserved?/1))
+    |> Enum.map(fn segment -> URI.encode(segment, fn ch -> URI.char_unreserved?(ch) end) end)
     |> Enum.join("/")
   end
 
