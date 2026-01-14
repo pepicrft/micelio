@@ -51,9 +51,9 @@ env:
     PHX_HOST: micelio.dev
     DATABASE_PATH: /var/micelio/micelio.sqlite3
     STORAGE_BACKEND: s3
-    SMTP_PORT: "465"
-    SMTP_SSL: "true"
-    SMTP_TLS: "false"
+    SMTP_PORT: "587"
+    SMTP_SSL: "false"
+    SMTP_TLS: "always"
   secret:
     - SECRET_KEY_BASE
     - SMTP_HOST
