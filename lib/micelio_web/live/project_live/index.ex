@@ -4,6 +4,7 @@ defmodule MicelioWeb.ProjectLive.Index do
   alias Micelio.Accounts
   alias Micelio.Authorization
   alias Micelio.Projects
+  alias MicelioWeb.PageMeta
 
   @impl true
   def mount(_params, _session, socket) do
@@ -15,6 +16,10 @@ defmodule MicelioWeb.ProjectLive.Index do
     socket =
       socket
       |> assign(:page_title, "Projects")
+      |> PageMeta.assign(
+        description: "Manage your projects.",
+        canonical_url: url(~p"/projects")
+      )
       |> assign(:projects_count, length(projects))
       |> assign(:can_create_project, admin_organizations != [])
       |> stream(:projects, projects)

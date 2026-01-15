@@ -119,6 +119,23 @@
 }
 
 @media (max-width: 60rem) {
+  .navbar {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    row-gap: var(--theme-ui-space-1);
+  }
+
+  .navbar-left,
+  .navbar-right {
+    flex-wrap: wrap;
+    gap: var(--theme-ui-space-1) var(--theme-ui-space-2);
+  }
+
+  .navbar-right {
+    margin-left: auto;
+    justify-content: flex-end;
+  }
+
   .navbar .hidden-small {
     display: none;
   }

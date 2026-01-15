@@ -40,7 +40,7 @@ defmodule MicelioWeb.Layouts do
   def app(assigns) do
     ~H"""
     <div>
-      <nav class="navbar">
+      <nav class="navbar" aria-label="Primary">
         <div class="navbar-left">
           <span class="brand">
             <span class="icon">
@@ -53,7 +53,7 @@ defmodule MicelioWeb.Layouts do
 
           <a href={~p"/blog"}>blog</a>
           <a href={~p"/changelog"}>changelog</a>
-          <a href="https://discord.gg/3SZU3aEQP" target="_blank" rel="noopener noreferrer">discord</a>
+          <a href="https://discord.gg/XKzUPfJe" target="_blank" rel="noopener noreferrer">discord</a>
         </div>
 
         <div class="navbar-right">
@@ -111,6 +111,19 @@ defmodule MicelioWeb.Layouts do
         {render_slot(@inner_block)}
       </div>
     </main>
+
+    <footer class="site-footer" id="site-footer">
+      <nav class="site-footer-nav" aria-label="Legal">
+        <a href={~p"/impressum"}>impressum</a>
+        <a href={~p"/privacy"}>privacy policy</a>
+        <a href={~p"/terms"}>terms of service</a>
+        <a href={~p"/cookies"}>cookie policy</a>
+      </nav>
+
+      <div class="site-footer-meta">
+        © {Date.utc_today().year} Micelio
+      </div>
+    </footer>
     """
   end
 

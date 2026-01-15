@@ -2,10 +2,18 @@ defmodule MicelioWeb.Browser.DeviceController do
   use MicelioWeb, :controller
 
   alias Micelio.OAuth
+  alias MicelioWeb.PageMeta
 
   def index(conn, _params) do
     sessions = OAuth.list_device_sessions_for_user(conn.assigns.current_user)
-    render(conn, :index, sessions: sessions)
+
+    conn
+    |> PageMeta.put(
+      title_parts: ["Devices"],
+      description: "Manage authorized devices for your Micelio account.",
+      canonical_url: url(~p"/account/devices")
+    )
+    |> render(:index, sessions: sessions)
   end
 
   def delete(conn, %{"id" => id}) do

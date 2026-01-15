@@ -2,6 +2,7 @@ defmodule MicelioWeb.SessionLive.Show do
   use MicelioWeb, :live_view
 
   alias Micelio.{Authorization, Projects, Sessions}
+  alias MicelioWeb.PageMeta
 
   @impl true
   def mount(
@@ -34,6 +35,13 @@ defmodule MicelioWeb.SessionLive.Show do
                 socket =
                   socket
                   |> assign(:page_title, "Session: #{session.goal}")
+                  |> PageMeta.assign(
+                    description: "Session details for #{project.name}.",
+                    canonical_url:
+                      url(
+                        ~p"/projects/#{organization.account.handle}/#{project.handle}/sessions/#{session.id}"
+                      )
+                  )
                   |> assign(:project, project)
                   |> assign(:organization, organization)
                   |> assign(:session, session)

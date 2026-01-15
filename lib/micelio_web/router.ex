@@ -21,6 +21,10 @@ defmodule MicelioWeb.Router do
     plug MicelioWeb.ReesourcePlug, :load_repository
   end
 
+  pipeline :og_image do
+    plug :put_secure_browser_headers
+  end
+
   # Enable LiveDashboard and Swoosh mailbox preview in development
   if Application.compile_env(:micelio, :dev_routes) do
     # If you want to use the LiveDashboard in production, you should put
@@ -108,10 +112,21 @@ defmodule MicelioWeb.Router do
     delete "/devices/:id", DeviceController, :delete
   end
 
+  scope "/og", MicelioWeb.Browser do
+    pipe_through :og_image
+
+    get "/:hash", OpenGraphImageController, :show
+  end
+
   scope "/", MicelioWeb.Browser do
     pipe_through([:browser, :load_resources])
 
     get "/", PageController, :home
+
+    get "/privacy", LegalController, :privacy
+    get "/terms", LegalController, :terms
+    get "/cookies", LegalController, :cookies
+    get "/impressum", LegalController, :impressum
 
     get "/:account", AccountController, :show
     get "/:account/:repository/tree/*path", RepositoryController, :tree

@@ -2,6 +2,7 @@ defmodule MicelioWeb.SessionLive.Index do
   use MicelioWeb, :live_view
 
   alias Micelio.{Authorization, Projects, Sessions}
+  alias MicelioWeb.PageMeta
 
   @impl true
   def mount(
@@ -19,6 +20,11 @@ defmodule MicelioWeb.SessionLive.Index do
           socket =
             socket
             |> assign(:page_title, "Sessions - #{project.name}")
+            |> PageMeta.assign(
+              description: "Browse sessions for #{project.name}.",
+              canonical_url:
+                url(~p"/projects/#{organization.account.handle}/#{project.handle}/sessions")
+            )
             |> assign(:project, project)
             |> assign(:organization, organization)
             |> assign(:status_filter, "all")

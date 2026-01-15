@@ -3,6 +3,7 @@ defmodule MicelioWeb.ProjectLive.Edit do
 
   alias Micelio.Authorization
   alias Micelio.Projects
+  alias MicelioWeb.PageMeta
 
   @impl true
   def mount(
@@ -25,6 +26,11 @@ defmodule MicelioWeb.ProjectLive.Edit do
           socket =
             socket
             |> assign(:page_title, "Edit Project")
+            |> PageMeta.assign(
+              description: "Edit project settings.",
+              canonical_url:
+                url(~p"/projects/#{organization.account.handle}/#{project.handle}/edit")
+            )
             |> assign(:project, project)
             |> assign(:organization, organization)
             |> assign(:form, form)

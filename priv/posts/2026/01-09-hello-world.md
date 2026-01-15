@@ -2,7 +2,7 @@
   title: "A Vision for Agent-First Development",
   author: :ruby,
   tags: ~w(vision exploration),
-  description: "Why I'm building Micelio and mic: rethinking version control for an AI-native world where humans and agents collaborate as peers."
+  description: "Why I'm building Micelio and hif: rethinking version control for an AI-native world where humans and agents collaborate as peers."
 }
 
 ---
@@ -19,23 +19,23 @@ Consider this scenario: An agent is tasked with "add authentication to the API."
 
 I think going back to first principles is worth exploring. Rather than incrementally building from Git or existing forges, LLMs present new capabilities that didn't exist before. It feels easier to design something from the ground up with no legacy constraints than trying to move incrementally from an existing foundation that was never designed for this reality.
 
-## What I'm Building: mic and Micelio
+## What I'm Building: hif and Micelio
 
-This is where **mic** and **Micelio** come in—an experiment in rethinking version control and forges from scratch.
+This is where **hif** and **Micelio** come in—an experiment in rethinking version control and forges from scratch.
 
-**mic** is a new version control protocol I'm designing from the ground up for AI-native development. Instead of commits, mic has sessions—complete units of work that capture not just what happened, but why it happened and how decisions were made. Imagine having a conversation with an agent about implementing a feature, and that entire reasoning process becomes part of the version history, not just the final code changes.
+**hif** is a new version control protocol I'm designing from the ground up for AI-native development. Instead of commits, hif has sessions—complete units of work that capture not just what happened, but why it happened and how decisions were made. Imagine having a conversation with an agent about implementing a feature, and that entire reasoning process becomes part of the version history, not just the final code changes.
 
-**Micelio** is the forge that makes mic accessible and useful for teams where humans and agents work as peers. I'm aiming for the scale that companies like Shopify or Meta need, with modern infrastructure patterns that avoid the bottlenecks of traditional forges. Session-based interfaces let you browse reasoning and decision-making, not just code changes.
+**Micelio** is the forge that makes hif accessible and useful for teams where humans and agents work as peers. Micelio is to hif what GitHub is to git. I'm aiming for the scale that companies like Shopify or Meta need, with modern infrastructure patterns that avoid the bottlenecks of traditional forges. Session-based interfaces let you browse reasoning and decision-making, not just code changes.
 
-## How I'm Approaching It: Open Source and Self-Hostable
+## How I'm Approaching It: hif Open Source, Micelio Hosted
 
-Unlike the GitHub model where a closed platform controls the infrastructure, I'm building both mic and Micelio as fully open source projects designed for anyone to run in their own infrastructure.
+Micelio is a hosted forge and is not open source. hif is open source.
 
-Whether you run Micelio on your own servers, in your private cloud, or use a hosted version, you maintain ownership of your data and processes. This isn't just about open source licensing—it's about architectural decisions that prioritize portability, standard protocols, and avoiding vendor lock-in.
+My goal is to keep the core version control protocol open, while building a forge experience that teams can rely on day to day.
 
-### mic: The Protocol
+### hif: The Protocol
 
-mic follows the same pattern as Git—it's the core protocol that will become a standalone piece mixing CLI tools with communication protocols. I'm currently developing it together with Micelio for fast iteration and prototyping, but it will eventually become its own independent foundation that anyone can build upon.
+hif follows the same pattern as git—it's the core protocol that will become a standalone piece mixing CLI tools with communication protocols. I'm currently developing it together with Micelio for fast iteration and prototyping, but it will eventually become its own independent foundation that anyone can build upon.
 
 This approach enables possibilities that traditional version control simply can't handle. I want to explore problems like reproducing environments easily with something like Nix, so developers can be trusted to run checks locally before pushing. I'm investigating how to make those checks run faster so that code can be continuously pushed, exploring what a world post-CI/CD might look like.
 
@@ -43,7 +43,7 @@ I also think containers will continue to commoditize, so I'm building a develope
 
 ### Micelio: The Forge
 
-The forge uses modern infrastructure patterns with object storage as primary storage for unlimited scale, stateless compute to avoid coordinator bottlenecks, and session-based interfaces that work at enterprise scale. Deploy it on-premises, in your private cloud, or use it as a managed service—the architecture is designed to work anywhere.
+The forge uses modern infrastructure patterns with object storage as primary storage for unlimited scale, stateless compute to avoid coordinator bottlenecks, and session-based interfaces that work at enterprise scale.
 
 ## Why This Might Matter
 
@@ -59,14 +59,14 @@ This is very much work in progress. I'm not ready for production use yet, but th
 
 ## Let's Tinker Together
 
-If this excites you, I'd love to build it together. I'm working on something I think is unprecedented: version control that captures not just what we built, but how we reasoned, why we chose alternatives, and how we can learn from the process. It's all happening in the open, designed for you to run wherever you need it.
+If this excites you, I'd love to build it together. I'm working on something I think is unprecedented: version control that captures not just what we built, but how we reasoned, why we chose alternatives, and how we can learn from the process.
 
-The future of software development is collaborative intelligence: humans and AI agents working together as peers. This requires new tools designed from the ground up for this reality—tools you can own, modify, and deploy on your own terms. Git was revolutionary for its time. I think it's time for what comes next.
+The future of software development is collaborative intelligence: humans and AI agents working together as peers. This requires new tools designed from the ground up for this reality. hif will be open source; Micelio will provide the hosted forge experience. Git was revolutionary for its time. I think it's time for what comes next.
 
-**Micelio + mic is my bet on that future. Open source, self-hostable, built for the age of AI agents.**
+**Micelio + hif is my bet on that future.**
 
-Join the conversation on [Discord](https://discord.gg/3SZU3aEQP) and help shape where this goes.
+Join the conversation on [Discord](https://discord.gg/XKzUPfJe) and help shape where this goes.
 
 ---
 
-*Ruby is building Micelio and mic as open source projects. Follow the project at [micelio.dev](https://micelio.dev), contribute on [GitHub](https://github.com/ruby/micelio), or join our [Discord community](https://discord.gg/3SZU3aEQP).*
+*Ruby is building Micelio (a hosted forge) and hif (an open source version control protocol). Follow the project at [micelio.dev](https://micelio.dev) or join our [Discord community](https://discord.gg/XKzUPfJe).*

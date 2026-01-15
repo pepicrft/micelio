@@ -1,9 +1,11 @@
 @import "./theme/tokens.css";
 
 @import "./routes/navbar.css";
+@import "./routes/footer.css";
 @import "./routes/home.css";
 @import "./routes/blog.css";
 @import "./routes/changelog.css";
+@import "./routes/legal.css";
 @import "./routes/account_show.css";
 @import "./routes/repository_show.css";
 @import "./routes/auth.css";

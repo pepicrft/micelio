@@ -4,31 +4,48 @@ defmodule MicelioWeb.Browser.DeviceAuthController do
   import Phoenix.Component, only: [to_form: 2]
 
   alias Micelio.OAuth
+  alias MicelioWeb.PageMeta
 
   def new(conn, params) do
     user_code = Map.get(params, "user_code", "")
     form = to_form(%{"user_code" => user_code}, as: :device)
 
-    render(conn, :new, form: form)
+    conn
+    |> PageMeta.put(
+      title_parts: ["Device authorization"],
+      description: "Authorize a device to access your Micelio account.",
+      canonical_url: url(~p"/device/auth")
+    )
+    |> render(:new, form: form)
   end
 
   def verify(conn, %{"device" => %{"user_code" => user_code}}) do
+    base_meta = [
+      description: "Authorize a device to access your Micelio account.",
+      canonical_url: url(~p"/device/auth")
+    ]
+
     case OAuth.approve_device_grant(user_code, conn.assigns.current_user) do
       {:ok, grant} ->
-        render(conn, :success, grant: grant)
+        conn
+        |> PageMeta.put(Keyword.merge([title_parts: ["Device authorized"]], base_meta))
+        |> render(:success, grant: grant)
 
       {:error, :not_found} ->
         conn
+        |> PageMeta.put(Keyword.merge([title_parts: ["Device authorization"]], base_meta))
         |> put_flash(:error, "That code was not found. Please check and try again.")
         |> render(:new, form: to_form(%{"user_code" => user_code}, as: :device))
 
       {:error, :expired_token} ->
         conn
+        |> PageMeta.put(Keyword.merge([title_parts: ["Device authorization"]], base_meta))
         |> put_flash(:error, "This device code has expired. Please start again.")
         |> render(:new, form: to_form(%{"user_code" => user_code}, as: :device))
 
       {:error, _reason} ->
         conn
+        |> PageMeta.put(Keyword.merge([title_parts: ["Device authorization"]], base_meta))
         |> put_flash(:error, "Unable to approve this device right now.")
         |> render(:new, form: to_form(%{"user_code" => user_code}, as: :device))
     end

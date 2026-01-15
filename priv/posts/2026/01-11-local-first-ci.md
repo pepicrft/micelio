@@ -54,4 +54,4 @@ Remote execution still has a place for expensive builds, but it stops being the 
 
 That’s the direction we want for hif and Micelio: sessions that contain the “why” (goal, conversation, decisions) alongside the “proof” (checks in a reproducible environment).
 
-If you’re interested in this direction, we discuss it on Discord: [https://discord.gg/3SZU3aEQP](https://discord.gg/3SZU3aEQP)
+If you’re interested in this direction, we discuss it on Discord: [https://discord.gg/XKzUPfJe](https://discord.gg/XKzUPfJe)

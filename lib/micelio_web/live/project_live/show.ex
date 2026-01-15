@@ -4,6 +4,7 @@ defmodule MicelioWeb.ProjectLive.Show do
   alias Micelio.Authorization
   alias Micelio.Projects
   alias Micelio.Sessions
+  alias MicelioWeb.PageMeta
 
   @impl true
   def mount(
@@ -27,6 +28,10 @@ defmodule MicelioWeb.ProjectLive.Show do
           socket =
             socket
             |> assign(:page_title, project.name)
+            |> PageMeta.assign(
+              description: project.description || "Project overview.",
+              canonical_url: url(~p"/projects/#{organization.account.handle}/#{project.handle}")
+            )
             |> assign(:project, project)
             |> assign(:organization, organization)
             |> assign(:recent_sessions, recent_sessions)

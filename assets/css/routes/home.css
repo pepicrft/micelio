@@ -3,11 +3,6 @@
 .home-container {
 }
 
-.home-header {
-  text-align: center;
-  margin-bottom: var(--theme-ui-space-4);
-}
-
 .home-title {
   font-weight: var(--theme-ui-fontWeights-bold);
   color: var(--theme-ui-colors-text);
@@ -55,7 +50,6 @@
 }
 
 .home-content {
-  margin-top: var(--theme-ui-space-4);
   display: grid;
   grid-template-columns: 2fr 1fr;
   gap: var(--theme-ui-space-3);
@@ -104,7 +98,7 @@
 }
 
 .home-overview p {
-  margin: var(--theme-ui-space-2) 0;
+  margin: 0 0 var(--theme-ui-space-2);
 }
 
 .home-overview a {
@@ -120,56 +114,43 @@
 }
 
 .home-pricing {
-  margin-top: var(--theme-ui-space-4);
-  padding-top: var(--theme-ui-space-4);
-  border-top: var(--theme-ui-borders-thin);
-}
-
-.home-pricing-header {
-  margin-bottom: var(--theme-ui-space-3);
-}
-
-.home-section-title {
-  font-weight: var(--theme-ui-fontWeights-bold);
-  color: var(--theme-ui-colors-text);
-  margin-bottom: var(--theme-ui-space-1);
-  border-bottom: var(--theme-ui-borders-thin);
-  padding-bottom: var(--theme-ui-space-1);
-}
-
-.home-section-subtitle {
-  color: var(--theme-ui-colors-secondary);
-}
-
-.home-pricing-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--theme-ui-space-2);
-}
-
-@media (max-width: 60rem) {
-  .home-pricing-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.home-pricing-tier {
-  border: var(--theme-ui-borders-thin);
+  margin: var(--theme-ui-space-4) 0;
   padding: var(--theme-ui-space-2);
-  background: var(--theme-ui-colors-background);
+  border: var(--theme-ui-borders-thin);
+  border-radius: var(--theme-ui-radii-default);
 }
 
 .home-pricing-title {
   font-weight: var(--theme-ui-fontWeights-bold);
-  margin-bottom: var(--theme-ui-space-1);
+  color: var(--theme-ui-colors-text);
+  margin-bottom: var(--theme-ui-space-2);
+  border-bottom: var(--theme-ui-borders-thin);
+  padding-bottom: var(--theme-ui-space-1);
 }
 
-.home-pricing-price {
+.home-pricing-list {
+  display: grid;
+  gap: var(--theme-ui-space-2);
+}
+
+@media (min-width: 60rem) {
+  .home-pricing-list {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.home-pricing-item {
+  padding: var(--theme-ui-space-2);
+  border: var(--theme-ui-borders-thin);
+  border-radius: var(--theme-ui-radii-default);
+}
+
+.home-pricing-plan {
   font-weight: var(--theme-ui-fontWeights-bold);
   color: var(--theme-ui-colors-text);
-  margin-bottom: var(--theme-ui-space-1);
 }
 
-.home-pricing-detail {
+.home-pricing-description {
+  margin-top: var(--theme-ui-space-1);
   color: var(--theme-ui-colors-secondary);
 }

@@ -4,6 +4,7 @@ defmodule MicelioWeb.Browser.AuthController do
   alias Micelio.Accounts
   alias Micelio.Accounts.AuthEmail
   alias Micelio.Mailer
+  alias MicelioWeb.PageMeta
 
   require Logger
 
@@ -11,7 +12,13 @@ defmodule MicelioWeb.Browser.AuthController do
   Renders the login form.
   """
   def new(conn, _params) do
-    render(conn, :new)
+    conn
+    |> PageMeta.put(
+      title_parts: ["Log in"],
+      description: "Log in to Micelio.",
+      canonical_url: url(~p"/auth/login")
+    )
+    |> render(:new)
   end
 
   @doc """
@@ -62,7 +69,13 @@ defmodule MicelioWeb.Browser.AuthController do
   Renders the "check your email" page.
   """
   def sent(conn, _params) do
-    render(conn, :sent)
+    conn
+    |> PageMeta.put(
+      title_parts: ["Check your email"],
+      description: "We sent you a login link. Check your inbox to continue.",
+      canonical_url: url(~p"/auth/sent")
+    )
+    |> render(:sent)
   end
 
   @doc """

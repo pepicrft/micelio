@@ -5,6 +5,7 @@ defmodule MicelioWeb.ProjectLive.New do
   alias Micelio.Authorization
   alias Micelio.Projects
   alias Micelio.Projects.Project
+  alias MicelioWeb.PageMeta
 
   @impl true
   def mount(_params, _session, socket) do
@@ -21,6 +22,10 @@ defmodule MicelioWeb.ProjectLive.New do
     socket =
       socket
       |> assign(:page_title, "New Project")
+      |> PageMeta.assign(
+        description: "Create a new project.",
+        canonical_url: url(~p"/projects/new")
+      )
       |> assign(:organizations, organizations)
       |> assign(:organization_options, organization_options(organizations))
       |> assign(:form, form)

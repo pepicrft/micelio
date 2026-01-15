@@ -113,9 +113,33 @@ defmodule MicelioWeb.PageMeta do
 
   @spec open_graph(t()) :: map()
   def open_graph(%__MODULE__{} = meta) do
-    meta.open_graph
-    |> normalize_map()
-    |> Map.drop([:title, :description, :type, :url, :site_name])
+    og =
+      meta.open_graph
+      |> normalize_map()
+      |> Map.drop([:title, :description, :type, :url, :site_name])
+
+    if has_og_image?(og) do
+      og
+    else
+      case MicelioWeb.OpenGraphImage.url(meta) do
+        nil ->
+          og
+
+        url ->
+          defaults = %{
+            "og:image:alt" => title(meta),
+            "og:image:width" => Integer.to_string(MicelioWeb.OpenGraphImage.width()),
+            "og:image:height" => Integer.to_string(MicelioWeb.OpenGraphImage.height()),
+            image: url
+          }
+
+          Map.merge(defaults, og)
+      end
+    end
+  end
+
+  defp has_og_image?(og) when is_map(og) do
+    Map.has_key?(og, :image) or Map.has_key?(og, "image") or Map.has_key?(og, "og:image")
   end
 
   @spec og_extra_tags(t()) :: [{String.t(), String.t()}]

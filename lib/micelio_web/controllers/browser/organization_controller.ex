@@ -5,6 +5,7 @@ defmodule MicelioWeb.Browser.OrganizationController do
 
   alias Micelio.Accounts
   alias Micelio.Accounts.OrganizationRegistration
+  alias MicelioWeb.PageMeta
 
   @doc """
   Renders the new organization form.
@@ -14,7 +15,9 @@ defmodule MicelioWeb.Browser.OrganizationController do
       Accounts.change_organization_registration()
       |> to_form(as: :organization)
 
-    render(conn, :new, form: form)
+    conn
+    |> put_new_org_meta()
+    |> render(:new, form: form)
   end
 
   @doc """
@@ -34,7 +37,17 @@ defmodule MicelioWeb.Browser.OrganizationController do
           |> Map.put(:action, :insert)
           |> to_form(as: :organization)
 
-        render(conn, :new, form: form)
+        conn
+        |> put_new_org_meta()
+        |> render(:new, form: form)
     end
+  end
+
+  defp put_new_org_meta(conn) do
+    PageMeta.put(conn,
+      title_parts: ["New organization"],
+      description: "Create a new organization to group projects and collaborators.",
+      canonical_url: url(~p"/organizations/new")
+    )
   end
 end
