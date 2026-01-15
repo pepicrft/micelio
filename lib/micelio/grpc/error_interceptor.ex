@@ -3,11 +3,8 @@ defmodule Micelio.GRPC.ErrorInterceptor do
   gRPC server interceptor that converts {:error, %GRPC.RPCError{}} tuples
   returned from handlers into raised exceptions.
 
-  This is needed because the GRPC library (as of v0.11.5) does not properly
-  handle error tuples returned from server functions - it tries to encode
-  them as protobuf messages instead of treating them as errors.
-
-  Usage: Add this interceptor to your GRPC endpoint configuration.
+  This works around a limitation in the grpc library where error tuples
+  are wrapped in {:ok, stream, reply} and passed to the protobuf encoder.
   """
 
   @behaviour GRPC.Server.Interceptor
