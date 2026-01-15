@@ -36,6 +36,36 @@ This file tracks upcoming features and improvements for Micelio.
 - [x] gRPC client with TLS support
 - [x] Basic CLI commands (auth, checkout, status, land)
 
+### Production Readiness (Completed)
+
+**1. Clone Command** ✅
+- [x] Implement `hif clone <org/project>` - same as checkout but git-like semantics
+- [x] Parse project reference (org/project format)
+- [x] Authenticate and fetch project tree from forge
+- [x] Download all blobs and write to local filesystem
+- [x] Create workspace manifest in `.hif/workspace.json`
+
+**2. Token Refresh with File-System Locking** ✅
+- [x] File-based locking mechanism for credential access (`~/.config/hif/.lock`)
+- [x] Standard OAuth2 token refresh via `/oauth/token` endpoint (using Boruta)
+- [x] `oauth.getValidAccessToken()` - returns valid token, refreshing if needed
+- [x] Automatic retry with backoff when lock is held (50 attempts, 100ms each)
+- [x] 5-minute refresh margin before expiry
+
+**3. Conflict Resolution** ✅
+- [x] Server-side conflict detection based on `base_position` in session metadata
+- [x] ConflictIndex for efficient path-based conflict scanning
+- [x] `LandSession` returns `ABORTED` status with conflicting paths
+- [x] CLI parses conflict errors and displays clear resolution instructions
+- [x] `hif sync` command fetches latest upstream and identifies local conflicts
+- [x] Preserves local changes during sync, only updates non-conflicting files
+
+**4. Error Recovery and Rollback** ✅
+- [x] Atomic file writes for manifest (write to temp, then rename)
+- [x] Backup file utilities (`backupFile`, `restoreFromBackup`)
+- [x] Retry helper module with exponential backoff for transient failures
+- [x] Proper error handling with user-friendly messages
+
 ### Phase 1: Foundation (In Progress)
 
 **Core Primitives:**

@@ -78,6 +78,10 @@ pub fn main() !void {
     try land_cmd.addArg(Arg.positional("GOAL", "What you're trying to accomplish", null));
     try root.addSubcommand(land_cmd);
 
+    // Sync: Pull latest changes from the forge
+    const sync_cmd = app.createCommand("sync", "Sync workspace with latest upstream changes");
+    try root.addSubcommand(sync_cmd);
+
     // Clone: Initialize local state for a forge project
     var clone_cmd = app.createCommand("clone", "Clone a project from the forge");
     try clone_cmd.addArg(Arg.positional("PROJECT", "Project URL or name (e.g., org/myapp)", null));
@@ -279,14 +283,29 @@ pub fn main() !void {
         return;
     }
 
+    if (matches.subcommandMatches("sync")) |_| {
+        _ = try workspace.sync(allocator);
+        return;
+    }
+
     if (matches.subcommandMatches("clone")) |clone_matches| {
-        if (clone_matches.getSingleValue("PROJECT")) |project| {
-            std.debug.print("Cloning project '{s}'...\n", .{project});
-            std.debug.print("(Not yet implemented - forge connection required)\n", .{});
-        } else {
-            std.debug.print("Error: project name required\n", .{});
-            std.debug.print("Usage: hif clone <project>\n", .{});
+        const project_ref = clone_matches.getSingleValue("PROJECT");
+
+        if (project_ref == null) {
+            std.debug.print("Error: project required\n", .{});
+            std.debug.print("Usage: hif clone <account>/<project>\n", .{});
+            return;
         }
+
+        const parsed = parseProjectRef(project_ref.?);
+        if (parsed == null) {
+            std.debug.print("Error: invalid project format\n", .{});
+            std.debug.print("Usage: hif clone <account>/<project>\n", .{});
+            return;
+        }
+
+        // Clone uses checkout with the project name as the default directory
+        try workspace.checkout(allocator, parsed.?.account, parsed.?.project, null);
         return;
     }
 

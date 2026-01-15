@@ -250,23 +250,67 @@ pub fn write(allocator: std.mem.Allocator, path: []const u8) !void {
     std.debug.print("Wrote {s} ({} bytes)\n", .{ path, content.len });
 }
 
+pub const LandResult = union(enum) {
+    success: struct {
+        session_id: []const u8,
+        landing_position: u64,
+    },
+    conflict: struct {
+        paths: []const []const u8,
+    },
+    err: []const u8,
+};
+
 pub fn land(allocator: std.mem.Allocator, server: []const u8) !void {
+    const result = try landSession(allocator, server);
+
+    switch (result) {
+        .success => |data| {
+            std.debug.print("Session landed successfully!\n", .{});
+            std.debug.print("Session ID: {s}\n", .{data.session_id});
+            if (data.landing_position > 0) {
+                std.debug.print("Landing position: {d}\n", .{data.landing_position});
+            }
+
+            // Remove local session file
+            const path_remove = try sessionStatePath(allocator);
+            defer allocator.free(path_remove);
+            std.fs.cwd().deleteFile(path_remove) catch {};
+        },
+        .conflict => |data| {
+            std.debug.print("Error: Conflicts detected with upstream changes.\n", .{});
+            std.debug.print("\nConflicting files:\n", .{});
+            for (data.paths) |path| {
+                std.debug.print("  - {s}\n", .{path});
+            }
+            std.debug.print("\nTo resolve:\n", .{});
+            std.debug.print("  1. Run 'hif sync' to fetch the latest upstream state\n", .{});
+            std.debug.print("  2. Review and merge your changes with the upstream versions\n", .{});
+            std.debug.print("  3. Run 'hif session land' again\n", .{});
+            return error.ConflictsDetected;
+        },
+        .err => |message| {
+            std.debug.print("Error: {s}\n", .{message});
+            return error.LandingFailed;
+        },
+    }
+}
+
+pub fn landSession(allocator: std.mem.Allocator, server: []const u8) !LandResult {
     var arena = std.heap.ArenaAllocator.init(allocator);
     defer arena.deinit();
     const arena_alloc = arena.allocator();
 
     const creds = try oauth.readCredentials(arena_alloc);
     if (creds == null or creds.?.access_token == null) {
-        std.debug.print("Error: Not authenticated. Run 'hif auth login' first.\n", .{});
-        return error.NotAuthenticated;
+        return .{ .err = "Not authenticated. Run 'hif auth login' first." };
     }
 
     const path = try sessionStatePath(arena_alloc);
     const data = try xdg.readFileAlloc(arena_alloc, path, 1024 * 1024);
-    
+
     if (data == null) {
-        std.debug.print("Error: No active session to land.\n", .{});
-        return error.NoActiveSession;
+        return .{ .err = "No active session to land." };
     }
 
     const session = try std.json.parseFromSliceLeaky(SessionState, arena_alloc, data.?, .{ .ignore_unknown_fields = true });
@@ -277,27 +321,44 @@ pub fn land(allocator: std.mem.Allocator, server: []const u8) !void {
     const request = try sessions_proto.encodeLandSessionRequest(arena_alloc, session.id, changes);
     defer arena_alloc.free(request);
 
-    const response = try grpc_client.unaryCall(
+    const result = try grpc_client.unaryCallResult(
         arena_alloc,
         endpoint,
         "/micelio.sessions.v1.SessionService/LandSession",
         request,
         creds.?.access_token.?,
     );
-    defer arena_alloc.free(response.bytes);
 
-    const landed = try sessions_proto.decodeSessionResponse(arena_alloc, response.bytes);
+    switch (result) {
+        .ok => |response| {
+            defer arena_alloc.free(response.bytes);
+            const landed = try sessions_proto.decodeSessionResponse(arena_alloc, response.bytes);
+            return .{
+                .success = .{
+                    .session_id = try allocator.dupe(u8, landed.session_id),
+                    .landing_position = landed.landing_position,
+                },
+            };
+        },
+        .err => |message| {
+            defer arena_alloc.free(message);
 
-    std.debug.print("Session landed successfully!\n", .{});
-    std.debug.print("Session ID: {s}\n", .{landed.session_id});
-    if (landed.landing_position > 0) {
-        std.debug.print("Landing position: {d}\n", .{landed.landing_position});
+            // Check if this is a conflict error
+            if (std.mem.startsWith(u8, message, "Conflicts detected: ")) {
+                const paths_str = message["Conflicts detected: ".len..];
+                var conflict_paths: std.ArrayList([]const u8) = .empty;
+
+                var iter = std.mem.splitSequence(u8, paths_str, ", ");
+                while (iter.next()) |p| {
+                    try conflict_paths.append(allocator, try allocator.dupe(u8, p));
+                }
+
+                return .{ .conflict = .{ .paths = try conflict_paths.toOwnedSlice(allocator) } };
+            }
+
+            return .{ .err = try allocator.dupe(u8, message) };
+        },
     }
-    
-    // Remove local session file
-    const path_remove = try sessionStatePath(allocator);
-    defer allocator.free(path_remove);
-    std.fs.cwd().deleteFile(path_remove) catch {};
 }
 
 pub fn abandon(allocator: std.mem.Allocator) !void {

@@ -53,7 +53,8 @@ pub fn save(
     const payload = try payload_buf.toOwnedSlice();
     defer allocator.free(payload);
 
-    try fs.writeFile(path, payload);
+    // Use atomic write to prevent manifest corruption
+    try fs.writeFileAtomic(allocator, path, payload);
 }
 
 pub fn ensureMetadataDir(workspace_root: []const u8) !void {

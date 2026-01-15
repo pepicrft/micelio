@@ -2,10 +2,13 @@ const std = @import("std");
 const grpc_client = @import("grpc/client.zig");
 const grpc_endpoint = @import("grpc/endpoint.zig");
 const auth_proto = @import("grpc/auth_proto.zig");
+const http = @import("http.zig");
 const xdg = @import("xdg.zig");
 
 pub const default_server = "http://localhost:50051";
 const credentials_filename = "credentials.json";
+const lock_filename = ".lock";
+const token_refresh_margin_seconds: i64 = 300; // Refresh 5 minutes before expiry
 
 const DeviceClientRegistration = struct {
     client_id: []const u8,
@@ -291,4 +294,150 @@ fn storeCredentials(allocator: std.mem.Allocator, credentials: Credentials) !voi
     defer allocator.free(path);
 
     try xdg.writeSecretFile(path, payload);
+}
+
+/// Gets a valid access token, refreshing if expired.
+/// Uses file locking to prevent race conditions with parallel agents.
+pub fn getValidAccessToken(allocator: std.mem.Allocator) ![]const u8 {
+    var arena = std.heap.ArenaAllocator.init(allocator);
+    defer arena.deinit();
+    const arena_alloc = arena.allocator();
+
+    // Acquire lock for credential access
+    const lock = try acquireCredentialsLock(arena_alloc);
+    defer releaseCredentialsLock(lock);
+
+    const creds = try readCredentials(arena_alloc);
+    if (creds == null) {
+        return error.NotAuthenticated;
+    }
+
+    const credentials = creds.?;
+    if (credentials.access_token == null) {
+        return error.NotAuthenticated;
+    }
+
+    // Check if token needs refresh
+    if (credentials.expires_at) |expires_at| {
+        const now = std.time.timestamp();
+        if (now >= expires_at - token_refresh_margin_seconds) {
+            // Token expired or expiring soon, try to refresh
+            if (credentials.refresh_token) |refresh_token| {
+                const new_creds = try refreshAccessToken(arena_alloc, credentials, refresh_token);
+                // Store refreshed credentials (lock already held)
+                try storeCredentials(allocator, new_creds);
+                return allocator.dupe(u8, new_creds.access_token.?);
+            } else {
+                return error.TokenExpired;
+            }
+        }
+    }
+
+    return allocator.dupe(u8, credentials.access_token.?);
+}
+
+fn refreshAccessToken(
+    allocator: std.mem.Allocator,
+    creds: Credentials,
+    refresh_token: []const u8,
+) !Credentials {
+    // Build OAuth token endpoint URL from server
+    const token_url = try buildTokenUrl(allocator, creds.server);
+    defer allocator.free(token_url);
+
+    // Build form-encoded body for refresh_token grant
+    const body = try std.fmt.allocPrint(
+        allocator,
+        "grant_type=refresh_token&refresh_token={s}&client_id={s}&client_secret={s}",
+        .{
+            refresh_token,
+            creds.client_id,
+            creds.client_secret,
+        },
+    );
+    defer allocator.free(body);
+
+    // Create HTTP client and make POST request
+    var client = std.http.Client{ .allocator = allocator };
+    defer client.deinit();
+
+    const response = try http.postForm(allocator, &client, token_url, body);
+    defer allocator.free(response.body);
+
+    if (response.status != .ok) {
+        return error.TokenRefreshFailed;
+    }
+
+    // Parse JSON response
+    const token_response = try std.json.parseFromSliceLeaky(
+        struct {
+            access_token: []const u8,
+            token_type: []const u8,
+            expires_in: ?i64 = null,
+            refresh_token: ?[]const u8 = null,
+        },
+        allocator,
+        response.body,
+        .{ .ignore_unknown_fields = true },
+    );
+
+    return Credentials{
+        .server = creds.server,
+        .client_id = creds.client_id,
+        .client_secret = creds.client_secret,
+        .access_token = token_response.access_token,
+        .refresh_token = token_response.refresh_token orelse refresh_token,
+        .expires_at = tokenExpiresAt(token_response.expires_in),
+        .token_type = token_response.token_type,
+    };
+}
+
+fn buildTokenUrl(allocator: std.mem.Allocator, server: []const u8) ![]u8 {
+    // Convert gRPC server URL to HTTP OAuth endpoint
+    // e.g., "http://localhost:50051" -> "http://localhost:4000/oauth/token"
+    // For now, assume Phoenix runs on port 4000 on same host
+    const endpoint = try grpc_endpoint.parseServer(allocator, server);
+    return std.fmt.allocPrint(allocator, "http://{s}:4000/oauth/token", .{endpoint.host});
+}
+
+const CredentialsLock = struct {
+    file: ?std.fs.File,
+};
+
+fn acquireCredentialsLock(allocator: std.mem.Allocator) !CredentialsLock {
+    const lock_path = try xdg.credentialsFilePath(allocator, lock_filename);
+    defer allocator.free(lock_path);
+
+    // Ensure credentials directory exists
+    _ = try xdg.ensureCredentialsDir(allocator);
+
+    // Try to acquire exclusive lock with retries
+    var attempts: u32 = 0;
+    const max_attempts: u32 = 50; // 5 seconds total with 100ms sleep
+
+    while (attempts < max_attempts) {
+        const file = std.fs.createFileAbsolute(lock_path, .{
+            .read = true,
+            .lock = .exclusive,
+            .lock_nonblocking = true,
+        }) catch |err| {
+            if (err == error.WouldBlock) {
+                // Lock held by another process, wait and retry
+                std.Thread.sleep(100 * std.time.ns_per_ms);
+                attempts += 1;
+                continue;
+            }
+            return err;
+        };
+
+        return CredentialsLock{ .file = file };
+    }
+
+    return error.LockTimeout;
+}
+
+fn releaseCredentialsLock(lock: CredentialsLock) void {
+    if (lock.file) |file| {
+        file.close();
+    }
 }

@@ -187,21 +187,51 @@ pub fn land(allocator: std.mem.Allocator, goal: []const u8) !void {
     );
     defer arena_alloc.free(land_request);
 
-    const land_response = try grpc_client.unaryCall(
+    const land_result = try grpc_client.unaryCallResult(
         arena_alloc,
         endpoint,
         "/micelio.sessions.v1.SessionService/LandSession",
         land_request,
         creds.?.access_token.?,
     );
-    defer arena_alloc.free(land_response.bytes);
-    const landed = try sessions_proto.decodeSessionResponse(arena_alloc, land_response.bytes);
 
-    try refreshManifest(arena_alloc, state, workspace_root, creds.?.access_token.?);
+    switch (land_result) {
+        .ok => |response| {
+            defer arena_alloc.free(response.bytes);
+            const landed = try sessions_proto.decodeSessionResponse(arena_alloc, response.bytes);
 
-    std.debug.print("Landed session {s}.\n", .{landed.session_id});
-    if (landed.landing_position > 0) {
-        std.debug.print("Landing position: {d}\n", .{landed.landing_position});
+            try refreshManifest(arena_alloc, state, workspace_root, creds.?.access_token.?);
+
+            std.debug.print("Landed session {s}.\n", .{landed.session_id});
+            if (landed.landing_position > 0) {
+                std.debug.print("Landing position: {d}\n", .{landed.landing_position});
+            }
+        },
+        .err => |message| {
+            defer arena_alloc.free(message);
+
+            // Check if this is a conflict error
+            if (std.mem.startsWith(u8, message, "Conflicts detected: ")) {
+                const paths_str = message["Conflicts detected: ".len..];
+
+                std.debug.print("Error: Conflicts detected with upstream changes.\n", .{});
+                std.debug.print("\nConflicting files:\n", .{});
+
+                var iter = std.mem.splitSequence(u8, paths_str, ", ");
+                while (iter.next()) |path| {
+                    std.debug.print("  - {s}\n", .{path});
+                }
+
+                std.debug.print("\nTo resolve:\n", .{});
+                std.debug.print("  1. Run 'hif sync' to fetch the latest upstream state\n", .{});
+                std.debug.print("  2. Review and merge your changes with the upstream versions\n", .{});
+                std.debug.print("  3. Run 'hif land' again\n", .{});
+                return error.ConflictsDetected;
+            }
+
+            std.debug.print("Error: {s}\n", .{message});
+            return error.LandingFailed;
+        },
     }
 }
 
@@ -358,6 +388,175 @@ fn generateSessionId(allocator: std.mem.Allocator) ![]u8 {
         &random_bytes,
     );
     return try allocator.dupe(u8, encoded);
+}
+
+pub const SyncResult = struct {
+    updated: u32,
+    conflicts: []const []const u8,
+};
+
+/// Syncs the workspace with the latest upstream tree.
+/// Returns information about updated files and any conflicts.
+pub fn sync(allocator: std.mem.Allocator) !SyncResult {
+    var arena = std.heap.ArenaAllocator.init(allocator);
+    defer arena.deinit();
+    const arena_alloc = arena.allocator();
+
+    const workspace_root = try std.process.getCwdAlloc(arena_alloc);
+    const parsed = try manifest.load(arena_alloc, workspace_root);
+    if (parsed == null) {
+        std.debug.print("No workspace metadata found. Run 'hif workspace checkout'.\n", .{});
+        return error.NoWorkspace;
+    }
+
+    const state = parsed.?.value;
+
+    const creds = try oauth.readCredentials(arena_alloc);
+    if (creds == null or creds.?.access_token == null) {
+        std.debug.print("Error: Not authenticated. Run 'hif auth login' first.\n", .{});
+        return error.NotAuthenticated;
+    }
+
+    const endpoint = try grpc_endpoint.parseServer(arena_alloc, state.server);
+    const request = try content_proto.encodeGetHeadTreeRequest(
+        arena_alloc,
+        state.account,
+        state.project,
+    );
+    defer arena_alloc.free(request);
+
+    const response = try grpc_client.unaryCall(
+        arena_alloc,
+        endpoint,
+        "/micelio.content.v1.ContentService/GetHeadTree",
+        request,
+        creds.?.access_token.?,
+    );
+    defer arena_alloc.free(response.bytes);
+
+    const tree = try content_proto.decodeTreeResponse(arena_alloc, response.bytes);
+    const new_tree_hash_hex = try hexEncode(arena_alloc, tree.tree_hash);
+
+    // Check if already up to date
+    if (std.mem.eql(u8, new_tree_hash_hex, state.tree_hash)) {
+        std.debug.print("Already up to date.\n", .{});
+        return .{ .updated = 0, .conflicts = &[_][]const u8{} };
+    }
+
+    // Build maps for comparison
+    var old_entries = std.StringHashMap([]const u8).init(arena_alloc);
+    for (state.entries) |entry| {
+        try old_entries.put(entry.path, entry.hash);
+    }
+
+    var new_entries = std.StringHashMap([]const u8).init(arena_alloc);
+    for (tree.entries) |entry| {
+        const hash_hex = try hexEncode(arena_alloc, entry.hash);
+        try new_entries.put(entry.path, hash_hex);
+    }
+
+    // Collect local changes
+    const local_changes = try collectChanges(arena_alloc, workspace_root, state);
+    var local_modified = std.StringHashMap(void).init(arena_alloc);
+    for (local_changes) |change| {
+        try local_modified.put(change.path, {});
+    }
+
+    var updated: u32 = 0;
+    var conflicts: std.ArrayList([]const u8) = .empty;
+
+    // Process upstream changes
+    for (tree.entries) |entry| {
+        const new_hash_hex = try hexEncode(arena_alloc, entry.hash);
+        const old_hash = old_entries.get(entry.path);
+
+        // File is new or changed upstream
+        const upstream_changed = old_hash == null or !std.mem.eql(u8, old_hash.?, new_hash_hex);
+        if (!upstream_changed) continue;
+
+        // Check if locally modified
+        if (local_modified.contains(entry.path)) {
+            // Conflict: both local and upstream changed
+            try conflicts.append(allocator, try allocator.dupe(u8, entry.path));
+            continue;
+        }
+
+        // Fetch and write the new content
+        const blob_request = try content_proto.encodeGetBlobRequest(
+            arena_alloc,
+            state.account,
+            state.project,
+            entry.hash,
+        );
+        defer arena_alloc.free(blob_request);
+
+        const blob_response = try grpc_client.unaryCall(
+            arena_alloc,
+            endpoint,
+            "/micelio.content.v1.ContentService/GetBlob",
+            blob_request,
+            creds.?.access_token.?,
+        );
+        defer arena_alloc.free(blob_response.bytes);
+
+        const content = try content_proto.decodeBlobResponse(arena_alloc, blob_response.bytes);
+        const file_path = try std.fs.path.join(arena_alloc, &[_][]const u8{ workspace_root, entry.path });
+        try fs.ensureParentDir(file_path);
+        try fs.writeFile(file_path, content);
+        updated += 1;
+    }
+
+    // Handle files deleted upstream
+    for (state.entries) |entry| {
+        if (new_entries.contains(entry.path)) continue;
+
+        // File was deleted upstream
+        if (local_modified.contains(entry.path)) {
+            // Conflict: locally modified but deleted upstream
+            try conflicts.append(allocator, try allocator.dupe(u8, entry.path));
+            continue;
+        }
+
+        // Delete the local file
+        const file_path = try std.fs.path.join(arena_alloc, &[_][]const u8{ workspace_root, entry.path });
+        std.fs.cwd().deleteFile(file_path) catch |err| {
+            if (err != error.FileNotFound) return err;
+        };
+        updated += 1;
+    }
+
+    // Update manifest with new tree
+    var entries: std.ArrayList(manifest.WorkspaceEntry) = .empty;
+    for (tree.entries) |entry| {
+        const hash_hex = try hexEncode(arena_alloc, entry.hash);
+        try entries.append(arena_alloc, .{ .path = entry.path, .hash = hash_hex });
+    }
+
+    const updated_state = manifest.WorkspaceState{
+        .version = state.version,
+        .server = state.server,
+        .account = state.account,
+        .project = state.project,
+        .tree_hash = new_tree_hash_hex,
+        .entries = try entries.toOwnedSlice(arena_alloc),
+    };
+
+    try manifest.save(arena_alloc, workspace_root, updated_state);
+
+    const conflict_paths = try conflicts.toOwnedSlice(allocator);
+
+    if (conflict_paths.len > 0) {
+        std.debug.print("Synced with {d} file(s) updated.\n", .{updated});
+        std.debug.print("\nConflicts ({d}):\n", .{conflict_paths.len});
+        for (conflict_paths) |path| {
+            std.debug.print("  ! {s}\n", .{path});
+        }
+        std.debug.print("\nResolve conflicts manually, then run 'hif land' again.\n", .{});
+    } else {
+        std.debug.print("Synced: {d} file(s) updated.\n", .{updated});
+    }
+
+    return .{ .updated = updated, .conflicts = conflict_paths };
 }
 
 fn hexEncode(allocator: std.mem.Allocator, bytes: []const u8) ![]u8 {
