@@ -1,8 +1,8 @@
 defmodule MicelioWeb.Browser.RepositoryController do
   use MicelioWeb, :controller
 
-  alias Micelio.Mic.Binary
-  alias Micelio.Mic.Repository, as: MicRepository
+  alias Micelio.Hif.Binary
+  alias Micelio.Hif.Repository, as: MicRepository
   alias MicelioWeb.PageMeta
 
   def show(conn, %{"account" => account_handle, "repository" => repository_handle}) do

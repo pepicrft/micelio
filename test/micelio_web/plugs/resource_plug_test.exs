@@ -1,4 +1,4 @@
-defmodule MicelioWeb.ReesourcePlugTest do
+defmodule MicelioWeb.ResourcePlugTest do
   use ExUnit.Case, async: true
   use Mimic
 
@@ -15,11 +15,11 @@ defmodule MicelioWeb.ReesourcePlugTest do
   describe "load_account" do
     test "assigns the account if it exists" do
       conn = build_conn(:get, "/micelio", %{account: "micelio"})
-      opts = MicelioWeb.ReesourcePlug.init(:load_account)
+      opts = MicelioWeb.ResourcePlug.init(:load_account)
       account = %Micelio.Accounts.Account{handle: "micelio"}
       expect(Micelio.Accounts, :get_account_by_handle, fn "micelio" -> account end)
 
-      got = MicelioWeb.ReesourcePlug.call(conn, opts)
+      got = MicelioWeb.ResourcePlug.call(conn, opts)
 
       assert got.assigns[:selected_account] == account
     end
@@ -28,9 +28,9 @@ defmodule MicelioWeb.ReesourcePlugTest do
   describe "load_repository" do
     test "assigns nil when no repository param" do
       conn = build_conn(:get, "/micelio", %{account: "micelio"})
-      opts = MicelioWeb.ReesourcePlug.init(:load_repository)
+      opts = MicelioWeb.ResourcePlug.init(:load_repository)
 
-      got = MicelioWeb.ReesourcePlug.call(conn, opts)
+      got = MicelioWeb.ResourcePlug.call(conn, opts)
 
       assert got.assigns[:selected_repository] == nil
       assert Map.delete(got.assigns, :selected_repository) == conn.assigns
@@ -38,7 +38,7 @@ defmodule MicelioWeb.ReesourcePlugTest do
 
     test "loads repository when account and repository param exist" do
       conn = build_conn(:get, "/micelio/mic", %{account: "micelio", repository: "mic"})
-      opts = MicelioWeb.ReesourcePlug.init(:load_repository)
+      opts = MicelioWeb.ResourcePlug.init(:load_repository)
 
       account = %Micelio.Accounts.Account{handle: "micelio", organization_id: "org-1"}
       conn = Plug.Conn.assign(conn, :selected_account, account)
@@ -46,7 +46,7 @@ defmodule MicelioWeb.ReesourcePlugTest do
       repository = %Micelio.Projects.Project{handle: "mic", organization_id: "org-1"}
       expect(Micelio.Projects, :get_project_by_handle, fn "org-1", "mic" -> repository end)
 
-      got = MicelioWeb.ReesourcePlug.call(conn, opts)
+      got = MicelioWeb.ResourcePlug.call(conn, opts)
 
       assert got.assigns[:selected_repository] == repository
     end

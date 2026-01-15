@@ -16,7 +16,7 @@ config :logger, level: :warning
 # you can enable the server option below.
 config :micelio, Micelio.GRPC, enabled: false
 config :micelio, Micelio.Mailer, adapter: Swoosh.Adapters.Test
-config :micelio, Micelio.Mic.RollupScheduler, enabled: false
+config :micelio, Micelio.Hif.RollupScheduler, enabled: false
 
 config :micelio, Micelio.Repo,
   database: Path.join([System.tmp_dir!(), "micelio", "micelio_test#{test_partition}.sqlite3"]),

@@ -10,10 +10,10 @@ defmodule Micelio.Application do
     children =
       [
         MicelioWeb.Telemetry,
-        Micelio.Mic.Telemetry,
+        Micelio.Hif.Telemetry,
         Micelio.Repo,
-        {Task.Supervisor, name: Micelio.Mic.RollupSupervisor},
-        Micelio.Mic.RollupScheduler,
+        {Task.Supervisor, name: Micelio.Hif.RollupSupervisor},
+        Micelio.Hif.RollupScheduler,
         {DNSCluster, query: Application.get_env(:micelio, :dns_cluster_query) || :ignore},
         {Phoenix.PubSub, name: Micelio.PubSub},
         # Start a worker by calling: Micelio.Worker.start_link(arg)

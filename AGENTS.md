@@ -1,29 +1,29 @@
 This is a monorepo containing:
 - **Forge** (Elixir/Phoenix) - The web application and gRPC server
-- **CLI** (Zig) - The `mic` command-line interface
+- **hif** (Zig) - The `hif` command-line interface
 
 See [NEXT.md](NEXT.md) for upcoming features and improvements.
 
 ---
 
-## CLI (Zig)
+## hif (Zig)
 
-The CLI is located in `cli/` and is built with Zig 0.15.
+The hif CLI is located in `hif/` and is built with Zig 0.15.
 
 ### Module Structure
 
-- `cli/src/core/hash.zig` - Blake3 hashing for content-addressed storage
-- `cli/src/core/bloom.zig` - Bloom filters for conflict detection
-- `cli/src/core/hlc.zig` - Hybrid Logical Clocks for distributed timestamps
-- `cli/src/core/tree.zig` - B+ tree for directory structures
-- `cli/src/root.zig` - Library entry point and re-exports
+- `hif/src/core/hash.zig` - Blake3 hashing for content-addressed storage
+- `hif/src/core/bloom.zig` - Bloom filters for conflict detection
+- `hif/src/core/hlc.zig` - Hybrid Logical Clocks for distributed timestamps
+- `hif/src/core/tree.zig` - B+ tree for directory structures
+- `hif/src/root.zig` - Library entry point and re-exports
 
 ### Testing
 
-Run all CLI tests with:
+Run all hif tests with:
 
 ```bash
-cd cli && zig build test
+cd hif && zig build test
 ```
 
 Tests are organized by module. Each core module includes comprehensive unit tests covering normal operation, edge cases, and error conditions.
@@ -34,7 +34,7 @@ Tests are organized by module. Each core module includes comprehensive unit test
 
 ### Static Assets
 
-- **SKILL.md** (`priv/static/SKILL.md`) - Documentation for the mic CLI served at `/SKILL.md`. Keep this file up to date when adding or changing mic CLI commands.
+- **SKILL.md** (`priv/static/SKILL.md`) - Documentation for the hif CLI served at `/SKILL.md`. Keep this file up to date when adding or changing hif CLI commands.
 
 ## Project guidelines
 

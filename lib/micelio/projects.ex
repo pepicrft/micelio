@@ -21,7 +21,7 @@ defmodule Micelio.Projects do
   def get_project_with_organization(id) do
     Project
     |> Repo.get(id)
-    |> Repo.preload(:organization)
+    |> Repo.preload(organization: :account)
   end
 
   @doc """

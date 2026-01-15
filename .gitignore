@@ -42,9 +42,9 @@ zig-out/
 /priv/lib/
 
 .env
-/cli/vendor/grpc/third_party/abseil-cpp/
-/cli/vendor/grpc/third_party/boringssl-with-bazel/
-/cli/vendor/grpc/third_party/cares/cares/
-/cli/vendor/grpc/third_party/protobuf/
-/cli/vendor/grpc/third_party/re2/
-/cli/vendor/grpc/third_party/zlib/
+/hif/vendor/grpc/third_party/abseil-cpp/
+/hif/vendor/grpc/third_party/boringssl-with-bazel/
+/hif/vendor/grpc/third_party/cares/cares/
+/hif/vendor/grpc/third_party/protobuf/
+/hif/vendor/grpc/third_party/re2/
+/hif/vendor/grpc/third_party/zlib/

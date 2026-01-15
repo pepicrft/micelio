@@ -16,16 +16,16 @@ The documentation for _users_, _contributors_, and _hosters_ is available at [`/
 > - **macOS**: `brew install libgit2`
 > - **Debian/Ubuntu**: `apt-get install libgit2-dev`
 >
-> The `mic` CLI vendors gRPC C core version `v1.76.0` in `cli/vendor/grpc`.
-> Building the CLI fetches gRPC dependencies into `cli/vendor/grpc/third_party` (no git submodules).
+> The `hif` CLI vendors gRPC C core version `v1.76.0` in `hif/vendor/grpc`.
+> Building the CLI fetches gRPC dependencies into `hif/vendor/grpc/third_party` (no git submodules).
 
-## mic CLI (early access)
+## hif CLI (early access)
 
 ```
-mic auth login
-mic checkout <account>/<project>
-mic status
-mic land "your goal"
+hif auth login
+hif checkout <account>/<project>
+hif status
+hif land "your goal"
 ```
 
 To start your Phoenix server:

@@ -1,4 +1,4 @@
-defmodule MicelioWeb.ReesourcePlug do
+defmodule MicelioWeb.ResourcePlug do
   import Plug.Conn
 
   alias Micelio.Accounts

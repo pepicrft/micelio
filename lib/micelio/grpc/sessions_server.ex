@@ -14,8 +14,8 @@ defmodule Micelio.GRPC.Sessions.V1.SessionService.Server do
     StartSessionRequest
   }
 
-  alias Micelio.Mic.Binary
-  alias Micelio.Mic.Landing
+  alias Micelio.Hif.Binary
+  alias Micelio.Hif.Landing
   alias Micelio.OAuth.AccessTokens
   alias Micelio.Projects
   alias Micelio.Sessions
@@ -43,10 +43,10 @@ defmodule Micelio.GRPC.Sessions.V1.SessionService.Server do
         conversation: map_conversation(request.conversation),
         decisions: map_decisions(request.decisions),
         metadata: %{
-          organization_handle: request.organization_handle,
-          project_handle: request.project_handle,
-          base_position: head.position,
-          base_tree_hash: head.tree_hash
+          "organization_handle" => request.organization_handle,
+          "project_handle" => request.project_handle,
+          "base_position" => head.position,
+          "base_tree_hash" => Base.encode64(head.tree_hash)
         }
       }
 

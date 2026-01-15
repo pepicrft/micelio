@@ -1,8 +1,8 @@
 defmodule Mix.Tasks.Micelio.Rollups.Rebuild do
-  @shortdoc "Rebuilds mic rollup indexes"
+  @shortdoc "Rebuilds hif rollup indexes"
 
   @moduledoc """
-  Rebuild mic rollup indexes for a project or all projects.
+  Rebuild hif rollup indexes for a project or all projects.
 
       mix micelio.rollups.rebuild --project <id> [--from 1] [--to 1000]
       mix micelio.rollups.rebuild --project <id> --from-head [--from 1]
@@ -11,7 +11,7 @@ defmodule Mix.Tasks.Micelio.Rollups.Rebuild do
 
   use Mix.Task
 
-  alias Micelio.Mic.RollupRebuilder
+  alias Micelio.Hif.RollupRebuilder
   alias Micelio.Projects
 
   @impl true

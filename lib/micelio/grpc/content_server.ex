@@ -17,8 +17,8 @@ defmodule Micelio.GRPC.Content.V1.ContentService.Server do
     TreeEntry
   }
 
-  alias Micelio.Mic.Binary
-  alias Micelio.Mic.Tree, as: MicTree
+  alias Micelio.Hif.Binary
+  alias Micelio.Hif.Tree, as: MicTree
   alias Micelio.OAuth.AccessTokens
   alias Micelio.Projects
   alias Micelio.Storage

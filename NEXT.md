@@ -23,7 +23,7 @@ This file tracks upcoming features and improvements for Micelio.
 
 ---
 
-## CLI (Zig)
+## hif (Zig)
 
 ### Current Status
 
@@ -46,12 +46,12 @@ This file tracks upcoming features and improvements for Micelio.
 - [ ] Binary serialization for all types
 - [ ] Bloom filter merge/rollup operations
 
-**CLI:**
+**hif:**
 - [x] Project/clone/auth command structure
-- [x] `mic checkout <account>/<project>` - Create local workspace
-- [x] `mic status` - Show workspace changes
-- [x] `mic land <goal>` - Land workspace changes
-- [ ] Local config (~/.mic/)
+- [x] `hif checkout <account>/<project>` - Create local workspace
+- [x] `hif status` - Show workspace changes
+- [x] `hif land <goal>` - Land workspace changes
+- [ ] Local config (~/.hif/)
 - [ ] Tiered cache (RAM → SSD)
 
 ### Phase 2: Conflict Detection
@@ -59,21 +59,21 @@ This file tracks upcoming features and improvements for Micelio.
 - [ ] Bloom per session - Create bloom on session start
 - [ ] Path index - Track which sessions touch which paths
 - [ ] Conflict check - If bloom intersects, check path index
-- [ ] `mic session resolve` - Interactive conflict resolution
+- [ ] `hif session resolve` - Interactive conflict resolution
 
 ### Phase 3: History and Navigation
 
-- [ ] `mic log` - List landed sessions
-- [ ] `mic log --path` - Sessions touching path
-- [ ] `mic diff` - Diff between two states
-- [ ] `mic goto @latest` - View latest tree state
-- [ ] `mic goto @position:N` - View tree at position N
+- [ ] `hif log` - List landed sessions
+- [ ] `hif log --path` - Sessions touching path
+- [ ] `hif diff` - Diff between two states
+- [ ] `hif goto @latest` - View latest tree state
+- [ ] `hif goto @position:N` - View tree at position N
 
-### Phase 4: Virtual Filesystem (mic-fs)
+### Phase 4: Virtual Filesystem (hif-fs)
 
 - [ ] NFS v3 server implementation
 - [ ] Session overlay for local changes
-- [ ] `mic mount` / `mic unmount` commands
+- [ ] `hif mount` / `hif unmount` commands
 - [ ] Prefetch on directory open
 
 ### Phase 5: Scale
@@ -98,4 +98,4 @@ For large-scale repositories (100K+ files), a proper B-tree or prolly tree with 
 
 ### gRPC Client
 
-The CLI uses vendored gRPC C core `v1.76.0` (TLS required) via `cli/vendor/grpc`.
+The hif CLI uses vendored gRPC C core `v1.76.0` (TLS required) via `hif/vendor/grpc`.

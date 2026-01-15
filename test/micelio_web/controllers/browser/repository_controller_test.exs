@@ -2,7 +2,7 @@ defmodule MicelioWeb.Browser.RepositoryControllerTest do
   use MicelioWeb.ConnCase, async: true
 
   alias Micelio.Accounts
-  alias Micelio.Mic.{Binary, Repository, Tree}
+  alias Micelio.Hif.{Binary, Repository, Tree}
   alias Micelio.Projects
   alias Micelio.Storage
 

@@ -1,10 +1,10 @@
-# Micelio & mic
+# Micelio & hif
 
-Micelio is a minimalist git forge, and mic is its CLI client.
+Micelio is a minimalist git forge, and hif is its CLI client.
 
-## Installing mic
+## Installing hif
 
-mic is built with Zig. To build from source:
+hif is built with Zig. To build from source:
 
 ```bash
 # Clone the micelio repository
@@ -14,9 +14,9 @@ cd micelio/cli
 # Build the CLI
 zig build
 
-# The binary will be at zig-out/bin/mic
+# The binary will be at zig-out/bin/hif
 # Move it to your PATH
-cp zig-out/bin/mic /usr/local/bin/
+cp zig-out/bin/hif /usr/local/bin/
 ```
 
 ## Authentication
@@ -25,42 +25,42 @@ Before using most commands, authenticate with the forge:
 
 ```bash
 # Login via device flow (opens browser)
-mic auth login
+hif auth login
 
 # Check authentication status
-mic auth status
+hif auth status
 
 # Remove stored credentials
-mic auth logout
+hif auth logout
 ```
 
 ## Project Management
 
 ```bash
 # List projects in an organization
-mic project list <organization>
+hif project list <organization>
 
 # Create a new project
-mic project create <organization> <handle> <name> [--description <desc>]
+hif project create <organization> <handle> <name> [--description <desc>]
 
 # Get project details
-mic project get <organization> <handle>
+hif project get <organization> <handle>
 
 # Update project fields
-mic project update <organization> <handle> [--name <name>] [--description <desc>] [--new-handle <handle>]
+hif project update <organization> <handle> [--name <name>] [--description <desc>] [--new-handle <handle>]
 
 # Delete a project
-mic project delete <organization> <handle>
+hif project delete <organization> <handle>
 ```
 
 ## Working with Content
 
 ```bash
 # List files in a project
-mic ls <account> <project> [--path prefix]
+hif ls <account> <project> [--path prefix]
 
 # Print file contents
-mic cat <account> <project> <path>
+hif cat <account> <project> <path>
 ```
 
 ## Workspaces
@@ -69,16 +69,16 @@ Create a local workspace to work on a project:
 
 ```bash
 # Checkout a project (creates local workspace)
-mic checkout <account>/<project> [--path dir]
+hif checkout <account>/<project> [--path dir]
 
 # Show workspace changes
-mic status
+hif status
 
 # Land workspace changes
-mic land <goal>
+hif land <goal>
 
 # Write content from stdin to a file
-mic write <path>
+hif write <path>
 ```
 
 ## Sessions
@@ -87,40 +87,40 @@ Sessions track work progress with notes and goals:
 
 ```bash
 # Start a new session
-mic session start <organization> <project> <goal>
+hif session start <organization> <project> <goal>
 
 # Show current session status
-mic session status
+hif session status
 
 # Add a note to the session
-mic session note <message> [--role human|agent]
+hif session note <message> [--role human|agent]
 
 # Land the session (push to forge)
-mic session land
+hif session land
 
 # Abandon the current session
-mic session abandon
+hif session abandon
 ```
 
 ## Quick Start
 
 ```bash
 # 1. Authenticate
-mic auth login
+hif auth login
 
 # 2. List available projects
-mic project list micelio
+hif project list micelio
 
 # 3. Checkout a project
-mic checkout micelio/myproject
+hif checkout micelio/myproject
 
 # 4. Start a session
-mic session start micelio myproject "Add feature X"
+hif session start micelio myproject "Add feature X"
 
 # 5. Make changes and add notes
-echo "content" | mic write src/new_file.txt
-mic session note "Added new file for feature X"
+echo "content" | hif write src/new_file.txt
+hif session note "Added new file for feature X"
 
 # 6. Land your changes
-mic session land
+hif session land
 ```

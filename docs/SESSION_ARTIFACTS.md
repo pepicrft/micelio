@@ -1,8 +1,8 @@
 # Session Artifacts in Micelio
 
-## Philosophy: Git tracks what. mic tracks why.
+## Philosophy: Git tracks what. hif tracks why.
 
-Micelio's session system implements the mic philosophy where development is organized around **sessions** instead of commits. Each session captures the complete context of a unit of work:
+Micelio's session system implements the hif philosophy where development is organized around **sessions** instead of commits. Each session captures the complete context of a unit of work:
 
 - **Goal**: What you're trying to accomplish
 - **Conversation**: Discussion between agents and humans
@@ -18,8 +18,8 @@ Unlike Git commits which are snapshots of code at a point in time, session chang
 - Start session: `SessionService.StartSession`
 - Land session: `SessionService.LandSession`
 - CLI flow:
-  - `mic session start <organization> <project> <goal>`
-  - `mic session land`
+  - `hif session start <organization> <project> <goal>`
+  - `hif session land`
 
 ### Key Differences
 
@@ -60,7 +60,7 @@ Storage path pattern: `sessions/{session_id}/changes/{file_path}`
 
 ## gRPC Usage
 
-Sessions are accessed via gRPC and the mic CLI. The server stores session
+Sessions are accessed via gRPC and the hif CLI. The server stores session
 metadata in SQLite and lands file changes into object storage.
 
 ## Programmatic Access
@@ -147,5 +147,5 @@ A migration tool is planned for the roadmap.
 
 ## Related Documentation
 
-- [DESIGN.md](/DESIGN.md) - Complete mic + Micelio vision
+- [DESIGN.md](/DESIGN.md) - Complete hif + Micelio vision
 - gRPC reference lives in `priv/protos`

@@ -84,6 +84,12 @@ config :phoenix_live_view,
 # Disable swoosh api client as it is only required for production adapters.
 config :swoosh, :api_client, false
 
+# Enable gRPC server for local testing (no TLS in dev)
+config :micelio, Micelio.GRPC,
+  enabled: true,
+  port: 50_051,
+  tls_mode: :disabled
+
 # For S3 storage (opt-in), uncomment and configure:
 # config :micelio, Micelio.Storage,
 #   backend: :s3,

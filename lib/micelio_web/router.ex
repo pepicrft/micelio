@@ -10,6 +10,7 @@ defmodule MicelioWeb.Router do
     plug :protect_from_forgery
     plug :put_secure_browser_headers
     plug MicelioWeb.AuthenticationPlug
+    plug MicelioWeb.Plugs.RateLimitPlug, limit: 200, window_ms: 60_000, bucket_prefix: "browser"
   end
 
   pipeline :require_auth do
@@ -17,8 +18,8 @@ defmodule MicelioWeb.Router do
   end
 
   pipeline :load_resources do
-    plug MicelioWeb.ReesourcePlug, :load_account
-    plug MicelioWeb.ReesourcePlug, :load_repository
+    plug MicelioWeb.ResourcePlug, :load_account
+    plug MicelioWeb.ResourcePlug, :load_repository
   end
 
   pipeline :og_image do
