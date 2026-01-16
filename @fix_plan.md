@@ -19,7 +19,7 @@
 
 ## Medium Priority (hif CLI)
 
-- [ ] **Tiered cache** - RAM -> SSD caching layer
+- [x] **Tiered cache** - RAM -> SSD caching layer in `hif/src/cache.zig`, integrated with workspace checkout and sync
 - [ ] **Session conflict resolution** - `hif session resolve` interactive conflict resolution
 - [ ] **Bloom per session** - Create bloom on session start
 - [ ] **Path index** - Track which sessions touch which paths

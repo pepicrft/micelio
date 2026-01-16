@@ -19,6 +19,40 @@ pub fn credentialsDir(allocator: std.mem.Allocator) ![]u8 {
     return std.fs.path.join(allocator, &.{ base, "hif", "credentials", "micelio.dev" });
 }
 
+pub fn cacheDir(allocator: std.mem.Allocator) ![]u8 {
+    if (std.process.getEnvVarOwned(allocator, "XDG_CACHE_HOME")) |value| {
+        if (value.len > 0) {
+            defer allocator.free(value);
+            return std.fs.path.join(allocator, &.{ value, "hif" });
+        }
+        allocator.free(value);
+    } else |_| {}
+
+    const home = try std.process.getEnvVarOwned(allocator, "HOME");
+    defer allocator.free(home);
+
+    return std.fs.path.join(allocator, &.{ home, ".cache", "hif" });
+}
+
+pub fn blobCacheDir(allocator: std.mem.Allocator) ![]u8 {
+    const base = try cacheDir(allocator);
+    defer allocator.free(base);
+
+    return std.fs.path.join(allocator, &.{ base, "blobs" });
+}
+
+pub fn ensureCacheDir(allocator: std.mem.Allocator) ![]u8 {
+    const dir = try cacheDir(allocator);
+    try std.fs.cwd().makePath(dir);
+    return dir;
+}
+
+pub fn ensureBlobCacheDir(allocator: std.mem.Allocator) ![]u8 {
+    const dir = try blobCacheDir(allocator);
+    try std.fs.cwd().makePath(dir);
+    return dir;
+}
+
 pub fn ensureCredentialsDir(allocator: std.mem.Allocator) ![]u8 {
     const dir = try credentialsDir(allocator);
     try std.fs.cwd().makePath(dir);

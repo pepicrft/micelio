@@ -6,6 +6,7 @@ const content_proto = @import("grpc/content_proto.zig");
 const sessions_proto = @import("grpc/sessions_proto.zig");
 const manifest = @import("workspace/manifest.zig");
 const fs = @import("workspace/fs.zig");
+const cache_mod = @import("cache.zig");
 
 const WorkspaceChange = struct {
     path: []const u8,
@@ -37,6 +38,10 @@ pub fn checkout(
         return error.WorkspaceExists;
     }
 
+    // Initialize blob cache
+    var blob_cache = try cache_mod.BlobCache.init(allocator, .{});
+    defer blob_cache.deinit();
+
     const endpoint = try grpc_endpoint.parseServer(arena_alloc, creds.?.server);
     const request = try content_proto.encodeGetHeadTreeRequest(arena_alloc, account, project);
     defer arena_alloc.free(request);
@@ -54,6 +59,7 @@ pub fn checkout(
     const tree_hash_hex = try hexEncode(arena_alloc, tree.tree_hash);
 
     var entries: std.ArrayList(manifest.WorkspaceEntry) = .empty;
+    var cache_hits: u32 = 0;
 
     for (tree.entries) |entry| {
         if (!isSafePath(entry.path)) {
@@ -61,29 +67,44 @@ pub fn checkout(
             return error.InvalidPath;
         }
 
-        const blob_request = try content_proto.encodeGetBlobRequest(
-            arena_alloc,
-            account,
-            project,
-            entry.hash,
-        );
-        defer arena_alloc.free(blob_request);
+        const hash_hex = try hexEncode(arena_alloc, entry.hash);
 
-        const blob_response = try grpc_client.unaryCall(
-            arena_alloc,
-            endpoint,
-            "/micelio.content.v1.ContentService/GetBlob",
-            blob_request,
-            creds.?.access_token.?,
-        );
-        defer arena_alloc.free(blob_response.bytes);
+        // Try cache first
+        const content = if (blob_cache.get(hash_hex)) |cached| blk: {
+            cache_hits += 1;
+            break :blk cached;
+        } else blk: {
+            // Fetch from server
+            const blob_request = try content_proto.encodeGetBlobRequest(
+                arena_alloc,
+                account,
+                project,
+                entry.hash,
+            );
+            defer arena_alloc.free(blob_request);
 
-        const content = try content_proto.decodeBlobResponse(arena_alloc, blob_response.bytes);
+            const blob_response = try grpc_client.unaryCall(
+                arena_alloc,
+                endpoint,
+                "/micelio.content.v1.ContentService/GetBlob",
+                blob_request,
+                creds.?.access_token.?,
+            );
+            defer arena_alloc.free(blob_response.bytes);
+
+            const fetched = try content_proto.decodeBlobResponse(arena_alloc, blob_response.bytes);
+
+            // Store in cache
+            try blob_cache.put(hash_hex, fetched);
+
+            break :blk try arena_alloc.dupe(u8, fetched);
+        };
+        defer allocator.free(content);
+
         const file_path = try std.fs.path.join(arena_alloc, &[_][]const u8{ workspace_root, entry.path });
         try fs.ensureParentDir(file_path);
         try fs.writeFile(file_path, content);
 
-        const hash_hex = try hexEncode(arena_alloc, entry.hash);
         try entries.append(arena_alloc, .{ .path = entry.path, .hash = hash_hex });
     }
 
@@ -99,9 +120,13 @@ pub fn checkout(
     try manifest.save(arena_alloc, workspace_root, state);
 
     std.debug.print(
-        "Workspace ready: {s} ({d} files)\n",
+        "Workspace ready: {s} ({d} files",
         .{ workspace_root, state.entries.len },
     );
+    if (cache_hits > 0) {
+        std.debug.print(", {d} from cache", .{cache_hits});
+    }
+    std.debug.print(")\n", .{});
     std.debug.print("Next: cd {s}\n", .{workspace_root});
     std.debug.print("      hif status\n", .{});
     std.debug.print("      hif land \"your goal\"\n", .{});
@@ -417,6 +442,10 @@ pub fn sync(allocator: std.mem.Allocator) !SyncResult {
         return error.NotAuthenticated;
     }
 
+    // Initialize blob cache
+    var blob_cache = try cache_mod.BlobCache.init(allocator, .{});
+    defer blob_cache.deinit();
+
     const endpoint = try grpc_endpoint.parseServer(arena_alloc, state.server);
     const request = try content_proto.encodeGetHeadTreeRequest(
         arena_alloc,
@@ -463,6 +492,7 @@ pub fn sync(allocator: std.mem.Allocator) !SyncResult {
     }
 
     var updated: u32 = 0;
+    var cache_hits: u32 = 0;
     var conflicts: std.ArrayList([]const u8) = .empty;
 
     // Process upstream changes
@@ -481,25 +511,38 @@ pub fn sync(allocator: std.mem.Allocator) !SyncResult {
             continue;
         }
 
-        // Fetch and write the new content
-        const blob_request = try content_proto.encodeGetBlobRequest(
-            arena_alloc,
-            state.account,
-            state.project,
-            entry.hash,
-        );
-        defer arena_alloc.free(blob_request);
+        // Try cache first
+        const content = if (blob_cache.get(new_hash_hex)) |cached| blk: {
+            cache_hits += 1;
+            break :blk cached;
+        } else blk: {
+            // Fetch from server
+            const blob_request = try content_proto.encodeGetBlobRequest(
+                arena_alloc,
+                state.account,
+                state.project,
+                entry.hash,
+            );
+            defer arena_alloc.free(blob_request);
 
-        const blob_response = try grpc_client.unaryCall(
-            arena_alloc,
-            endpoint,
-            "/micelio.content.v1.ContentService/GetBlob",
-            blob_request,
-            creds.?.access_token.?,
-        );
-        defer arena_alloc.free(blob_response.bytes);
+            const blob_response = try grpc_client.unaryCall(
+                arena_alloc,
+                endpoint,
+                "/micelio.content.v1.ContentService/GetBlob",
+                blob_request,
+                creds.?.access_token.?,
+            );
+            defer arena_alloc.free(blob_response.bytes);
 
-        const content = try content_proto.decodeBlobResponse(arena_alloc, blob_response.bytes);
+            const fetched = try content_proto.decodeBlobResponse(arena_alloc, blob_response.bytes);
+
+            // Store in cache
+            try blob_cache.put(new_hash_hex, fetched);
+
+            break :blk try arena_alloc.dupe(u8, fetched);
+        };
+        defer allocator.free(content);
+
         const file_path = try std.fs.path.join(arena_alloc, &[_][]const u8{ workspace_root, entry.path });
         try fs.ensureParentDir(file_path);
         try fs.writeFile(file_path, content);
@@ -546,14 +589,22 @@ pub fn sync(allocator: std.mem.Allocator) !SyncResult {
     const conflict_paths = try conflicts.toOwnedSlice(allocator);
 
     if (conflict_paths.len > 0) {
-        std.debug.print("Synced with {d} file(s) updated.\n", .{updated});
+        std.debug.print("Synced with {d} file(s) updated", .{updated});
+        if (cache_hits > 0) {
+            std.debug.print(" ({d} from cache)", .{cache_hits});
+        }
+        std.debug.print(".\n", .{});
         std.debug.print("\nConflicts ({d}):\n", .{conflict_paths.len});
         for (conflict_paths) |path| {
             std.debug.print("  ! {s}\n", .{path});
         }
         std.debug.print("\nResolve conflicts manually, then run 'hif land' again.\n", .{});
     } else {
-        std.debug.print("Synced: {d} file(s) updated.\n", .{updated});
+        std.debug.print("Synced: {d} file(s) updated", .{updated});
+        if (cache_hits > 0) {
+            std.debug.print(" ({d} from cache)", .{cache_hits});
+        }
+        std.debug.print(".\n", .{});
     }
 
     return .{ .updated = updated, .conflicts = conflict_paths };
