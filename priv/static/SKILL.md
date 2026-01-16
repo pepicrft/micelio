@@ -77,6 +77,9 @@ hif status
 # Land workspace changes
 hif land <goal>
 
+# Sync workspace with upstream changes
+hif sync [--strategy ours|theirs|interactive]
+
 # Write content from stdin to a file
 hif write <path>
 ```

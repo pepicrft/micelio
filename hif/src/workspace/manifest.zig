@@ -11,6 +11,7 @@ pub const WorkspaceState = struct {
     server: []const u8,
     account: []const u8,
     project: []const u8,
+    position: ?u64 = null,
     tree_hash: []const u8,
     entries: []WorkspaceEntry,
 };

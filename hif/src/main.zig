@@ -82,7 +82,12 @@ pub fn main() !void {
     try root.addSubcommand(land_cmd);
 
     // Sync: Pull latest changes from the forge
-    const sync_cmd = app.createCommand("sync", "Sync workspace with latest upstream changes");
+    var sync_cmd = app.createCommand("sync", "Sync workspace with latest upstream changes");
+    try sync_cmd.addArg(Arg.singleValueOption(
+        "strategy",
+        's',
+        "Merge strategy: ours, theirs, or interactive (default)",
+    ));
     try root.addSubcommand(sync_cmd);
 
     // Clone: Initialize local state for a forge project
@@ -311,8 +316,14 @@ pub fn main() !void {
         return;
     }
 
-    if (matches.subcommandMatches("sync")) |_| {
-        _ = try workspace.sync(allocator);
+    if (matches.subcommandMatches("sync")) |sync_matches| {
+        const strategy_raw = sync_matches.getSingleValue("strategy") orelse "interactive";
+        const strategy = workspace.parseMergeStrategy(strategy_raw) orelse {
+            std.debug.print("Error: invalid strategy '{s}'.\n", .{strategy_raw});
+            std.debug.print("Usage: hif sync [--strategy ours|theirs|interactive]\n", .{});
+            return;
+        };
+        _ = try workspace.syncWorkspace(allocator, strategy);
         return;
     }
 

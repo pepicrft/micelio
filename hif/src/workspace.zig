@@ -225,7 +225,13 @@ pub fn land(allocator: std.mem.Allocator, goal: []const u8) !void {
             defer arena_alloc.free(response.bytes);
             const landed = try sessions_proto.decodeSessionResponse(arena_alloc, response.bytes);
 
-            try refreshManifest(arena_alloc, state, workspace_root, creds.?.access_token.?);
+            try refreshManifest(
+                arena_alloc,
+                state,
+                workspace_root,
+                creds.?.access_token.?,
+                landed.landing_position,
+            );
 
             std.debug.print("Landed session {s}.\n", .{landed.session_id});
             if (landed.landing_position > 0) {
@@ -265,6 +271,7 @@ fn refreshManifest(
     state: manifest.WorkspaceState,
     workspace_root: []const u8,
     access_token: []const u8,
+    landing_position: u64,
 ) !void {
     const endpoint = try grpc_endpoint.parseServer(allocator, state.server);
     const request = try content_proto.encodeGetHeadTreeRequest(
@@ -297,6 +304,7 @@ fn refreshManifest(
         .server = state.server,
         .account = state.account,
         .project = state.project,
+        .position = landing_position,
         .tree_hash = tree_hash_hex,
         .entries = try entries.toOwnedSlice(allocator),
     };
@@ -420,9 +428,26 @@ pub const SyncResult = struct {
     conflicts: []const []const u8,
 };
 
+pub const MergeStrategy = enum {
+    ours,
+    theirs,
+    interactive,
+};
+
+pub fn parseMergeStrategy(value: []const u8) ?MergeStrategy {
+    if (std.mem.eql(u8, value, "ours")) return .ours;
+    if (std.mem.eql(u8, value, "theirs")) return .theirs;
+    if (std.mem.eql(u8, value, "interactive")) return .interactive;
+    return null;
+}
+
 /// Syncs the workspace with the latest upstream tree.
 /// Returns information about updated files and any conflicts.
 pub fn sync(allocator: std.mem.Allocator) !SyncResult {
+    return syncWorkspace(allocator, .interactive);
+}
+
+pub fn syncWorkspace(allocator: std.mem.Allocator, strategy: MergeStrategy) !SyncResult {
     var arena = std.heap.ArenaAllocator.init(allocator);
     defer arena.deinit();
     const arena_alloc = arena.allocator();
@@ -447,24 +472,24 @@ pub fn sync(allocator: std.mem.Allocator) !SyncResult {
     defer blob_cache.deinit();
 
     const endpoint = try grpc_endpoint.parseServer(arena_alloc, state.server);
-    const request = try content_proto.encodeGetHeadTreeRequest(
+    const head_request = try content_proto.encodeGetHeadTreeRequest(
         arena_alloc,
         state.account,
         state.project,
     );
-    defer arena_alloc.free(request);
+    defer arena_alloc.free(head_request);
 
-    const response = try grpc_client.unaryCall(
+    const head_response = try grpc_client.unaryCall(
         arena_alloc,
         endpoint,
         "/micelio.content.v1.ContentService/GetHeadTree",
-        request,
+        head_request,
         creds.?.access_token.?,
     );
-    defer arena_alloc.free(response.bytes);
+    defer arena_alloc.free(head_response.bytes);
 
-    const tree = try content_proto.decodeTreeResponse(arena_alloc, response.bytes);
-    const new_tree_hash_hex = try hexEncode(arena_alloc, tree.tree_hash);
+    const head_tree = try content_proto.decodeTreeResponse(arena_alloc, head_response.bytes);
+    const new_tree_hash_hex = try hexEncode(arena_alloc, head_tree.tree_hash);
 
     // Check if already up to date
     if (std.mem.eql(u8, new_tree_hash_hex, state.tree_hash)) {
@@ -472,16 +497,43 @@ pub fn sync(allocator: std.mem.Allocator) !SyncResult {
         return .{ .updated = 0, .conflicts = &[_][]const u8{} };
     }
 
+    const base_position = state.position orelse 0;
+    const base_request = try content_proto.encodeGetTreeAtPositionRequest(
+        arena_alloc,
+        state.account,
+        state.project,
+        base_position,
+    );
+    defer arena_alloc.free(base_request);
+
+    const base_response = try grpc_client.unaryCall(
+        arena_alloc,
+        endpoint,
+        "/micelio.content.v1.ContentService/GetTreeAtPosition",
+        base_request,
+        creds.?.access_token.?,
+    );
+    defer arena_alloc.free(base_response.bytes);
+
+    const base_tree = try content_proto.decodeTreeResponse(arena_alloc, base_response.bytes);
+
     // Build maps for comparison
-    var old_entries = std.StringHashMap([]const u8).init(arena_alloc);
-    for (state.entries) |entry| {
-        try old_entries.put(entry.path, entry.hash);
+    var base_entries = std.StringHashMap([]const u8).init(arena_alloc);
+    if (state.position != null) {
+        for (base_tree.entries) |entry| {
+            const hash_hex = try hexEncode(arena_alloc, entry.hash);
+            try base_entries.put(entry.path, hash_hex);
+        }
+    } else {
+        for (state.entries) |entry| {
+            try base_entries.put(entry.path, entry.hash);
+        }
     }
 
-    var new_entries = std.StringHashMap([]const u8).init(arena_alloc);
-    for (tree.entries) |entry| {
+    var head_entries = std.StringHashMap([]const u8).init(arena_alloc);
+    for (head_tree.entries) |entry| {
         const hash_hex = try hexEncode(arena_alloc, entry.hash);
-        try new_entries.put(entry.path, hash_hex);
+        try head_entries.put(entry.path, hash_hex);
     }
 
     // Collect local changes
@@ -493,22 +545,33 @@ pub fn sync(allocator: std.mem.Allocator) !SyncResult {
 
     var updated: u32 = 0;
     var cache_hits: u32 = 0;
+    var resolved_conflicts: u32 = 0;
     var conflicts: std.ArrayList([]const u8) = .empty;
 
     // Process upstream changes
-    for (tree.entries) |entry| {
+    for (head_tree.entries) |entry| {
         const new_hash_hex = try hexEncode(arena_alloc, entry.hash);
-        const old_hash = old_entries.get(entry.path);
+        const base_hash = base_entries.get(entry.path);
 
         // File is new or changed upstream
-        const upstream_changed = old_hash == null or !std.mem.eql(u8, old_hash.?, new_hash_hex);
+        const upstream_changed = base_hash == null or !std.mem.eql(u8, base_hash.?, new_hash_hex);
         if (!upstream_changed) continue;
 
         // Check if locally modified
         if (local_modified.contains(entry.path)) {
-            // Conflict: both local and upstream changed
-            try conflicts.append(allocator, try allocator.dupe(u8, entry.path));
-            continue;
+            switch (strategy) {
+                .theirs => {
+                    resolved_conflicts += 1;
+                },
+                .ours => {
+                    resolved_conflicts += 1;
+                    continue;
+                },
+                .interactive => {
+                    try conflicts.append(allocator, try allocator.dupe(u8, entry.path));
+                    continue;
+                },
+            }
         }
 
         // Try cache first
@@ -551,13 +614,23 @@ pub fn sync(allocator: std.mem.Allocator) !SyncResult {
 
     // Handle files deleted upstream
     for (state.entries) |entry| {
-        if (new_entries.contains(entry.path)) continue;
+        if (head_entries.contains(entry.path)) continue;
 
         // File was deleted upstream
         if (local_modified.contains(entry.path)) {
-            // Conflict: locally modified but deleted upstream
-            try conflicts.append(allocator, try allocator.dupe(u8, entry.path));
-            continue;
+            switch (strategy) {
+                .theirs => {
+                    resolved_conflicts += 1;
+                },
+                .ours => {
+                    resolved_conflicts += 1;
+                    continue;
+                },
+                .interactive => {
+                    try conflicts.append(allocator, try allocator.dupe(u8, entry.path));
+                    continue;
+                },
+            }
         }
 
         // Delete the local file
@@ -570,7 +643,7 @@ pub fn sync(allocator: std.mem.Allocator) !SyncResult {
 
     // Update manifest with new tree
     var entries: std.ArrayList(manifest.WorkspaceEntry) = .empty;
-    for (tree.entries) |entry| {
+    for (head_tree.entries) |entry| {
         const hash_hex = try hexEncode(arena_alloc, entry.hash);
         try entries.append(arena_alloc, .{ .path = entry.path, .hash = hash_hex });
     }
@@ -580,6 +653,7 @@ pub fn sync(allocator: std.mem.Allocator) !SyncResult {
         .server = state.server,
         .account = state.account,
         .project = state.project,
+        .position = state.position,
         .tree_hash = new_tree_hash_hex,
         .entries = try entries.toOwnedSlice(arena_alloc),
     };
@@ -605,6 +679,13 @@ pub fn sync(allocator: std.mem.Allocator) !SyncResult {
             std.debug.print(" ({d} from cache)", .{cache_hits});
         }
         std.debug.print(".\n", .{});
+    }
+
+    if (resolved_conflicts > 0 and conflict_paths.len == 0) {
+        std.debug.print(
+            "Resolved {d} conflict(s) using {s} strategy.\n",
+            .{ resolved_conflicts, @tagName(strategy) },
+        );
     }
 
     return .{ .updated = updated, .conflicts = conflict_paths };
