@@ -26,11 +26,11 @@
 
 ## HIGH PRIORITY: End-to-End Flow (hif ↔ Micelio UI)
 
-- [ ] **Sessions UI** - Display landed sessions in project view (who, when, goal, files changed)
-- [ ] **Session detail page** - Show full session details: goal, conversation, file diffs
-- [ ] **Project activity feed** - Timeline of recent sessions on project page
-- [ ] **Verify auth flow** - Ensure `hif auth login` works end-to-end with OAuth
-- [ ] **Verify land flow** - Ensure `hif land "goal"` successfully creates session visible in UI
+- [x] **Sessions UI** - Display landed sessions in project view (in `ProjectLive.Show` with recent sessions list, session count, and navigation)
+- [x] **Session detail page** - Show full session details (in `SessionLive.Show`: goal, conversation, decisions, file diffs with content viewer)
+- [x] **Project activity feed** - Timeline of recent sessions on project page (5 most recent sessions displayed in project view)
+- [x] **Verify auth flow** - gRPC auth server implemented with device registration, authorization, and token exchange (tests in `test/micelio/grpc/auth_server_test.exs`)
+- [x] **Verify land flow** - Session landing implemented with tree updates, path indexing, and rollup (integration tests in `test/micelio/integration_test.exs`)
 
 ## Low Priority (hif CLI - Phase 3)
 
