@@ -3,6 +3,17 @@
 .account-profile {
 }
 
+.account-profile-header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--theme-ui-space-3);
+}
+
+.account-profile-avatar {
+  border-radius: var(--theme-ui-radii-full);
+  flex-shrink: 0;
+}
+
 .account-profile-meta {
   color: var(--theme-ui-colors-muted);
 }
@@ -25,4 +36,80 @@
 
 .account-profile-link:hover {
   text-decoration: underline;
+}
+
+/* Activity Graph */
+.activity-graph {
+  margin-top: var(--theme-ui-space-4);
+}
+
+.activity-graph-container {
+  overflow-x: auto;
+  padding-bottom: var(--theme-ui-space-2);
+}
+
+.activity-graph-svg {
+  display: block;
+}
+
+.activity-graph-cell {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  border-radius: 2px;
+}
+
+/* Level colors - GitHub-style greens with theme awareness */
+.activity-graph-cell--0 {
+  fill: var(--activity-level-0, oklch(0.25 0.01 240));
+}
+
+.activity-graph-cell--1 {
+  fill: var(--activity-level-1, oklch(0.45 0.12 145));
+}
+
+.activity-graph-cell--2 {
+  fill: var(--activity-level-2, oklch(0.55 0.16 145));
+}
+
+.activity-graph-cell--3 {
+  fill: var(--activity-level-3, oklch(0.65 0.20 145));
+}
+
+.activity-graph-cell--4 {
+  fill: var(--activity-level-4, oklch(0.75 0.22 145));
+}
+
+/* Legend styles */
+.activity-graph-legend {
+  display: flex;
+  align-items: center;
+  gap: var(--theme-ui-space-1);
+  margin-top: var(--theme-ui-space-2);
+  font-size: var(--theme-ui-fontSizes-xs);
+  color: var(--theme-ui-colors-muted);
+}
+
+.activity-graph-legend .activity-graph-cell {
+  background-color: var(--activity-level-0, oklch(0.25 0.01 240));
+}
+
+.activity-graph-legend .activity-graph-cell--1 {
+  background-color: var(--activity-level-1, oklch(0.45 0.12 145));
+}
+
+.activity-graph-legend .activity-graph-cell--2 {
+  background-color: var(--activity-level-2, oklch(0.55 0.16 145));
+}
+
+.activity-graph-legend .activity-graph-cell--3 {
+  background-color: var(--activity-level-3, oklch(0.65 0.20 145));
+}
+
+.activity-graph-legend .activity-graph-cell--4 {
+  background-color: var(--activity-level-4, oklch(0.75 0.22 145));
+}
+
+.activity-graph-legend-label {
+  padding: 0 var(--theme-ui-space-1);
 }

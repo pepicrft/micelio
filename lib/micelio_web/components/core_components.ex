@@ -561,4 +561,169 @@ defmodule MicelioWeb.CoreComponents do
   def translate_errors(errors, field) when is_list(errors) do
     for {^field, {msg, opts}} <- errors, do: translate_error({msg, opts})
   end
+
+  @doc """
+  Renders a Gravatar avatar image based on an email address.
+
+  Uses MD5 hash of the email to generate the Gravatar URL.
+  Falls back to a "mystery person" default image if no Gravatar exists.
+
+  ## Examples
+
+      <.gravatar email={@user.email} />
+      <.gravatar email={@user.email} size={64} />
+      <.gravatar email={@user.email} size={48} class="rounded-full" />
+  """
+  attr :email, :string, required: true, doc: "the email address to generate avatar for"
+  attr :size, :integer, default: 48, doc: "the size in pixels (will be used for both width and height)"
+  attr :class, :string, default: nil, doc: "additional CSS classes"
+  attr :alt, :string, default: "", doc: "alt text for the image"
+  attr :rest, :global
+
+  def gravatar(assigns) do
+    assigns = assign(assigns, :url, gravatar_url(assigns.email, assigns.size))
+
+    ~H"""
+    <img
+      src={@url}
+      width={@size}
+      height={@size}
+      alt={@alt}
+      class={@class}
+      loading="lazy"
+      decoding="async"
+      referrerpolicy="no-referrer"
+      {@rest}
+    />
+    """
+  end
+
+  @doc """
+  Generates a Gravatar URL for the given email address.
+
+  ## Parameters
+    - email: The email address to generate the Gravatar URL for
+    - size: The size of the image in pixels (default: 48)
+
+  ## Examples
+
+      iex> MicelioWeb.CoreComponents.gravatar_url("test@example.com")
+      "https://www.gravatar.com/avatar/55502f40dc8b7c769880b10874abc9d0?s=48&d=mp&r=g"
+
+  """
+  def gravatar_url(email, size \\ 48) when is_binary(email) and is_integer(size) do
+    email = email |> String.trim() |> String.downcase()
+    hash = :crypto.hash(:md5, email) |> Base.encode16(case: :lower)
+    "https://www.gravatar.com/avatar/#{hash}?s=#{size}&d=mp&r=g"
+  end
+
+  @doc """
+  Renders a GitHub-style activity/contribution graph.
+
+  Shows activity over the past N weeks as a grid of colored cells.
+  Each cell represents one day, with color intensity based on activity count.
+
+  ## Examples
+
+      <.activity_graph activity_counts={@activity_counts} />
+      <.activity_graph activity_counts={@activity_counts} weeks={26} />
+  """
+  attr :activity_counts, :map, required: true, doc: "map of Date => count"
+  attr :weeks, :integer, default: 52, doc: "number of weeks to display"
+  attr :class, :string, default: nil, doc: "additional CSS classes"
+
+  def activity_graph(assigns) do
+    today = Date.utc_today()
+    # Find the Sunday of the current week
+    today_weekday = Date.day_of_week(today, :sunday)
+    last_sunday = Date.add(today, -(today_weekday - 1))
+    # Start from N weeks ago on a Sunday
+    start_date = Date.add(last_sunday, -(assigns.weeks * 7) + 7)
+
+    # Build the grid data: list of {week_index, day_of_week (0-6), date, count}
+    dates =
+      Date.range(start_date, today)
+      |> Enum.to_list()
+
+    weeks_data =
+      dates
+      |> Enum.with_index()
+      |> Enum.map(fn {date, idx} ->
+        week_idx = div(idx, 7)
+        day_idx = Date.day_of_week(date, :sunday) - 1
+        count = Map.get(assigns.activity_counts, date, 0)
+        {week_idx, day_idx, date, count}
+      end)
+      |> Enum.group_by(fn {week_idx, _, _, _} -> week_idx end)
+
+    max_count = assigns.activity_counts |> Map.values() |> Enum.max(fn -> 0 end)
+    total_count = assigns.activity_counts |> Map.values() |> Enum.sum()
+
+    assigns =
+      assigns
+      |> assign(:weeks_data, weeks_data)
+      |> assign(:max_count, max_count)
+      |> assign(:total_count, total_count)
+      |> assign(:cell_size, 11)
+      |> assign(:cell_gap, 3)
+
+    ~H"""
+    <div class={["activity-graph", @class]} aria-label="Activity graph">
+      <div class="activity-graph-container">
+        <svg
+          class="activity-graph-svg"
+          width={@weeks * (@cell_size + @cell_gap)}
+          height={7 * (@cell_size + @cell_gap)}
+          role="img"
+          aria-label={"#{@total_count} contributions"}
+        >
+          <%= for {week_idx, days} <- @weeks_data do %>
+            <%= for {_week, day_idx, date, count} <- days do %>
+              <rect
+                x={week_idx * (@cell_size + @cell_gap)}
+                y={day_idx * (@cell_size + @cell_gap)}
+                width={@cell_size}
+                height={@cell_size}
+                rx="2"
+                class={activity_cell_class(count, @max_count)}
+                data-date={Date.to_iso8601(date)}
+                data-count={count}
+              >
+                <title>{Date.to_iso8601(date)}: {count} {ngettext("contribution", "contributions", count)}</title>
+              </rect>
+            <% end %>
+          <% end %>
+        </svg>
+      </div>
+      <div class="activity-graph-legend">
+        <span class="activity-graph-legend-label">Less</span>
+        <span class="activity-graph-cell activity-graph-cell--0"></span>
+        <span class="activity-graph-cell activity-graph-cell--1"></span>
+        <span class="activity-graph-cell activity-graph-cell--2"></span>
+        <span class="activity-graph-cell activity-graph-cell--3"></span>
+        <span class="activity-graph-cell activity-graph-cell--4"></span>
+        <span class="activity-graph-legend-label">More</span>
+      </div>
+    </div>
+    """
+  end
+
+  defp activity_cell_class(count, max_count) do
+    level = activity_level(count, max_count)
+    "activity-graph-cell activity-graph-cell--#{level}"
+  end
+
+  defp activity_level(0, _max), do: 0
+  defp activity_level(_count, 0), do: 0
+
+  defp activity_level(count, max) do
+    ratio = count / max
+
+    cond do
+      ratio <= 0.25 -> 1
+      ratio <= 0.5 -> 2
+      ratio <= 0.75 -> 3
+      true -> 4
+    end
+  end
 end

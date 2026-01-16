@@ -149,6 +149,44 @@ defmodule MicelioWeb.PageMeta do
     |> Enum.map(fn {key, value} -> {to_og_property(key), to_string(value)} end)
   end
 
+  @doc """
+  Returns the Twitter Card type. Uses "summary_large_image" when an OG image is present.
+  """
+  @spec twitter_card(t()) :: String.t()
+  def twitter_card(%__MODULE__{} = meta) do
+    og = open_graph(meta)
+
+    if has_og_image?(og) do
+      "summary_large_image"
+    else
+      "summary"
+    end
+  end
+
+  @doc """
+  Returns Twitter-specific extra tags (image, etc.).
+  """
+  @spec twitter_extra_tags(t()) :: [{String.t(), String.t()}]
+  def twitter_extra_tags(%__MODULE__{} = meta) do
+    og = open_graph(meta)
+
+    tags = []
+
+    tags =
+      case Map.get(og, :image) || Map.get(og, "image") || Map.get(og, "og:image") do
+        nil -> tags
+        url -> [{"twitter:image", to_string(url)} | tags]
+      end
+
+    tags =
+      case Map.get(og, "og:image:alt") do
+        nil -> tags
+        alt -> [{"twitter:image:alt", to_string(alt)} | tags]
+      end
+
+    Enum.reverse(tags)
+  end
+
   @spec merge(t(), keyword() | map()) :: t()
   def merge(%__MODULE__{} = meta, opts) when is_list(opts) or is_map(opts) do
     opts = normalize_map(opts)

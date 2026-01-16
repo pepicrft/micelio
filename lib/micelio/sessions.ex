@@ -208,4 +208,28 @@ defmodule Micelio.Sessions do
       deleted: count_session_changes(session, change_type: "deleted")
     }
   end
+
+  ## Activity/Contribution Data
+
+  @doc """
+  Returns activity counts grouped by date for a user.
+  Counts landed sessions per day over the specified number of weeks.
+  Returns a map of Date => count.
+  """
+  @spec activity_counts_for_user(User.t(), non_neg_integer()) :: %{Date.t() => non_neg_integer()}
+  def activity_counts_for_user(%User{} = user, weeks \\ 52) do
+    today = Date.utc_today()
+    start_date = Date.add(today, -(weeks * 7))
+
+    Session
+    |> where([s], s.user_id == ^user.id)
+    |> where([s], s.status == "landed")
+    |> where([s], not is_nil(s.landed_at))
+    |> where([s], s.landed_at >= ^DateTime.new!(start_date, ~T[00:00:00], "Etc/UTC"))
+    |> select([s], s.landed_at)
+    |> Repo.all()
+    |> Enum.group_by(&DateTime.to_date/1)
+    |> Enum.map(fn {date, sessions} -> {date, length(sessions)} end)
+    |> Map.new()
+  end
 end

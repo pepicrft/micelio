@@ -27,6 +27,16 @@
       <meta property={property} content={content} />
     <% end %>
 
+    <%!-- Twitter Card tags --%>
+    <meta name="twitter:card" content={MicelioWeb.PageMeta.twitter_card(meta)} />
+    <meta name="twitter:title" content={MicelioWeb.PageMeta.og_title(meta)} />
+    <%= if description do %>
+      <meta name="twitter:description" content={description} />
+    <% end %>
+    <%= for {name, content} <- MicelioWeb.PageMeta.twitter_extra_tags(meta) do %>
+      <meta name={name} content={content} />
+    <% end %>
+
     <link phx-track-static rel="stylesheet" href={~p"/assets/js/app.css"} />
     <script defer phx-track-static type="text/javascript" src={~p"/assets/js/app.js"}>
     </script>
