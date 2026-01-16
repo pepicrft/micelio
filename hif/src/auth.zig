@@ -45,7 +45,7 @@ pub const AuthFlow = struct {
         defer allocator.free(response.body);
 
         if (response.status != .ok) {
-            try handleAuthError(allocator, response.body);
+            handleAuthError(allocator, response.body);
             return error.AuthorizationFailed;
         }
 
@@ -108,17 +108,16 @@ pub const AuthFlow = struct {
         }) catch return error.AuthorizationFailed;
         defer parsed_error.deinit();
 
-        if (parsed_error.value) |error_resp| {
-            if (std.mem.eql(u8, error_resp.code, "authorization_pending")) {
-                return null;
-            }
-            if (std.mem.eql(u8, error_resp.code, "slow_down")) {
-                self.interval += 5;
-                return null;
-            }
-            if (std.mem.eql(u8, error_resp.code, "expired_token")) {
-                return error.DeviceCodeExpired;
-            }
+        const err_code = parsed_error.value.code;
+        if (std.mem.eql(u8, err_code, "authorization_pending")) {
+            return null;
+        }
+        if (std.mem.eql(u8, err_code, "slow_down")) {
+            self.interval += 5;
+            return null;
+        }
+        if (std.mem.eql(u8, err_code, "expired_token")) {
+            return error.DeviceCodeExpired;
         }
 
         return error.AuthorizationFailed;
@@ -315,15 +314,12 @@ fn tokensFromResponse(allocator: std.mem.Allocator, response: TokenResponse) !De
     };
 }
 
-fn handleAuthError(allocator: std.mem.Allocator, body: []const u8) !void {
+fn handleAuthError(allocator: std.mem.Allocator, body: []const u8) void {
     const parsed = std.json.parseFromSlice(ErrorResponse, allocator, body, .{
         .ignore_unknown_fields = true,
         .allocate = .alloc_always,
-    }) catch return error.AuthorizationFailed;
+    }) catch return;
     defer parsed.deinit();
-
-    if (parsed.value.code.len == 0) return error.AuthorizationFailed;
-    return error.AuthorizationFailed;
 }
 
 fn jsonEncode(allocator: std.mem.Allocator, payload: anytype) ![]u8 {
