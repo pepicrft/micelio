@@ -12,14 +12,14 @@ This file tracks upcoming features and improvements for Micelio.
 
 ### API
 
-- [ ] **REST API for agents** - RESTful API endpoints for AI agents to interact with Micelio (sessions, projects, content)
+- [x] **REST API for agents** - RESTful API endpoints for AI agents to interact with Micelio (sessions, projects, content)
 
 ### UI Enhancements
 
-- [ ] **Activity graph** - GitHub-style contribution/activity visualization showing user or project activity over time
-- [ ] **OpenGraph utilities** - Helper functions for generating OG meta tags and dynamically generated OG images for blog posts, projects, and profiles for better social sharing
-- [ ] **Gravatar integration** - Use Gravatar as the default avatar for users based on their email
-- [ ] **Account avatar customization** - Allow users to upload and change their account avatar
+- [x] **Activity graph** - GitHub-style contribution/activity visualization showing user or project activity over time
+- [x] **OpenGraph utilities** - Helper functions for generating OG meta tags and dynamically generated OG images for blog posts, projects, and profiles for better social sharing (includes Twitter Card support)
+- [x] **Gravatar integration** - Use Gravatar as the default avatar for users based on their email
+- [x] **Account avatar customization** - Allow users to upload and change their account avatar
 
 ---
 
@@ -66,35 +66,35 @@ This file tracks upcoming features and improvements for Micelio.
 - [x] Retry helper module with exponential backoff for transient failures
 - [x] Proper error handling with user-friendly messages
 
-### Phase 1: Foundation (In Progress)
+### Phase 1: Foundation (Completed)
 
 **Core Primitives:**
 - [x] Blake3 hashing
 - [x] Bloom filters
 - [x] Basic tree (insert, delete, hash)
 - [x] HLC timestamps
-- [ ] Binary serialization for all types
-- [ ] Bloom filter merge/rollup operations
+- [x] Binary serialization for all types (`hif/src/core/serialize.zig`)
+- [x] Bloom filter merge/rollup operations
 
 **hif:**
 - [x] Project/clone/auth command structure
 - [x] `hif checkout <account>/<project>` - Create local workspace
 - [x] `hif status` - Show workspace changes
 - [x] `hif land <goal>` - Land workspace changes
-- [ ] Local config (~/.hif/)
-- [ ] Tiered cache (RAM → SSD)
+- [x] Local config (~/.hif/) - Configuration management with servers, aliases, and preferences
+- [x] Tiered cache (RAM → SSD) - Caching layer in `hif/src/cache.zig`
 
-### Phase 2: Conflict Detection
+### Phase 2: Conflict Detection (Completed)
 
-- [ ] Bloom per session - Create bloom on session start
-- [ ] Path index - Track which sessions touch which paths
-- [ ] Conflict check - If bloom intersects, check path index
-- [ ] `hif session resolve` - Interactive conflict resolution
+- [x] Bloom per session - Create bloom on session start, stored in session.json as base64
+- [x] Path index - Track which sessions touch which paths (stored in `projects/{id}/landing/paths/{position}.bin`)
+- [x] Conflict check - If bloom intersects, check path index
+- [x] `hif session resolve` - Interactive conflict resolution with ours/theirs/interactive strategies
 
 ### Phase 3: History and Navigation
 
-- [ ] `hif log` - List landed sessions
-- [ ] `hif log --path` - Sessions touching path
+- [x] `hif log` - List landed sessions via gRPC ListSessions endpoint
+- [ ] `hif log --path` - Sessions touching path (requires backend path filtering)
 - [ ] `hif diff` - Diff between two states
 - [ ] `hif goto @latest` - View latest tree state
 - [ ] `hif goto @position:N` - View tree at position N
