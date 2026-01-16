@@ -5,9 +5,9 @@ defmodule MicelioWeb.Plugs.RateLimitPlug do
   Provides configurable rate limiting per IP address.
   """
 
-  import Plug.Conn
-
   @behaviour Plug
+
+  import Plug.Conn
 
   @default_limit 100
   @default_window_ms 60_000

@@ -72,6 +72,7 @@ defmodule Micelio.GRPC.Sessions.V1.ListSessionsRequest do
   field :organization_handle, 2, type: :string, json_name: "organizationHandle"
   field :project_handle, 3, type: :string, json_name: "projectHandle"
   field :status, 4, type: :string
+  field :path, 5, type: :string
 end
 
 defmodule Micelio.GRPC.Sessions.V1.SessionResponse do

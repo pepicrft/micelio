@@ -139,14 +139,69 @@ defmodule Micelio.GRPC.Sessions.V1.SessionService.Server do
           status: normalize_status_filter(request.status)
         )
 
+      # Apply path filter if specified
+      filtered_sessions =
+        case empty_to_nil(request.path) do
+          nil ->
+            sessions
+
+          path ->
+            filter_sessions_by_path(sessions, project.id, path)
+        end
+
       %V1.ListSessionsResponse{
-        sessions: Enum.map(sessions, &session_to_proto(&1, organization, project))
+        sessions: Enum.map(filtered_sessions, &session_to_proto(&1, organization, project))
       }
     else
       nil -> {:error, not_found_status("Project not found.")}
       false -> {:error, forbidden_status("You do not have access to this organization.")}
       {:error, status} -> {:error, status}
     end
+  end
+
+  defp filter_sessions_by_path(sessions, project_id, path) do
+    alias Micelio.Hif.ConflictIndex
+
+    # Get landing positions for sessions that touched this path
+    matching_positions =
+      sessions
+      |> Enum.map(fn session ->
+        case session.metadata do
+          %{"landing_position" => pos} when is_integer(pos) -> pos
+          %{"landing_position" => pos} when is_binary(pos) -> parse_integer(pos)
+          _ -> nil
+        end
+      end)
+      |> Enum.reject(&is_nil/1)
+      |> Enum.filter(fn position ->
+        case ConflictIndex.load_path_index(project_id, position) do
+          {:ok, nil} -> false
+          {:ok, paths} -> path in paths or path_matches_prefix?(path, paths)
+          {:error, _} -> false
+        end
+      end)
+      |> MapSet.new()
+
+    Enum.filter(sessions, fn session ->
+      case session.metadata do
+        %{"landing_position" => pos} when is_integer(pos) ->
+          MapSet.member?(matching_positions, pos)
+
+        %{"landing_position" => pos} when is_binary(pos) ->
+          MapSet.member?(matching_positions, parse_integer(pos))
+
+        _ ->
+          false
+      end
+    end)
+  end
+
+  defp path_matches_prefix?(query_path, indexed_paths) do
+    # Also match if query path is a prefix (directory) or if indexed path is a prefix
+    Enum.any?(indexed_paths, fn indexed_path ->
+      String.starts_with?(indexed_path, query_path <> "/") or
+        String.starts_with?(query_path, indexed_path <> "/")
+    end)
   end
 
   defp session_to_proto(session, organization, project) do

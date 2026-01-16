@@ -3,7 +3,10 @@ const std = @import("std");
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
-    const grpc_enabled = b.option(bool, "grpc", "Build gRPC C core for the CLI") orelse true;
+    
+    // gRPC option: "nghttp2" (default, lightweight) or "grpc" (legacy heavy)
+    const grpc_backend = b.option([]const u8, "grpc-backend", "gRPC backend: nghttp2 (default) or grpc") orelse "nghttp2";
+    const use_nghttp2 = std.mem.eql(u8, grpc_backend, "nghttp2");
 
     const yazap_mod = b.addModule("yazap", .{
         .root_source_file = b.path("vendor/yazap/src/lib.zig"),
@@ -34,12 +37,23 @@ pub fn build(b: *std.Build) void {
             }),
         });
         exe_val.addIncludePath(b.path("src"));
-        exe_val.addCSourceFile(.{
-            .file = b.path("src/grpc/client.c"),
-            .flags = &.{"-std=c11"},
-        });
         exe_val.linkLibC();
-        if (grpc_enabled) {
+        
+        if (use_nghttp2) {
+            // Lightweight nghttp2 backend (~200KB vs 1.1GB)
+            exe_val.addCSourceFile(.{
+                .file = b.path("src/grpc/http2_client.c"),
+                .flags = &.{"-std=c11"},
+            });
+            exe_val.linkSystemLibrary("nghttp2");
+            exe_val.linkSystemLibrary("ssl");
+            exe_val.linkSystemLibrary("crypto");
+        } else {
+            // Legacy gRPC backend (heavy, 10+ minute build)
+            exe_val.addCSourceFile(.{
+                .file = b.path("src/grpc/client.c"),
+                .flags = &.{"-std=c11"},
+            });
             const grpc = addGrpc(b, optimize);
             exe_val.step.dependOn(grpc.step);
             exe_val.addIncludePath(grpc.include_dir);
@@ -47,6 +61,7 @@ pub fn build(b: *std.Build) void {
             exe_val.linkSystemLibrary("grpc");
             exe_val.linkSystemLibrary("gpr");
         }
+        
         b.installArtifact(exe_val);
         exe = exe_val;
     }

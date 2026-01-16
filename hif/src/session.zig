@@ -44,10 +44,10 @@ const session_filename = "session.json";
 fn sessionStatePath(allocator: std.mem.Allocator) ![]u8 {
     const cwd = try std.process.getCwdAlloc(allocator);
     defer allocator.free(cwd);
-    
+
     const hif_dir = try std.fs.path.join(allocator, &[_][]const u8{ cwd, ".hif" });
     defer allocator.free(hif_dir);
-    
+
     return std.fs.path.join(allocator, &[_][]const u8{ hif_dir, session_filename });
 }
 
@@ -122,7 +122,7 @@ pub fn start(allocator: std.mem.Allocator, organization: []const u8, project: []
     try ensureHifDirectory();
     const path_persist = try sessionStatePath(allocator);
     defer allocator.free(path_persist);
-    
+
     const file = try std.fs.cwd().createFile(path_persist, .{});
     defer file.close();
     try file.writeAll(payload);
@@ -140,7 +140,7 @@ pub fn status(allocator: std.mem.Allocator) !void {
 
     const path = try sessionStatePath(arena_alloc);
     const data = try xdg.readFileAlloc(arena_alloc, path, 1024 * 1024);
-    
+
     if (data == null) {
         std.debug.print("No active session.\n", .{});
         std.debug.print("Start one with: hif session start <organization> <project> <goal>\n", .{});
@@ -153,14 +153,14 @@ pub fn status(allocator: std.mem.Allocator) !void {
     std.debug.print("Goal: {s}\n", .{session.goal});
     std.debug.print("Project: {s}/{s}\n", .{ session.project_org, session.project_handle });
     std.debug.print("Started: {s}\n", .{session.started_at});
-    
+
     if (session.conversation.len > 0) {
         std.debug.print("\nConversation ({} messages):\n", .{session.conversation.len});
         for (session.conversation) |msg| {
             std.debug.print("  [{s}] {s}\n", .{ msg.role, msg.message });
         }
     }
-    
+
     if (session.decisions.len > 0) {
         std.debug.print("\nDecisions ({}):\n", .{session.decisions.len});
         for (session.decisions) |decision| {
@@ -184,7 +184,7 @@ pub fn addNote(allocator: std.mem.Allocator, role: []const u8, message: []const 
 
     const path = try sessionStatePath(arena_alloc);
     const data = try xdg.readFileAlloc(arena_alloc, path, 1024 * 1024);
-    
+
     if (data == null) {
         std.debug.print("Error: No active session. Start one with 'hif session start'.\n", .{});
         return error.NoActiveSession;
@@ -192,7 +192,7 @@ pub fn addNote(allocator: std.mem.Allocator, role: []const u8, message: []const 
 
     var session = try std.json.parseFromSlice(SessionState, arena_alloc, data.?, .{ .allocate = .alloc_always });
     defer session.deinit();
-    
+
     const now = try currentTimestamp(arena_alloc);
     const new_message = Conversation{
         .role = role,
@@ -409,7 +409,7 @@ pub fn abandon(allocator: std.mem.Allocator) !void {
 fn generateSessionId(allocator: std.mem.Allocator) ![]u8 {
     var random_bytes: [16]u8 = undefined;
     std.crypto.random.bytes(&random_bytes);
-    
+
     const encoded = std.base64.url_safe_no_pad.Encoder.encode(try allocator.alloc(u8, std.base64.url_safe_no_pad.Encoder.calcSize(16)), &random_bytes);
     return try allocator.dupe(u8, encoded);
 }
@@ -523,4 +523,13 @@ pub fn getSessionPaths(allocator: std.mem.Allocator) ![]const []const u8 {
     }
 
     return try paths.toOwnedSlice(allocator);
+}
+
+/// Interactive conflict resolution (not yet implemented)
+pub fn resolve(allocator: std.mem.Allocator, server: []const u8, strategy: []const u8) !void {
+    _ = allocator;
+    _ = server;
+    _ = strategy;
+    std.debug.print("Conflict resolution is not yet implemented.\n", .{});
+    std.debug.print("Available strategies: ours, theirs, interactive\n", .{});
 }

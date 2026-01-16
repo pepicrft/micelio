@@ -12,6 +12,7 @@ defmodule Micelio.GRPC.Content.V1.ContentService.Server do
     GetHeadTreeRequest,
     GetPathRequest,
     GetPathResponse,
+    GetTreeAtPositionRequest,
     GetTreeRequest,
     GetTreeResponse,
     TreeEntry
@@ -58,6 +59,54 @@ defmodule Micelio.GRPC.Content.V1.ContentService.Server do
       false -> {:error, forbidden_status("You do not have access to this account.")}
       {:error, status} -> {:error, status}
     end
+  end
+
+  def get_tree_at_position(%GetTreeAtPositionRequest{} = request, stream) do
+    with :ok <- require_field(request.account_handle, "account_handle"),
+         :ok <- require_field(request.project_handle, "project_handle"),
+         {:ok, user} <- fetch_user(request.user_id, stream),
+         {:ok, organization} <- Accounts.get_organization_by_handle(request.account_handle),
+         true <- Accounts.user_in_organization?(user, organization.id),
+         project when not is_nil(project) <-
+           Projects.get_project_by_handle(organization.id, request.project_handle),
+         {:ok, tree_hash, tree} <- load_tree_at_position(project.id, request.position) do
+      %GetTreeResponse{tree: %V1.Tree{entries: tree_entries(tree)}, tree_hash: tree_hash}
+    else
+      nil -> {:error, not_found_status("Project not found.")}
+      false -> {:error, forbidden_status("You do not have access to this account.")}
+      {:error, status} -> {:error, status}
+    end
+  end
+
+  defp load_tree_at_position(_project_id, 0) do
+    # Position 0 means empty tree (before any landings)
+    {:ok, Binary.zero_hash(), MicTree.empty()}
+  end
+
+  defp load_tree_at_position(project_id, position) do
+    landing_key = "projects/#{project_id}/landing/#{pad_position(position)}.bin"
+
+    case Storage.get(landing_key) do
+      {:ok, content} ->
+        with {:ok, landing} <- Binary.decode_landing(content),
+             {:ok, tree} <- load_tree(project_id, landing.tree_hash) do
+          {:ok, landing.tree_hash, tree}
+        else
+          {:error, _} -> {:error, internal_status("Failed to decode landing.")}
+        end
+
+      {:error, :not_found} ->
+        {:error, not_found_status("Position not found.")}
+
+      {:error, _reason} ->
+        {:error, internal_status("Failed to load landing.")}
+    end
+  end
+
+  defp pad_position(position) do
+    position
+    |> Integer.to_string()
+    |> String.pad_leading(12, "0")
   end
 
   def get_blob(%GetBlobRequest{} = request, stream) do

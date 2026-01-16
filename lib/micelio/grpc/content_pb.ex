@@ -66,6 +66,15 @@ defmodule Micelio.GRPC.Content.V1.GetPathResponse do
   field :blob_hash, 2, type: :bytes, json_name: "blobHash"
 end
 
+defmodule Micelio.GRPC.Content.V1.GetTreeAtPositionRequest do
+  use Protobuf, syntax: :proto3
+
+  field :user_id, 1, type: :string, json_name: "userId"
+  field :account_handle, 2, type: :string, json_name: "accountHandle"
+  field :project_handle, 3, type: :string, json_name: "projectHandle"
+  field :position, 4, type: :uint64
+end
+
 defmodule Micelio.GRPC.Content.V1.ContentService.Service do
   use GRPC.Service, name: "micelio.content.v1.ContentService"
 
@@ -78,6 +87,12 @@ defmodule Micelio.GRPC.Content.V1.ContentService.Service do
   rpc(
     :GetTree,
     Micelio.GRPC.Content.V1.GetTreeRequest,
+    Micelio.GRPC.Content.V1.GetTreeResponse
+  )
+
+  rpc(
+    :GetTreeAtPosition,
+    Micelio.GRPC.Content.V1.GetTreeAtPositionRequest,
     Micelio.GRPC.Content.V1.GetTreeResponse
   )
 

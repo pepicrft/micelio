@@ -29,6 +29,10 @@ config :esbuild,
     env: %{"NODE_PATH" => [Path.expand("../deps", __DIR__), Mix.Project.build_path()]}
   ]
 
+# Hammer rate limiting configuration
+config :hammer,
+  backend: {Hammer.Backend.ETS, [expiry_ms: 60_000 * 60 * 4, cleanup_interval_ms: 60_000 * 10]}
+
 # Configure Elixir's Logger
 config :logger, :default_formatter,
   format: "$time $metadata[$level] $message\n",
@@ -37,10 +41,6 @@ config :logger, :default_formatter,
 config :micelio, Micelio.GRPC,
   enabled: false,
   port: 50_051
-
-# Hammer rate limiting configuration
-config :hammer,
-  backend: {Hammer.Backend.ETS, [expiry_ms: 60_000 * 60 * 4, cleanup_interval_ms: 60_000 * 10]}
 
 # Configure the mailer
 #
@@ -64,9 +64,8 @@ config :micelio, MicelioWeb.Endpoint,
 
 config :micelio,
   ecto_repos: [Micelio.Repo],
+  # Import environment specific config. This must remain at the bottom
   generators: [timestamp_type: :utc_datetime]
-
-# Import environment specific config. This must remain at the bottom
 
 # Use Jason for JSON parsing in Phoenix
 # of this file so it overrides the configuration defined above.

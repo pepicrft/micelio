@@ -24,12 +24,13 @@ pub fn list(
 
     const endpoint = try grpc_endpoint.parseServer(arena_alloc, creds.?.server);
 
-    // Request only landed sessions
+    // Request only landed sessions, with optional path filter
     const request = try sessions_proto.encodeListSessionsRequest(
         arena_alloc,
         organization,
         project,
         "landed",
+        path_filter,
     );
     defer arena_alloc.free(request);
 
@@ -45,30 +46,30 @@ pub fn list(
     const sessions = try sessions_proto.decodeListSessionsResponse(arena_alloc, response.bytes);
 
     if (sessions.len == 0) {
-        std.debug.print("No landed sessions found for {s}/{s}\n", .{ organization, project });
+        if (path_filter) |pf| {
+            std.debug.print("No landed sessions found for {s}/{s} touching path '{s}'\n", .{ organization, project, pf });
+        } else {
+            std.debug.print("No landed sessions found for {s}/{s}\n", .{ organization, project });
+        }
         return;
     }
 
-    // Apply path filter if specified
-    const filtered = if (path_filter != null) blk: {
-        // Note: Path filtering would require fetching session details with file changes
-        // For now, we display all and note the limitation
-        std.debug.print("Note: --path filtering requires session change data (not yet implemented)\n\n", .{});
-        break :blk sessions;
-    } else sessions;
+    // Apply limit (path filtering is done server-side)
+    const display_count = @min(limit, @as(u32, @intCast(sessions.len)));
+    const display_sessions = sessions[0..display_count];
 
-    // Apply limit
-    const display_count = @min(limit, @as(u32, @intCast(filtered.len)));
-    const display_sessions = filtered[0..display_count];
-
-    std.debug.print("Landed sessions for {s}/{s}:\n\n", .{ organization, project });
+    if (path_filter) |pf| {
+        std.debug.print("Landed sessions for {s}/{s} touching '{s}':\n\n", .{ organization, project, pf });
+    } else {
+        std.debug.print("Landed sessions for {s}/{s}:\n\n", .{ organization, project });
+    }
 
     for (display_sessions) |session| {
         printSession(session);
     }
 
-    if (filtered.len > display_count) {
-        std.debug.print("... and {} more sessions (use --limit to show more)\n", .{filtered.len - display_count});
+    if (sessions.len > display_count) {
+        std.debug.print("... and {} more sessions (use --limit to show more)\n", .{sessions.len - display_count});
     }
 }
 

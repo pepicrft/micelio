@@ -229,7 +229,6 @@ defmodule Micelio.Sessions do
     |> select([s], s.landed_at)
     |> Repo.all()
     |> Enum.group_by(&DateTime.to_date/1)
-    |> Enum.map(fn {date, sessions} -> {date, length(sessions)} end)
-    |> Map.new()
+    |> Map.new(fn {date, sessions} -> {date, length(sessions)} end)
   end
 end

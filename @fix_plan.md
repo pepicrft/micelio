@@ -32,12 +32,22 @@
 - [x] **Verify auth flow** - gRPC auth server implemented with device registration, authorization, and token exchange (tests in `test/micelio/grpc/auth_server_test.exs`)
 - [x] **Verify land flow** - Session landing implemented with tree updates, path indexing, and rollup (integration tests in `test/micelio/integration_test.exs`)
 
+## High Priority (hif CLI - Build Performance)
+
+- [x] **Replace gRPC C++ with nghttp2** - Migrate from 1.1GB google/grpc to lightweight nghttp2 (~500KB)
+  - Use nghttp2 for HTTP/2 transport
+  - Implement thin gRPC framing layer in Zig (5-byte header + protobuf)
+  - Keep existing protobuf message encoding
+  - Target: build time from 10+ mins → 30 seconds
+  - Wire format: `[1B compressed][4B length BE][protobuf payload]`
+  - Headers: `POST /package.Service/Method`, `content-type: application/grpc`, `te: trailers`
+
 ## Low Priority (hif CLI - Phase 3)
 
 - [x] **hif log** - List landed sessions via gRPC ListSessions endpoint
-- [ ] **hif log --path** - Sessions touching specific path (requires backend path filtering)
-- [ ] **hif diff** - Diff between two states
-- [ ] **hif goto** - View tree at specific state
+- [x] **hif log --path** - Sessions touching specific path (backend path filtering via gRPC ListSessions with path field)
+- [x] **hif diff** - Diff between two states (GetTreeAtPosition endpoint + client-side diff computation)
+- [x] **hif goto** - View tree at specific state (GetTreeAtPosition endpoint + file listing)
 
 ## Completed
 

@@ -6,6 +6,8 @@ const session = @import("session.zig");
 const content = @import("content.zig");
 const workspace = @import("workspace.zig");
 const log = @import("log.zig");
+const diff = @import("diff.zig");
+const goto = @import("goto.zig");
 
 const App = yazap.App;
 const Arg = yazap.Arg;
@@ -112,6 +114,20 @@ pub fn main() !void {
     try log_cmd.addArg(Arg.singleValueOption("path", 'p', "Filter sessions by file path"));
     try log_cmd.addArg(Arg.singleValueOption("limit", 'n', "Maximum number of sessions to show (default: 20)"));
     try root.addSubcommand(log_cmd);
+
+    // Diff: Show changes between two states
+    var diff_cmd = app.createCommand("diff", "Show changes between two tree states");
+    try diff_cmd.addArg(Arg.positional("PROJECT", "Account/project (e.g., acme/app)", null));
+    try diff_cmd.addArg(Arg.positional("FROM", "Starting position (e.g., @10 or 10)", null));
+    try diff_cmd.addArg(Arg.positional("TO", "Ending position (e.g., @15 or 15, omit for HEAD)", null));
+    try root.addSubcommand(diff_cmd);
+
+    // Goto: View tree at a specific position
+    var goto_cmd = app.createCommand("goto", "View tree at a specific position");
+    try goto_cmd.addArg(Arg.positional("PROJECT", "Account/project (e.g., acme/app)", null));
+    try goto_cmd.addArg(Arg.positional("POSITION", "Position to view (e.g., @10 or 10)", null));
+    try goto_cmd.addArg(Arg.singleValueOption("path", 'p', "Filter files by path prefix"));
+    try root.addSubcommand(goto_cmd);
 
     // Session: Manage work sessions
     var session_cmd = app.createCommand("session", "Manage work sessions");
@@ -390,6 +406,85 @@ pub fn main() !void {
         return;
     }
 
+    if (matches.subcommandMatches("diff")) |diff_matches| {
+        const project_ref = diff_matches.getSingleValue("PROJECT");
+        const from_str = diff_matches.getSingleValue("FROM");
+        const to_str = diff_matches.getSingleValue("TO");
+
+        if (project_ref == null or from_str == null) {
+            std.debug.print("Error: project and from position required\n", .{});
+            std.debug.print("Usage: hif diff <account>/<project> <from> [to]\n", .{});
+            std.debug.print("  from/to can be @N, N, @latest, or HEAD\n", .{});
+            return;
+        }
+
+        const parsed = parseProjectRef(project_ref.?);
+        if (parsed == null) {
+            std.debug.print("Error: invalid project format\n", .{});
+            std.debug.print("Usage: hif diff <account>/<project> <from> [to]\n", .{});
+            return;
+        }
+
+        const from_parsed = parsePositionOrLatest(from_str.?) orelse {
+            std.debug.print("Error: invalid from position\n", .{});
+            return;
+        };
+
+        // Convert PositionOrLatest to the format diff.show expects
+        const from_position: ?u64 = switch (from_parsed) {
+            .position => |p| p,
+            .latest => null, // null means HEAD
+        };
+
+        const to_position: ?u64 = if (to_str) |s| blk: {
+            const to_parsed = parsePositionOrLatest(s) orelse {
+                std.debug.print("Error: invalid to position\n", .{});
+                return;
+            };
+            break :blk switch (to_parsed) {
+                .position => |p| p,
+                .latest => null,
+            };
+        } else null;
+
+        try diff.show(allocator, parsed.?.account, parsed.?.project, from_position, to_position);
+        return;
+    }
+
+    if (matches.subcommandMatches("goto")) |goto_matches| {
+        const project_ref = goto_matches.getSingleValue("PROJECT");
+        const position_str = goto_matches.getSingleValue("POSITION");
+        const path_prefix = goto_matches.getSingleValue("path");
+
+        if (project_ref == null or position_str == null) {
+            std.debug.print("Error: project and position required\n", .{});
+            std.debug.print("Usage: hif goto <account>/<project> <position> [--path prefix]\n", .{});
+            std.debug.print("  position can be @N, N, @latest, or HEAD\n", .{});
+            return;
+        }
+
+        const parsed = parseProjectRef(project_ref.?);
+        if (parsed == null) {
+            std.debug.print("Error: invalid project format\n", .{});
+            std.debug.print("Usage: hif goto <account>/<project> <position>\n", .{});
+            return;
+        }
+
+        const pos_parsed = parsePositionOrLatest(position_str.?) orelse {
+            std.debug.print("Error: invalid position\n", .{});
+            return;
+        };
+
+        // Convert to optional u64 (null means HEAD)
+        const position: ?u64 = switch (pos_parsed) {
+            .position => |p| p,
+            .latest => null,
+        };
+
+        try goto.show(allocator, parsed.?.account, parsed.?.project, position, path_prefix);
+        return;
+    }
+
     if (matches.subcommandMatches("session")) |session_matches| {
         if (session_matches.subcommandMatches("start")) |start_matches| {
             const org = start_matches.getSingleValue("ORGANIZATION");
@@ -468,4 +563,36 @@ fn parseProjectRef(value: []const u8) ?ProjectRef {
         .account = value[0..slash_index],
         .project = value[slash_index + 1 ..],
     };
+}
+
+const PositionOrLatest = union(enum) {
+    position: u64,
+    latest,
+};
+
+/// Parse a position like "@10", "10", "@position:10", "@latest", or "HEAD" into PositionOrLatest
+/// Returns null for invalid input
+fn parsePositionOrLatest(value: []const u8) ?PositionOrLatest {
+    // Handle @latest / latest / HEAD as special case
+    if (std.mem.eql(u8, value, "@latest") or
+        std.mem.eql(u8, value, "latest") or
+        std.mem.eql(u8, value, "HEAD"))
+    {
+        return .latest;
+    }
+
+    // Handle @position:N format
+    if (std.mem.startsWith(u8, value, "@position:")) {
+        const num_str = value[10..];
+        if (num_str.len == 0) return null;
+        const pos = std.fmt.parseInt(u64, num_str, 10) catch return null;
+        return .{ .position = pos };
+    }
+
+    // Strip leading @ if present
+    const num_str = if (value.len > 0 and value[0] == '@') value[1..] else value;
+    if (num_str.len == 0) return null;
+
+    const pos = std.fmt.parseInt(u64, num_str, 10) catch return null;
+    return .{ .position = pos };
 }

@@ -78,6 +78,22 @@ pub fn encodeGetPathRequest(
     return buf.toOwnedSlice();
 }
 
+pub fn encodeGetTreeAtPositionRequest(
+    allocator: std.mem.Allocator,
+    account: []const u8,
+    project: []const u8,
+    position: u64,
+) ![]u8 {
+    var buf = std.Io.Writer.Allocating.init(allocator);
+    defer buf.deinit();
+
+    try proto.encodeStringField(&buf.writer, 2, account);
+    try proto.encodeStringField(&buf.writer, 3, project);
+    try proto.encodeVarintField(&buf.writer, 4, position);
+
+    return buf.toOwnedSlice();
+}
+
 pub fn decodeTreeResponse(allocator: std.mem.Allocator, data: []const u8) !TreeResponse {
     var decoder = proto.Decoder.init(data);
     var tree_hash: []const u8 = &[_]u8{};

@@ -575,7 +575,11 @@ defmodule MicelioWeb.CoreComponents do
       <.gravatar email={@user.email} size={48} class="rounded-full" />
   """
   attr :email, :string, required: true, doc: "the email address to generate avatar for"
-  attr :size, :integer, default: 48, doc: "the size in pixels (will be used for both width and height)"
+
+  attr :size, :integer,
+    default: 48,
+    doc: "the size in pixels (will be used for both width and height)"
+
   attr :class, :string, default: nil, doc: "additional CSS classes"
   attr :alt, :string, default: "", doc: "alt text for the image"
   attr :rest, :global
@@ -689,7 +693,9 @@ defmodule MicelioWeb.CoreComponents do
                 data-date={Date.to_iso8601(date)}
                 data-count={count}
               >
-                <title>{Date.to_iso8601(date)}: {count} {ngettext("contribution", "contributions", count)}</title>
+                <title>
+                  {Date.to_iso8601(date)}: {count} {ngettext("contribution", "contributions", count)}
+                </title>
               </rect>
             <% end %>
           <% end %>

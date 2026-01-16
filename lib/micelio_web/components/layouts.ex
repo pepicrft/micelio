@@ -127,11 +127,7 @@ defmodule MicelioWeb.Layouts do
     """
   end
 
-  defp gravatar_url(email) when is_binary(email) do
-    email = email |> String.trim() |> String.downcase()
-    hash = :crypto.hash(:md5, email) |> Base.encode16(case: :lower)
-    "https://www.gravatar.com/avatar/#{hash}?s=48&d=mp&r=g"
-  end
+  # Using imported gravatar_url from CoreComponents
 
   @doc """
   Shows the flash group with standard titles and content.

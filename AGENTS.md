@@ -41,6 +41,44 @@ Tests are organized by module. Each core module includes comprehensive unit test
 - Use `mix precommit` alias when you are done with all changes and fix any pending issues
 - Use the already included and available `:req` (`Req`) library for HTTP requests, **avoid** `:httpoison`, `:tesla`, and `:httpc`. Req is included by default and is the preferred HTTP client for Phoenix apps
 
+## Code Quality Standards (Distinguished Engineering)
+
+Write code as if it will be maintained for 10 years by engineers who've never seen it before.
+
+### Architecture
+- **Single Responsibility**: Each module/function does ONE thing well
+- **Clear boundaries**: Separate concerns (parsing, validation, business logic, I/O)
+- **Explicit over implicit**: No magic; make data flow obvious
+- **Fail fast**: Validate inputs at boundaries, return errors early
+
+### Zig-Specific
+- **Memory safety is paramount**:
+  - Always pair allocations with deallocations (`defer allocator.free(...)`)
+  - Use arena allocators for request-scoped memory
+  - Prefer stack allocation when size is bounded
+  - Document ownership: who allocates, who frees
+- **No leaks**: Run `zig build test` with `--detect-leaks` when available
+- **Error handling**: Return errors, don't panic. Use `errdefer` for cleanup on failure paths
+- **Slices over pointers**: Prefer `[]const u8` over `[*]const u8`
+
+### Elixir-Specific
+- **Let it crash**: Use supervisors, don't over-handle errors
+- **Pattern match at function heads**: Not nested case statements
+- **Pipelines for data transformation**: Keep them readable (3-5 steps max)
+- **Contexts for boundaries**: Business logic in contexts, not controllers/LiveViews
+
+### Testing
+- **Test behavior, not implementation**: Focus on public API contracts
+- **Edge cases**: Empty inputs, nil/null, boundaries, unicode, large inputs
+- **Memory tests for Zig**: Ensure no leaks under various code paths
+- **Property-based tests** where applicable (StreamData for Elixir)
+
+### Code Organization
+- **Consistent naming**: `verb_noun` for functions, `Noun` for modules
+- **Small functions**: If it scrolls, split it
+- **Comments explain WHY, not WHAT**: Code should be self-documenting
+- **Group related functions**: Public API at top, private helpers below
+
 ## Zig NIFs
 
 Git operations are implemented using Zig NIFs with libgit2. The code is organized with domain-based function prefixes in a single `zig/git/git.zig` file:

@@ -94,10 +94,9 @@ This file tracks upcoming features and improvements for Micelio.
 ### Phase 3: History and Navigation
 
 - [x] `hif log` - List landed sessions via gRPC ListSessions endpoint
-- [ ] `hif log --path` - Sessions touching path (requires backend path filtering)
-- [ ] `hif diff` - Diff between two states
-- [ ] `hif goto @latest` - View latest tree state
-- [ ] `hif goto @position:N` - View tree at position N
+- [x] `hif log --path` - Sessions touching path (backend path filtering via gRPC ListSessions)
+- [x] `hif diff` - Diff between two states (GetTreeAtPosition endpoint + client-side comparison)
+- [x] `hif goto @N` - View tree at position N (also supports `@latest` and `@position:N` syntax)
 
 ### Phase 4: Virtual Filesystem (hif-fs)
 

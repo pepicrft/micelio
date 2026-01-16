@@ -29,6 +29,11 @@ pub fn encodeStringField(writer: anytype, field_number: u32, value: []const u8) 
     try encodeBytesField(writer, field_number, value);
 }
 
+pub fn encodeVarintField(writer: anytype, field_number: u32, value: u64) !void {
+    try encodeKey(writer, field_number, .varint);
+    try encodeVarint(writer, value);
+}
+
 pub const Decoder = struct {
     data: []const u8,
     pos: usize,

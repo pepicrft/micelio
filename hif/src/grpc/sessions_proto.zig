@@ -151,11 +151,13 @@ fn encodeFileChange(allocator: std.mem.Allocator, change: FileChange) ![]u8 {
 ///   2: organization_handle (string)
 ///   3: project_handle (string)
 ///   4: status (string) - filter: "landed", "active", "all"
+///   5: path (string) - filter sessions by file path
 pub fn encodeListSessionsRequest(
     allocator: std.mem.Allocator,
     organization: []const u8,
     project: []const u8,
     status_filter: ?[]const u8,
+    path_filter: ?[]const u8,
 ) ![]u8 {
     var buf = std.Io.Writer.Allocating.init(allocator);
     defer buf.deinit();
@@ -163,6 +165,9 @@ pub fn encodeListSessionsRequest(
     try proto.encodeStringField(&buf.writer, 3, project);
     if (status_filter) |status| {
         try proto.encodeStringField(&buf.writer, 4, status);
+    }
+    if (path_filter) |path| {
+        try proto.encodeStringField(&buf.writer, 5, path);
     }
     return buf.toOwnedSlice();
 }

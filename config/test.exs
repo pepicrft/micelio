@@ -15,8 +15,8 @@ config :logger, level: :warning
 # We don't run a server during test. If one is required,
 # you can enable the server option below.
 config :micelio, Micelio.GRPC, enabled: false
-config :micelio, Micelio.Mailer, adapter: Swoosh.Adapters.Test
 config :micelio, Micelio.Hif.RollupScheduler, enabled: false
+config :micelio, Micelio.Mailer, adapter: Swoosh.Adapters.Test
 
 config :micelio, Micelio.Repo,
   database: Path.join([System.tmp_dir!(), "micelio", "micelio_test#{test_partition}.sqlite3"]),
