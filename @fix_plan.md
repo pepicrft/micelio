@@ -20,14 +20,22 @@
 ## Medium Priority (hif CLI)
 
 - [x] **Tiered cache** - RAM -> SSD caching layer in `hif/src/cache.zig`, integrated with workspace checkout and sync
-- [ ] **Session conflict resolution** - `hif session resolve` interactive conflict resolution
+- [x] **Session conflict resolution** - `hif session resolve` interactive conflict resolution with ours/theirs/interactive strategies
 - [x] **Bloom per session** - Bloom filter created on session start and updated when files are written. Stored in session.json as base64-encoded data
-- [ ] **Path index** - Track which sessions touch which paths
+- [x] **Path index** - Track which sessions touch which paths (stored in `projects/{id}/landing/paths/{position}.bin`, exact match before bloom fallback)
+
+## HIGH PRIORITY: End-to-End Flow (hif ↔ Micelio UI)
+
+- [ ] **Sessions UI** - Display landed sessions in project view (who, when, goal, files changed)
+- [ ] **Session detail page** - Show full session details: goal, conversation, file diffs
+- [ ] **Project activity feed** - Timeline of recent sessions on project page
+- [ ] **Verify auth flow** - Ensure `hif auth login` works end-to-end with OAuth
+- [ ] **Verify land flow** - Ensure `hif land "goal"` successfully creates session visible in UI
 
 ## Low Priority (hif CLI - Phase 3)
 
-- [ ] **hif log** - List landed sessions
-- [ ] **hif log --path** - Sessions touching specific path
+- [x] **hif log** - List landed sessions via gRPC ListSessions endpoint
+- [ ] **hif log --path** - Sessions touching specific path (requires backend path filtering)
 - [ ] **hif diff** - Diff between two states
 - [ ] **hif goto** - View tree at specific state
 

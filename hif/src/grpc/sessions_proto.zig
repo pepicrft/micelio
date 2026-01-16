@@ -144,3 +144,49 @@ fn encodeFileChange(allocator: std.mem.Allocator, change: FileChange) ![]u8 {
     try proto.encodeStringField(&buf.writer, 3, change.change_type);
     return buf.toOwnedSlice();
 }
+
+/// Encode ListSessionsRequest for gRPC call
+/// ListSessionsRequest fields:
+///   1: user_id (string)
+///   2: organization_handle (string)
+///   3: project_handle (string)
+///   4: status (string) - filter: "landed", "active", "all"
+pub fn encodeListSessionsRequest(
+    allocator: std.mem.Allocator,
+    organization: []const u8,
+    project: []const u8,
+    status_filter: ?[]const u8,
+) ![]u8 {
+    var buf = std.Io.Writer.Allocating.init(allocator);
+    defer buf.deinit();
+    try proto.encodeStringField(&buf.writer, 2, organization);
+    try proto.encodeStringField(&buf.writer, 3, project);
+    if (status_filter) |status| {
+        try proto.encodeStringField(&buf.writer, 4, status);
+    }
+    return buf.toOwnedSlice();
+}
+
+/// Decode ListSessionsResponse - returns array of Sessions
+/// ListSessionsResponse fields:
+///   1: sessions (repeated Session)
+pub fn decodeListSessionsResponse(allocator: std.mem.Allocator, data: []const u8) ![]Session {
+    var decoder = proto.Decoder.init(data);
+    var sessions: std.ArrayList(Session) = .empty;
+
+    while (!decoder.eof()) {
+        const key = try decoder.readVarint();
+        const field_number: u32 = @intCast(key >> 3);
+        const wire_type: proto.WireType = @enumFromInt(@as(u3, @intCast(key & 0x07)));
+
+        if (field_number == 1 and wire_type == .length_delimited) {
+            const session_bytes = try decoder.readBytes(allocator);
+            const session = try decodeSession(allocator, session_bytes);
+            try sessions.append(allocator, session);
+        } else {
+            try decoder.skipField(wire_type);
+        }
+    }
+
+    return sessions.toOwnedSlice(allocator);
+}

@@ -5,6 +5,7 @@ const projects = @import("projects.zig");
 const session = @import("session.zig");
 const content = @import("content.zig");
 const workspace = @import("workspace.zig");
+const log = @import("log.zig");
 
 const App = yazap.App;
 const Arg = yazap.Arg;
@@ -105,6 +106,13 @@ pub fn main() !void {
     try write_cmd.addArg(Arg.positional("PATH", "File path", null));
     try root.addSubcommand(write_cmd);
 
+    // Log: List landed sessions
+    var log_cmd = app.createCommand("log", "List landed sessions");
+    try log_cmd.addArg(Arg.positional("PROJECT", "Account/project (e.g., acme/app)", null));
+    try log_cmd.addArg(Arg.singleValueOption("path", 'p', "Filter sessions by file path"));
+    try log_cmd.addArg(Arg.singleValueOption("limit", 'n', "Maximum number of sessions to show (default: 20)"));
+    try root.addSubcommand(log_cmd);
+
     // Session: Manage work sessions
     var session_cmd = app.createCommand("session", "Manage work sessions");
 
@@ -127,6 +135,10 @@ pub fn main() !void {
 
     const session_abandon_cmd = app.createCommand("abandon", "Abandon the current session");
     try session_cmd.addSubcommand(session_abandon_cmd);
+
+    var session_resolve_cmd = app.createCommand("resolve", "Interactive conflict resolution");
+    try session_resolve_cmd.addArg(Arg.singleValueOption("strategy", 's', "Resolution strategy: ours, theirs, or interactive (default)"));
+    try session_cmd.addSubcommand(session_resolve_cmd);
 
     try root.addSubcommand(session_cmd);
 
@@ -351,6 +363,33 @@ pub fn main() !void {
         return;
     }
 
+    if (matches.subcommandMatches("log")) |log_matches| {
+        const project_ref = log_matches.getSingleValue("PROJECT");
+        const path_filter = log_matches.getSingleValue("path");
+        const limit_str = log_matches.getSingleValue("limit");
+
+        if (project_ref == null) {
+            std.debug.print("Error: project required\n", .{});
+            std.debug.print("Usage: hif log <account>/<project> [--path <path>] [--limit <n>]\n", .{});
+            return;
+        }
+
+        const parsed = parseProjectRef(project_ref.?);
+        if (parsed == null) {
+            std.debug.print("Error: invalid project format\n", .{});
+            std.debug.print("Usage: hif log <account>/<project>\n", .{});
+            return;
+        }
+
+        const limit: u32 = if (limit_str) |s|
+            std.fmt.parseInt(u32, s, 10) catch 20
+        else
+            20;
+
+        try log.list(allocator, parsed.?.account, parsed.?.project, path_filter, limit);
+        return;
+    }
+
     if (matches.subcommandMatches("session")) |session_matches| {
         if (session_matches.subcommandMatches("start")) |start_matches| {
             const org = start_matches.getSingleValue("ORGANIZATION");
@@ -396,12 +435,19 @@ pub fn main() !void {
             return;
         }
 
+        if (session_matches.subcommandMatches("resolve")) |resolve_matches| {
+            const strategy = resolve_matches.getSingleValue("strategy") orelse "interactive";
+            try session.resolve(allocator, oauth.default_server, strategy);
+            return;
+        }
+
         std.debug.print("Session management commands:\n", .{});
         std.debug.print("  start <org> <project> <goal>  - Start a new session\n", .{});
         std.debug.print("  status                        - Show current session status\n", .{});
         std.debug.print("  note <message> [--role]       - Add a note to the session\n", .{});
         std.debug.print("  land                          - Land the session (push to forge)\n", .{});
         std.debug.print("  abandon                       - Abandon the current session\n", .{});
+        std.debug.print("  resolve [--strategy]          - Interactive conflict resolution\n", .{});
         return;
     }
 
