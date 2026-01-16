@@ -9,13 +9,13 @@
 ## Medium Priority (Forge UI)
 
 - [x] **Activity graph** - GitHub-style contribution/activity visualization
-- [ ] **Account avatar customization** - Allow users to upload and change their account avatar
+- [x] **Account avatar customization** - Allow users to upload and change their account avatar
 
 ## High Priority (hif CLI)
 
-- [ ] **Binary serialization** - Implement binary serialization for all core types
-- [ ] **Bloom filter merge/rollup** - Operations for combining bloom filters
-- [ ] **Local config** - ~/.hif/ configuration management
+- [x] **Binary serialization** - Implemented binary serialization for all core types (Tree, Bloom, HLC) in `hif/src/core/serialize.zig`
+- [x] **Bloom filter merge/rollup** - Added rollup, intersection, scaleUp, jaccardSimilarity, clone, isSubsetOf, isEmpty operations
+- [x] **Local config** - ~/.hif/ configuration management with servers, aliases, and preferences
 
 ## Medium Priority (hif CLI)
 

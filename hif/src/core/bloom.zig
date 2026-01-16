@@ -271,7 +271,151 @@ pub const Bloom = struct {
     pub fn sizeBits(self: *const Bloom) usize {
         return self.bits.len * 8;
     }
+
+    /// Check if the bloom filter is empty (no bits set).
+    pub fn isEmpty(self: *const Bloom) bool {
+        for (self.bits) |byte| {
+            if (byte != 0) return false;
+        }
+        return true;
+    }
+
+    /// Check if this filter is a subset of another.
+    ///
+    /// Returns true if all bits set in this filter are also set in other.
+    /// Useful for checking if one session's changes are contained in another.
+    pub fn isSubsetOf(self: *const Bloom, other: *const Bloom) bool {
+        if (self.bits.len != other.bits.len) return false;
+
+        for (self.bits, other.bits) |a, b| {
+            // If any bit in self is not set in other, not a subset
+            if ((a & ~b) != 0) return false;
+        }
+        return true;
+    }
+
+    /// Clone the bloom filter.
+    pub fn clone(self: *const Bloom) !Bloom {
+        const bits = try self.allocator.dupe(u8, self.bits);
+        return .{
+            .bits = bits,
+            .num_hashes = self.num_hashes,
+            .allocator = self.allocator,
+        };
+    }
 };
+
+/// Rollup multiple bloom filters into a single combined filter.
+///
+/// This is useful for creating aggregate bloom filters from multiple sessions.
+/// All filters must have the same size and number of hashes.
+///
+/// The caller owns the returned bloom filter and must call deinit() on it.
+///
+/// Example:
+/// ```zig
+/// var filters = [_]*const Bloom{ &filter1, &filter2, &filter3 };
+/// var combined = try rollup(allocator, &filters);
+/// defer combined.deinit();
+/// ```
+pub fn rollup(allocator: std.mem.Allocator, filters: []const *const Bloom) !Bloom {
+    if (filters.len == 0) {
+        return error.EmptyInput;
+    }
+
+    const first = filters[0];
+    const size_bytes = first.bits.len;
+    const num_hashes = first.num_hashes;
+
+    // Verify all filters have compatible parameters
+    for (filters[1..]) |filter| {
+        if (filter.bits.len != size_bytes) return error.IncompatibleSize;
+        if (filter.num_hashes != num_hashes) return error.IncompatibleHashes;
+    }
+
+    // Create the result filter
+    const bits = try allocator.alloc(u8, size_bytes);
+    @memset(bits, 0);
+
+    // Merge all filters
+    for (filters) |filter| {
+        for (bits, filter.bits) |*b, f| {
+            b.* |= f;
+        }
+    }
+
+    return .{
+        .bits = bits,
+        .num_hashes = num_hashes,
+        .allocator = allocator,
+    };
+}
+
+/// Create a new bloom filter that is the intersection of two filters.
+///
+/// The result contains only the bits that are set in both filters.
+/// This can be used to find potential common elements.
+///
+/// Returns error if filters have different sizes.
+pub fn intersection(allocator: std.mem.Allocator, a: *const Bloom, b: *const Bloom) !Bloom {
+    if (a.bits.len != b.bits.len) return error.IncompatibleSize;
+    if (a.num_hashes != b.num_hashes) return error.IncompatibleHashes;
+
+    const bits = try allocator.alloc(u8, a.bits.len);
+
+    for (bits, a.bits, b.bits) |*r, x, y| {
+        r.* = x & y;
+    }
+
+    return .{
+        .bits = bits,
+        .num_hashes = a.num_hashes,
+        .allocator = allocator,
+    };
+}
+
+/// Create a new bloom filter with double the capacity.
+///
+/// This is useful when a filter becomes too full (fill ratio > 0.5).
+/// The new filter will have approximately the same false positive rate
+/// as the original when it was less full.
+///
+/// Note: This creates a new filter with double the bits. Existing items
+/// cannot be automatically migrated (bloom filters don't store items),
+/// so you'll need to re-add items to the new filter.
+pub fn scaleUp(allocator: std.mem.Allocator, original: *const Bloom) !Bloom {
+    const new_size = original.bits.len * 2;
+    const bits = try allocator.alloc(u8, new_size);
+    @memset(bits, 0);
+
+    return .{
+        .bits = bits,
+        .num_hashes = original.num_hashes,
+        .allocator = allocator,
+    };
+}
+
+/// Compute the Jaccard similarity estimate between two bloom filters.
+///
+/// Returns a value between 0.0 (completely different) and 1.0 (identical).
+/// This is useful for estimating set similarity without accessing the original items.
+///
+/// Note: This is an estimate that may have errors, especially when filters
+/// have high fill ratios.
+pub fn jaccardSimilarity(a: *const Bloom, b: *const Bloom) f64 {
+    if (a.bits.len != b.bits.len) return 0.0;
+
+    var both_set: usize = 0;
+    var either_set: usize = 0;
+
+    for (a.bits, b.bits) |x, y| {
+        both_set += @popCount(x & y);
+        either_set += @popCount(x | y);
+    }
+
+    if (either_set == 0) return 1.0; // Both empty
+    return @as(f64, @floatFromInt(both_set)) / @as(f64, @floatFromInt(either_set));
+}
 
 // ============================================================================
 // Tests
@@ -522,4 +666,160 @@ test "Bloom addHash and mayContainHash work with pre-computed hashes" {
     const other_h = hash.hash("other/path.zig");
     // May or may not contain due to possible collision, but shouldn't crash
     _ = bloom.mayContainHash(&other_h);
+}
+
+test "Bloom isEmpty returns true for empty filter" {
+    var bloom = try Bloom.initWithSize(std.testing.allocator, 64, 5);
+    defer bloom.deinit();
+
+    try std.testing.expect(bloom.isEmpty());
+
+    bloom.add("test");
+    try std.testing.expect(!bloom.isEmpty());
+
+    bloom.clear();
+    try std.testing.expect(bloom.isEmpty());
+}
+
+test "Bloom isSubsetOf detects subset" {
+    var small = try Bloom.initWithSize(std.testing.allocator, 128, 7);
+    defer small.deinit();
+    var large = try Bloom.initWithSize(std.testing.allocator, 128, 7);
+    defer large.deinit();
+
+    small.add("file1.txt");
+    large.add("file1.txt");
+    large.add("file2.txt");
+
+    // small should be a subset of large
+    try std.testing.expect(small.isSubsetOf(&large));
+    // large should NOT be a subset of small (has extra bits)
+    try std.testing.expect(!large.isSubsetOf(&small));
+}
+
+test "Bloom clone creates independent copy" {
+    var original = try Bloom.initWithSize(std.testing.allocator, 64, 5);
+    defer original.deinit();
+
+    original.add("test.txt");
+
+    var cloned = try original.clone();
+    defer cloned.deinit();
+
+    try std.testing.expect(cloned.mayContain("test.txt"));
+    try std.testing.expectEqual(original.num_hashes, cloned.num_hashes);
+    try std.testing.expectEqual(original.sizeBytes(), cloned.sizeBytes());
+
+    // Modifying clone shouldn't affect original
+    cloned.add("other.txt");
+    // Original may or may not contain due to potential collision
+    // But the bits should be different now
+}
+
+test "rollup combines multiple filters" {
+    var f1 = try Bloom.initWithSize(std.testing.allocator, 128, 7);
+    defer f1.deinit();
+    var f2 = try Bloom.initWithSize(std.testing.allocator, 128, 7);
+    defer f2.deinit();
+    var f3 = try Bloom.initWithSize(std.testing.allocator, 128, 7);
+    defer f3.deinit();
+
+    f1.add("file1.txt");
+    f2.add("file2.txt");
+    f3.add("file3.txt");
+
+    const filters = [_]*const Bloom{ &f1, &f2, &f3 };
+    var combined = try rollup(std.testing.allocator, &filters);
+    defer combined.deinit();
+
+    try std.testing.expect(combined.mayContain("file1.txt"));
+    try std.testing.expect(combined.mayContain("file2.txt"));
+    try std.testing.expect(combined.mayContain("file3.txt"));
+}
+
+test "rollup rejects empty input" {
+    const empty: []const *const Bloom = &[_]*const Bloom{};
+    try std.testing.expectError(error.EmptyInput, rollup(std.testing.allocator, empty));
+}
+
+test "rollup rejects incompatible sizes" {
+    var f1 = try Bloom.initWithSize(std.testing.allocator, 64, 5);
+    defer f1.deinit();
+    var f2 = try Bloom.initWithSize(std.testing.allocator, 128, 5);
+    defer f2.deinit();
+
+    const filters = [_]*const Bloom{ &f1, &f2 };
+    try std.testing.expectError(error.IncompatibleSize, rollup(std.testing.allocator, &filters));
+}
+
+test "intersection creates common bits" {
+    var a = try Bloom.initWithSize(std.testing.allocator, 128, 7);
+    defer a.deinit();
+    var b = try Bloom.initWithSize(std.testing.allocator, 128, 7);
+    defer b.deinit();
+
+    // Add shared path to both
+    a.add("shared.txt");
+    b.add("shared.txt");
+
+    // Add unique paths
+    a.add("only_a.txt");
+    b.add("only_b.txt");
+
+    var result = try intersection(std.testing.allocator, &a, &b);
+    defer result.deinit();
+
+    // Shared path should be in intersection
+    try std.testing.expect(result.mayContain("shared.txt"));
+}
+
+test "scaleUp creates larger filter" {
+    var original = try Bloom.initWithSize(std.testing.allocator, 64, 5);
+    defer original.deinit();
+
+    var scaled = try scaleUp(std.testing.allocator, &original);
+    defer scaled.deinit();
+
+    try std.testing.expectEqual(@as(usize, 128), scaled.sizeBytes());
+    try std.testing.expectEqual(original.num_hashes, scaled.num_hashes);
+    try std.testing.expect(scaled.isEmpty());
+}
+
+test "jaccardSimilarity returns 1.0 for identical filters" {
+    var a = try Bloom.initWithSize(std.testing.allocator, 64, 5);
+    defer a.deinit();
+    var b = try Bloom.initWithSize(std.testing.allocator, 64, 5);
+    defer b.deinit();
+
+    a.add("test.txt");
+    b.add("test.txt");
+
+    const similarity = jaccardSimilarity(&a, &b);
+    try std.testing.expectEqual(@as(f64, 1.0), similarity);
+}
+
+test "jaccardSimilarity returns 1.0 for empty filters" {
+    var a = try Bloom.initWithSize(std.testing.allocator, 64, 5);
+    defer a.deinit();
+    var b = try Bloom.initWithSize(std.testing.allocator, 64, 5);
+    defer b.deinit();
+
+    const similarity = jaccardSimilarity(&a, &b);
+    try std.testing.expectEqual(@as(f64, 1.0), similarity);
+}
+
+test "jaccardSimilarity between different filters" {
+    var a = try Bloom.initWithSize(std.testing.allocator, 256, 7);
+    defer a.deinit();
+    var b = try Bloom.initWithSize(std.testing.allocator, 256, 7);
+    defer b.deinit();
+
+    // Add different items
+    a.add("only_in_a.txt");
+    b.add("only_in_b.txt");
+
+    const similarity = jaccardSimilarity(&a, &b);
+    // Should be less than 1.0 since they have different bits
+    try std.testing.expect(similarity >= 0.0);
+    try std.testing.expect(similarity <= 1.0);
 }

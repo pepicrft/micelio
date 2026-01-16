@@ -14,6 +14,7 @@ pub const hash = @import("core/hash.zig");
 pub const hlc = @import("core/hlc.zig");
 pub const bloom = @import("core/bloom.zig");
 pub const tree = @import("core/tree.zig");
+pub const serialize = @import("core/serialize.zig");
 
 // Re-export commonly used types for convenience
 pub const Hash = hash.Hash;
