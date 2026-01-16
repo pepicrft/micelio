@@ -1,5 +1,5 @@
 const std = @import("std");
-const oauth = @import("oauth.zig");
+const auth = @import("auth.zig");
 const grpc_client = @import("grpc/client.zig");
 const grpc_endpoint = @import("grpc/endpoint.zig");
 const content_proto = @import("grpc/content_proto.zig");
@@ -23,11 +23,7 @@ pub fn checkout(
     defer arena.deinit();
     const arena_alloc = arena.allocator();
 
-    const creds = try oauth.readCredentials(arena_alloc);
-    if (creds == null or creds.?.access_token == null) {
-        std.debug.print("Error: Not authenticated. Run 'hif auth login' first.\n", .{});
-        return error.NotAuthenticated;
-    }
+    const tokens = try auth.requireTokensWithMessage(arena_alloc);
 
     const workspace_root = target_path orelse project;
     try fs.ensureDir(workspace_root);
@@ -42,7 +38,7 @@ pub fn checkout(
     var blob_cache = try cache_mod.BlobCache.init(allocator, .{});
     defer blob_cache.deinit();
 
-    const endpoint = try grpc_endpoint.parseServer(arena_alloc, creds.?.server);
+    const endpoint = try grpc_endpoint.parseServer(arena_alloc, tokens.server);
     const request = try content_proto.encodeGetHeadTreeRequest(arena_alloc, account, project);
     defer arena_alloc.free(request);
 
@@ -51,7 +47,7 @@ pub fn checkout(
         endpoint,
         "/micelio.content.v1.ContentService/GetHeadTree",
         request,
-        creds.?.access_token.?,
+        tokens.access_token,
     );
     defer arena_alloc.free(response.bytes);
 
@@ -88,7 +84,7 @@ pub fn checkout(
                 endpoint,
                 "/micelio.content.v1.ContentService/GetBlob",
                 blob_request,
-                creds.?.access_token.?,
+                tokens.access_token,
             );
             defer arena_alloc.free(blob_response.bytes);
 
@@ -110,7 +106,7 @@ pub fn checkout(
 
     const state = manifest.WorkspaceState{
         .version = 1,
-        .server = creds.?.server,
+        .server = tokens.server,
         .account = account,
         .project = project,
         .tree_hash = tree_hash_hex,
@@ -175,11 +171,7 @@ pub fn land(allocator: std.mem.Allocator, goal: []const u8) !void {
         return;
     }
 
-    const creds = try oauth.readCredentials(arena_alloc);
-    if (creds == null or creds.?.access_token == null) {
-        std.debug.print("Error: Not authenticated. Run 'hif auth login' first.\n", .{});
-        return error.NotAuthenticated;
-    }
+    const access_token = try auth.requireAccessTokenWithMessage(arena_alloc);
 
     const endpoint = try grpc_endpoint.parseServer(arena_alloc, state.server);
     const session_id = try generateSessionId(arena_alloc);
@@ -197,7 +189,7 @@ pub fn land(allocator: std.mem.Allocator, goal: []const u8) !void {
         endpoint,
         "/micelio.sessions.v1.SessionService/StartSession",
         start_request,
-        creds.?.access_token.?,
+        access_token,
     );
     defer arena_alloc.free(start_response.bytes);
     _ = try sessions_proto.decodeSessionResponse(arena_alloc, start_response.bytes);
@@ -217,7 +209,7 @@ pub fn land(allocator: std.mem.Allocator, goal: []const u8) !void {
         endpoint,
         "/micelio.sessions.v1.SessionService/LandSession",
         land_request,
-        creds.?.access_token.?,
+        access_token,
     );
 
     switch (land_result) {
@@ -229,7 +221,7 @@ pub fn land(allocator: std.mem.Allocator, goal: []const u8) !void {
                 arena_alloc,
                 state,
                 workspace_root,
-                creds.?.access_token.?,
+                access_token,
                 landed.landing_position,
             );
 
@@ -461,11 +453,7 @@ pub fn syncWorkspace(allocator: std.mem.Allocator, strategy: MergeStrategy) !Syn
 
     const state = parsed.?.value;
 
-    const creds = try oauth.readCredentials(arena_alloc);
-    if (creds == null or creds.?.access_token == null) {
-        std.debug.print("Error: Not authenticated. Run 'hif auth login' first.\n", .{});
-        return error.NotAuthenticated;
-    }
+    const access_token = try auth.requireAccessTokenWithMessage(arena_alloc);
 
     // Initialize blob cache
     var blob_cache = try cache_mod.BlobCache.init(allocator, .{});
@@ -484,7 +472,7 @@ pub fn syncWorkspace(allocator: std.mem.Allocator, strategy: MergeStrategy) !Syn
         endpoint,
         "/micelio.content.v1.ContentService/GetHeadTree",
         head_request,
-        creds.?.access_token.?,
+        access_token,
     );
     defer arena_alloc.free(head_response.bytes);
 
@@ -511,7 +499,7 @@ pub fn syncWorkspace(allocator: std.mem.Allocator, strategy: MergeStrategy) !Syn
         endpoint,
         "/micelio.content.v1.ContentService/GetTreeAtPosition",
         base_request,
-        creds.?.access_token.?,
+        access_token,
     );
     defer arena_alloc.free(base_response.bytes);
 
@@ -593,7 +581,7 @@ pub fn syncWorkspace(allocator: std.mem.Allocator, strategy: MergeStrategy) !Syn
                 endpoint,
                 "/micelio.content.v1.ContentService/GetBlob",
                 blob_request,
-                creds.?.access_token.?,
+                access_token,
             );
             defer arena_alloc.free(blob_response.bytes);
 

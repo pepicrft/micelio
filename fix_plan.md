@@ -74,3 +74,17 @@ rm -rf zig-out .zig-cache && zig build
 
 ### Consider streaming RPCs
 The current implementation only supports unary calls. If bidirectional streaming is needed, the http2_client.c would need to be extended.
+
+### Additional Features
+- [x] `hif sync` command - Implement sync command to pull latest changes from forge and merge with local workspace
+
+**Implemented:**
+- Added `hif sync` command with --strategy option (ours, theirs, interactive)
+- Implemented syncWorkspace function with merge conflict resolution
+- Added MergeStrategy enum and parseMergeStrategy helper
+- Added position field to workspace manifest for base tree tracking
+- Updated refreshManifest to preserve landing position
+
+### Additional Features
+- [ ] `hif cat` command - Implement command to read file content from forge directly
+- [ ] `hif ls` command - Implement command to list directory contents from forge

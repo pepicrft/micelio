@@ -1,5 +1,5 @@
 const std = @import("std");
-const oauth = @import("oauth.zig");
+const auth = @import("auth.zig");
 const grpc_client = @import("grpc/client.zig");
 const grpc_endpoint = @import("grpc/endpoint.zig");
 const content_proto = @import("grpc/content_proto.zig");
@@ -16,13 +16,8 @@ pub fn show(
     defer arena.deinit();
     const arena_alloc = arena.allocator();
 
-    const creds = try oauth.readCredentials(arena_alloc);
-    if (creds == null or creds.?.access_token == null) {
-        std.debug.print("Error: Not authenticated. Run 'hif auth login' first.\n", .{});
-        return error.NotAuthenticated;
-    }
-
-    const endpoint = try grpc_endpoint.parseServer(arena_alloc, creds.?.server);
+    const tokens = try auth.requireTokensWithMessage(arena_alloc);
+    const endpoint = try grpc_endpoint.parseServer(arena_alloc, tokens.server);
 
     // null position means HEAD, otherwise fetch specific position
     const parsed = if (position) |pos| blk: {
@@ -39,7 +34,7 @@ pub fn show(
             endpoint,
             "/micelio.content.v1.ContentService/GetTreeAtPosition",
             request,
-            creds.?.access_token.?,
+            tokens.access_token,
         );
         defer arena_alloc.free(response.bytes);
 
@@ -57,7 +52,7 @@ pub fn show(
             endpoint,
             "/micelio.content.v1.ContentService/GetHeadTree",
             request,
-            creds.?.access_token.?,
+            tokens.access_token,
         );
         defer arena_alloc.free(response.bytes);
 

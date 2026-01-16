@@ -1,5 +1,7 @@
 const std = @import("std");
 const yazap = @import("yazap");
+const auth = @import("auth.zig");
+const config = @import("config.zig");
 const oauth = @import("oauth.zig");
 const projects = @import("projects.zig");
 const session = @import("session.zig");
@@ -100,6 +102,7 @@ pub fn main() !void {
     try cat_cmd.addArg(Arg.positional("ACCOUNT", "Account handle", null));
     try cat_cmd.addArg(Arg.positional("PROJECT", "Project handle", null));
     try cat_cmd.addArg(Arg.positional("PATH", "File path", null));
+    try cat_cmd.addArg(Arg.singleValueOption("position", 'p', "Position to read (e.g., @10 or 10, default: @latest)"));
     try root.addSubcommand(cat_cmd);
 
     var ls_cmd = app.createCommand("ls", "List tree entries from the forge");
@@ -168,21 +171,41 @@ pub fn main() !void {
         return;
     };
 
-    // Output handled by std.debug.print in oauth functions
+    // Output handled by std.debug.print in command handlers
 
     if (matches.subcommandMatches("auth")) |auth_matches| {
         if (auth_matches.subcommandMatches("login")) |_| {
-            try oauth.login(allocator, oauth.default_server);
+            var cfg = try config.Config.load(allocator);
+            defer cfg.deinit();
+
+            const default_name = cfg.getDefaultServerName() orelse {
+                std.debug.print("Error: No default server configured.\n", .{});
+                return error.NoDefaultServer;
+            };
+            const server = cfg.getServer(default_name) orelse {
+                std.debug.print("Error: Default server config not found.\n", .{});
+                return error.NoDefaultServer;
+            };
+            const web_url = server.web_url orelse {
+                std.debug.print("Error: Default server missing web_url.\n", .{});
+                return error.NoWebUrl;
+            };
+            const grpc_url = server.grpc_url orelse {
+                std.debug.print("Error: Default server missing grpc_url.\n", .{});
+                return error.NoGrpcUrl;
+            };
+
+            try auth.login(allocator, web_url, grpc_url);
             return;
         }
 
         if (auth_matches.subcommandMatches("status")) |_| {
-            try oauth.status(allocator, oauth.default_server);
+            try auth.status(allocator);
             return;
         }
 
         if (auth_matches.subcommandMatches("logout")) |_| {
-            try oauth.logout(allocator);
+            try auth.logout(allocator);
             return;
         }
 
@@ -352,14 +375,46 @@ pub fn main() !void {
         const account = cat_matches.getSingleValue("ACCOUNT");
         const project = cat_matches.getSingleValue("PROJECT");
         const path = cat_matches.getSingleValue("PATH");
+        const position_str = cat_matches.getSingleValue("position");
 
         if (account == null or project == null or path == null) {
             std.debug.print("Error: account, project, and path required\n", .{});
-            std.debug.print("Usage: hif cat <account> <project> <path>\n", .{});
+            std.debug.print("Usage: hif cat <account> <project> <path> [--position <@N>]\n", .{});
             return;
         }
 
-        try content.cat(allocator, oauth.default_server, account.?, project.?, path.?);
+        const position: ?u64 = if (position_str) |value| blk: {
+            const parsed = parsePositionOrLatest(value) orelse {
+                std.debug.print("Error: invalid position\n", .{});
+                std.debug.print("  position can be @N, N, @latest, or HEAD\n", .{});
+                return;
+            };
+            break :blk switch (parsed) {
+                .position => |p| p,
+                .latest => null,
+            };
+        } else null;
+
+        const blob_hash = try content.getPath(
+            allocator,
+            oauth.default_server,
+            account.?,
+            project.?,
+            path.?,
+            position,
+        );
+        defer allocator.free(blob_hash);
+
+        const content_bytes = try content.fetchBlob(
+            allocator,
+            oauth.default_server,
+            account.?,
+            project.?,
+            blob_hash,
+        );
+        defer allocator.free(content_bytes);
+
+        try std.fs.File.stdout().writeAll(content_bytes);
         return;
     }
 

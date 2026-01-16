@@ -1,6 +1,6 @@
 const std = @import("std");
 const xdg = @import("xdg.zig");
-const oauth = @import("oauth.zig");
+const auth = @import("auth.zig");
 const grpc_client = @import("grpc/client.zig");
 const grpc_endpoint = @import("grpc/endpoint.zig");
 const sessions_proto = @import("grpc/sessions_proto.zig");
@@ -74,13 +74,8 @@ pub fn start(allocator: std.mem.Allocator, organization: []const u8, project: []
     const session_id = try generateSessionId(arena_alloc);
     const now = try currentTimestamp(arena_alloc);
 
-    const creds = try oauth.readCredentials(arena_alloc);
-    if (creds == null or creds.?.access_token == null) {
-        std.debug.print("Error: Not authenticated. Run 'hif auth login' first.\n", .{});
-        return error.NotAuthenticated;
-    }
-
-    const endpoint = try grpc_endpoint.parseServer(arena_alloc, creds.?.server);
+    const tokens = try auth.requireTokensWithMessage(arena_alloc);
+    const endpoint = try grpc_endpoint.parseServer(arena_alloc, tokens.server);
     const request = try sessions_proto.encodeStartSessionRequest(arena_alloc, organization, project, session_id, goal);
     defer arena_alloc.free(request);
 
@@ -89,7 +84,7 @@ pub fn start(allocator: std.mem.Allocator, organization: []const u8, project: []
         endpoint,
         "/micelio.sessions.v1.SessionService/StartSession",
         request,
-        creds.?.access_token.?,
+        tokens.access_token,
     );
     defer arena_alloc.free(response.bytes);
 
@@ -331,10 +326,14 @@ pub fn landSession(allocator: std.mem.Allocator, server: []const u8) !LandResult
     defer arena.deinit();
     const arena_alloc = arena.allocator();
 
-    const creds = try oauth.readCredentials(arena_alloc);
-    if (creds == null or creds.?.access_token == null) {
-        return .{ .err = "Not authenticated. Run 'hif auth login' first." };
-    }
+    const tokens = auth.requireTokens(arena_alloc) catch |err| {
+        return switch (err) {
+            error.NotAuthenticated => .{ .err = "Not authenticated. Run 'hif auth login' first." },
+            error.TokenExpired => .{ .err = "Access token expired. Run 'hif auth login' again." },
+            error.InvalidTokens => .{ .err = "Stored token data is invalid. Run 'hif auth login' again." },
+            else => return err,
+        };
+    };
 
     const path = try sessionStatePath(arena_alloc);
     const data = try xdg.readFileAlloc(arena_alloc, path, 1024 * 1024);
@@ -356,7 +355,7 @@ pub fn landSession(allocator: std.mem.Allocator, server: []const u8) !LandResult
         endpoint,
         "/micelio.sessions.v1.SessionService/LandSession",
         request,
-        creds.?.access_token.?,
+        tokens.access_token,
     );
 
     switch (result) {

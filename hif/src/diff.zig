@@ -1,5 +1,5 @@
 const std = @import("std");
-const oauth = @import("oauth.zig");
+const auth = @import("auth.zig");
 const grpc_client = @import("grpc/client.zig");
 const grpc_endpoint = @import("grpc/endpoint.zig");
 const content_proto = @import("grpc/content_proto.zig");
@@ -16,25 +16,20 @@ pub fn show(
     defer arena.deinit();
     const arena_alloc = arena.allocator();
 
-    const creds = try oauth.readCredentials(arena_alloc);
-    if (creds == null or creds.?.access_token == null) {
-        std.debug.print("Error: Not authenticated. Run 'hif auth login' first.\n", .{});
-        return error.NotAuthenticated;
-    }
-
-    const endpoint = try grpc_endpoint.parseServer(arena_alloc, creds.?.server);
+    const tokens = try auth.requireTokensWithMessage(arena_alloc);
+    const endpoint = try grpc_endpoint.parseServer(arena_alloc, tokens.server);
 
     // Fetch the "from" tree (null = HEAD)
     const from_tree = if (from_position) |pos|
-        try fetchTreeAtPosition(arena_alloc, endpoint, organization, project, pos, creds.?.access_token.?)
+        try fetchTreeAtPosition(arena_alloc, endpoint, organization, project, pos, tokens.access_token)
     else
-        try fetchHeadTree(arena_alloc, endpoint, organization, project, creds.?.access_token.?);
+        try fetchHeadTree(arena_alloc, endpoint, organization, project, tokens.access_token);
 
     // Fetch the "to" tree (null = HEAD)
     const to_tree = if (to_position) |pos|
-        try fetchTreeAtPosition(arena_alloc, endpoint, organization, project, pos, creds.?.access_token.?)
+        try fetchTreeAtPosition(arena_alloc, endpoint, organization, project, pos, tokens.access_token)
     else
-        try fetchHeadTree(arena_alloc, endpoint, organization, project, creds.?.access_token.?);
+        try fetchHeadTree(arena_alloc, endpoint, organization, project, tokens.access_token);
 
     // Compute diff (uses arena_alloc, no separate cleanup needed)
     const changes = try computeDiff(arena_alloc, from_tree.entries, to_tree.entries);

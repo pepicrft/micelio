@@ -1,5 +1,5 @@
 const std = @import("std");
-const oauth = @import("oauth.zig");
+const auth = @import("auth.zig");
 const grpc_client = @import("grpc/client.zig");
 const grpc_endpoint = @import("grpc/endpoint.zig");
 const projects_proto = @import("grpc/projects_proto.zig");
@@ -9,11 +9,7 @@ pub fn list(allocator: std.mem.Allocator, server: []const u8, organization: []co
     defer arena.deinit();
     const arena_alloc = arena.allocator();
 
-    const creds = try oauth.readCredentials(arena_alloc);
-    if (creds == null or creds.?.access_token == null) {
-        std.debug.print("Error: Not authenticated. Run 'hif auth login' first.\n", .{});
-        return error.NotAuthenticated;
-    }
+    const access_token = try auth.requireAccessTokenWithMessage(arena_alloc);
 
     const endpoint = try grpc_endpoint.parseServer(arena_alloc, server);
     const request = try projects_proto.encodeListProjectsRequest(arena_alloc, organization);
@@ -24,7 +20,7 @@ pub fn list(allocator: std.mem.Allocator, server: []const u8, organization: []co
         endpoint,
         "/micelio.projects.v1.ProjectService/ListProjects",
         request,
-        creds.?.access_token.?,
+        access_token,
     );
     defer arena_alloc.free(response.bytes);
 
@@ -50,11 +46,7 @@ pub fn create(allocator: std.mem.Allocator, server: []const u8, organization: []
     defer arena.deinit();
     const arena_alloc = arena.allocator();
 
-    const creds = try oauth.readCredentials(arena_alloc);
-    if (creds == null or creds.?.access_token == null) {
-        std.debug.print("Error: Not authenticated. Run 'hif auth login' first.\n", .{});
-        return error.NotAuthenticated;
-    }
+    const access_token = try auth.requireAccessTokenWithMessage(arena_alloc);
 
     const endpoint = try grpc_endpoint.parseServer(arena_alloc, server);
     const request = try projects_proto.encodeCreateProjectRequest(
@@ -71,7 +63,7 @@ pub fn create(allocator: std.mem.Allocator, server: []const u8, organization: []
         endpoint,
         "/micelio.projects.v1.ProjectService/CreateProject",
         request,
-        creds.?.access_token.?,
+        access_token,
     );
     defer arena_alloc.free(response.bytes);
 
@@ -89,11 +81,7 @@ pub fn get(allocator: std.mem.Allocator, server: []const u8, organization: []con
     defer arena.deinit();
     const arena_alloc = arena.allocator();
 
-    const creds = try oauth.readCredentials(arena_alloc);
-    if (creds == null or creds.?.access_token == null) {
-        std.debug.print("Error: Not authenticated. Run 'hif auth login' first.\n", .{});
-        return error.NotAuthenticated;
-    }
+    const access_token = try auth.requireAccessTokenWithMessage(arena_alloc);
 
     const endpoint = try grpc_endpoint.parseServer(arena_alloc, server);
     const request = try projects_proto.encodeGetProjectRequest(arena_alloc, organization, handle);
@@ -104,7 +92,7 @@ pub fn get(allocator: std.mem.Allocator, server: []const u8, organization: []con
         endpoint,
         "/micelio.projects.v1.ProjectService/GetProject",
         request,
-        creds.?.access_token.?,
+        access_token,
     );
     defer arena_alloc.free(response.bytes);
 
@@ -134,11 +122,7 @@ pub fn update(
     defer arena.deinit();
     const arena_alloc = arena.allocator();
 
-    const creds = try oauth.readCredentials(arena_alloc);
-    if (creds == null or creds.?.access_token == null) {
-        std.debug.print("Error: Not authenticated. Run 'hif auth login' first.\n", .{});
-        return error.NotAuthenticated;
-    }
+    const access_token = try auth.requireAccessTokenWithMessage(arena_alloc);
 
     const endpoint = try grpc_endpoint.parseServer(arena_alloc, server);
     const request = try projects_proto.encodeUpdateProjectRequest(
@@ -156,7 +140,7 @@ pub fn update(
         endpoint,
         "/micelio.projects.v1.ProjectService/UpdateProject",
         request,
-        creds.?.access_token.?,
+        access_token,
     );
     defer arena_alloc.free(response.bytes);
 
@@ -174,11 +158,7 @@ pub fn delete(allocator: std.mem.Allocator, server: []const u8, organization: []
     defer arena.deinit();
     const arena_alloc = arena.allocator();
 
-    const creds = try oauth.readCredentials(arena_alloc);
-    if (creds == null or creds.?.access_token == null) {
-        std.debug.print("Error: Not authenticated. Run 'hif auth login' first.\n", .{});
-        return error.NotAuthenticated;
-    }
+    const access_token = try auth.requireAccessTokenWithMessage(arena_alloc);
 
     const endpoint = try grpc_endpoint.parseServer(arena_alloc, server);
     const request = try projects_proto.encodeDeleteProjectRequest(arena_alloc, organization, handle);
@@ -189,7 +169,7 @@ pub fn delete(allocator: std.mem.Allocator, server: []const u8, organization: []
         endpoint,
         "/micelio.projects.v1.ProjectService/DeleteProject",
         request,
-        creds.?.access_token.?,
+        access_token,
     );
     defer arena_alloc.free(response.bytes);
 
