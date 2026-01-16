@@ -21,7 +21,7 @@
 
 - [x] **Tiered cache** - RAM -> SSD caching layer in `hif/src/cache.zig`, integrated with workspace checkout and sync
 - [ ] **Session conflict resolution** - `hif session resolve` interactive conflict resolution
-- [ ] **Bloom per session** - Create bloom on session start
+- [x] **Bloom per session** - Bloom filter created on session start and updated when files are written. Stored in session.json as base64-encoded data
 - [ ] **Path index** - Track which sessions touch which paths
 
 ## Low Priority (hif CLI - Phase 3)

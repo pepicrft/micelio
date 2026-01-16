@@ -4,6 +4,7 @@ const oauth = @import("oauth.zig");
 const grpc_client = @import("grpc/client.zig");
 const grpc_endpoint = @import("grpc/endpoint.zig");
 const sessions_proto = @import("grpc/sessions_proto.zig");
+const bloom_mod = @import("core/bloom.zig");
 
 const SessionState = struct {
     id: []const u8,
@@ -14,6 +15,10 @@ const SessionState = struct {
     conversation: []Conversation = &[_]Conversation{},
     decisions: []Decision = &[_]Decision{},
     files: []FileChange = &[_]FileChange{},
+    /// Base64-encoded bloom filter for path tracking
+    bloom_data: ?[]const u8 = null,
+    /// Number of hash functions used in bloom filter
+    bloom_hashes: u32 = 7,
 };
 
 const Conversation = struct {
@@ -90,12 +95,21 @@ pub fn start(allocator: std.mem.Allocator, organization: []const u8, project: []
 
     _ = try sessions_proto.decodeSessionResponse(arena_alloc, response.bytes);
 
+    // Create bloom filter for path tracking (sized for ~1000 paths, 1% FP rate)
+    var bloom = try bloom_mod.Bloom.init(arena_alloc, 1000, 0.01);
+    defer bloom.deinit();
+    const bloom_serialized = try bloom.serialize(arena_alloc);
+    defer arena_alloc.free(bloom_serialized);
+    const bloom_b64 = try encodeBase64(arena_alloc, bloom_serialized);
+
     const session = SessionState{
         .id = session_id,
         .goal = goal,
         .project_org = organization,
         .project_handle = project,
         .started_at = now,
+        .bloom_data = bloom_b64,
+        .bloom_hashes = bloom.num_hashes,
     };
 
     // Write session state
@@ -236,6 +250,22 @@ pub fn write(allocator: std.mem.Allocator, path: []const u8) !void {
     };
 
     session.value.files = try upsertChange(arena_alloc, session.value.files, change);
+
+    // Update bloom filter with the path
+    if (session.value.bloom_data) |bloom_b64| {
+        const bloom_bytes = try decodeBase64(arena_alloc, bloom_b64);
+        defer arena_alloc.free(bloom_bytes);
+        var bloom = try bloom_mod.Bloom.deserialize(arena_alloc, bloom_bytes);
+        defer bloom.deinit();
+
+        // Add the path to the bloom filter
+        bloom.add(path);
+
+        // Re-serialize the updated bloom filter
+        const updated_bloom = try bloom.serialize(arena_alloc);
+        defer arena_alloc.free(updated_bloom);
+        session.value.bloom_data = try encodeBase64(arena_alloc, updated_bloom);
+    }
 
     var payload_buf = std.io.Writer.Allocating.init(arena_alloc);
     defer payload_buf.deinit();
@@ -429,7 +459,68 @@ fn mapChanges(allocator: std.mem.Allocator, files: []FileChange) ![]sessions_pro
 fn currentTimestamp(allocator: std.mem.Allocator) ![]u8 {
     const timestamp = std.time.timestamp();
     const seconds: u64 = @intCast(timestamp);
-    
+
     // Simple ISO-ish format (we'll improve this later)
     return std.fmt.allocPrint(allocator, "{}", .{seconds});
+}
+
+fn encodeBase64(allocator: std.mem.Allocator, data: []const u8) ![]u8 {
+    const size = std.base64.standard.Encoder.calcSize(data.len);
+    const buf = try allocator.alloc(u8, size);
+    _ = std.base64.standard.Encoder.encode(buf, data);
+    return buf;
+}
+
+fn decodeBase64(allocator: std.mem.Allocator, encoded: []const u8) ![]u8 {
+    const size = std.base64.standard.Decoder.calcSizeForSlice(encoded) catch return error.InvalidBase64;
+    const buf = try allocator.alloc(u8, size);
+    std.base64.standard.Decoder.decode(buf, encoded) catch return error.InvalidBase64;
+    return buf;
+}
+
+/// Load the bloom filter from the current session, if available.
+pub fn loadSessionBloom(allocator: std.mem.Allocator) !?bloom_mod.Bloom {
+    var arena = std.heap.ArenaAllocator.init(allocator);
+    defer arena.deinit();
+    const arena_alloc = arena.allocator();
+
+    const path = try sessionStatePath(arena_alloc);
+    const data = try xdg.readFileAlloc(arena_alloc, path, 1024 * 1024);
+
+    if (data == null) {
+        return null;
+    }
+
+    const session = try std.json.parseFromSliceLeaky(SessionState, arena_alloc, data.?, .{ .ignore_unknown_fields = true });
+
+    if (session.bloom_data) |bloom_b64| {
+        const bloom_bytes = try decodeBase64(allocator, bloom_b64);
+        defer allocator.free(bloom_bytes);
+        return try bloom_mod.Bloom.deserialize(allocator, bloom_bytes);
+    }
+
+    return null;
+}
+
+/// Get a list of all paths touched in the current session.
+pub fn getSessionPaths(allocator: std.mem.Allocator) ![]const []const u8 {
+    var arena = std.heap.ArenaAllocator.init(allocator);
+    defer arena.deinit();
+    const arena_alloc = arena.allocator();
+
+    const path = try sessionStatePath(arena_alloc);
+    const data = try xdg.readFileAlloc(arena_alloc, path, 1024 * 1024);
+
+    if (data == null) {
+        return &[_][]const u8{};
+    }
+
+    const session = try std.json.parseFromSliceLeaky(SessionState, arena_alloc, data.?, .{ .ignore_unknown_fields = true });
+
+    var paths: std.ArrayList([]const u8) = .empty;
+    for (session.files) |file| {
+        try paths.append(allocator, try allocator.dupe(u8, file.path));
+    }
+
+    return try paths.toOwnedSlice(allocator);
 }
