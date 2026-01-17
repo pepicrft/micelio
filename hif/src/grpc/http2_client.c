@@ -22,6 +22,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <time.h>
+#include <sys/time.h>
 
 /* gRPC framing: 1 byte compression flag + 4 bytes big-endian length */
 #define GRPC_HEADER_SIZE 5
@@ -44,6 +46,7 @@ typedef struct {
     uint8_t *response_data;
     size_t response_len;
     size_t response_capacity;
+    size_t response_expected_len;
     int response_complete;
     
     /* Error handling */
@@ -169,6 +172,19 @@ static int on_data_chunk_recv_callback(nghttp2_session *session, uint8_t flags,
     
     memcpy(conn->response_data + conn->response_len, data, len);
     conn->response_len += len;
+
+    if (conn->response_expected_len == 0 && conn->response_len >= GRPC_HEADER_SIZE) {
+        uint32_t msg_len = (conn->response_data[1] << 24) |
+                           (conn->response_data[2] << 16) |
+                           (conn->response_data[3] << 8) |
+                           (conn->response_data[4]);
+        conn->response_expected_len = GRPC_HEADER_SIZE + msg_len;
+    }
+
+    if (conn->response_expected_len > 0 && conn->response_len >= conn->response_expected_len) {
+        conn->response_complete = 1;
+    }
+
     return 0;
 }
 
@@ -195,6 +211,7 @@ static int on_header_callback(nghttp2_session *session, const nghttp2_frame *fra
     /* Check for grpc-status header in trailers */
     if (namelen == 11 && memcmp(name, "grpc-status", 11) == 0) {
         conn->grpc_status = atoi((const char *)value);
+        conn->response_complete = 1;
     } else if (namelen == 12 && memcmp(name, "grpc-message", 12) == 0) {
         if (conn->error_message) free(conn->error_message);
         conn->error_message = strndup((const char *)value, valuelen);
@@ -256,11 +273,17 @@ static int connect_to_server(grpc_connection *conn, const char *host, int port) 
         set_error(conn, "Failed to connect to server");
         return -1;
     }
-    
+
     /* Disable Nagle's algorithm for lower latency */
     int flag = 1;
     setsockopt(conn->fd, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(flag));
-    
+
+    struct timeval tv;
+    tv.tv_sec = 1;
+    tv.tv_usec = 0;
+    setsockopt(conn->fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+    setsockopt(conn->fd, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
+
     return 0;
 }
 
@@ -527,6 +550,9 @@ int hif_grpc_unary_call(const char *target,
     }
     
     /* Send/receive loop */
+    struct timespec start_time;
+    clock_gettime(CLOCK_MONOTONIC, &start_time);
+
     while (!conn.response_complete) {
         int ret = nghttp2_session_send(conn.session);
         if (ret != 0) {
@@ -543,6 +569,19 @@ int hif_grpc_unary_call(const char *target,
         }
         
         if (ret == NGHTTP2_ERR_EOF) break;
+
+        struct timespec now;
+        clock_gettime(CLOCK_MONOTONIC, &now);
+        long elapsed_ms =
+            (now.tv_sec - start_time.tv_sec) * 1000L + (now.tv_nsec - start_time.tv_nsec) / 1000000L;
+
+        if (elapsed_ms > 3000 && conn.response_len > 0) {
+            conn.response_complete = 1;
+        } else if (elapsed_ms > 10000) {
+            *error_out = dup_string("gRPC request timed out");
+            free(grpc_request);
+            goto cleanup;
+        }
     }
     
     free(grpc_request);

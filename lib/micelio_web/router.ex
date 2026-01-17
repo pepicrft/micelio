@@ -13,6 +13,10 @@ defmodule MicelioWeb.Router do
     plug MicelioWeb.Plugs.RateLimitPlug, limit: 200, window_ms: 60_000, bucket_prefix: "browser"
   end
 
+  pipeline :api do
+    plug :accepts, ["json"]
+  end
+
   pipeline :require_auth do
     plug MicelioWeb.RequireAuthPlug
   end
@@ -74,6 +78,18 @@ defmodule MicelioWeb.Router do
     get "/sent", AuthController, :sent
     get "/verify/:token", AuthController, :verify
     delete "/logout", AuthController, :delete
+  end
+
+  scope "/auth", MicelioWeb.Oauth do
+    pipe_through :api
+
+    post "/device", DeviceController, :create
+  end
+
+  scope "/oauth", MicelioWeb.Oauth do
+    pipe_through :api
+
+    post "/register", RegistrationController, :register
   end
 
   scope "/device", MicelioWeb.Browser do

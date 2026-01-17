@@ -9,6 +9,16 @@ defmodule Micelio.Storage.S3Test do
   setup :verify_on_exit!
   setup :set_mimic_global
 
+  setup do
+    original = Application.get_env(:micelio, Micelio.Storage, [])
+
+    on_exit(fn ->
+      Application.put_env(:micelio, Micelio.Storage, original)
+    end)
+
+    :ok
+  end
+
   setup_all do
     Mimic.copy(Req)
     :ok
@@ -336,11 +346,13 @@ defmodule Micelio.Storage.S3Test do
     end
 
     test "uses environment variables for configuration" do
-      Application.put_env(:micelio, Micelio.Storage, [])
-
-      System.put_env("S3_BUCKET", "env-bucket")
-      System.put_env("AWS_ACCESS_KEY_ID", "env-key")
-      System.put_env("AWS_SECRET_ACCESS_KEY", "env-secret")
+      Application.put_env(:micelio, Micelio.Storage,
+        env: %{
+          "S3_BUCKET" => "env-bucket",
+          "S3_ACCESS_KEY_ID" => "env-key",
+          "S3_SECRET_ACCESS_KEY" => "env-secret"
+        }
+      )
 
       expect(Req, :request, fn opts ->
         assert opts[:url] =~ "env-bucket"
@@ -348,21 +360,15 @@ defmodule Micelio.Storage.S3Test do
       end)
 
       assert {:ok, _} = S3.put("key", "content")
-
-      # Cleanup
-      System.delete_env("S3_BUCKET")
-      System.delete_env("AWS_ACCESS_KEY_ID")
-      System.delete_env("AWS_SECRET_ACCESS_KEY")
     end
 
     test "prioritizes explicit config over environment variables" do
       Application.put_env(:micelio, Micelio.Storage,
+        env: %{"S3_BUCKET" => "env-bucket"},
         s3_bucket: "config-bucket",
         s3_access_key_id: "config-key",
         s3_secret_access_key: "config-secret"
       )
-
-      System.put_env("S3_BUCKET", "env-bucket")
 
       expect(Req, :request, fn opts ->
         assert opts[:url] =~ "config-bucket"
@@ -371,8 +377,6 @@ defmodule Micelio.Storage.S3Test do
       end)
 
       assert {:ok, _} = S3.put("key", "content")
-
-      System.delete_env("S3_BUCKET")
     end
   end
 

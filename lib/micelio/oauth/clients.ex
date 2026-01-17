@@ -31,8 +31,10 @@ defmodule Micelio.OAuth.Clients do
   end
 
   @impl Boruta.Openid.Clients
-  def create_client(_registration_params) do
-    {:error, "Client creation not supported via OpenID registration"}
+  def create_client(registration_params) do
+    with {:ok, device_client} <- Micelio.OAuth.register_dynamic_client(registration_params) do
+      {:ok, to_oauth_client(device_client)}
+    end
   end
 
   @impl Boruta.Oauth.Clients

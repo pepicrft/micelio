@@ -93,7 +93,7 @@ pub fn checkout(
             // Store in cache
             try blob_cache.put(hash_hex, fetched);
 
-            break :blk try arena_alloc.dupe(u8, fetched);
+            break :blk try allocator.dupe(u8, fetched);
         };
         defer allocator.free(content);
 
@@ -350,7 +350,8 @@ fn collectChanges(
         if (entry.kind != .file) continue;
         if (isMetadataPath(entry.path)) continue;
         if (known.contains(entry.path)) continue;
-        try changes.append(allocator, .{ .path = entry.path, .change_type = "added" });
+        const path_copy = try allocator.dupe(u8, entry.path);
+        try changes.append(allocator, .{ .path = path_copy, .change_type = "added" });
     }
 
     return changes.toOwnedSlice(allocator);

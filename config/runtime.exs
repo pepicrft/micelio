@@ -37,6 +37,10 @@ local_path_default =
 storage_config =
   case storage_backend do
     :local ->
+      if config_env() == :prod do
+        IO.warn("STORAGE_BACKEND is set to local in production; S3 is strongly recommended.")
+      end
+
       [
         backend: :local,
         local_path: local_path_default
@@ -48,8 +52,8 @@ storage_config =
         s3_bucket: System.fetch_env!("S3_BUCKET"),
         s3_region: System.get_env("S3_REGION") || "us-east-1",
         s3_endpoint: System.get_env("S3_ENDPOINT"),
-        s3_access_key_id: System.get_env("AWS_ACCESS_KEY_ID"),
-        s3_secret_access_key: System.get_env("AWS_SECRET_ACCESS_KEY")
+        s3_access_key_id: System.get_env("S3_ACCESS_KEY_ID"),
+        s3_secret_access_key: System.get_env("S3_SECRET_ACCESS_KEY")
       ]
   end
 
@@ -124,6 +128,9 @@ if config_env() == :prod do
     System.get_env("DATABASE_PATH") ||
       "/var/micelio/micelio.sqlite3"
 
+  database_dir = Path.dirname(database_path)
+  File.mkdir_p!(database_dir)
+
   # The secret key base is used to sign/encrypt cookies and other secrets.
   # A default value is used in config/dev.exs and config/test.exs but you
   # want to use a different value for prod and you most likely don't want
@@ -153,6 +160,8 @@ if config_env() == :prod do
     required_smtp_vars
     |> Enum.filter(fn {_, val} -> is_nil(val) end)
     |> Enum.map(fn {name, _} -> name end)
+
+  config :micelio, Micelio.GRPC, require_auth_token: true
 
   config :micelio, Micelio.Repo,
     database: database_path,

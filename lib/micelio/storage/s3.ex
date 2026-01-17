@@ -19,7 +19,7 @@ defmodule Micelio.Storage.S3 do
 
   Credentials are loaded in order:
   1. Explicit config keys (:s3_access_key_id, :s3_secret_access_key)
-  2. Environment variables (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
+  2. Environment variables (S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY)
   3. IAM instance profile/role (when running on AWS)
 
   ## S3 Operations
@@ -272,24 +272,27 @@ defmodule Micelio.Storage.S3 do
 
   defp validate_config do
     config = Application.get_env(:micelio, Micelio.Storage, [])
+    env = Keyword.get(config, :env, %{})
 
-    bucket = Keyword.get(config, :s3_bucket) || System.get_env("S3_BUCKET")
-    region = Keyword.get(config, :s3_region) || System.get_env("S3_REGION") || "us-east-1"
+    bucket = Keyword.get(config, :s3_bucket) || env_get(env, "S3_BUCKET")
+
+    region =
+      Keyword.get(config, :s3_region) || env_get(env, "S3_REGION") || "us-east-1"
 
     access_key =
-      Keyword.get(config, :s3_access_key_id) || System.get_env("AWS_ACCESS_KEY_ID")
+      Keyword.get(config, :s3_access_key_id) || env_get(env, "S3_ACCESS_KEY_ID")
 
     secret_key =
-      Keyword.get(config, :s3_secret_access_key) || System.get_env("AWS_SECRET_ACCESS_KEY")
+      Keyword.get(config, :s3_secret_access_key) || env_get(env, "S3_SECRET_ACCESS_KEY")
 
     endpoint =
       Keyword.get(config, :s3_endpoint) ||
-        System.get_env("S3_ENDPOINT") ||
+        env_get(env, "S3_ENDPOINT") ||
         "https://s3.#{region}.amazonaws.com"
 
     url_style =
       Keyword.get(config, :s3_url_style) ||
-        System.get_env("S3_URL_STYLE") ||
+        env_get(env, "S3_URL_STYLE") ||
         :virtual
 
     url_style =
@@ -321,6 +324,10 @@ defmodule Micelio.Storage.S3 do
            url_style: url_style
          }}
     end
+  end
+
+  defp env_get(env, key) when is_map(env) do
+    Map.get(env, key) || System.get_env(key)
   end
 
   defp build_url(config, key) do

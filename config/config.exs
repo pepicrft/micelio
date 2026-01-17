@@ -40,7 +40,8 @@ config :logger, :default_formatter,
 
 config :micelio, Micelio.GRPC,
   enabled: false,
-  port: 50_051
+  port: 50_051,
+  require_auth_token: false
 
 # Configure the mailer
 #

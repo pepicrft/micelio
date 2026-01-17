@@ -21,6 +21,10 @@ This guide covers the minimal production setup for Micelio with gRPC enabled.
 - `STORAGE_LOCAL_PATH` (defaults to `/var/micelio/storage` in prod)
 - `S3_BUCKET` (required for `s3`)
 - `S3_REGION` (default: `us-east-1`)
+- `S3_ACCESS_KEY_ID`
+- `S3_SECRET_ACCESS_KEY`
+
+**Production:** `STORAGE_BACKEND` must be `s3`.
 
 ### gRPC (TLS required)
 
@@ -39,3 +43,4 @@ This guide covers the minimal production setup for Micelio with gRPC enabled.
 
 - gRPC refuses to start without TLS configured.
 - SQLite is used for auth and metadata; object storage holds sessions and blobs.
+- In production, gRPC calls require a valid OAuth access token via `authorization: Bearer <token>`.

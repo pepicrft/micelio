@@ -136,7 +136,11 @@ defmodule Micelio.Hif.ConflictIndex do
       :ok
     else
       encoded = Binary.encode_path_index(paths)
-      Storage.put(path_index_key(project_id, position), encoded)
+
+      case Storage.put(path_index_key(project_id, position), encoded) do
+        {:ok, _} -> :ok
+        {:error, _} = error -> error
+      end
     end
   end
 

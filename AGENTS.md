@@ -109,6 +109,7 @@ Write code as if it will be maintained for 10 years by engineers who've never se
 - **Edge cases**: Empty inputs, nil/null, boundaries, unicode, large inputs
 - **Memory tests for Zig**: Ensure no leaks under various code paths
 - **Property-based tests** where applicable (StreamData for Elixir)
+- **Do not modify OS environment variables in tests**: use dependency injection via config/env maps instead
 
 ### Code Organization
 - **Consistent naming**: `verb_noun` for functions, `Noun` for modules

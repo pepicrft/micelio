@@ -45,19 +45,25 @@ defmodule Micelio.Sessions.ChangeStore do
           |> Enum.map(& &1.file_path)
           |> Conflict.build_filter()
 
-        _ =
-          Sessions.update_session(session, %{
-            metadata: Map.put(session.metadata || %{}, "change_filter", filter)
-          })
+        case Sessions.update_session(session, %{
+               metadata: Map.put(session.metadata || %{}, "change_filter", filter)
+             }) do
+          {:ok, updated_session} ->
+            updated_stats =
+              Enum.reduce(changes, stats, fn change, acc ->
+                acc
+                |> Map.update!(:total, &(&1 + 1))
+                |> increment_change_type(change.change_type)
+              end)
 
-        Enum.reduce(changes, stats, fn change, acc ->
-          acc
-          |> Map.update!(:total, &(&1 + 1))
-          |> increment_change_type(change.change_type)
-        end)
+            {:ok, updated_session, updated_stats}
 
-      {:error, _} ->
-        stats
+          {:error, _changeset} ->
+            {:error, :session_update_failed}
+        end
+
+      {:error, _changeset} ->
+        {:error, :change_insert_failed}
     end
   end
 

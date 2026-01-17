@@ -83,6 +83,77 @@ defmodule Micelio.OAuth do
   end
 
   @doc """
+  Registers a new OAuth client via dynamic registration.
+  """
+  def register_dynamic_client(attrs \\ %{}) when is_map(attrs) do
+    name = Map.get(attrs, :name) || Map.get(attrs, :client_name) || "Micelio Client"
+    redirect_uris = Map.get(attrs, :redirect_uris) || []
+
+    grant_types =
+      Map.get(attrs, :grant_types) ||
+        [
+          "urn:ietf:params:oauth:grant-type:device_code",
+          "refresh_token"
+        ]
+
+    token_endpoint_auth_methods =
+      Map.get(attrs, :token_endpoint_auth_methods) || ["client_secret_post"]
+
+    client_id = Ecto.UUID.generate()
+    client_secret = generate_token(48)
+
+    boruta_attrs = %{
+      id: client_id,
+      secret: client_secret,
+      name: name,
+      access_token_ttl: @access_token_ttl,
+      authorization_code_ttl: @authorization_code_ttl,
+      refresh_token_ttl: @refresh_token_ttl,
+      id_token_ttl: @id_token_ttl,
+      redirect_uris: redirect_uris,
+      scopes: [],
+      authorize_scope: false,
+      supported_grant_types: grant_types,
+      pkce: false,
+      public: false,
+      confidential: true
+    }
+
+    device_attrs = %{
+      client_id: client_id,
+      client_secret: client_secret,
+      name: name,
+      redirect_uris: redirect_uris,
+      grant_types: grant_types,
+      access_token_ttl: @access_token_ttl,
+      authorization_code_ttl: @authorization_code_ttl,
+      refresh_token_ttl: @refresh_token_ttl,
+      id_token_ttl: @id_token_ttl,
+      pkce: false,
+      public_refresh_token: true,
+      public_revoke: true,
+      confidential: true,
+      token_endpoint_auth_methods: token_endpoint_auth_methods,
+      token_endpoint_jwt_auth_alg: Map.get(attrs, :token_endpoint_jwt_auth_alg),
+      jwt_public_key: Map.get(attrs, :jwt_public_key),
+      private_key: Map.get(attrs, :private_key),
+      enforce_dpop: false
+    }
+
+    Multi.new()
+    |> Multi.insert(:boruta_client, BorutaClient.changeset(%BorutaClient{}, boruta_attrs))
+    |> Multi.insert(
+      :device_client,
+      DeviceClient.registration_changeset(%DeviceClient{}, device_attrs)
+    )
+    |> Repo.transaction()
+    |> case do
+      {:ok, %{device_client: device_client}} -> {:ok, device_client}
+      {:error, _step, changeset, _} -> {:error, changeset}
+    end
+  end
+
+  @doc """
   Gets a device client by client_id.
   """
   def get_device_client(client_id) do

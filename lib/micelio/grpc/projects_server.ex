@@ -136,9 +136,13 @@ defmodule Micelio.GRPC.Projects.V1.ProjectService.Server do
   end
 
   defp fetch_user(user_id, stream) do
-    case empty_to_nil(user_id) do
-      nil -> fetch_user_from_token(stream)
-      value -> fetch_user_by_id(value)
+    if require_auth_token?() do
+      fetch_user_from_token(user_id, stream)
+    else
+      case empty_to_nil(user_id) do
+        nil -> fetch_user_from_token(user_id, stream)
+        value -> fetch_user_by_id(value)
+      end
     end
   end
 
@@ -149,11 +153,15 @@ defmodule Micelio.GRPC.Projects.V1.ProjectService.Server do
     end
   end
 
-  defp fetch_user_from_token(stream) do
+  defp fetch_user_from_token(user_id, stream) do
     with {:ok, token} <- fetch_bearer_token(stream),
          %Boruta.Oauth.Token{} = access_token <- AccessTokens.get_by(value: token),
          user when not is_nil(user) <- Accounts.get_user(access_token.sub) do
-      {:ok, user}
+      case empty_to_nil(user_id) do
+        nil -> {:ok, user}
+        value when value == user.id -> {:ok, user}
+        _ -> {:error, unauthenticated_status("User does not match access token.")}
+      end
     else
       _ -> {:error, unauthenticated_status("User is required.")}
     end
@@ -176,6 +184,11 @@ defmodule Micelio.GRPC.Projects.V1.ProjectService.Server do
 
   defp require_field(_value, field_name),
     do: {:error, invalid_status("#{field_name} is required.")}
+
+  defp require_auth_token? do
+    config = Application.get_env(:micelio, Micelio.GRPC, [])
+    Keyword.get(config, :require_auth_token, false)
+  end
 
   defp empty_to_nil(value) when is_binary(value) do
     trimmed = String.trim(value)

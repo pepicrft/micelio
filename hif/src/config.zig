@@ -273,6 +273,11 @@ pub const Config = struct {
                 const server_config = ServerConfig{
                     .grpc_url = if (entry.value_ptr.grpc_url) |u| try self.allocator.dupe(u8, u) else null,
                     .web_url = if (entry.value_ptr.web_url) |u| try self.allocator.dupe(u8, u) else null,
+                    .client_id = if (entry.value_ptr.client_id) |u| try self.allocator.dupe(u8, u) else null,
+                    .client_secret = if (entry.value_ptr.client_secret) |u|
+                        try self.allocator.dupe(u8, u)
+                    else
+                        null,
                 };
                 try self.servers.put(owned_name, server_config);
             }
@@ -316,15 +321,29 @@ pub const Config = struct {
             first_server = false;
 
             try writer.print("    \"{s}\": {{\n", .{entry.key_ptr.*});
+            var wrote = false;
+
             if (entry.value_ptr.grpc_url) |url| {
                 try writer.print("      \"grpc_url\": \"{s}\"", .{url});
+                wrote = true;
             }
             if (entry.value_ptr.web_url) |url| {
-                if (entry.value_ptr.grpc_url != null) try writer.writeAll(",\n") else try writer.writeAll("      ");
-                try writer.print("      \"web_url\": \"{s}\"\n", .{url});
-            } else {
-                try writer.writeAll("\n");
+                if (wrote) try writer.writeAll(",\n") else try writer.writeAll("      ");
+                try writer.print("      \"web_url\": \"{s}\"", .{url});
+                wrote = true;
             }
+            if (entry.value_ptr.client_id) |client_id| {
+                if (wrote) try writer.writeAll(",\n") else try writer.writeAll("      ");
+                try writer.print("      \"client_id\": \"{s}\"", .{client_id});
+                wrote = true;
+            }
+            if (entry.value_ptr.client_secret) |client_secret| {
+                if (wrote) try writer.writeAll(",\n") else try writer.writeAll("      ");
+                try writer.print("      \"client_secret\": \"{s}\"", .{client_secret});
+                wrote = true;
+            }
+
+            try writer.writeAll("\n");
             try writer.writeAll("    }");
         }
         try writer.writeAll("\n  },\n");
@@ -355,17 +374,23 @@ pub const Config = struct {
 pub const ServerConfig = struct {
     grpc_url: ?[]const u8 = null,
     web_url: ?[]const u8 = null,
+    client_id: ?[]const u8 = null,
+    client_secret: ?[]const u8 = null,
 
     pub fn clone(self: ServerConfig, allocator: std.mem.Allocator) !ServerConfig {
         return .{
             .grpc_url = if (self.grpc_url) |u| try allocator.dupe(u8, u) else null,
             .web_url = if (self.web_url) |u| try allocator.dupe(u8, u) else null,
+            .client_id = if (self.client_id) |u| try allocator.dupe(u8, u) else null,
+            .client_secret = if (self.client_secret) |u| try allocator.dupe(u8, u) else null,
         };
     }
 
     pub fn deinit(self: ServerConfig, allocator: std.mem.Allocator) void {
         if (self.grpc_url) |u| allocator.free(u);
         if (self.web_url) |u| allocator.free(u);
+        if (self.client_id) |u| allocator.free(u);
+        if (self.client_secret) |u| allocator.free(u);
     }
 };
 
@@ -392,6 +417,8 @@ const ConfigJson = struct {
 const ServerConfigJson = struct {
     grpc_url: ?[]const u8 = null,
     web_url: ?[]const u8 = null,
+    client_id: ?[]const u8 = null,
+    client_secret: ?[]const u8 = null,
 };
 
 const PreferencesJson = struct {

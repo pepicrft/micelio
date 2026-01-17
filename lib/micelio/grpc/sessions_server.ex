@@ -78,31 +78,48 @@ defmodule Micelio.GRPC.Sessions.V1.SessionService.Server do
           decisions: map_decisions(request.decisions, session.decisions)
         })
 
-      _ =
+      session_for_landing =
         if Enum.empty?(request.files) do
-          %{total: 0, added: 0, modified: 0, deleted: 0}
+          updated_session
         else
-          ChangeStore.store_session_changes(updated_session, file_change_payloads(request.files))
+          case ChangeStore.store_session_changes(
+                 updated_session,
+                 file_change_payloads(request.files)
+               ) do
+            {:ok, session_with_filter, _stats} ->
+              session_with_filter
+
+            {:error, reason} ->
+              {:error, invalid_status("Failed to store session changes: #{inspect(reason)}")}
+          end
         end
 
-      case Landing.land_session(updated_session) do
-        {:ok, landing} ->
-          {:ok, landed_session} =
-            Sessions.land_session(updated_session, %{
-              landed_at: landing.landed_at,
-              metadata:
-                Map.put(updated_session.metadata || %{}, "landing_position", landing.position)
-            })
+      case session_for_landing do
+        {:error, _} = error ->
+          error
 
-          %SessionResponse{
-            session: session_to_proto(landed_session, project.organization, project)
-          }
+        %Session{} ->
+          case Landing.land_session(session_for_landing) do
+            {:ok, landing} ->
+              {:ok, landed_session} =
+                Sessions.land_session(session_for_landing, %{
+                  landed_at: landing.landed_at,
+                  metadata:
+                    session_for_landing.metadata
+                    |> normalize_metadata()
+                    |> Map.put("landing_position", landing.position)
+                })
 
-        {:error, {:conflicts, paths}} ->
-          {:error, conflict_status("Conflicts detected: #{Enum.join(paths, ", ")}")}
+              %SessionResponse{
+                session: session_to_proto(landed_session, project.organization, project)
+              }
 
-        {:error, reason} ->
-          {:error, invalid_status("Landing failed: #{inspect(reason)}")}
+            {:error, {:conflicts, paths}} ->
+              {:error, conflict_status("Conflicts detected: #{Enum.join(paths, ", ")}")}
+
+            {:error, reason} ->
+              {:error, invalid_status("Landing failed: #{inspect(reason)}")}
+          end
       end
     else
       nil -> {:error, not_found_status("Session not found.")}
@@ -158,6 +175,9 @@ defmodule Micelio.GRPC.Sessions.V1.SessionService.Server do
       {:error, status} -> {:error, status}
     end
   end
+
+  defp normalize_metadata(%{} = metadata), do: metadata
+  defp normalize_metadata(_), do: %{}
 
   defp filter_sessions_by_path(sessions, project_id, path) do
     alias Micelio.Hif.ConflictIndex
@@ -288,9 +308,13 @@ defmodule Micelio.GRPC.Sessions.V1.SessionService.Server do
   defp head_key(project_id), do: "projects/#{project_id}/head"
 
   defp fetch_user(user_id, stream) do
-    case empty_to_nil(user_id) do
-      nil -> fetch_user_from_token(stream)
-      value -> fetch_user_by_id(value)
+    if require_auth_token?() do
+      fetch_user_from_token(user_id, stream)
+    else
+      case empty_to_nil(user_id) do
+        nil -> fetch_user_from_token(user_id, stream)
+        value -> fetch_user_by_id(value)
+      end
     end
   end
 
@@ -301,11 +325,15 @@ defmodule Micelio.GRPC.Sessions.V1.SessionService.Server do
     end
   end
 
-  defp fetch_user_from_token(stream) do
+  defp fetch_user_from_token(user_id, stream) do
     with {:ok, token} <- fetch_bearer_token(stream),
          %Boruta.Oauth.Token{} = access_token <- AccessTokens.get_by(value: token),
          user when not is_nil(user) <- Accounts.get_user(access_token.sub) do
-      {:ok, user}
+      case empty_to_nil(user_id) do
+        nil -> {:ok, user}
+        value when value == user.id -> {:ok, user}
+        _ -> {:error, unauthenticated_status("User does not match access token.")}
+      end
     else
       _ -> {:error, unauthenticated_status("User is required.")}
     end
@@ -328,6 +356,11 @@ defmodule Micelio.GRPC.Sessions.V1.SessionService.Server do
 
   defp require_field(_value, field_name),
     do: {:error, invalid_status("#{field_name} is required.")}
+
+  defp require_auth_token? do
+    config = Application.get_env(:micelio, Micelio.GRPC, [])
+    Keyword.get(config, :require_auth_token, false)
+  end
 
   defp empty_to_nil(value) when is_binary(value) do
     trimmed = String.trim(value)

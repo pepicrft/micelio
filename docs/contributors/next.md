@@ -129,6 +129,7 @@ These are exploratory ideas for future consideration:
 - PR stacking (like GitHub is working on)
 - Store issues/PRs in the repository itself for portability
 - GitHub Pages-like static site hosting
+- Design tags/releases as first-class hif objects (session-linked, immutable)
 
 ### Security
 - Sanitize fetch account & repository queries to prevent injection
