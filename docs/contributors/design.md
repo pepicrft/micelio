@@ -693,4 +693,51 @@ This daemon architecture provides the "narrow waist" that makes hif universally 
 
 ---
 
-*Built by Ruby and contributors. GPL-2.0 licensed.*
+## Session Implementation Details
+
+### Schema Design
+
+**Session** - The main session record contains:
+- `goal`: What the session aims to accomplish
+- `conversation`: Array of messages (agent/human dialog)
+- `decisions`: Array of decision records with reasoning
+- `metadata`: Additional context
+- `status`: active, landed, or abandoned
+- `changes`: Has-many relationship to SessionChange
+
+**SessionChange** - Individual file modifications within a session:
+- `file_path`: The file that changed
+- `change_type`: "added", "modified", or "deleted"
+- `content`: Inline content for small files (< 100KB)
+- `storage_key`: S3/local storage reference for large files
+- `metadata`: File-specific metadata (size, lines changed, etc.)
+
+### Storage Strategy
+
+Files are stored based on size:
+- **Small files (< 100KB)**: Stored inline in `content` field
+- **Large files (>= 100KB)**: Stored in object storage, referenced by `storage_key`
+
+Storage path pattern: `sessions/{session_id}/changes/{file_path}`
+
+### Session Lifecycle (gRPC + CLI)
+
+- Start session: `SessionService.StartSession`
+- Land session: `SessionService.LandSession`
+- CLI flow:
+  - `hif session start <organization> <project> <goal>`
+  - `hif session land`
+
+### Session Changes vs Git Commits
+
+| Git Commits | Session Changes |
+|-------------|-----------------|
+| Snapshot-based | Context-aware |
+| What changed | What changed + why |
+| Manual commit messages | Integrated conversation |
+| Lost iterations | Preserved reasoning |
+| Linear history | Session-based grouping |
+
+---
+
+*Built by Ruby and contributors. Apache-2.0 licensed.*

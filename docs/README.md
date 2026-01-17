@@ -1,13 +1,16 @@
 # Documentation
 
-This directory contains the documentation for users, contributors, and hosters of Micelio.
+This directory contains documentation for users, contributors, and hosters of Micelio.
 
 ## Hosters
 
-We consider _hosters_ people interested in running their own instance of Micelio. The documentation for them includes all the information that you need to spin up a Micelio instance and keep it up to date.
+For people interested in running their own Micelio instance:
 
 - [Deployment](./hosters/deployment.md)
 
-## contributors
+## Contributors
 
-## Users
+For people interested in contributing to Micelio:
+
+- [Design](./contributors/design.md) - Architecture and vision
+- [What's Next](./contributors/next.md) - Roadmap and upcoming work

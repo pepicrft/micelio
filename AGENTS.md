@@ -2,7 +2,44 @@ This is a monorepo containing:
 - **Forge** (Elixir/Phoenix) - The web application and gRPC server
 - **hif** (Zig) - The `hif` command-line interface
 
-See [NEXT.md](NEXT.md) for upcoming features and improvements.
+See [docs/contributors/next.md](docs/contributors/next.md) for upcoming features and [docs/contributors/design.md](docs/contributors/design.md) for architecture.
+
+---
+
+## Quick Reference
+
+### Build
+```bash
+# Elixir (server)
+mix compile --warnings-as-errors
+
+# Zig (hif CLI)
+cd hif && zig build
+```
+
+### Test
+```bash
+# Elixir
+mix test
+
+# Zig
+cd hif && zig build test
+```
+
+### Format
+```bash
+# Elixir
+mix format --check-formatted
+
+# Zig
+cd hif && zig fmt --check src/
+```
+
+### Pre-commit validation
+```bash
+mix compile --warnings-as-errors && mix format --check-formatted && mix test
+cd hif && zig build && zig fmt --check src/ && zig build test
+```
 
 ---
 
