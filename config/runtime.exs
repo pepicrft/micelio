@@ -52,8 +52,10 @@ storage_config =
         s3_bucket: System.fetch_env!("S3_BUCKET"),
         s3_region: System.get_env("S3_REGION") || "us-east-1",
         s3_endpoint: System.get_env("S3_ENDPOINT"),
-        s3_access_key_id: System.get_env("S3_ACCESS_KEY_ID"),
-        s3_secret_access_key: System.get_env("S3_SECRET_ACCESS_KEY")
+        s3_access_key_id:
+          System.get_env("S3_ACCESS_KEY_ID") || System.get_env("AWS_ACCESS_KEY_ID"),
+        s3_secret_access_key:
+          System.get_env("S3_SECRET_ACCESS_KEY") || System.get_env("AWS_SECRET_ACCESS_KEY")
       ]
   end
 

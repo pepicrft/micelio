@@ -25,23 +25,64 @@ defmodule Micelio.Accounts.AuthEmail do
     <html>
     <head>
       <meta charset="utf-8">
+      <meta name="color-scheme" content="light dark">
+      <meta name="supported-color-schemes" content="light dark">
       <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .button { display: inline-block; background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
-        .footer { margin-top: 30px; font-size: 12px; color: #666; }
+        :root {
+          color-scheme: light dark;
+        }
+        body {
+          font-family: system-ui, -apple-system, sans-serif;
+          font-size: 16px;
+          line-height: 1.5;
+          color: #000000;
+          background-color: #ffffff;
+          margin: 0;
+          padding: 0;
+        }
+        @media (prefers-color-scheme: dark) {
+          body {
+            color: #f5f5f5;
+            background-color: #0b0d10;
+          }
+          .link { color: #f5f5f5; }
+          .muted { color: #8a8a8a; }
+          .mono { color: #b0b0b0; }
+        }
+        .container {
+          max-width: 600px;
+          margin: 0 auto;
+          padding: 32px 16px;
+        }
+        .title {
+          font-size: 16px;
+          font-weight: 600;
+          margin: 0 0 16px 0;
+        }
+        p {
+          margin: 0 0 16px 0;
+        }
+        .link {
+          color: #000000;
+        }
+        .mono {
+          font-family: ui-monospace, monospace;
+          font-size: 16px;
+          color: #666666;
+          word-break: break-all;
+        }
+        .muted {
+          color: #999999;
+          margin-top: 32px;
+        }
       </style>
     </head>
     <body>
       <div class="container">
-        <h1>Sign in to Micelio</h1>
-        <p>Click the button below to sign in to your account. This link will expire in 15 minutes.</p>
-        <a href="#{url}" class="button">Sign in to Micelio</a>
-        <p>Or copy and paste this link into your browser:</p>
-        <p><code>#{url}</code></p>
-        <div class="footer">
-          <p>If you didn't request this email, you can safely ignore it.</p>
-        </div>
+        <p class="title">Sign in to Micelio</p>
+        <p>Click the link below to sign in. This link expires in 15 minutes.</p>
+        <p><a href="#{url}" class="link">#{url}</a></p>
+        <p class="muted">If you did not request this email, you can ignore it.</p>
       </div>
     </body>
     </html>

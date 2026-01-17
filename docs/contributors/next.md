@@ -19,20 +19,20 @@ This document tracks upcoming work, implementation status, and ideas for Micelio
 
 The forge uses stateless agents with S3 as the source of truth, inspired by Turbopuffer, WarpStream, and Calvin. See [design.md](design.md) for full architecture details.
 
-#### Phase 1: Auth Database (SQLite + Litestream)
+#### Phase 1: Auth Database (SQLite)
 
-Store users, tokens, and permissions in SQLite, replicated to S3 via Litestream.
+Store users, tokens, and permissions in SQLite.
 
-- [ ] Add `ecto_sqlite3` dependency and configure SQLite
-- [ ] Set up Litestream for S3 replication
-- [ ] Implement `Micelio.Hif.Auth` context
+- [x] Add `ecto_sqlite3` dependency and configure SQLite
+- [x] Implement authentication (OAuth with Boruta, device auth, gRPC auth)
+- [x] Implement authorization contexts (`Micelio.Authorization`)
 
 #### Phase 2: S3 Storage Layer (Binary)
 
 Read/write hif data to S3 using binary formats.
 
 - [x] Storage abstraction with local + S3 backends
-- [ ] Implement `Micelio.Hif.Binary` serialization
+- [x] Implement `Micelio.Hif.Binary` serialization (head, landing, session summary, path index, rollup checkpoint)
 
 #### Phase 3: Session CRUD
 
@@ -43,19 +43,15 @@ Read/write hif data to S3 using binary formats.
 
 Landing via S3 conditional writes, no coordinator process.
 
-- [ ] Coordinator-free landing with conditional writes
-- [ ] Bloom filter rollups for O(log n) conflict detection
+- [x] Coordinator-free landing with conditional writes (`put_if_match`, `put_if_none_match`)
+- [x] Bloom filter rollups for O(log n) conflict detection (3 levels: 100, 10K, 1M)
 
 #### Phase 5: API Endpoints
 
 - [x] gRPC API (projects service)
-- [ ] Session gRPC API
+- [x] Session gRPC API (start, land, get, list with path filtering)
 
-#### Phase 6: libhif-core Integration
-
-Use Zig NIFs for binary serialization and bloom filters.
-
-#### Phase 7: Tiered Caching
+#### Phase 6: Tiered Caching
 
 Fast reads via multi-tier caching (RAM -> SSD -> CDN -> S3).
 
