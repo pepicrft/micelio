@@ -195,11 +195,11 @@ pub fn main() !void {
                 return error.NoGrpcUrl;
             };
 
-            var owned_client_id: ?[]u8 = null;
-            var owned_client_secret: ?[]u8 = null;
+            var owned_client_id: ?[]const u8 = null;
+            var owned_client_secret: ?[]const u8 = null;
             defer {
-                if (owned_client_id) |id| allocator.free(id);
-                if (owned_client_secret) |secret| allocator.free(secret);
+                if (owned_client_id) |id| allocator.free(@constCast(id));
+                if (owned_client_secret) |secret| allocator.free(@constCast(secret));
             }
 
             var credentials: ?auth.ClientCredentials = null;
