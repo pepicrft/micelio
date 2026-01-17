@@ -75,44 +75,11 @@ jobs:
 
       - name: Deploy with Kamal
         run: |
-          # Export secrets from fnox as environment variables for Kamal
-          export KAMAL_REGISTRY_PASSWORD=$(fnox get KAMAL_REGISTRY_PASSWORD)
-          export SECRET_KEY_BASE=$(fnox get SECRET_KEY_BASE)
-          export POSTGRES_PASSWORD=$(fnox get POSTGRES_PASSWORD)
-          export SMTP_HOST=$(fnox get SMTP_HOST)
-          export SMTP_USERNAME=$(fnox get SMTP_USERNAME)
-          export SMTP_PASSWORD=$(fnox get SMTP_PASSWORD)
-          export SMTP_PORT=$(fnox get SMTP_PORT)
-          export SMTP_FROM_EMAIL=$(fnox get SMTP_FROM_EMAIL)
-          export SMTP_FROM_NAME=$(fnox get SMTP_FROM_NAME)
-          export S3_BUCKET=$(fnox get S3_BUCKET)
-          export S3_ENDPOINT=$(fnox get S3_ENDPOINT)
-          export S3_REGION=$(fnox get S3_REGION)
-          export AWS_ACCESS_KEY_ID=$(fnox get AWS_ACCESS_KEY_ID)
-          export AWS_SECRET_ACCESS_KEY=$(fnox get AWS_SECRET_ACCESS_KEY)
-          export TLS_CERT_PEM=$(fnox get TLS_CERT_PEM)
-          export TLS_KEY_PEM=$(fnox get TLS_KEY_PEM)
-
-          # Create .kamal/secrets file locally with all required secrets
+          # Export secrets from fnox and create .kamal/secrets for Kamal
+          eval "$(fnox export -f env)"
           mkdir -p .kamal
-          cat > .kamal/secrets << EOF
-          KAMAL_REGISTRY_PASSWORD=$KAMAL_REGISTRY_PASSWORD
-          SECRET_KEY_BASE=$SECRET_KEY_BASE
-          POSTGRES_PASSWORD=$POSTGRES_PASSWORD
-          SMTP_HOST=$SMTP_HOST
-          SMTP_USERNAME=$SMTP_USERNAME
-          SMTP_PASSWORD=$SMTP_PASSWORD
-          SMTP_PORT=$SMTP_PORT
-          SMTP_FROM_EMAIL=$SMTP_FROM_EMAIL
-          SMTP_FROM_NAME=$SMTP_FROM_NAME
-          S3_BUCKET=$S3_BUCKET
-          S3_ENDPOINT=$S3_ENDPOINT
-          S3_REGION=$S3_REGION
-          AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
-          AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
-          TLS_CERT_PEM=$TLS_CERT_PEM
-          TLS_KEY_PEM=$TLS_KEY_PEM
-          EOF
+          fnox export -f env -o .kamal/secrets
+          sed -i 's/^export //' .kamal/secrets
 
           # Copy secrets to remote server
           scp .kamal/secrets root@91.98.64.68:.kamal/secrets
