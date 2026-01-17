@@ -87,7 +87,7 @@ defmodule MicelioWeb.Browser.AuthController do
         conn
         |> put_session(:user_id, user.id)
         |> put_flash(:info, "Welcome back, #{user.account.handle}!")
-        |> redirect(to: ~p"/")
+        |> redirect(to: login_redirect_path(conn))
 
       {:error, :invalid_token} ->
         conn
@@ -122,6 +122,14 @@ defmodule MicelioWeb.Browser.AuthController do
 
       true ->
         details
+    end
+  end
+
+  defp login_redirect_path(conn) do
+    if get_session(conn, :device_user_code) do
+      ~p"/device/auth"
+    else
+      ~p"/"
     end
   end
 end
