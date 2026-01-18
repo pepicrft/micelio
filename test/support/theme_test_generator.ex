@@ -1,5 +1,6 @@
 defmodule Micelio.Theme.TestGenerator do
   @moduledoc false
+  use Agent
 
   def start_link(opts) do
     name = Keyword.fetch!(opts, :name)

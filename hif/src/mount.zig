@@ -214,7 +214,10 @@ fn unmountWithStore(
     const existing = try store.read(resolved_mount);
     defer if (existing) |state| state.deinit(allocator);
 
-    try ops.run_umount(allocator, resolved_mount);
+    var umount_err: ?anyerror = null;
+    ops.run_umount(allocator, resolved_mount) catch |err| {
+        umount_err = err;
+    };
 
     if (existing) |state| {
         const alive = try ops.is_process_alive(state.pid);
@@ -235,6 +238,10 @@ fn unmountWithStore(
         if (!alive_after) {
             try store.remove(resolved_mount);
         }
+    }
+
+    if (umount_err) |err| {
+        return err;
     }
 
     std.debug.print("Unmounted {s}\n", .{resolved_mount});
@@ -473,6 +480,11 @@ fn fakeRunUmount(allocator: std.mem.Allocator, mount_path: []const u8) !void {
     }
 }
 
+fn fakeRunUmountFail(allocator: std.mem.Allocator, mount_path: []const u8) !void {
+    try fakeRunUmount(allocator, mount_path);
+    return error.UnmountFailed;
+}
+
 fn fakeIsProcessAlive(pid: u32) !bool {
     _ = pid;
     if (fake_unmount_state) |state| {
@@ -636,4 +648,89 @@ test "unmount without state only runs umount" {
 
     try std.testing.expectEqual(@as(usize, 1), state.count);
     try std.testing.expectEqualStrings("umount", state.calls[0]);
+}
+
+test "unmount clears state when process already stopped" {
+    const allocator = std.testing.allocator;
+    var temp = std.testing.tmpDir(.{});
+    defer temp.cleanup();
+
+    const base_dir = try temp.dir.realpathAlloc(allocator, ".");
+    defer allocator.free(base_dir);
+
+    var store = try MountStateStore.initWithBaseDir(allocator, base_dir);
+    defer store.deinit();
+
+    const mount_path = try std.fs.path.join(allocator, &.{ base_dir, "mnt" });
+    defer allocator.free(mount_path);
+
+    try store.write(mount_path, 4242, 20490);
+
+    var state = FakeUnmountState{
+        .calls = undefined,
+        .count = 0,
+        .alive = false,
+    };
+    fake_unmount_state = &state;
+    defer fake_unmount_state = null;
+
+    const ops = UnmountOps{
+        .run_umount = fakeRunUmount,
+        .is_process_alive = fakeIsProcessAlive,
+        .stop_process = fakeStopProcess,
+    };
+
+    try unmountWithStore(allocator, mount_path, &store, ops);
+
+    try std.testing.expectEqual(@as(usize, 2), state.count);
+    try std.testing.expectEqualStrings("umount", state.calls[0]);
+    try std.testing.expectEqualStrings("alive", state.calls[1]);
+
+    const missing = try store.read(mount_path);
+    try std.testing.expect(missing == null);
+}
+
+test "unmount stops process even when umount fails" {
+    const allocator = std.testing.allocator;
+    var temp = std.testing.tmpDir(.{});
+    defer temp.cleanup();
+
+    const base_dir = try temp.dir.realpathAlloc(allocator, ".");
+    defer allocator.free(base_dir);
+
+    var store = try MountStateStore.initWithBaseDir(allocator, base_dir);
+    defer store.deinit();
+
+    const mount_path = try std.fs.path.join(allocator, &.{ base_dir, "mnt" });
+    defer allocator.free(mount_path);
+
+    try store.write(mount_path, 4242, 20490);
+
+    var state = FakeUnmountState{
+        .calls = undefined,
+        .count = 0,
+        .alive = true,
+    };
+    fake_unmount_state = &state;
+    defer fake_unmount_state = null;
+
+    const ops = UnmountOps{
+        .run_umount = fakeRunUmountFail,
+        .is_process_alive = fakeIsProcessAlive,
+        .stop_process = fakeStopProcess,
+    };
+
+    try std.testing.expectError(
+        error.UnmountFailed,
+        unmountWithStore(allocator, mount_path, &store, ops),
+    );
+
+    try std.testing.expectEqual(@as(usize, 4), state.count);
+    try std.testing.expectEqualStrings("umount", state.calls[0]);
+    try std.testing.expectEqualStrings("alive", state.calls[1]);
+    try std.testing.expectEqualStrings("stop", state.calls[2]);
+    try std.testing.expectEqualStrings("alive", state.calls[3]);
+
+    const missing = try store.read(mount_path);
+    try std.testing.expect(missing == null);
 }
