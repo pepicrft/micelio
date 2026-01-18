@@ -32,16 +32,20 @@ Micelio is a minimalist, open-source git forge built with Elixir/Phoenix, design
   - Use content hash for cache invalidation
   - Support cache invalidation on X, LinkedIn, and other platforms
 - [x] Create public agent LiveView to watch agent progress on projects
-- [ ] Implement daily theme generation using LLM API
+- [x] Implement daily theme generation using LLM API
   - Generate new theme personality each day and apply it
   - Persist generated themes in S3
   - Cache in memory for performance
   - Add footer explaining the daily personality design
 - [x] Add JSON-LD structured data for SEO (Schema.org SoftwareSourceCode)
-- [ ] Create embeddable badges for projects (Shields.io-style for Micelio)
-- [ ] Implement ActivityPub federation for projects and profiles
+- [x] Create embeddable badges for projects (Shields.io-style for Micelio)
+- [x] Implement ActivityPub federation for projects and profiles
 - [ ] Add GitHub OAuth authentication
+  - Store as AuthIdentity linked to user by provider_user_id (github_id), NOT by email
+  - AuthIdentity: user_id + provider + provider_user_id
 - [ ] Add GitLab OAuth authentication
+  - Store as AuthIdentity linked to user by provider_user_id (gitlab_id), NOT by email
+  - AuthIdentity: user_id + provider + provider_user_id
 - [ ] Add Passkey (WebAuthn) authentication support
 
 ### hif (Zig CLI)
