@@ -140,6 +140,16 @@ pub fn build(b: *std.Build) void {
     });
     test_step.dependOn(&b.addRunArtifact(config_tests).step);
 
+    // Session module tests
+    const session_tests = b.addTest(.{
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("src/session.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
+    });
+    test_step.dependOn(&b.addRunArtifact(session_tests).step);
+
     // NFS module tests
     const nfs_tests = b.addTest(.{
         .root_module = b.createModule(.{

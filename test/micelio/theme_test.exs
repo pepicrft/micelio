@@ -1,8 +1,6 @@
 defmodule Micelio.ThemeTest do
   use ExUnit.Case, async: true
 
-  import Jason.Encode, only: [encode!: 1]
-
   setup do
     unique = System.unique_integer([:positive])
     storage_state = {:global, {:theme_storage, unique}}

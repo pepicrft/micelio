@@ -59,6 +59,54 @@ fn ensureHifDirectory() !void {
     };
 }
 
+fn ensureOverlayDirectory() !void {
+    try ensureHifDirectory();
+    std.fs.cwd().makePath(overlay_root) catch |err| {
+        if (err != error.PathAlreadyExists) return err;
+    };
+}
+
+fn clearOverlayDirectory(allocator: std.mem.Allocator) !void {
+    const path = try overlayRootPath(allocator);
+    defer allocator.free(path);
+    std.fs.cwd().deleteTree(path) catch |err| switch (err) {
+        error.FileNotFound => return,
+        else => return err,
+    };
+}
+
+fn overlayRootPath(allocator: std.mem.Allocator) ![]u8 {
+    return try allocator.dupe(u8, overlay_root);
+}
+
+fn overlayFilePath(allocator: std.mem.Allocator, path: []const u8) ![]u8 {
+    if (!isSafePath(path)) return error.InvalidPath;
+    return std.fs.path.join(allocator, &[_][]const u8{ overlay_root, path });
+}
+
+fn writeOverlayFile(allocator: std.mem.Allocator, path: []const u8, content: []const u8) !void {
+    try ensureOverlayDirectory();
+    const overlay_path = try overlayFilePath(allocator, path);
+    defer allocator.free(overlay_path);
+
+    try ensureParentDir(overlay_path);
+    const file = try std.fs.cwd().createFile(overlay_path, .{ .truncate = true });
+    defer file.close();
+    try file.writeAll(content);
+}
+
+fn readOverlayFile(allocator: std.mem.Allocator, path: []const u8, max_bytes: usize) !?[]u8 {
+    const overlay_path = try overlayFilePath(allocator, path);
+    defer allocator.free(overlay_path);
+
+    const file = std.fs.cwd().openFile(overlay_path, .{}) catch |err| switch (err) {
+        error.FileNotFound => return null,
+        else => return err,
+    };
+    defer file.close();
+    return try file.readToEndAlloc(allocator, max_bytes);
+}
+
 pub fn start(allocator: std.mem.Allocator, organization: []const u8, project: []const u8, goal: []const u8) !void {
     var arena = std.heap.ArenaAllocator.init(allocator);
     defer arena.deinit();
@@ -90,6 +138,9 @@ pub fn start(allocator: std.mem.Allocator, organization: []const u8, project: []
     defer arena_alloc.free(response.bytes);
 
     _ = try sessions_proto.decodeSessionResponse(arena_alloc, response.bytes);
+
+    try clearOverlayDirectory(arena_alloc);
+    try ensureOverlayDirectory();
 
     // Create bloom filter for path tracking (sized for ~1000 paths, 1% FP rate)
     var bloom = try bloom_mod.Bloom.init(arena_alloc, 1000, 0.01);
@@ -221,6 +272,11 @@ pub fn write(allocator: std.mem.Allocator, path: []const u8) !void {
     defer arena.deinit();
     const arena_alloc = arena.allocator();
 
+    if (!isSafePath(path)) {
+        std.debug.print("Error: Invalid path '{s}'.\n", .{path});
+        return error.InvalidPath;
+    }
+
     const session_path = try sessionStatePath(arena_alloc);
     const data = try xdg.readFileAlloc(arena_alloc, session_path, 1024 * 1024);
 
@@ -238,6 +294,8 @@ pub fn write(allocator: std.mem.Allocator, path: []const u8) !void {
     const file = try std.fs.cwd().createFile(path, .{ .truncate = true });
     defer file.close();
     try file.writeAll(content);
+
+    try writeOverlayFile(arena_alloc, path, content);
 
     const change = FileChange{
         .path = path,
@@ -302,6 +360,8 @@ pub fn land(allocator: std.mem.Allocator, server: []const u8) !void {
             const path_remove = try sessionStatePath(allocator);
             defer allocator.free(path_remove);
             std.fs.cwd().deleteFile(path_remove) catch {};
+
+            try clearOverlayDirectory(allocator);
         },
         .conflict => |data| {
             std.debug.print("Error: Conflicts detected with upstream changes.\n", .{});
@@ -346,7 +406,7 @@ pub fn landSession(allocator: std.mem.Allocator, server: []const u8) !LandResult
     const session = try std.json.parseFromSliceLeaky(SessionState, arena_alloc, data.?, .{ .ignore_unknown_fields = true });
 
     const endpoint = try grpc_endpoint.parseServer(arena_alloc, server);
-    const changes = try mapChanges(arena_alloc, session.files);
+    const changes = try mapChangesFromOverlay(arena_alloc, session.files);
     defer arena_alloc.free(changes);
     const request = try sessions_proto.encodeLandSessionRequest(arena_alloc, session.id, changes);
     defer arena_alloc.free(request);
@@ -403,6 +463,7 @@ pub fn abandon(allocator: std.mem.Allocator) !void {
         return err;
     };
 
+    try clearOverlayDirectory(allocator);
     std.debug.print("Session abandoned.\n", .{});
 }
 
@@ -415,13 +476,20 @@ fn generateSessionId(allocator: std.mem.Allocator) ![]u8 {
 }
 
 fn ensureParentDir(path: []const u8) !void {
-    var iter = std.mem.splitBackwardsScalar(u8, path, '/');
-    const filename = iter.next() orelse return;
-    _ = filename;
+    const parent = std.fs.path.dirname(path) orelse return;
+    try std.fs.cwd().makePath(parent);
+}
 
-    if (iter.next()) |dir| {
-        try std.fs.cwd().makePath(dir);
+fn isSafePath(path: []const u8) bool {
+    if (path.len == 0) return false;
+    if (std.fs.path.isAbsolute(path)) return false;
+
+    var it = std.mem.splitScalar(u8, path, '/');
+    while (it.next()) |segment| {
+        if (std.mem.eql(u8, segment, "..")) return false;
     }
+
+    return true;
 }
 
 fn upsertChange(allocator: std.mem.Allocator, existing: []FileChange, change: FileChange) ![]FileChange {
@@ -444,12 +512,21 @@ fn upsertChange(allocator: std.mem.Allocator, existing: []FileChange, change: Fi
     return updated.toOwnedSlice(allocator);
 }
 
-fn mapChanges(allocator: std.mem.Allocator, files: []FileChange) ![]sessions_proto.FileChange {
+fn mapChangesFromOverlay(allocator: std.mem.Allocator, files: []FileChange) ![]sessions_proto.FileChange {
     var mapped = try allocator.alloc(sessions_proto.FileChange, files.len);
     for (files, 0..) |file, idx| {
+        const content = if (std.mem.eql(u8, file.change_type, "deleted")) blk: {
+            break :blk &[_]u8{};
+        } else blk: {
+            if (try readOverlayFile(allocator, file.path, 50 * 1024 * 1024)) |overlay_content| {
+                break :blk overlay_content;
+            }
+            break :blk file.content;
+        };
+
         mapped[idx] = .{
             .path = file.path,
-            .content = file.content,
+            .content = content,
             .change_type = file.change_type,
         };
     }
@@ -532,4 +609,80 @@ pub fn resolve(allocator: std.mem.Allocator, server: []const u8, strategy: []con
     _ = strategy;
     std.debug.print("Conflict resolution is not yet implemented.\n", .{});
     std.debug.print("Available strategies: ours, theirs, interactive\n", .{});
+}
+
+test "session overlay writes and reads content" {
+    const allocator = std.testing.allocator;
+    const original_cwd = try std.process.getCwdAlloc(allocator);
+    defer allocator.free(original_cwd);
+
+    var temp = std.testing.tmpDir(.{});
+    defer temp.cleanup();
+    try temp.dir.setAsCwd();
+    defer {
+        var restore_dir = std.fs.openDirAbsolute(original_cwd, .{}) catch unreachable;
+        defer restore_dir.close();
+        restore_dir.setAsCwd() catch unreachable;
+    }
+
+    try ensureOverlayDirectory();
+    try writeOverlayFile(allocator, "src/main.zig", "hello");
+
+    const content = try readOverlayFile(allocator, "src/main.zig", 1024);
+    defer if (content) |data| allocator.free(data);
+    try std.testing.expect(content != null);
+    try std.testing.expectEqualStrings("hello", content.?);
+}
+
+test "session overlay falls back to session content when missing" {
+    const allocator = std.testing.allocator;
+    const original_cwd = try std.process.getCwdAlloc(allocator);
+    defer allocator.free(original_cwd);
+
+    var temp = std.testing.tmpDir(.{});
+    defer temp.cleanup();
+    try temp.dir.setAsCwd();
+    defer {
+        var restore_dir = std.fs.openDirAbsolute(original_cwd, .{}) catch unreachable;
+        defer restore_dir.close();
+        restore_dir.setAsCwd() catch unreachable;
+    }
+
+    var files = [_]FileChange{
+        .{ .path = "README.md", .content = "inline", .change_type = "modified" },
+    };
+
+    const mapped = try mapChangesFromOverlay(allocator, files[0..]);
+    defer allocator.free(mapped);
+    try std.testing.expectEqualStrings("inline", mapped[0].content);
+}
+
+test "session overlay prefers overlay content for landing" {
+    const allocator = std.testing.allocator;
+    const original_cwd = try std.process.getCwdAlloc(allocator);
+    defer allocator.free(original_cwd);
+
+    var temp = std.testing.tmpDir(.{});
+    defer temp.cleanup();
+    try temp.dir.setAsCwd();
+    defer {
+        var restore_dir = std.fs.openDirAbsolute(original_cwd, .{}) catch unreachable;
+        defer restore_dir.close();
+        restore_dir.setAsCwd() catch unreachable;
+    }
+
+    try ensureOverlayDirectory();
+    try writeOverlayFile(allocator, "notes.txt", "overlay");
+
+    var files = [_]FileChange{
+        .{ .path = "notes.txt", .content = "inline", .change_type = "modified" },
+    };
+
+    const mapped = try mapChangesFromOverlay(allocator, files[0..]);
+    defer {
+        allocator.free(mapped[0].content);
+        allocator.free(mapped);
+    }
+
+    try std.testing.expectEqualStrings("overlay", mapped[0].content);
 }

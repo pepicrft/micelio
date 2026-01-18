@@ -122,8 +122,8 @@ pub const VirtualFs = struct {
     }
 
     pub fn listDir(self: *VirtualFs, path: []const u8, allocator: std.mem.Allocator) !std.ArrayList(DirEntry) {
-        var entries = std.ArrayList(DirEntry).init(allocator);
-        errdefer entries.deinit();
+        var entries = std.ArrayList(DirEntry).empty;
+        errdefer entries.deinit(allocator);
         const prefix = try buildPrefix(allocator, path);
         defer allocator.free(prefix);
 
@@ -137,7 +137,7 @@ pub const VirtualFs = struct {
             if (remainder.len == 0) continue;
             if (std.mem.indexOfScalar(u8, remainder, '/')) |_| continue;
 
-            try entries.append(.{
+            try entries.append(allocator, .{
                 .name = remainder,
                 .path = key,
                 .kind = entry.value_ptr.kind,
@@ -164,19 +164,19 @@ pub const NfsServer = struct {
 
     pub fn handleCall(self: *NfsServer, input: []const u8) ![]u8 {
         var reader = XdrReader.init(input);
-        const call = reader.readRpcCall() catch |err| {
-            return try self.buildRpcError(0, .garbage_args, err);
+        const call = reader.readRpcCall() catch {
+            return try self.buildRpcError(0, .garbage_args);
         };
 
         if (call.prog != NFS_PROGRAM) {
-            return try self.buildRpcError(call.xid, .prog_unavail, error.UnsupportedProgram);
+            return try self.buildRpcError(call.xid, .prog_unavail);
         }
         if (call.vers != NFS_VERSION) {
-            return try self.buildRpcError(call.xid, .prog_mismatch, error.UnsupportedVersion);
+            return try self.buildRpcError(call.xid, .prog_mismatch);
         }
 
         const proc = std.meta.intToEnum(NfsProcedure, call.proc) catch {
-            return try self.buildRpcError(call.xid, .proc_unavail, error.UnsupportedProcedure);
+            return try self.buildRpcError(call.xid, .proc_unavail);
         };
 
         var writer = XdrWriter.init(self.allocator);
@@ -207,14 +207,14 @@ pub const NfsServer = struct {
         errdefer self.allocator.free(response);
 
         var out = try std.ArrayList(u8).initCapacity(self.allocator, 4 + response.len);
-        errdefer out.deinit();
+        errdefer out.deinit(self.allocator);
         const out_marker = 0x8000_0000 | @as(u32, @intCast(response.len));
         var marker_buf: [4]u8 = undefined;
         std.mem.writeInt(u32, &marker_buf, out_marker, .big);
-        try out.appendSlice(&marker_buf);
-        try out.appendSlice(response);
+        try out.appendSlice(self.allocator, &marker_buf);
+        try out.appendSlice(self.allocator, response);
         self.allocator.free(response);
-        return out.toOwnedSlice();
+        return out.toOwnedSlice(self.allocator);
     }
 
     fn handleGetattr(self: *NfsServer, reader: *XdrReader, writer: *XdrWriter) !void {
@@ -285,7 +285,7 @@ pub const NfsServer = struct {
         }
 
         const size = node.content.len;
-        if (offset >= size) {
+        if (offset >= @as(u64, @intCast(size))) {
             try writer.writeU32(@intFromEnum(NfsStatus.ok));
             try writePostOpAttr(writer, handle, node);
             try writer.writeU32(0);
@@ -294,9 +294,12 @@ pub const NfsServer = struct {
             return;
         }
 
-        const max_len = std.math.min(@as(usize, @intCast(count)), size - offset);
-        const data = node.content[@intCast(offset) .. @intCast(offset) + max_len];
-        const eof = offset + max_len >= size;
+        const start = @as(usize, @intCast(offset));
+        const remaining = size - start;
+        const max_len = @min(@as(usize, @intCast(count)), remaining);
+        const end = start + max_len;
+        const data = node.content[start..end];
+        const eof = end >= size;
 
         try writer.writeU32(@intFromEnum(NfsStatus.ok));
         try writePostOpAttr(writer, handle, node);
@@ -323,7 +326,7 @@ pub const NfsServer = struct {
         }
 
         var entries = try self.fs.listDir(handle, self.allocator);
-        defer entries.deinit();
+        defer entries.deinit(self.allocator);
 
         try writer.writeU32(@intFromEnum(NfsStatus.ok));
         try writePostOpAttr(writer, handle, node);
@@ -348,8 +351,7 @@ pub const NfsServer = struct {
         try writer.writeBool(true);
     }
 
-    fn buildRpcError(self: *NfsServer, xid: u32, status: RpcAcceptStat, err: anyerror) ![]u8 {
-        _ = err;
+    fn buildRpcError(self: *NfsServer, xid: u32, status: RpcAcceptStat) ![]u8 {
         var writer = XdrWriter.init(self.allocator);
         errdefer writer.deinit();
         try writer.writeRpcReplyHeader(xid, status);
@@ -374,14 +376,16 @@ const XdrReader = struct {
 
     fn readU32(self: *XdrReader) !u32 {
         if (self.pos + 4 > self.buf.len) return error.InvalidMessage;
-        const value = std.mem.readInt(u32, self.buf[self.pos .. self.pos + 4], .big);
+        const bytes = self.buf[self.pos .. self.pos + 4];
+        const value = std.mem.readInt(u32, @as(*const [4]u8, @ptrCast(bytes.ptr)), .big);
         self.pos += 4;
         return value;
     }
 
     fn readU64(self: *XdrReader) !u64 {
         if (self.pos + 8 > self.buf.len) return error.InvalidMessage;
-        const value = std.mem.readInt(u64, self.buf[self.pos .. self.pos + 8], .big);
+        const bytes = self.buf[self.pos .. self.pos + 8];
+        const value = std.mem.readInt(u64, @as(*const [8]u8, @ptrCast(bytes.ptr)), .big);
         self.pos += 8;
         return value;
     }
@@ -440,30 +444,31 @@ const XdrReader = struct {
 };
 
 const XdrWriter = struct {
+    allocator: std.mem.Allocator,
     list: std.ArrayList(u8),
 
     fn init(allocator: std.mem.Allocator) XdrWriter {
-        return .{ .list = std.ArrayList(u8).init(allocator) };
+        return .{ .allocator = allocator, .list = .empty };
     }
 
     fn deinit(self: *XdrWriter) void {
-        self.list.deinit();
+        self.list.deinit(self.allocator);
     }
 
     fn toOwnedSlice(self: *XdrWriter) ![]u8 {
-        return self.list.toOwnedSlice();
+        return self.list.toOwnedSlice(self.allocator);
     }
 
     fn writeU32(self: *XdrWriter, value: u32) !void {
         var buf: [4]u8 = undefined;
         std.mem.writeInt(u32, &buf, value, .big);
-        try self.list.appendSlice(&buf);
+        try self.list.appendSlice(self.allocator, &buf);
     }
 
     fn writeU64(self: *XdrWriter, value: u64) !void {
         var buf: [8]u8 = undefined;
         std.mem.writeInt(u64, &buf, value, .big);
-        try self.list.appendSlice(&buf);
+        try self.list.appendSlice(self.allocator, &buf);
     }
 
     fn writeBool(self: *XdrWriter, value: bool) !void {
@@ -472,20 +477,20 @@ const XdrWriter = struct {
 
     fn writeOpaque(self: *XdrWriter, value: []const u8) !void {
         try self.writeU32(@intCast(value.len));
-        try self.list.appendSlice(value);
+        try self.list.appendSlice(self.allocator, value);
         const pad = padding(value.len);
         if (pad > 0) {
             var zeros: [4]u8 = .{0} ** 4;
-            try self.list.appendSlice(zeros[0..pad]);
+            try self.list.appendSlice(self.allocator, zeros[0..pad]);
         }
     }
 
     fn writeFixedOpaque(self: *XdrWriter, value: []const u8) !void {
-        try self.list.appendSlice(value);
+        try self.list.appendSlice(self.allocator, value);
         const pad = padding(value.len);
         if (pad > 0) {
             var zeros: [4]u8 = .{0} ** 4;
-            try self.list.appendSlice(zeros[0..pad]);
+            try self.list.appendSlice(self.allocator, zeros[0..pad]);
         }
     }
 
