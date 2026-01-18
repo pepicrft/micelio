@@ -21,7 +21,7 @@ defmodule Micelio.MixProject do
   def application do
     [
       mod: {Micelio.Application, []},
-      extra_applications: [:logger, :runtime_tools, :crypto, :ssl, :public_key, :json]
+      extra_applications: [:logger, :runtime_tools, :crypto, :ssl, :public_key]
     ]
   end
 
@@ -59,7 +59,7 @@ defmodule Micelio.MixProject do
       {:telemetry_poller, "~> 1.0"},
       {:gettext, "~> 1.0"},
       {:open_api_spex, "~> 3.21"},
-      {:jason, "~> 1.2"}, {:json, "~> 1.4"},
+      {:jason, "~> 1.2"},
       {:dns_cluster, "~> 0.2.0"},
       {:bandit, "~> 1.5"},
       {:quokka, "~> 2.11", only: [:dev, :test], runtime: false},

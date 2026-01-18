@@ -201,7 +201,7 @@ defmodule Micelio.Theme do
     storage = Keyword.fetch!(config, :storage)
     payload = theme_to_payload(theme)
 
-    case JSON.encode(payload) do
+    case Jason.encode(payload) do
       {:ok, json} ->
         case storage_put(storage, key, json, config) do
           {:ok, _} -> :ok
