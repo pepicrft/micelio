@@ -8,7 +8,7 @@ defmodule Micelio.Auth.CBOR do
     end
   end
 
-  defp decode_item(<<major::4, addl::4, rest::binary>>) do
+  defp decode_item(<<major::3, addl::5, rest::binary>>) do
     with {:ok, length, rest} <- read_length(addl, rest) do
       case major do
         0 -> {:ok, length, rest}

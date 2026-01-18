@@ -30,8 +30,11 @@ defmodule MicelioWeb.Browser.PasskeyControllerTest do
           rp_id()
         )
 
+      assert {:ok, _} = Micelio.Auth.Passkeys.verify_registration(payload, challenge)
+
       conn =
         conn
+        |> recycle()
         |> with_csrf()
         |> post("/account/passkeys", payload)
 
@@ -80,6 +83,7 @@ defmodule MicelioWeb.Browser.PasskeyControllerTest do
 
       conn =
         conn
+        |> recycle()
         |> with_csrf()
         |> post("/auth/passkey/authenticate", payload)
 
@@ -104,7 +108,7 @@ defmodule MicelioWeb.Browser.PasskeyControllerTest do
     auth_data =
       rp_id_hash <>
         <<flags::unsigned-8, sign_count::unsigned-big-32>> <>
-        <<0::binary-size(16)>> <>
+        :binary.copy(<<0>>, 16) <>
         <<byte_size(credential_id)::unsigned-big-16>> <>
         credential_id <>
         cbor_encode(cose_key(public_key))
@@ -159,7 +163,7 @@ defmodule MicelioWeb.Browser.PasskeyControllerTest do
     }
   end
 
-  defp cose_key(<<4, x::binary-size(32), y::binary-size(32)>>) do
+  defp cose_key(<<4, x::bytes-size(32), y::bytes-size(32)>>) do
     %{1 => 2, 3 => -7, -1 => 1, -2 => {:bytes, x}, -3 => {:bytes, y}}
   end
 

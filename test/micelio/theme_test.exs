@@ -1,5 +1,6 @@
 defmodule Micelio.ThemeTest do
   use ExUnit.Case, async: true
+  import Jason.Encode, only: [encode!: 1]
 
   setup do
     unique = System.unique_integer([:positive])
@@ -39,7 +40,7 @@ defmodule Micelio.ThemeTest do
       "dark" => %{"primary" => "#eeeeee"}
     }
 
-    {:ok, _} = Micelio.Theme.TestStorage.put(key, JSON.encode!(payload), config)
+    {:ok, _} = Micelio.Theme.TestStorage.put(key, Jason.encode!(payload), config)
 
     theme = Micelio.Theme.daily_theme(server: server)
     assert theme.name == "Stored Theme"
