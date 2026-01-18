@@ -23,6 +23,7 @@ end
 # Storage configuration (local by default, S3 opt-in)
 storage_backend =
   case System.get_env("STORAGE_BACKEND") do
+    "tiered" -> :tiered
     "s3" -> :s3
     _ -> :local
   end
@@ -33,6 +34,36 @@ local_path_default =
       :prod -> "/var/micelio/storage"
       _ -> Path.join([System.tmp_dir!(), "micelio", "storage"])
     end
+
+cache_path_default =
+  System.get_env("STORAGE_CACHE_PATH") ||
+    case config_env() do
+      :prod -> "/var/micelio/cache"
+      _ -> Path.join([System.tmp_dir!(), "micelio", "cache"])
+    end
+
+origin_backend =
+  case System.get_env("STORAGE_ORIGIN_BACKEND") do
+    "s3" -> :s3
+    "local" -> :local
+    _ -> if System.get_env("S3_BUCKET"), do: :s3, else: :local
+  end
+
+cache_memory_max_bytes =
+  case System.get_env("STORAGE_CACHE_MEMORY_MAX_BYTES") do
+    nil -> nil
+    value -> String.to_integer(value)
+  end
+
+cache_timeout_ms =
+  case System.get_env("STORAGE_CDN_TIMEOUT_MS") do
+    nil -> nil
+    value -> String.to_integer(value)
+  end
+
+maybe_put = fn config, key, value ->
+  if is_nil(value), do: config, else: Keyword.put(config, key, value)
+end
 
 storage_config =
   case storage_backend do
@@ -55,6 +86,34 @@ storage_config =
         s3_access_key_id: System.get_env("S3_ACCESS_KEY_ID"),
         s3_secret_access_key: System.get_env("S3_SECRET_ACCESS_KEY")
       ]
+
+    :tiered ->
+      base_config =
+        [
+          backend: :tiered,
+          origin_backend: origin_backend,
+          origin_local_path: local_path_default,
+          local_path: local_path_default,
+          cache_disk_path: cache_path_default,
+          cdn_base_url: System.get_env("STORAGE_CDN_BASE_URL")
+        ]
+        |> maybe_put.(:cache_memory_max_bytes, cache_memory_max_bytes)
+        |> maybe_put.(:cdn_timeout_ms, cache_timeout_ms)
+
+      case origin_backend do
+        :s3 ->
+          base_config ++
+            [
+              s3_bucket: System.fetch_env!("S3_BUCKET"),
+              s3_region: System.get_env("S3_REGION") || "us-east-1",
+              s3_endpoint: System.get_env("S3_ENDPOINT"),
+              s3_access_key_id: System.get_env("S3_ACCESS_KEY_ID"),
+              s3_secret_access_key: System.get_env("S3_SECRET_ACCESS_KEY")
+            ]
+
+        :local ->
+          base_config
+      end
   end
 
 grpc_enabled = System.get_env("MICELIO_GRPC_ENABLED") == "true"

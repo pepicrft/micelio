@@ -38,6 +38,11 @@ config :logger, :default_formatter,
   format: "$time $metadata[$level] $message\n",
   metadata: [:request_id]
 
+config :mime, :types, %{
+  "application/activity+json" => ["activity+json"],
+  "application/jrd+json" => ["jrd+json"]
+}
+
 config :micelio, Micelio.GRPC,
   enabled: false,
   port: 50_051,

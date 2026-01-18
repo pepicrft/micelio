@@ -12,6 +12,7 @@ defmodule Micelio.Application do
         MicelioWeb.Telemetry,
         Micelio.Hif.Telemetry,
         Micelio.Repo,
+        {Task.Supervisor, name: Micelio.Webhooks.Supervisor},
         {Task.Supervisor, name: Micelio.Hif.RollupSupervisor},
         Micelio.Hif.RollupScheduler,
         {DNSCluster, query: Application.get_env(:micelio, :dns_cluster_query) || :ignore},
