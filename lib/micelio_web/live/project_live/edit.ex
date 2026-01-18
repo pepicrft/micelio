@@ -147,6 +147,18 @@ defmodule MicelioWeb.ProjectLive.Edit do
 
           <div class="project-form-group">
             <.input
+              field={@form[:visibility]}
+              type="select"
+              label="Visibility"
+              options={visibility_options()}
+              class="project-input"
+              error_class="project-input project-input-error"
+            />
+            <p class="project-form-hint">Public projects are visible to everyone.</p>
+          </div>
+
+          <div class="project-form-group">
+            <.input
               field={@form[:url]}
               type="url"
               label="URL"
@@ -173,5 +185,12 @@ defmodule MicelioWeb.ProjectLive.Edit do
       </div>
     </Layouts.app>
     """
+  end
+
+  defp visibility_options do
+    [
+      {"Private", "private"},
+      {"Public", "public"}
+    ]
   end
 end

@@ -36,6 +36,7 @@ defmodule MicelioWeb.ProjectLive.Show do
             |> assign(:organization, organization)
             |> assign(:recent_sessions, recent_sessions)
             |> assign(:session_count, session_count)
+            |> assign_star_data()
 
           {:ok, socket}
         else
@@ -71,6 +72,23 @@ defmodule MicelioWeb.ProjectLive.Show do
   end
 
   @impl true
+  def handle_event("toggle_star", _params, socket) do
+    project = socket.assigns.project
+    user = socket.assigns.current_user
+
+    if socket.assigns.starred? do
+      _ = Projects.unstar_project(user, project)
+    else
+      case Projects.star_project(user, project) do
+        {:ok, _star} -> :ok
+        {:error, _changeset} -> :error
+      end
+    end
+
+    {:noreply, assign_star_data(socket)}
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
     <Layouts.app
@@ -97,6 +115,23 @@ defmodule MicelioWeb.ProjectLive.Show do
             <% end %>
           </:subtitle>
           <:actions>
+            <div class="project-show-stars">
+              <button
+                type="button"
+                class="project-show-action project-show-action-star"
+                id="project-star-toggle"
+                phx-click="toggle_star"
+              >
+                <%= if @starred? do %>
+                  Unstar
+                <% else %>
+                  Star
+                <% end %>
+              </button>
+              <span class="project-show-stars-count" id="project-stars-count">
+                Stars: {@stars_count}
+              </span>
+            </div>
             <%= if Authorization.authorize(:project_update, @current_user, @project) == :ok do %>
               <.link
                 navigate={~p"/projects/#{@organization.account.handle}/#{@project.handle}/edit"}
@@ -158,5 +193,14 @@ defmodule MicelioWeb.ProjectLive.Show do
       </div>
     </Layouts.app>
     """
+  end
+
+  defp assign_star_data(socket) do
+    project = socket.assigns.project
+    user = socket.assigns.current_user
+
+    socket
+    |> assign(:starred?, Projects.project_starred?(user, project))
+    |> assign(:stars_count, Projects.count_project_stars(project))
   end
 end

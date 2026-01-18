@@ -58,11 +58,15 @@ defmodule MicelioWeb.ProjectLiveTest do
           organization_id: organization.id,
           name: "Live Created",
           handle: "live-created",
-          description: "Created from LiveView"
+          description: "Created from LiveView",
+          visibility: "public"
         }
       )
 
     render_submit(form)
+
+    project = Projects.get_project_by_handle(organization.id, "live-created")
+    assert project.visibility == "public"
 
     assert_redirect(view, ~p"/projects/#{organization.account.handle}/live-created")
   end
@@ -76,7 +80,7 @@ defmodule MicelioWeb.ProjectLiveTest do
         name: "Edit Org"
       })
 
-    {:ok, _project} =
+    {:ok, project} =
       Projects.create_project(%{
         handle: "edit-project",
         name: "Edit Project",
@@ -93,12 +97,57 @@ defmodule MicelioWeb.ProjectLiveTest do
         project: %{
           name: "Updated Project",
           handle: "edit-project",
-          description: "Updated"
+          description: "Updated",
+          visibility: "public"
         }
       )
 
     render_submit(form)
 
+    updated = Projects.get_project(project.id)
+    assert updated.visibility == "public"
+
     assert_redirect(view, ~p"/projects/#{organization.account.handle}/edit-project")
+  end
+
+  test "toggles project stars from the show view", %{conn: conn} do
+    {:ok, user} = Accounts.get_or_create_user_by_email("projects-star@example.com")
+
+    {:ok, organization} =
+      Accounts.create_organization_for_user(user, %{
+        handle: "star-org",
+        name: "Star Org"
+      })
+
+    {:ok, project} =
+      Projects.create_project(%{
+        handle: "star-project",
+        name: "Star Project",
+        organization_id: organization.id
+      })
+
+    conn = login_user(conn, user)
+
+    {:ok, view, _html} =
+      live(conn, ~p"/projects/#{organization.account.handle}/#{project.handle}")
+
+    assert has_element?(view, "#project-star-toggle")
+    assert element(view, "#project-stars-count") |> render() =~ "Stars: 0"
+
+    view
+    |> element("#project-star-toggle")
+    |> render_click()
+
+    assert Projects.project_starred?(user, project)
+    assert Projects.count_project_stars(project) == 1
+    assert element(view, "#project-stars-count") |> render() =~ "Stars: 1"
+
+    view
+    |> element("#project-star-toggle")
+    |> render_click()
+
+    refute Projects.project_starred?(user, project)
+    assert Projects.count_project_stars(project) == 0
+    assert element(view, "#project-stars-count") |> render() =~ "Stars: 0"
   end
 end
