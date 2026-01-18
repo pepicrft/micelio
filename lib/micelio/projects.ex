@@ -7,9 +7,18 @@ defmodule Micelio.Projects do
   import Ecto.Query
 
   alias Micelio.Accounts
+  alias Micelio.Accounts.OrganizationMembership
   alias Micelio.Projects.{Project, ProjectStar}
   alias Micelio.Repo
   alias Micelio.Storage
+
+  @micelio_workspace_email "micelio@micelio.dev"
+  @micelio_workspace_org_handle "micelio"
+  @micelio_workspace_org_name "Micelio"
+  @micelio_workspace_project_handle "micelio"
+  @micelio_workspace_project_name "Micelio"
+  @micelio_workspace_project_description "The Micelio platform"
+  @micelio_workspace_project_url "https://micelio.dev"
 
   @doc """
   Gets a project by ID.
@@ -83,6 +92,26 @@ defmodule Micelio.Projects do
   end
 
   @doc """
+  Ensures the Micelio workspace project exists with default metadata.
+  """
+  def ensure_micelio_workspace do
+    Repo.transaction(fn ->
+      with {:ok, user} <- Accounts.get_or_create_user_by_email(@micelio_workspace_email),
+           {:ok, organization} <- ensure_micelio_organization(),
+           {:ok, _membership} <- ensure_micelio_membership(user, organization),
+           {:ok, project} <- ensure_micelio_project(organization) do
+        %{user: user, organization: organization, project: project}
+      else
+        {:error, reason} -> Repo.rollback(reason)
+      end
+    end)
+    |> case do
+      {:ok, data} -> {:ok, data}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  @doc """
   Searches projects by name and description using full-text search.
   """
   def search_projects(raw_query, opts \\ []) do
@@ -96,12 +125,12 @@ defmodule Micelio.Projects do
 
       Project
       |> join(:inner, [p], f in "projects_fts", on: field(f, :project_id) == p.id)
-      |> where([_p, f], fragment("? MATCH ?", f, ^query))
+      |> where([_p, _f], fragment("projects_fts MATCH ?", ^query))
       |> search_visibility_filter(user)
       |> join(:left, [p, _f], o in assoc(p, :organization))
       |> join(:left, [p, _f, o], a in assoc(o, :account))
       |> preload([_p, _f, o, a], organization: {o, account: a})
-      |> order_by([_p, f], fragment("bm25(?)", f))
+      |> order_by([_p, _f], fragment("bm25(projects_fts)"))
       |> limit(^limit)
       |> Repo.all()
     end
@@ -305,16 +334,76 @@ defmodule Micelio.Projects do
 
   defp user_in_organization?(_, _), do: false
 
+  defp ensure_micelio_organization do
+    case Accounts.get_organization_by_handle(@micelio_workspace_org_handle) do
+      {:ok, organization} ->
+        {:ok, organization}
+
+      {:error, :not_found} ->
+        Accounts.create_organization(%{
+          handle: @micelio_workspace_org_handle,
+          name: @micelio_workspace_org_name
+        })
+    end
+  end
+
+  defp ensure_micelio_membership(%Accounts.User{} = user, %Accounts.Organization{} = organization) do
+    case Repo.get_by(OrganizationMembership,
+           user_id: user.id,
+           organization_id: organization.id
+         ) do
+      nil ->
+        Accounts.create_organization_membership(%{
+          user_id: user.id,
+          organization_id: organization.id,
+          role: "admin"
+        })
+
+      %OrganizationMembership{} = membership ->
+        {:ok, membership}
+    end
+  end
+
+  defp ensure_micelio_project(%Accounts.Organization{} = organization) do
+    attrs = %{
+      handle: @micelio_workspace_project_handle,
+      name: @micelio_workspace_project_name,
+      description: @micelio_workspace_project_description,
+      url: @micelio_workspace_project_url,
+      organization_id: organization.id
+    }
+
+    case get_project_by_handle(organization.id, @micelio_workspace_project_handle) do
+      nil ->
+        create_project(attrs)
+
+      %Project{} = project ->
+        update_attrs =
+          Enum.reduce([:description, :url], %{}, fn key, acc ->
+            value = Map.get(project, key)
+            desired = Map.get(attrs, key)
+
+            if value in [nil, ""], do: Map.put(acc, key, desired), else: acc
+          end)
+
+        if update_attrs == %{} do
+          {:ok, project}
+        else
+          update_project(project, update_attrs)
+        end
+    end
+  end
+
   defp normalize_search_query(query) when is_binary(query) do
     tokens =
       query
       |> String.downcase()
-      |> Regex.scan(~r/[[:alnum:]]+/u)
+      |> then(&Regex.scan(~r/[[:alnum:]]+/u, &1))
       |> List.flatten()
 
     case tokens do
       [] -> ""
-      _ -> tokens |> Enum.map(&"#{&1}*") |> Enum.join(" AND ")
+      _ -> tokens |> Enum.map_join(" AND ", &"#{&1}*")
     end
   end
 

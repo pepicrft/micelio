@@ -49,7 +49,10 @@ defmodule Micelio.GRPC.ProjectsServerTest do
     unique = System.unique_integer([:positive])
 
     {:ok, organization} =
-      Accounts.create_organization(%{handle: "grpc-public-org-#{unique}", name: "GRPC Public Org"})
+      Accounts.create_organization(%{
+        handle: "grpc-public-org-#{unique}",
+        name: "GRPC Public Org"
+      })
 
     {:ok, _private_project} =
       Projects.create_project(%{

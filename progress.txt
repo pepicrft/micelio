@@ -1,13 +1,3 @@
-- Completed unauthenticated API rate limiting task; added retry-after header test.
-- Verified public/private repository visibility is enforced in schema and authorization; marked task complete.
-- Added repository settings LiveView for updating name, description, and visibility with coverage tests.
-- Verified OpenAPISpex setup is in place (spec module, routes, and tests) and marked the task complete.
-- Implemented ActivityPub follower storage with inbox handling and updated controller/tests.
-- Added favorites list to account profile using starred projects with coverage tests.
-- Implemented repository search with full-text lookup across names/descriptions, plus controller/UI and coverage tests.
-- Marked repository forking as complete after confirming ownership/origin tracking and coverage tests.
-- Verified user profile pages show owned repositories and activity; marked task complete.
-- Verified repository README rendering on the homepage with existing tests; marked task complete.
-- Verified server-side syntax highlighting for repository file views and added extension alias coverage test.
-- Verified repository file browser with tree navigation (including breadcrumbs, parent links, and redirects) and marked task complete.
-- Added unit tests for session blame attribution logic and marked blame view task complete.
+- Marked user activity graph task complete in PRD; verified existing activity graph UI/data/tests.
+- Completed tiered storage caching layer checks: fixed cache metadata handling, added tiered cache tests, and improved local lock fallback; ran scoped mix test/format with pubsub override.
+- Completed admin dashboard readiness work: fixed admin access guard, search query FTS usage, fork target UUID handling, repository path link encoding, and updated related tests; ran mix test/format/precommit with Mix pubsub workaround in sandbox.

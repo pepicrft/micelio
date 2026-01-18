@@ -99,6 +99,8 @@ defmodule MicelioWeb.ActivityPubControllerTest do
 
     assert conn.status == 202
 
+    conn = recycle(conn)
+
     conn =
       conn
       |> put_req_header("content-type", "application/activity+json")
@@ -110,7 +112,11 @@ defmodule MicelioWeb.ActivityPubControllerTest do
 
     assert conn.status == 202
 
-    conn = get(conn, ~p"/ap/actors/#{handle}/followers")
+    conn =
+      conn
+      |> recycle()
+      |> get(~p"/ap/actors/#{handle}/followers")
+
     response = json_response(conn, 200)
 
     assert response["totalItems"] == 0

@@ -68,6 +68,9 @@ defmodule MicelioWeb.Layouts do
           </button>
 
           <%= if assigns[:current_user] do %>
+            <%= if Micelio.Admin.admin_user?(assigns.current_user) do %>
+              <a href={~p"/admin"}>admin</a>
+            <% end %>
             <a href={~p"/projects"}>projects</a>
             <form action={~p"/auth/logout"} method="post" class="navbar-logout-form">
               <input type="hidden" name="_csrf_token" value={Phoenix.Controller.get_csrf_token()} />

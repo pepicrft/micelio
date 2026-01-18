@@ -32,8 +32,12 @@ defmodule Micelio.Fediverse do
 
   def parse_webfinger_resource("acct:" <> resource) do
     case String.split(resource, "@", parts: 2) do
-      [handle, host] when host == host_with_port() ->
-        {:ok, handle}
+      [handle, host] ->
+        if host == host_with_port() do
+          {:ok, handle}
+        else
+          {:error, :not_found}
+        end
 
       _ ->
         {:error, :not_found}
@@ -104,8 +108,13 @@ defmodule Micelio.Fediverse do
   def actor_url(handle) when is_binary(handle), do: absolute_url("/ap/actors/#{handle}")
   def inbox_url(handle) when is_binary(handle), do: absolute_url("/ap/actors/#{handle}/inbox")
   def outbox_url(handle) when is_binary(handle), do: absolute_url("/ap/actors/#{handle}/outbox")
-  def followers_url(handle) when is_binary(handle), do: absolute_url("/ap/actors/#{handle}/followers")
-  def following_url(handle) when is_binary(handle), do: absolute_url("/ap/actors/#{handle}/following")
+
+  def followers_url(handle) when is_binary(handle),
+    do: absolute_url("/ap/actors/#{handle}/followers")
+
+  def following_url(handle) when is_binary(handle),
+    do: absolute_url("/ap/actors/#{handle}/following")
+
   def profile_url(handle) when is_binary(handle), do: absolute_url("/#{handle}")
 
   def list_follower_actors(%Account{} = account) do

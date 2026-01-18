@@ -2,9 +2,11 @@ defmodule Micelio.ProjectsTest do
   use Micelio.DataCase, async: true
 
   alias Micelio.Accounts
+  alias Micelio.Accounts.OrganizationMembership
   alias Micelio.Hif.Repository, as: MicRepository
   alias Micelio.Projects
   alias Micelio.Projects.Project
+  alias Micelio.Repo
   alias Micelio.Storage
 
   describe "Project changeset" do
@@ -742,10 +744,7 @@ defmodule Micelio.ProjectsTest do
         })
 
       {:ok,
-       user: user,
-       organization: organization,
-       project: project,
-       public_project: public_project}
+       user: user, organization: organization, project: project, public_project: public_project}
     end
 
     test "returns the project for authorized user", %{
@@ -911,6 +910,49 @@ defmodule Micelio.ProjectsTest do
       results = Projects.search_projects("alpha beta", user: nil)
 
       assert Enum.any?(results, &(&1.id == project.id))
+    end
+  end
+
+  describe "ensure_micelio_workspace/0" do
+    test "creates the micelio org, membership, and project" do
+      assert {:ok, %{user: user, organization: organization, project: project}} =
+               Projects.ensure_micelio_workspace()
+
+      assert user.email == "micelio@micelio.dev"
+      assert organization.account.handle == "micelio"
+      assert project.handle == "micelio"
+      assert project.name == "Micelio"
+      assert project.description == "The Micelio platform"
+      assert project.url == "https://micelio.dev"
+
+      assert %OrganizationMembership{} =
+               Repo.get_by(OrganizationMembership,
+                 user_id: user.id,
+                 organization_id: organization.id
+               )
+    end
+
+    test "backfills missing project metadata and is idempotent" do
+      {:ok, organization} =
+        Accounts.create_organization(%{handle: "micelio", name: "Micelio"})
+
+      {:ok, project} =
+        Projects.create_project(%{
+          handle: "micelio",
+          name: "Micelio",
+          organization_id: organization.id
+        })
+
+      assert project.description == nil
+      assert project.url == nil
+
+      assert {:ok, %{project: updated_project}} = Projects.ensure_micelio_workspace()
+      assert updated_project.id == project.id
+      assert updated_project.description == "The Micelio platform"
+      assert updated_project.url == "https://micelio.dev"
+
+      assert {:ok, %{project: same_project}} = Projects.ensure_micelio_workspace()
+      assert same_project.id == updated_project.id
     end
   end
 end

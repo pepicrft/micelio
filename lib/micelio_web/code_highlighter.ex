@@ -42,9 +42,13 @@ defmodule MicelioWeb.CodeHighlighter do
 
   defp fallback_lexer(extension) do
     case Map.get(@fallback_lexers, extension) do
-      nil -> nil
-      lexer when Code.ensure_loaded?(lexer) -> {lexer, []}
-      _ -> nil
+      nil ->
+        nil
+
+      lexer ->
+        if Code.ensure_loaded?(lexer) do
+          {lexer, []}
+        end
     end
   end
 end

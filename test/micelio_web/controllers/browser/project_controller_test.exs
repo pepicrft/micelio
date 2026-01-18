@@ -51,12 +51,12 @@ defmodule MicelioWeb.Browser.RepositoryControllerTest do
     assert html =~ ">lib<"
     refute html =~ "id=\"repository-tree-parent\""
 
-    lib_index = String.index(html, "repository-tree-name\">lib<")
-    readme_index = String.index(html, "repository-tree-name\">README.md<")
+    lib_index = :binary.match(html, "repository-tree-name\">lib<")
+    readme_index = :binary.match(html, "repository-tree-name\">README.md<")
 
-    assert is_integer(lib_index)
-    assert is_integer(readme_index)
-    assert lib_index < readme_index
+    assert match?({_, _}, lib_index)
+    assert match?({_, _}, readme_index)
+    assert elem(lib_index, 0) < elem(readme_index, 0)
   end
 
   test "labels directory and file entries in the tree", %{
@@ -67,8 +67,11 @@ defmodule MicelioWeb.Browser.RepositoryControllerTest do
     conn = get(conn, ~p"/#{organization.account.handle}/#{project.handle}")
     html = html_response(conn, 200)
 
-    assert html =~ "repository-tree-kind\">dir"
-    assert html =~ "repository-tree-kind\">file"
+    doc = LazyHTML.from_fragment(html)
+    kinds_text = doc |> LazyHTML.query(".repository-tree-kind") |> LazyHTML.text()
+
+    assert String.contains?(kinds_text, "dir")
+    assert String.contains?(kinds_text, "file")
   end
 
   test "renders README on repository homepage", %{
@@ -258,7 +261,7 @@ defmodule MicelioWeb.Browser.RepositoryControllerTest do
     {:ok, user_two} = Accounts.get_or_create_user_by_email("bob@example.com")
 
     base_content = "IO.puts(\"ok\")\n"
-    updated_content = "IO.puts(\"ok\")\nIO.puts(\"next\")\n"
+    updated_content = ~s{IO.puts("ok")\nIO.puts("next")\n}
 
     updated_hash = :crypto.hash(:sha256, updated_content)
     {:ok, _} = Storage.put(Repository.blob_key(project.id, updated_hash), updated_content)
@@ -527,7 +530,7 @@ defmodule MicelioWeb.Browser.RepositoryControllerTest do
       Accounts.create_organization_membership(%{
         user_id: user.id,
         organization_id: target_org.id,
-        role: "member"
+        role: "user"
       })
 
     conn = get(conn, ~p"/#{organization.account.handle}/#{project.handle}")
@@ -558,7 +561,7 @@ defmodule MicelioWeb.Browser.RepositoryControllerTest do
       |> with_csrf()
       |> post(~p"/#{organization.account.handle}/#{project.handle}/fork", %{
         "fork" => %{
-          "organization_id" => Integer.to_string(target_org.id),
+          "organization_id" => to_string(target_org.id),
           "handle" => "demo-fork",
           "return_to" => ~p"/#{organization.account.handle}/#{project.handle}"
         }
@@ -603,7 +606,7 @@ defmodule MicelioWeb.Browser.RepositoryControllerTest do
       Accounts.create_organization_membership(%{
         user_id: user.id,
         organization_id: target_org.id,
-        role: "member"
+        role: "user"
       })
 
     return_to = ~p"/#{organization.account.handle}/#{project.handle}"
@@ -620,7 +623,10 @@ defmodule MicelioWeb.Browser.RepositoryControllerTest do
       })
 
     assert redirected_to(conn) == return_to
-    assert Phoenix.Controller.get_flash(conn, :error) == "Select an organization you administer to fork."
+
+    assert Phoenix.Controller.get_flash(conn, :error) ==
+             "Select an organization you administer to fork."
+
     assert is_nil(Projects.get_project_by_handle(target_org.id, "demo-fork"))
   end
 
@@ -639,8 +645,10 @@ defmodule MicelioWeb.Browser.RepositoryControllerTest do
 
   defp with_csrf(conn) do
     csrf_token = CSRFProtection.get_csrf_token()
+    existing_session = Map.get(conn.private, :plug_session, %{})
 
     conn
+    |> Plug.Test.init_test_session(existing_session)
     |> put_session("_csrf_token", CSRFProtection.dump_state())
     |> put_req_header("x-csrf-token", csrf_token)
   end

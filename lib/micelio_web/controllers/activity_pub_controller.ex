@@ -18,36 +18,40 @@ defmodule MicelioWeb.ActivityPubController do
   def webfinger(conn, _params), do: send_resp(conn, :bad_request, "")
 
   def actor(conn, %{"handle" => handle}) do
-    with {:ok, account} <- Fediverse.account_for_handle(handle) do
-      activity_pub_json(conn, Fediverse.actor_payload(account))
-    else
+    case Fediverse.account_for_handle(handle) do
+      {:ok, account} ->
+        activity_pub_json(conn, Fediverse.actor_payload(account))
+
       _ ->
         send_resp(conn, :not_found, "")
     end
   end
 
   def outbox(conn, %{"handle" => handle}) do
-    with {:ok, _account} <- Fediverse.account_for_handle(handle) do
-      activity_pub_json(conn, Fediverse.outbox_payload(handle))
-    else
+    case Fediverse.account_for_handle(handle) do
+      {:ok, _account} ->
+        activity_pub_json(conn, Fediverse.outbox_payload(handle))
+
       _ ->
         send_resp(conn, :not_found, "")
     end
   end
 
   def followers(conn, %{"handle" => handle}) do
-    with {:ok, account} <- Fediverse.account_for_handle(handle) do
-      activity_pub_json(conn, Fediverse.followers_payload(account))
-    else
+    case Fediverse.account_for_handle(handle) do
+      {:ok, account} ->
+        activity_pub_json(conn, Fediverse.followers_payload(account))
+
       _ ->
         send_resp(conn, :not_found, "")
     end
   end
 
   def following(conn, %{"handle" => handle}) do
-    with {:ok, account} <- Fediverse.account_for_handle(handle) do
-      activity_pub_json(conn, Fediverse.following_payload(account))
-    else
+    case Fediverse.account_for_handle(handle) do
+      {:ok, account} ->
+        activity_pub_json(conn, Fediverse.following_payload(account))
+
       _ ->
         send_resp(conn, :not_found, "")
     end

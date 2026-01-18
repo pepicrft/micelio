@@ -166,6 +166,9 @@ defmodule Micelio.Storage.Local do
   end
 
   defp with_lock(key, opts, fun) do
-    :global.trans({:storage_local_lock, base_path(opts), key}, fun)
+    case node() do
+      :nonode@nohost -> fun.()
+      _ -> :global.trans({:storage_local_lock, base_path(opts), key}, fun)
+    end
   end
 end

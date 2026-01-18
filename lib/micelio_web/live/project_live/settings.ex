@@ -64,7 +64,11 @@ defmodule MicelioWeb.RepositoryLive.Settings do
 
   @impl true
   def handle_event("save", %{"repository" => params}, socket) do
-    if Authorization.authorize(:project_update, socket.assigns.current_user, socket.assigns.repository) ==
+    if Authorization.authorize(
+         :project_update,
+         socket.assigns.current_user,
+         socket.assigns.repository
+       ) ==
          :ok do
       case Projects.update_project_settings(socket.assigns.repository, params) do
         {:ok, repository} ->
@@ -104,7 +108,9 @@ defmodule MicelioWeb.RepositoryLive.Settings do
           </:subtitle>
           <:actions>
             <.link
-              navigate={~p"/#{@organization.account.handle}/#{@repository.handle}/settings/webhooks"}
+              navigate={
+                ~p"/#{@organization.account.handle}/#{@repository.handle}/settings/webhooks"
+              }
               class="project-button project-button-secondary"
               id="repository-webhooks-link"
             >
@@ -124,8 +130,8 @@ defmodule MicelioWeb.RepositoryLive.Settings do
             <.input
               field={@form[:name]}
               type="text"
-              label="Repository name"
-              placeholder="My Repository"
+              label="Project name"
+              placeholder="My Project"
               class="project-input"
               error_class="project-input project-input-error"
             />

@@ -20,6 +20,7 @@ defmodule MicelioWeb.Router do
   pipeline :api do
     plug :accepts, ["json"]
     plug MicelioWeb.Plugs.ApiAuthenticationPlug
+
     plug MicelioWeb.Plugs.RateLimitPlug,
       limit: @api_rate_limit_limit,
       window_ms: @api_rate_limit_window_ms,
@@ -38,6 +39,10 @@ defmodule MicelioWeb.Router do
 
   pipeline :require_auth do
     plug MicelioWeb.RequireAuthPlug
+  end
+
+  pipeline :require_admin do
+    plug MicelioWeb.RequireAdminPlug
   end
 
   pipeline :load_resources do
@@ -161,6 +166,13 @@ defmodule MicelioWeb.Router do
 
     get "/new", OrganizationController, :new
     post "/", OrganizationController, :create
+  end
+
+  # Admin routes (require admin access)
+  scope "/admin", MicelioWeb.Browser do
+    pipe_through [:browser, :require_auth, :require_admin]
+
+    get "/", AdminController, :index
   end
 
   scope "/account", MicelioWeb.Browser do

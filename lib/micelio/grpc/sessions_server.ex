@@ -17,6 +17,7 @@ defmodule Micelio.GRPC.Sessions.V1.SessionService.Server do
   alias Micelio.Hif.Binary
   alias Micelio.Hif.Landing
   alias Micelio.OAuth.AccessTokens
+  alias Micelio.Notifications
   alias Micelio.Projects
   alias Micelio.Sessions
   alias Micelio.Sessions.ChangeStore
@@ -112,6 +113,7 @@ defmodule Micelio.GRPC.Sessions.V1.SessionService.Server do
                 })
 
               Webhooks.dispatch_session_landed(project, landed_session, landing.position)
+              Notifications.dispatch_session_landed(project, landed_session)
 
               %SessionResponse{
                 session: session_to_proto(landed_session, project.organization, project)

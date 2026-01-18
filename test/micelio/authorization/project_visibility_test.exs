@@ -41,7 +41,8 @@ defmodule Micelio.Authorization.ProjectVisibilityTest do
         role: "user"
       })
 
-    {:ok, outsider} = Accounts.get_or_create_user_by_email("project-outsider-#{unique}@example.com")
+    {:ok, outsider} =
+      Accounts.get_or_create_user_by_email("project-outsider-#{unique}@example.com")
 
     %{
       public_project: public_project,
@@ -70,6 +71,7 @@ defmodule Micelio.Authorization.ProjectVisibilityTest do
     private_project: private_project,
     outsider: outsider
   } do
-    assert {:error, :forbidden} = Authorization.authorize(:project_read, outsider, private_project)
+    assert {:error, :forbidden} =
+             Authorization.authorize(:project_read, outsider, private_project)
   end
 end

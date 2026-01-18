@@ -3,64 +3,194 @@
   current_scope={assigns[:current_scope]}
   current_user={assigns[:current_user]}
 >
-  <div class="project-show-container">
-    <header class="project-show-header">
-      <h1>{@project.name}</h1>
-      <div class="project-show-handle">@{@account.handle}/{@project.handle}</div>
-      <%= if @project.description do %>
-        <p class="project-show-description">{@project.description}</p>
-      <% end %>
-
-      <div class="project-show-actions">
-        <a
-          href={~p"/projects/#{@project.handle}/edit"}
-          class="project-show-action project-show-action-edit"
-        >
-          Edit
-        </a>
-        <form action={~p"/projects/#{@project.handle}"} method="post" style="display: inline;">
-          <input type="hidden" name="_csrf_token" value={Phoenix.Controller.get_csrf_token()} />
-          <input type="hidden" name="_method" value="delete" />
-          <button
-            type="submit"
-            class="project-show-action project-show-action-delete"
-            onclick="return confirm('Are you sure you want to delete this project?');"
-          >
-            Delete
-          </button>
-        </form>
-      </div>
-    </header>
-
-    <div class="project-content">
-      <div style="padding: 1.5rem; background: #f9fafb; border-radius: 8px; margin-bottom: 1.5rem;">
-        <h3 style="margin-top: 0; color: #374151;">Project Overview</h3>
-        <div style="display: grid; gap: 1rem;">
-          <div>
-            <strong>Created:</strong> {Calendar.strftime(@project.inserted_at, "%B %d, %Y")}
-          </div>
-          <div>
-            <strong>Last updated:</strong> {Calendar.strftime(
-              @project.updated_at,
-              "%B %d, %Y at %I:%M %p"
-            )}
-          </div>
-          <div>
-            <strong>Handle:</strong> {@project.handle}
-          </div>
+  <div class="project-container">
+    <.header>
+      {@account.handle}/{@project.handle}
+      <:subtitle>
+        <%= if @project.description do %>
+          <p class="project-description">{@project.description}</p>
+        <% end %>
+        <%= if @forked_from do %>
+          <p class="project-forked-from">
+            Forked from
+            <a
+              href={~p"/#{@forked_from.organization.account.handle}/#{@forked_from.handle}"}
+              class="project-forked-link"
+            >
+              {@forked_from.organization.account.handle}/{@forked_from.handle}
+            </a>
+          </p>
+        <% end %>
+        <%= if @project.url do %>
+          <p class="project-url">
+            <a href={@project.url} target="_blank" rel="noopener noreferrer">
+              {@project.url}
+            </a>
+          </p>
+        <% end %>
+      </:subtitle>
+      <:actions>
+        <div class="project-stars">
+          <%= if @current_user do %>
+            <.form
+              for={@star_form}
+              id="project-star-form"
+              class="project-star-form"
+              action={~p"/#{@account.handle}/#{@project.handle}/star"}
+              method="post"
+            >
+              <.input field={@star_form[:return_to]} type="hidden" />
+              <button
+                type="submit"
+                class="project-star-toggle"
+                id="project-star-toggle"
+              >
+                <%= if @starred? do %>
+                  Unstar
+                <% else %>
+                  Star
+                <% end %>
+              </button>
+            </.form>
+          <% end %>
+          <span class="project-stars-count" id="project-stars-count">
+            Stars: {@stars_count}
+          </span>
         </div>
-      </div>
+        <%= if @current_user && @fork_organizations != [] do %>
+          <.form
+            for={@fork_form}
+            id="project-fork-form"
+            class="project-fork-form"
+            action={~p"/#{@account.handle}/#{@project.handle}/fork"}
+            method="post"
+          >
+            <.input field={@fork_form[:return_to]} type="hidden" />
+            <div class="project-fork-fields">
+              <.input
+                field={@fork_form[:organization_id]}
+                type="select"
+                label="Fork to"
+                options={@fork_organization_options}
+              />
+              <.input field={@fork_form[:handle]} type="text" label="Handle" />
+            </div>
+            <button type="submit" class="project-fork-submit" id="project-fork-submit">
+              Fork
+            </button>
+          </.form>
+        <% end %>
+        <%= if Micelio.Authorization.authorize(:project_update, @current_user, @project) == :ok do %>
+          <a
+            href={~p"/#{@account.handle}/#{@project.handle}/settings"}
+            class="project-show-action project-show-action-edit"
+            id="project-settings"
+          >
+            Settings
+          </a>
+        <% end %>
+      </:actions>
+    </.header>
 
-      <div style="text-align: center; padding: 2rem; color: #6b7280;">
-        <p>Project features will be added here soon.</p>
-        <p>This could include:</p>
-        <ul style="text-align: left; display: inline-block; color: #9ca3af;">
-          <li>Repository management</li>
-          <li>Issue tracking</li>
-          <li>Collaboration tools</li>
-          <li>Documentation</li>
+    <div class="project-browser">
+      <% segments = if @dir_path == "", do: [], else: String.split(@dir_path, "/") %>
+      <% last_segment_index = length(segments) - 1 %>
+      <% repo_href = ~p"/#{@account.handle}/#{@project.handle}" %>
+
+      <nav class="project-breadcrumb" aria-label="Path" id="project-breadcrumb">
+        <a href={repo_href}>{@project.handle}</a>
+        <%= for {segment, idx} <- Enum.with_index(segments) do %>
+          <span class="project-breadcrumb-sep">/</span>
+          <% segment_path = Enum.take(segments, idx + 1) %>
+          <%= if idx == last_segment_index do %>
+            <span class="project-breadcrumb-current">{segment}</span>
+          <% else %>
+            <a href={~p"/#{@account.handle}/#{@project.handle}/tree/#{segment_path}"}>
+              {segment}
+            </a>
+          <% end %>
+        <% end %>
+      </nav>
+
+      <%= if @entries == [] do %>
+        <p class="project-empty">No files yet</p>
+      <% else %>
+        <ul class="project-tree" id="project-tree">
+          <%= if @dir_path != "" do %>
+            <% parent_dir = Path.dirname(@dir_path) %>
+            <% parent_dir = if parent_dir == ".", do: "", else: parent_dir %>
+            <% parent_segments = if parent_dir == "", do: [], else: String.split(parent_dir, "/") %>
+            <li class="project-tree-item project-tree-parent">
+              <a
+                href={
+                  if parent_dir == "" do
+                    repo_href
+                  else
+                    ~p"/#{@account.handle}/#{@project.handle}/tree/#{parent_segments}"
+                  end
+                }
+                class="project-tree-link project-tree-parent-link"
+                id="project-tree-parent"
+              >
+                <span class="project-tree-name">..</span>
+                <span class="project-tree-kind">parent</span>
+              </a>
+            </li>
+          <% end %>
+          <li :for={entry <- @entries} class="project-tree-item">
+            <% entry_segments = String.split(entry.path, "/") %>
+            <a
+              href={
+                if entry.type == :tree do
+                  ~p"/#{@account.handle}/#{@project.handle}/tree/#{entry_segments}"
+                else
+                  ~p"/#{@account.handle}/#{@project.handle}/blob/#{entry_segments}"
+                end
+              }
+              class="project-tree-link"
+            >
+              <span class="project-tree-name">{entry.name}</span>
+              <span class="project-tree-kind">
+                <%= if entry.type == :tree do %>
+                  dir
+                <% else %>
+                  file
+                <% end %>
+              </span>
+            </a>
+          </li>
         </ul>
-      </div>
+      <% end %>
     </div>
+
+    <%= if @readme do %>
+      <section class="project-readme" id="project-readme">
+        <header class="project-readme-header">
+          <h2 class="project-readme-title">README</h2>
+          <a
+            class="project-readme-link"
+            href={
+              ~p"/#{@account.handle}/#{@project.handle}/blob/#{String.split(@readme.path, "/")}"
+            }
+          >
+            {@readme.path}
+          </a>
+        </header>
+        <div class="project-readme-body">
+          <%= case @readme.content do %>
+            <% {:html, html} -> %>
+              <div class="project-readme-markdown" id="project-readme-content">
+                {raw(html)}
+              </div>
+            <% {:text, content} -> %>
+              <pre class="project-readme-content" id="project-readme-content">{content}</pre>
+            <% {:binary, size} -> %>
+              <p class="project-readme-binary">
+                Binary file ({size} bytes) cannot be displayed.
+              </p>
+          <% end %>
+        </div>
+      </section>
+    <% end %>
   </div>
 </Layouts.app>

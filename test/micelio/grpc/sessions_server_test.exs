@@ -52,7 +52,9 @@ defmodule Micelio.GRPC.SessionsServerTest do
       {:ok, %{position: 12, landed_at: landing_time}}
     end)
 
-    expect(Webhooks, :dispatch_session_landed, fn dispatched_project, dispatched_session, position ->
+    expect(Webhooks, :dispatch_session_landed, fn dispatched_project,
+                                                  dispatched_session,
+                                                  position ->
       assert dispatched_project.id == project.id
       assert dispatched_session.status == "landed"
       assert dispatched_session.metadata["landing_position"] == 12

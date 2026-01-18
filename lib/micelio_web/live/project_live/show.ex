@@ -2,6 +2,7 @@ defmodule MicelioWeb.ProjectLive.Show do
   use MicelioWeb, :live_view
 
   alias Micelio.Authorization
+  alias Micelio.Notifications
   alias Micelio.Projects
   alias Micelio.Sessions
   alias MicelioWeb.PageMeta
@@ -80,7 +81,10 @@ defmodule MicelioWeb.ProjectLive.Show do
       _ = Projects.unstar_project(user, project)
     else
       case Projects.star_project(user, project) do
-        {:ok, _star} -> :ok
+        {:ok, _star} ->
+          _ = Notifications.dispatch_project_starred(project, user)
+          :ok
+
         {:error, _changeset} -> :error
       end
     end

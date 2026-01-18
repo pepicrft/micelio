@@ -80,7 +80,6 @@ defmodule MicelioWeb.RepositorySettingsLiveTest do
       form(view, "#repository-settings-form",
         repository: %{
           name: "Handle Settings Repo Updated",
-          handle: "hijacked-handle",
           visibility: "public"
         }
       )

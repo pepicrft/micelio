@@ -10,6 +10,7 @@ defmodule MicelioWeb.Browser.ProfileController do
     user = conn.assigns.current_user
     activity_counts = Sessions.activity_counts_for_user(user)
     starred_projects = Projects.list_starred_projects_for_user(user)
+
     owned_projects =
       user
       |> Accounts.list_organizations_for_user_with_role("admin")

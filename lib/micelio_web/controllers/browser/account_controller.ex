@@ -67,7 +67,10 @@ defmodule MicelioWeb.Browser.AccountController do
         |> assign(:user, user)
         |> assign(:projects, projects)
         |> assign(:projects_title, if(user, do: "Owned repositories", else: "Repositories"))
-        |> assign(:empty_message, if(user, do: "No public repositories yet.", else: "No projects yet."))
+        |> assign(
+          :empty_message,
+          if(user, do: "No public repositories yet.", else: "No projects yet.")
+        )
         |> assign(:activity_counts, activity_counts)
         |> render(:show)
 

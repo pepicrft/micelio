@@ -1,7 +1,7 @@
-defmodule Micelio.Hif.RepositoryTest do
+defmodule Micelio.Hif.ProjectTest do
   use ExUnit.Case, async: true
 
-  alias Micelio.Hif.Repository
+  alias Micelio.Hif.Project
 
   test "list_entries returns directories before files and sorts by name" do
     tree = %{
@@ -13,7 +13,7 @@ defmodule Micelio.Hif.RepositoryTest do
       "a/inner.md" => <<6>>
     }
 
-    entries = Repository.list_entries(tree, "")
+    entries = Project.list_entries(tree, "")
 
     assert Enum.map(entries, & &1.name) == ["a", "b", "a.txt", "b.txt"]
     assert Enum.map(entries, & &1.type) == [:tree, :tree, :blob, :blob]
@@ -26,7 +26,7 @@ defmodule Micelio.Hif.RepositoryTest do
       "README.md" => <<3>>
     }
 
-    entries = Repository.list_entries(tree, "lib")
+    entries = Project.list_entries(tree, "lib")
 
     assert Enum.map(entries, & &1.path) == ["lib/utils", "lib/app.ex"]
     assert Enum.map(entries, & &1.type) == [:tree, :blob]
@@ -38,8 +38,8 @@ defmodule Micelio.Hif.RepositoryTest do
       "lib/utils/helpers.ex" => <<2>>
     }
 
-    assert Repository.directory_exists?(tree, "lib")
-    assert Repository.directory_exists?(tree, "lib/utils")
-    refute Repository.directory_exists?(tree, "priv")
+    assert Project.directory_exists?(tree, "lib")
+    assert Project.directory_exists?(tree, "lib/utils")
+    refute Project.directory_exists?(tree, "priv")
   end
 end

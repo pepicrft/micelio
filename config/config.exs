@@ -38,11 +38,6 @@ config :logger, :default_formatter,
   format: "$time $metadata[$level] $message\n",
   metadata: [:request_id]
 
-config :mime, :types, %{
-  "application/activity+json" => ["activity+json"],
-  "application/jrd+json" => ["jrd+json"]
-}
-
 config :micelio, Micelio.GRPC,
   enabled: false,
   port: 50_051,
@@ -68,10 +63,17 @@ config :micelio, MicelioWeb.Endpoint,
   pubsub_server: Micelio.PubSub,
   live_view: [signing_salt: "uBaIW6yU"]
 
+config :micelio, :admin_emails, []
+
 config :micelio,
   ecto_repos: [Micelio.Repo],
   # Import environment specific config. This must remain at the bottom
   generators: [timestamp_type: :utc_datetime]
+
+config :mime, :types, %{
+  "application/activity+json" => ["activity+json"],
+  "application/jrd+json" => ["jrd+json"]
+}
 
 # Use Jason for JSON parsing in Phoenix
 # of this file so it overrides the configuration defined above.

@@ -152,6 +152,20 @@ defmodule Micelio.Accounts do
   end
 
   @doc """
+  Lists users for an organization.
+  """
+  def list_users_for_organization(%Organization{} = organization),
+    do: list_users_for_organization(organization.id)
+
+  def list_users_for_organization(organization_id) do
+    User
+    |> join(:inner, [u], m in OrganizationMembership, on: m.user_id == u.id)
+    |> where([_u, m], m.organization_id == ^organization_id)
+    |> order_by([u, _m], asc: u.email)
+    |> Repo.all()
+  end
+
+  @doc """
   Gets an organization membership for a user and organization.
   """
   def get_organization_membership(user_id, organization_id) do

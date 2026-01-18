@@ -34,8 +34,6 @@ defmodule Micelio.GRPC.Content.V1.ContentService.Server do
          :ok <- authorize_project_read(organization, project, request.user_id, stream),
          {:ok, tree_hash, tree} <- load_head_tree(project.id) do
       %GetTreeResponse{tree: %V1.Tree{entries: tree_entries(tree)}, tree_hash: tree_hash}
-    else
-      {:error, status} -> {:error, status}
     end
   end
 
@@ -48,8 +46,6 @@ defmodule Micelio.GRPC.Content.V1.ContentService.Server do
          :ok <- authorize_project_read(organization, project, request.user_id, stream),
          {:ok, tree} <- load_tree(project.id, request.tree_hash) do
       %GetTreeResponse{tree: %V1.Tree{entries: tree_entries(tree)}, tree_hash: request.tree_hash}
-    else
-      {:error, status} -> {:error, status}
     end
   end
 
@@ -61,8 +57,6 @@ defmodule Micelio.GRPC.Content.V1.ContentService.Server do
          :ok <- authorize_project_read(organization, project, request.user_id, stream),
          {:ok, tree_hash, tree} <- load_tree_at_position(project.id, request.position) do
       %GetTreeResponse{tree: %V1.Tree{entries: tree_entries(tree)}, tree_hash: tree_hash}
-    else
-      {:error, status} -> {:error, status}
     end
   end
 
@@ -106,8 +100,6 @@ defmodule Micelio.GRPC.Content.V1.ContentService.Server do
          :ok <- authorize_project_read(organization, project, request.user_id, stream),
          {:ok, content} <- load_blob(project.id, request.blob_hash) do
       %GetBlobResponse{content: content}
-    else
-      {:error, status} -> {:error, status}
     end
   end
 
@@ -122,8 +114,6 @@ defmodule Micelio.GRPC.Content.V1.ContentService.Server do
          {:ok, blob_hash} <- fetch_path_hash(tree, request.path),
          {:ok, content} <- load_blob(project.id, blob_hash) do
       %GetPathResponse{content: content, blob_hash: blob_hash}
-    else
-      {:error, status} -> {:error, status}
     end
   end
 

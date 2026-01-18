@@ -35,6 +35,10 @@ defmodule Micelio.Storage.Tiered do
 
           :miss ->
             case cdn_get(config, key) do
+              {:ok, content, metadata} ->
+                _ = cache_put(config, key, content, metadata)
+                {:ok, content}
+
               {:ok, content} ->
                 _ = cache_put(config, key, content)
                 {:ok, content}
@@ -186,17 +190,6 @@ defmodule Micelio.Storage.Tiered do
     case Keyword.get(config, :origin_local_path) do
       path when is_binary(path) -> [base_path: path]
       _ -> []
-    end
-  end
-
-  defp origin_get(config, key) do
-    backend = origin_backend_module(config)
-    opts = origin_local_opts(config)
-
-    if backend == Micelio.Storage.Local and opts != [] do
-      Micelio.Storage.Local.get(key, opts)
-    else
-      backend.get(key)
     end
   end
 
@@ -366,7 +359,7 @@ defmodule Micelio.Storage.Tiered do
     end
   end
 
-  defp memory_put(config, key, content, metadata) do
+  defp memory_put(config, key, content, metadata \\ nil) do
     if memory_enabled?(config) do
       ensure_tables()
       namespace = cache_namespace(config)
@@ -388,7 +381,12 @@ defmodule Micelio.Storage.Tiered do
         end
 
       seq = next_seq(namespace)
-      :ets.insert(@entries_table, {entry_key, content, size, seq, normalize_metadata(content, metadata)})
+
+      :ets.insert(
+        @entries_table,
+        {entry_key, content, size, seq, normalize_metadata(content, metadata)}
+      )
+
       :ets.insert(@order_table, {{namespace, seq}, key, size})
 
       _ = update_total_bytes(namespace, size - existing_size)
@@ -456,7 +454,8 @@ defmodule Micelio.Storage.Tiered do
     :ets.update_counter(@meta_table, {namespace, :seq}, {2, 1}, {{namespace, :seq}, 0})
   end
 
-  defp evict_if_needed(_namespace, max_bytes) when not is_integer(max_bytes) or max_bytes <= 0, do: :ok
+  defp evict_if_needed(_namespace, max_bytes) when not is_integer(max_bytes) or max_bytes <= 0,
+    do: :ok
 
   defp evict_if_needed(namespace, max_bytes) do
     if total_bytes(namespace) > max_bytes do
@@ -609,10 +608,23 @@ defmodule Micelio.Storage.Tiered do
                receive_timeout: Keyword.get(config, :cdn_timeout_ms, @default_cdn_timeout_ms),
                decode_body: false
              ) do
-          {:ok, %{status: 200, body: body}} -> {:ok, body}
-          {:ok, %{status: 404}} -> :miss
-          {:ok, _} -> :miss
-          {:error, _} -> :miss
+          {:ok, %{status: 200, body: body, headers: headers}} ->
+            case header_value(headers, "etag") do
+              nil -> {:ok, body}
+              etag -> {:ok, body, %{etag: etag}}
+            end
+
+          {:ok, %{status: 200, body: body}} ->
+            {:ok, body}
+
+          {:ok, %{status: 404}} ->
+            :miss
+
+          {:ok, _} ->
+            :miss
+
+          {:error, _} ->
+            :miss
         end
 
       _ ->
@@ -632,7 +644,7 @@ defmodule Micelio.Storage.Tiered do
           {:ok, %{status: 200, body: body, headers: headers}} ->
             case header_value(headers, "etag") do
               nil -> :miss
-              etag -> {:ok, %{content: body, etag: etag}}
+              etag -> {:ok, %{content: body, etag: etag, size: byte_size(body)}}
             end
 
           {:ok, %{status: 404}} ->
@@ -655,7 +667,9 @@ defmodule Micelio.Storage.Tiered do
       base_url when is_binary(base_url) ->
         url = String.trim_trailing(base_url, "/") <> "/" <> key
 
-        case Req.head(url, receive_timeout: Keyword.get(config, :cdn_timeout_ms, @default_cdn_timeout_ms)) do
+        case Req.head(url,
+               receive_timeout: Keyword.get(config, :cdn_timeout_ms, @default_cdn_timeout_ms)
+             ) do
           {:ok, %{status: 200}} -> true
           {:ok, %{status: 404}} -> false
           {:ok, _} -> false
@@ -726,7 +740,7 @@ defmodule Micelio.Storage.Tiered do
 
     Enum.find_value(headers, fn
       {key, value} when is_binary(key) ->
-        if String.downcase(key) == target, do: value, else: nil
+        if String.downcase(key) == target, do: value
 
       _ ->
         nil

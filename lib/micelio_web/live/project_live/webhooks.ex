@@ -8,11 +8,7 @@ defmodule MicelioWeb.RepositoryLive.Webhooks do
   alias MicelioWeb.PageMeta
 
   @impl true
-  def mount(
-        %{"account" => account_handle, "repository" => repository_handle},
-        _session,
-        socket
-      ) do
+  def mount(%{"account" => account_handle, "repository" => repository_handle}, _session, socket) do
     case Projects.get_project_for_user_by_handle(
            socket.assigns.current_user,
            account_handle,
@@ -62,7 +58,11 @@ defmodule MicelioWeb.RepositoryLive.Webhooks do
 
   @impl true
   def handle_event("save", %{"webhook" => params}, socket) do
-    if Authorization.authorize(:project_update, socket.assigns.current_user, socket.assigns.repository) ==
+    if Authorization.authorize(
+         :project_update,
+         socket.assigns.current_user,
+         socket.assigns.repository
+       ) ==
          :ok do
       attrs = params_with_project(params, socket.assigns.repository.id)
 
@@ -75,7 +75,8 @@ defmodule MicelioWeb.RepositoryLive.Webhooks do
            |> assign(:form, webhook_form(socket.assigns.repository))}
 
         {:error, changeset} ->
-          {:noreply, assign(socket, form: to_form(Map.put(changeset, :action, :validate), as: :webhook))}
+          {:noreply,
+           assign(socket, form: to_form(Map.put(changeset, :action, :validate), as: :webhook))}
       end
     else
       {:noreply, put_flash(socket, :error, "You do not have access to this repository.")}
@@ -84,7 +85,11 @@ defmodule MicelioWeb.RepositoryLive.Webhooks do
 
   @impl true
   def handle_event("toggle", %{"id" => webhook_id}, socket) do
-    if Authorization.authorize(:project_update, socket.assigns.current_user, socket.assigns.repository) ==
+    if Authorization.authorize(
+         :project_update,
+         socket.assigns.current_user,
+         socket.assigns.repository
+       ) ==
          :ok do
       case Webhooks.get_webhook_for_project(socket.assigns.repository.id, webhook_id) do
         %Webhook{} = webhook ->
@@ -93,7 +98,10 @@ defmodule MicelioWeb.RepositoryLive.Webhooks do
               {:noreply,
                socket
                |> put_flash(:info, "Webhook updated successfully.")
-               |> assign(:webhooks, Webhooks.list_webhooks_for_project(socket.assigns.repository.id))}
+               |> assign(
+                 :webhooks,
+                 Webhooks.list_webhooks_for_project(socket.assigns.repository.id)
+               )}
 
             {:error, _changeset} ->
               {:noreply, put_flash(socket, :error, "Unable to update webhook.")}
@@ -109,7 +117,11 @@ defmodule MicelioWeb.RepositoryLive.Webhooks do
 
   @impl true
   def handle_event("delete", %{"id" => webhook_id}, socket) do
-    if Authorization.authorize(:project_update, socket.assigns.current_user, socket.assigns.repository) ==
+    if Authorization.authorize(
+         :project_update,
+         socket.assigns.current_user,
+         socket.assigns.repository
+       ) ==
          :ok do
       case Webhooks.get_webhook_for_project(socket.assigns.repository.id, webhook_id) do
         %Webhook{} = webhook ->
@@ -118,7 +130,10 @@ defmodule MicelioWeb.RepositoryLive.Webhooks do
               {:noreply,
                socket
                |> put_flash(:info, "Webhook deleted successfully.")
-               |> assign(:webhooks, Webhooks.list_webhooks_for_project(socket.assigns.repository.id))}
+               |> assign(
+                 :webhooks,
+                 Webhooks.list_webhooks_for_project(socket.assigns.repository.id)
+               )}
 
             {:error, _reason} ->
               {:noreply, put_flash(socket, :error, "Unable to delete webhook.")}
@@ -287,7 +302,6 @@ defmodule MicelioWeb.RepositoryLive.Webhooks do
     |> String.replace(".", " ")
     |> String.replace("_", " ")
     |> String.split(" ")
-    |> Enum.map(&String.capitalize/1)
-    |> Enum.join(" ")
+    |> Enum.map_join(" ", &String.capitalize/1)
   end
 end

@@ -115,23 +115,23 @@
 
 /* Level colors - GitHub-style greens with theme awareness */
 .activity-graph-cell--0 {
-  fill: var(--activity-level-0, oklch(0.25 0.01 240));
+  fill: var(--theme-ui-colors-activity-0);
 }
 
 .activity-graph-cell--1 {
-  fill: var(--activity-level-1, oklch(0.45 0.12 145));
+  fill: var(--theme-ui-colors-activity-1);
 }
 
 .activity-graph-cell--2 {
-  fill: var(--activity-level-2, oklch(0.55 0.16 145));
+  fill: var(--theme-ui-colors-activity-2);
 }
 
 .activity-graph-cell--3 {
-  fill: var(--activity-level-3, oklch(0.65 0.20 145));
+  fill: var(--theme-ui-colors-activity-3);
 }
 
 .activity-graph-cell--4 {
-  fill: var(--activity-level-4, oklch(0.75 0.22 145));
+  fill: var(--theme-ui-colors-activity-4);
 }
 
 /* Legend styles */
@@ -145,23 +145,23 @@
 }
 
 .activity-graph-legend .activity-graph-cell {
-  background-color: var(--activity-level-0, oklch(0.25 0.01 240));
+  background-color: var(--theme-ui-colors-activity-0);
 }
 
 .activity-graph-legend .activity-graph-cell--1 {
-  background-color: var(--activity-level-1, oklch(0.45 0.12 145));
+  background-color: var(--theme-ui-colors-activity-1);
 }
 
 .activity-graph-legend .activity-graph-cell--2 {
-  background-color: var(--activity-level-2, oklch(0.55 0.16 145));
+  background-color: var(--theme-ui-colors-activity-2);
 }
 
 .activity-graph-legend .activity-graph-cell--3 {
-  background-color: var(--activity-level-3, oklch(0.65 0.20 145));
+  background-color: var(--theme-ui-colors-activity-3);
 }
 
 .activity-graph-legend .activity-graph-cell--4 {
-  background-color: var(--activity-level-4, oklch(0.75 0.22 145));
+  background-color: var(--theme-ui-colors-activity-4);
 }
 
 .activity-graph-legend-label {

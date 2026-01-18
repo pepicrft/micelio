@@ -36,7 +36,11 @@ defmodule Micelio.Storage.TieredTest do
     {:ok, config: config, origin_dir: origin_dir, cache_dir: cache_dir}
   end
 
-  test "reads from origin and seeds disk cache", %{config: config, origin_dir: origin_dir, cache_dir: cache_dir} do
+  test "reads from origin and seeds disk cache", %{
+    config: config,
+    origin_dir: origin_dir,
+    cache_dir: cache_dir
+  } do
     key = "sessions/abc/files/main.ex"
     content = "hello"
 
@@ -69,7 +73,7 @@ defmodule Micelio.Storage.TieredTest do
   test "reads from disk when memory is empty and origin is missing", %{
     config: config,
     origin_dir: origin_dir,
-    cache_dir: cache_dir
+    cache_dir: _cache_dir
   } do
     key = "sessions/abc/files/disk.ex"
     content = "disk cache"
@@ -157,7 +161,10 @@ defmodule Micelio.Storage.TieredTest do
     assert {:ok, %{content: ^content, etag: ^etag}} = Tiered.get_with_metadata(key, disk_config)
   end
 
-  test "reads from CDN when caches miss and seeds disk cache", %{config: config, cache_dir: cache_dir} do
+  test "reads from CDN when caches miss and seeds disk cache", %{
+    config: config,
+    cache_dir: cache_dir
+  } do
     key = "sessions/abc/files/cdn.ex"
     content = "cdn content"
 
@@ -177,6 +184,24 @@ defmodule Micelio.Storage.TieredTest do
 
     _ = File.rm(Path.join(cache_dir, key))
     assert {:ok, ^content} = Tiered.get(key, config)
+  end
+
+  test "head uses cached CDN metadata after get", %{config: config} do
+    key = "sessions/abc/files/cdn-head-cache.ex"
+    content = "cdn cached content"
+    etag = "cdn-cached-etag"
+    size = byte_size(content)
+
+    expect(Req, :get, fn url, opts ->
+      assert url == "https://cdn.example/#{key}"
+      assert opts[:decode_body] == false
+      {:ok, %{status: 200, body: content, headers: [{"etag", etag}]}}
+    end)
+
+    config = Keyword.put(config, :cdn_base_url, "https://cdn.example")
+
+    assert {:ok, ^content} = Tiered.get(key, config)
+    assert {:ok, %{etag: ^etag, size: ^size}} = Tiered.head(key, config)
   end
 
   test "falls back to origin when CDN misses and seeds disk cache", %{
@@ -308,7 +333,37 @@ defmodule Micelio.Storage.TieredTest do
     assert File.exists?(Path.join(cache_dir, "#{key}.meta"))
   end
 
-  test "evicts oldest memory entries when cache exceeds limit", %{config: config, origin_dir: origin_dir} do
+  test "head falls back to origin when CDN misses and caches are disabled", %{
+    config: config,
+    origin_dir: origin_dir
+  } do
+    key = "sessions/abc/files/head-origin.ex"
+    content = "origin head content"
+    size = byte_size(content)
+
+    head_config =
+      config
+      |> Keyword.put(:cdn_base_url, "https://cdn.example")
+      |> Keyword.put(:cache_disk_path, nil)
+      |> Keyword.put(:cache_memory_max_bytes, 0)
+      |> Keyword.put(:cache_namespace, "#{config[:cache_namespace]}-head-origin")
+
+    {:ok, ^key} = Local.put(key, content, base_path: origin_dir)
+    {:ok, %{etag: etag}} = Local.get_with_metadata(key, base_path: origin_dir)
+
+    expect(Req, :get, fn url, opts ->
+      assert url == "https://cdn.example/#{key}"
+      assert opts[:decode_body] == false
+      {:ok, %{status: 404}}
+    end)
+
+    assert {:ok, %{etag: ^etag, size: ^size}} = Tiered.head(key, head_config)
+  end
+
+  test "evicts oldest memory entries when cache exceeds limit", %{
+    config: config,
+    origin_dir: origin_dir
+  } do
     key1 = "sessions/abc/files/evict-1.ex"
     key2 = "sessions/abc/files/evict-2.ex"
     content1 = "123456"
@@ -358,6 +413,30 @@ defmodule Micelio.Storage.TieredTest do
     refute File.exists?(Path.join(cache_dir, key))
   end
 
+  test "put_if_match seeds disk cache on success", %{
+    config: config,
+    origin_dir: origin_dir,
+    cache_dir: cache_dir
+  } do
+    key = "sessions/abc/files/precondition-success.ex"
+    original = "original content"
+    updated = "updated content"
+
+    disk_config =
+      config
+      |> Keyword.put(:cache_memory_max_bytes, 0)
+      |> Keyword.put(:cache_namespace, "#{config[:cache_namespace]}-precondition-success")
+
+    {:ok, ^key} = Local.put(key, original, base_path: origin_dir)
+    {:ok, %{etag: etag}} = Local.get_with_metadata(key, base_path: origin_dir)
+
+    assert {:ok, ^key} = Tiered.put_if_match(key, updated, etag, disk_config)
+    assert File.exists?(Path.join(cache_dir, key))
+
+    {:ok, ^key} = Local.delete(key, base_path: origin_dir)
+    assert {:ok, ^updated} = Tiered.get(key, disk_config)
+  end
+
   test "delete clears disk cache entries and metadata", %{
     config: config,
     origin_dir: origin_dir,
@@ -399,7 +478,10 @@ defmodule Micelio.Storage.TieredTest do
     refute Local.exists?(key, base_path: origin_dir)
   end
 
-  test "overwriting a key does not evict the latest entry", %{config: config, origin_dir: origin_dir} do
+  test "overwriting a key does not evict the latest entry", %{
+    config: config,
+    origin_dir: origin_dir
+  } do
     key = "sessions/abc/files/overwrite-cache.ex"
     content1 = "first"
     content2 = "secon"
@@ -415,5 +497,55 @@ defmodule Micelio.Storage.TieredTest do
     {:ok, ^key} = Local.delete(key, base_path: origin_dir)
 
     assert {:ok, ^content2} = Tiered.get(key, memory_config)
+  end
+
+  test "memory caches are isolated by namespace", %{config: config, origin_dir: origin_dir} do
+    key = "sessions/abc/files/namespace-cache.ex"
+    content = "namespaced"
+
+    memory_config =
+      config
+      |> Keyword.put(:cache_disk_path, nil)
+      |> Keyword.put(:cache_namespace, "#{config[:cache_namespace]}-ns1")
+
+    other_config = Keyword.put(memory_config, :cache_namespace, "#{config[:cache_namespace]}-ns2")
+
+    {:ok, ^key} = Local.put(key, content, base_path: origin_dir)
+    assert {:ok, ^content} = Tiered.get(key, memory_config)
+    {:ok, ^key} = Local.delete(key, base_path: origin_dir)
+
+    assert {:error, :not_found} = Tiered.get(key, other_config)
+  end
+
+  test "list delegates to the origin backend", %{config: config} do
+    key1 = "sessions/abc/files/list-1.ex"
+    key2 = "sessions/abc/files/list-2.ex"
+
+    {:ok, ^key1} = FakeOrigin.put(key1, "list one")
+    {:ok, ^key2} = FakeOrigin.put(key2, "list two")
+
+    list_config =
+      config
+      |> Keyword.put(:origin_backend, FakeOrigin)
+      |> Keyword.put(:cache_namespace, "#{config[:cache_namespace]}-list")
+
+    assert {:ok, keys} = Tiered.list("sessions/abc/files", list_config)
+    assert Enum.sort(keys) == Enum.sort([key1, key2])
+  end
+
+  test "exists? returns true when cached even if origin is missing", %{config: config} do
+    key = "sessions/abc/files/cache-exists.ex"
+
+    {:ok, ^key} = FakeOrigin.put(key, "cached")
+
+    exists_config =
+      config
+      |> Keyword.put(:origin_backend, FakeOrigin)
+      |> Keyword.put(:cache_namespace, "#{config[:cache_namespace]}-exists")
+
+    assert {:ok, ^key} = Tiered.put(key, "cached", exists_config)
+    {:ok, ^key} = FakeOrigin.delete(key)
+
+    assert Tiered.exists?(key, exists_config)
   end
 end

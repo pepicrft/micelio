@@ -17,6 +17,7 @@ config :logger, level: :warning
 config :micelio, Micelio.GRPC, enabled: false
 config :micelio, Micelio.Hif.RollupScheduler, enabled: false
 config :micelio, Micelio.Mailer, adapter: Swoosh.Adapters.Test
+config :micelio, :notifications_async, false
 
 config :micelio, Micelio.Repo,
   database: Path.join([System.tmp_dir!(), "micelio", "micelio_test#{test_partition}.sqlite3"]),
@@ -30,6 +31,8 @@ config :micelio, MicelioWeb.Endpoint,
   http: [ip: {127, 0, 0, 1}, port: 4002],
   secret_key_base: "7CasJHWDMv4jqFHNq+m+JV10UTi5t6g4FH0RJBPjOPwTEbBg2vI/VDZknktJ4B4/",
   server: false
+
+config :micelio, :admin_emails, ["admin@example.com"]
 
 # Initialize plugs at runtime for faster test compilation
 config :phoenix, :plug_init_mode, :runtime

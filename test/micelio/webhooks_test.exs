@@ -73,7 +73,10 @@ defmodule Micelio.WebhooksTest do
                Webhooks.deliver_project_event(project, "push", payload)
     end
 
-    test "delivers only active webhooks with matching events", %{project: project, webhook: webhook} do
+    test "delivers only active webhooks with matching events", %{
+      project: project,
+      webhook: webhook
+    } do
       {:ok, _inactive} =
         Webhooks.create_webhook(%{
           project_id: project.id,
@@ -285,7 +288,9 @@ defmodule Micelio.WebhooksTest do
                  events: ["unknown.event"]
                })
 
-      assert "contains unsupported events" in errors_on(changeset).events
+      assert Enum.any?(errors_on(changeset).events, fn message ->
+               String.contains?(message, "contains unsupported events")
+             end)
     end
 
     test "rejects invalid urls" do

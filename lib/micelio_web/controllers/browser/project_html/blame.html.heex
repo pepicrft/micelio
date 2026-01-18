@@ -1,0 +1,157 @@
+<Layouts.app
+  flash={@flash}
+  current_scope={assigns[:current_scope]}
+  current_user={assigns[:current_user]}
+>
+  <div class="project-container">
+    <% file_segments = String.split(@file_path, "/") %>
+    <% dir_segments = Enum.drop(file_segments, -1) %>
+    <.header>
+      {@account.handle}/{@project.handle}
+      <:subtitle>
+        <p class="project-file-path">{@file_path}</p>
+        <%= if @forked_from do %>
+          <p class="project-forked-from">
+            Forked from
+            <a
+              href={~p"/#{@forked_from.organization.account.handle}/#{@forked_from.handle}"}
+              class="project-forked-link"
+            >
+              {@forked_from.organization.account.handle}/{@forked_from.handle}
+            </a>
+          </p>
+        <% end %>
+      </:subtitle>
+      <:actions>
+        <% repo_href = ~p"/#{@account.handle}/#{@project.handle}" %>
+        <% parent_dir = Path.dirname(@file_path) %>
+        <% parent_dir = if parent_dir == ".", do: "", else: parent_dir %>
+
+        <div class="project-stars">
+          <%= if @current_user do %>
+            <.form
+              for={@star_form}
+              id="project-star-form"
+              class="project-star-form"
+              action={~p"/#{@account.handle}/#{@project.handle}/star"}
+              method="post"
+            >
+              <.input field={@star_form[:return_to]} type="hidden" />
+              <button
+                type="submit"
+                class="project-star-toggle"
+                id="project-star-toggle"
+              >
+                <%= if @starred? do %>
+                  Unstar
+                <% else %>
+                  Star
+                <% end %>
+              </button>
+            </.form>
+          <% end %>
+          <span class="project-stars-count" id="project-stars-count">
+            Stars: {@stars_count}
+          </span>
+        </div>
+        <%= if @current_user && @fork_organizations != [] do %>
+          <.form
+            for={@fork_form}
+            id="project-fork-form"
+            class="project-fork-form"
+            action={~p"/#{@account.handle}/#{@project.handle}/fork"}
+            method="post"
+          >
+            <.input field={@fork_form[:return_to]} type="hidden" />
+            <div class="project-fork-fields">
+              <.input
+                field={@fork_form[:organization_id]}
+                type="select"
+                label="Fork to"
+                options={@fork_organization_options}
+              />
+              <.input field={@fork_form[:handle]} type="text" label="Handle" />
+            </div>
+            <button type="submit" class="project-fork-submit" id="project-fork-submit">
+              Fork
+            </button>
+          </.form>
+        <% end %>
+
+        <a
+          class="project-file-back"
+          href={~p"/#{@account.handle}/#{@project.handle}/blob/#{file_segments}"}
+          id="project-blame-view-file"
+        >
+          View file
+        </a>
+
+        <%= if parent_dir == "" do %>
+          <a class="project-file-back" href={repo_href}>Back</a>
+        <% else %>
+          <a
+            class="project-file-back"
+            href={~p"/#{@account.handle}/#{@project.handle}/tree/#{dir_segments}"}
+          >
+            Back
+          </a>
+        <% end %>
+      </:actions>
+    </.header>
+
+    <% filename = List.last(file_segments) %>
+    <% repo_href = ~p"/#{@account.handle}/#{@project.handle}" %>
+
+    <div class="project-browser">
+      <nav class="project-breadcrumb" aria-label="Path" id="project-breadcrumb">
+        <a href={repo_href}>{@project.handle}</a>
+        <%= for {segment, idx} <- Enum.with_index(dir_segments) do %>
+          <span class="project-breadcrumb-sep">/</span>
+          <% segment_path = Enum.take(dir_segments, idx + 1) %>
+          <a href={~p"/#{@account.handle}/#{@project.handle}/tree/#{segment_path}"}>
+            {segment}
+          </a>
+        <% end %>
+        <span class="project-breadcrumb-sep">/</span>
+        <span class="project-breadcrumb-current">{filename}</span>
+      </nav>
+    </div>
+
+    <div class="project-blame">
+      <%= case @blame_content do %>
+        <% {:text, _content} -> %>
+          <%= if @blame_lines == [] do %>
+            <p class="project-blame-empty" id="project-blame-empty">
+              No blame data available for this file yet.
+            </p>
+          <% else %>
+            <div class="project-blame-table" id="project-blame-table">
+              <%= for line <- @blame_lines do %>
+                <div class="project-blame-row" id={"project-blame-line-#{line.line_number}"}>
+                  <div class="project-blame-meta">
+                    <span class="project-blame-author">
+                      {line.author_handle || "unknown"}
+                    </span>
+                    <span class="project-blame-session">
+                      {line.session_id || "unknown"}
+                    </span>
+                    <span class="project-blame-date">
+                      {line.landed_at}
+                    </span>
+                  </div>
+                  <div class="project-blame-line">
+                    <span class="project-blame-number">{line.line_number}</span>
+                    <span class="project-blame-code">{line.text}</span>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          <% end %>
+        <% {:binary, size} -> %>
+          <p class="project-file-binary">
+            Binary file ({size} bytes) cannot be blamed.
+          </p>
+      <% end %>
+    </div>
+  </div>
+</Layouts.app>

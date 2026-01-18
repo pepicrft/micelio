@@ -45,8 +45,6 @@ defmodule Micelio.GRPC.Projects.V1.ProjectService.Server do
         {:error, status} ->
           {:error, status}
       end
-    else
-      {:error, status} -> {:error, status}
     end
   end
 

@@ -112,7 +112,10 @@ defmodule MicelioWeb.RepositoryWebhooksLiveTest do
       })
 
     assert {:error, {:redirect, %{to: "/auth/login"}}} =
-             live(conn, ~p"/#{organization.account.handle}/#{repository.handle}/settings/webhooks")
+             live(
+               conn,
+               ~p"/#{organization.account.handle}/#{repository.handle}/settings/webhooks"
+             )
   end
 
   test "requires admin access", %{conn: conn} do
@@ -148,7 +151,10 @@ defmodule MicelioWeb.RepositoryWebhooksLiveTest do
                to: redirect_to,
                flash: %{"error" => "You do not have access to this repository."}
              }}} =
-             live(conn, ~p"/#{organization.account.handle}/#{repository.handle}/settings/webhooks")
+             live(
+               conn,
+               ~p"/#{organization.account.handle}/#{repository.handle}/settings/webhooks"
+             )
 
     assert redirect_to == ~p"/#{organization.account.handle}/#{repository.handle}"
   end
