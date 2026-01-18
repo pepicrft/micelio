@@ -271,7 +271,11 @@ defmodule Micelio.Storage.S3 do
   # Private Functions
 
   defp validate_config do
-    config = Application.get_env(:micelio, Micelio.Storage, [])
+    # Check process dictionary first (for test isolation)
+    # Then fall back to Application config
+    config =
+      Process.get(:micelio_storage_config) ||
+        Application.get_env(:micelio, Micelio.Storage, [])
     env = Keyword.get(config, :env, %{})
 
     bucket = Keyword.get(config, :s3_bucket) || env_get(env, "S3_BUCKET")

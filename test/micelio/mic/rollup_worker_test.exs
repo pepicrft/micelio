@@ -1,19 +1,21 @@
 defmodule Micelio.Mic.RollupWorkerTest do
+  # async: false because this test spawns background workers that need storage config
+  # and spawned processes don't inherit process dictionary
   use ExUnit.Case, async: false
 
   alias Micelio.Mic.{Binary, ConflictIndex, RollupWorker}
   alias Micelio.Sessions.Conflict
   alias Micelio.Storage
+  alias Micelio.StorageHelper
 
   setup do
-    base_dir =
-      Path.join(System.tmp_dir!(), "micelio-rollup-#{System.unique_integer([:positive])}")
-
-    storage_dir = Path.join(base_dir, "storage")
-    File.mkdir_p!(storage_dir)
+    # This test spawns background workers that need storage config.
+    # Since spawned processes don't inherit process dictionary, we use
+    # Application.put_env here. This test must remain async: false.
+    {:ok, storage} = StorageHelper.create_isolated_storage()
 
     previous = Application.get_env(:micelio, Micelio.Storage)
-    Application.put_env(:micelio, Micelio.Storage, backend: :local, local_path: storage_dir)
+    Application.put_env(:micelio, Micelio.Storage, storage.config)
 
     on_exit(fn ->
       case previous do
@@ -21,7 +23,7 @@ defmodule Micelio.Mic.RollupWorkerTest do
         _ -> Application.put_env(:micelio, Micelio.Storage, previous)
       end
 
-      File.rm_rf!(base_dir)
+      StorageHelper.cleanup(storage)
     end)
 
     :ok

@@ -146,7 +146,12 @@ defmodule Micelio.Storage.Local do
   end
 
   defp config_base_path do
-    config = Application.get_env(:micelio, Micelio.Storage, [])
+    # Check process dictionary first (for test isolation)
+    # Then fall back to Application config
+    config =
+      Process.get(:micelio_storage_config) ||
+        Application.get_env(:micelio, Micelio.Storage, [])
+
     Keyword.get(config, :local_path, default_path())
   end
 

@@ -62,7 +62,11 @@ defmodule Micelio.Storage do
   Returns nil when no CDN base URL is configured.
   """
   def cdn_url(key) when is_binary(key) do
-    config = Application.get_env(:micelio, __MODULE__, [])
+    # Check process dictionary first (for test isolation)
+    # Then fall back to Application config
+    config =
+      Process.get(:micelio_storage_config) ||
+        Application.get_env(:micelio, __MODULE__, [])
 
     case Keyword.get(config, :cdn_base_url) do
       base when is_binary(base) and base != "" ->
@@ -96,7 +100,12 @@ defmodule Micelio.Storage do
   end
 
   defp backend do
-    config = Application.get_env(:micelio, __MODULE__, [])
+    # Check process dictionary first (for test isolation)
+    # Then fall back to Application config
+    config =
+      Process.get(:micelio_storage_config) ||
+        Application.get_env(:micelio, __MODULE__, [])
+
     backend_type = Keyword.get(config, :backend, :local)
 
     case backend_type do

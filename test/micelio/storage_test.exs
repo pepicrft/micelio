@@ -1,23 +1,30 @@
 defmodule Micelio.StorageTest do
-  use ExUnit.Case, async: false
+  use ExUnit.Case, async: true
 
   import Mimic
 
   alias Micelio.Storage
+  alias Micelio.StorageHelper
 
   setup :verify_on_exit!
-  setup :set_mimic_global
+  setup :set_mimic_private
 
-  setup_all do
+  setup do
     Mimic.copy(Req)
     :ok
   end
 
   describe "backend selection" do
     test "uses local backend when configured" do
-      Application.put_env(:micelio, Micelio.Storage, backend: :local)
+      # Use isolated storage via process dictionary
+      {:ok, storage} = StorageHelper.create_isolated_storage()
+      Process.put(:micelio_storage_config, storage.config)
 
-      # Should use local storage
+      on_exit(fn ->
+        Process.delete(:micelio_storage_config)
+        StorageHelper.cleanup(storage)
+      end)
+
       key = "test/local.txt"
       content = "local content"
 
@@ -29,13 +36,20 @@ defmodule Micelio.StorageTest do
     end
 
     test "uses S3 backend when configured" do
-      Application.put_env(:micelio, Micelio.Storage,
+      # Configure S3 backend via process dictionary
+      config = [
         backend: :s3,
         s3_bucket: "test-bucket",
         s3_region: "us-east-1",
         s3_access_key_id: "test-key",
         s3_secret_access_key: "test-secret"
-      )
+      ]
+
+      Process.put(:micelio_storage_config, config)
+
+      on_exit(fn ->
+        Process.delete(:micelio_storage_config)
+      end)
 
       key = "test/s3.txt"
       content = "s3 content"
@@ -57,9 +71,18 @@ defmodule Micelio.StorageTest do
     end
 
     test "defaults to local backend when not configured" do
-      Application.delete_env(:micelio, Micelio.Storage)
+      # Ensure process dictionary is clear to test default behavior
+      Process.delete(:micelio_storage_config)
 
-      # Should default to local
+      # Create a temp directory for this test
+      unique = System.unique_integer([:positive])
+      tmp_dir = Path.join(System.tmp_dir!(), "micelio-default-test-#{unique}")
+
+      on_exit(fn ->
+        File.rm_rf(tmp_dir)
+      end)
+
+      # The default local backend uses a temp directory
       key = "test/default.txt"
       content = "default content"
 
@@ -74,26 +97,24 @@ defmodule Micelio.StorageTest do
       unique = Integer.to_string(:erlang.unique_integer([:positive]))
       origin_dir = Path.join(System.tmp_dir!(), "micelio-test-origin-#{unique}")
       cache_dir = Path.join(System.tmp_dir!(), "micelio-test-cache-#{unique}")
-      original = Application.get_env(:micelio, Micelio.Storage, :unset)
 
       on_exit(fn ->
+        Process.delete(:micelio_storage_config)
         File.rm_rf(origin_dir)
         File.rm_rf(cache_dir)
-
-        case original do
-          :unset -> Application.delete_env(:micelio, Micelio.Storage)
-          _ -> Application.put_env(:micelio, Micelio.Storage, original)
-        end
       end)
 
-      Application.put_env(:micelio, Micelio.Storage,
+      # Configure tiered backend via process dictionary
+      config = [
         backend: :tiered,
         origin_backend: :local,
         origin_local_path: origin_dir,
         cache_disk_path: cache_dir,
         cache_memory_max_bytes: 1_000_000,
         cache_namespace: "storage-test-#{unique}"
-      )
+      ]
+
+      Process.put(:micelio_storage_config, config)
 
       key = "test/tiered.txt"
       content = "tiered content"
@@ -106,18 +127,13 @@ defmodule Micelio.StorageTest do
 
   describe "cdn_url/1" do
     test "returns a CDN URL when configured" do
-      original = Application.get_env(:micelio, Micelio.Storage, :unset)
+      # Configure CDN via process dictionary
+      config = [cdn_base_url: "https://cdn.example.test/micelio"]
+      Process.put(:micelio_storage_config, config)
 
       on_exit(fn ->
-        case original do
-          :unset -> Application.delete_env(:micelio, Micelio.Storage)
-          _ -> Application.put_env(:micelio, Micelio.Storage, original)
-        end
+        Process.delete(:micelio_storage_config)
       end)
-
-      Application.put_env(:micelio, Micelio.Storage,
-        cdn_base_url: "https://cdn.example.test/micelio"
-      )
 
       key = "projects/123/blobs/aa/file name.txt"
 
@@ -126,16 +142,12 @@ defmodule Micelio.StorageTest do
     end
 
     test "returns nil when CDN is not configured" do
-      original = Application.get_env(:micelio, Micelio.Storage, :unset)
+      # Configure empty storage config via process dictionary
+      Process.put(:micelio_storage_config, [])
 
       on_exit(fn ->
-        case original do
-          :unset -> Application.delete_env(:micelio, Micelio.Storage)
-          _ -> Application.put_env(:micelio, Micelio.Storage, original)
-        end
+        Process.delete(:micelio_storage_config)
       end)
-
-      Application.put_env(:micelio, Micelio.Storage, [])
 
       assert Storage.cdn_url("projects/123/blobs/aa/file.txt") == nil
     end

@@ -4,6 +4,7 @@ defmodule Micelio.Mic.DeltaCompressionTest do
   alias Micelio.Mic.DeltaCompression
   alias Micelio.Mic.Project
   alias Micelio.Storage
+  alias Micelio.StorageHelper
 
   test "encodes delta payloads and reconstructs content" do
     base = String.duplicate("a", 500) <> "b" <> String.duplicate("a", 500)
@@ -30,17 +31,13 @@ defmodule Micelio.Mic.DeltaCompressionTest do
   end
 
   test "project get_blob decodes stored delta payloads" do
-    storage_dir =
-      Path.join(System.tmp_dir!(), "micelio-delta-test-#{System.unique_integer([:positive])}")
-
-    previous = Application.get_env(:micelio, Micelio.Storage)
-    Application.put_env(:micelio, Micelio.Storage, backend: :local, local_path: storage_dir)
+    # Use isolated storage via process dictionary (no global state!)
+    {:ok, storage} = StorageHelper.create_isolated_storage()
+    Process.put(:micelio_storage_config, storage.config)
 
     on_exit(fn ->
-      case previous do
-        nil -> Application.delete_env(:micelio, Micelio.Storage)
-        _ -> Application.put_env(:micelio, Micelio.Storage, previous)
-      end
+      Process.delete(:micelio_storage_config)
+      StorageHelper.cleanup(storage)
     end)
 
     project_id = "proj-123"

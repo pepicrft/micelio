@@ -4,27 +4,20 @@ defmodule Micelio.ProjectsWorkspaceTest do
   alias Micelio.Mic.Project
   alias Micelio.Projects
   alias Micelio.Storage
+  alias Micelio.StorageHelper
 
   setup do
-    base_dir =
-      Path.join(System.tmp_dir!(), "micelio-workspace-#{System.unique_integer([:positive])}")
+    # Use isolated storage via process dictionary (no global state!)
+    {:ok, storage} = StorageHelper.create_isolated_storage()
+    Process.put(:micelio_storage_config, storage.config)
 
-    storage_dir = Path.join(base_dir, "storage")
-    source_dir = Path.join(base_dir, "source")
-
-    File.mkdir_p!(storage_dir)
+    # Create source directory for test files
+    source_dir = Path.join(storage.base_dir, "source")
     File.mkdir_p!(source_dir)
 
-    previous = Application.get_env(:micelio, Micelio.Storage)
-    Application.put_env(:micelio, Micelio.Storage, backend: :local, local_path: storage_dir)
-
     on_exit(fn ->
-      case previous do
-        nil -> Application.delete_env(:micelio, Micelio.Storage)
-        _ -> Application.put_env(:micelio, Micelio.Storage, previous)
-      end
-
-      File.rm_rf!(base_dir)
+      Process.delete(:micelio_storage_config)
+      StorageHelper.cleanup(storage)
     end)
 
     {:ok, %{source_dir: source_dir}}

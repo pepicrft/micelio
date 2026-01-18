@@ -497,26 +497,12 @@ defmodule MicelioWeb.Browser.RepositoryControllerTest do
     organization: organization,
     project: project
   } do
-    original = Application.get_env(:micelio, Micelio.Storage, :unset)
+    # Configure CDN via process dictionary (no global state!)
+    Process.put(:micelio_storage_config, [cdn_base_url: "https://cdn.example.test/micelio"])
 
     on_exit(fn ->
-      case original do
-        :unset -> Application.delete_env(:micelio, Micelio.Storage)
-        _ -> Application.put_env(:micelio, Micelio.Storage, original)
-      end
+      Process.delete(:micelio_storage_config)
     end)
-
-    base_config =
-      case original do
-        :unset -> []
-        config when is_list(config) -> config
-      end
-
-    Application.put_env(
-      :micelio,
-      Micelio.Storage,
-      Keyword.put(base_config, :cdn_base_url, "https://cdn.example.test/micelio")
-    )
 
     app = "IO.puts(\"ok\")\n"
     app_hash = :crypto.hash(:sha256, app)
@@ -719,7 +705,7 @@ defmodule MicelioWeb.Browser.RepositoryControllerTest do
 
     assert redirected_to(conn) == return_to
 
-    assert Phoenix.Controller.get_flash(conn, :error) ==
+    assert Phoenix.Flash.get(conn.assigns.flash, :error) ==
              "Select an organization you administer to fork."
 
     assert is_nil(Projects.get_project_by_handle(target_org.id, "demo-fork"))

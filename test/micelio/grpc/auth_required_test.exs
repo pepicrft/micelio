@@ -17,6 +17,7 @@ defmodule Micelio.GRPC.AuthRequiredTest do
   alias Micelio.Sessions
 
   setup do
+    # GRPC config still needs Application.put_env as it's read directly by GRPC code
     original = Application.get_env(:micelio, Micelio.GRPC, [])
     Application.put_env(:micelio, Micelio.GRPC, Keyword.put(original, :require_auth_token, true))
 
@@ -24,11 +25,11 @@ defmodule Micelio.GRPC.AuthRequiredTest do
       Application.put_env(:micelio, Micelio.GRPC, original)
     end)
 
-    storage_original = Application.get_env(:micelio, Micelio.Storage, [])
-    Application.put_env(:micelio, Micelio.Storage, backend: :local)
+    # Use process dictionary for Storage config (parallel-safe)
+    Process.put(:micelio_storage_config, [backend: :local])
 
     on_exit(fn ->
-      Application.put_env(:micelio, Micelio.Storage, storage_original)
+      Process.delete(:micelio_storage_config)
     end)
 
     :ok

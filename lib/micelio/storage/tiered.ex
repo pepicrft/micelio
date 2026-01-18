@@ -159,7 +159,10 @@ defmodule Micelio.Storage.Tiered do
   end
 
   defp config do
-    Application.get_env(:micelio, Micelio.Storage, [])
+    # Check process dictionary first (for test isolation)
+    # Then fall back to Application config
+    Process.get(:micelio_storage_config) ||
+      Application.get_env(:micelio, Micelio.Storage, [])
   end
 
   defp cache_put(config, key, content, metadata \\ nil) do
