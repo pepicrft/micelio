@@ -85,6 +85,11 @@ Micelio is a minimalist, open-source git forge built with Elixir/Phoenix, design
   - Make it visually prominent to encourage exploration
   - Sort by stars, recent activity, or trending score
   - Include pagination or infinite scroll for browsing
+- [ ] Create .ico favicon and configure site to use it
+  - Design circular logo favicon (simple circle as per brand identity)
+  - Generate .ico format at standard sizes (16x16, 32x32, 48x48)
+  - Configure Phoenix to serve favicon.ico
+  - Add to layout head section
 
 ### mic (Zig CLI)
 
