@@ -40,6 +40,7 @@ const FileChange = struct {
 };
 
 const session_filename = "session.json";
+const overlay_root = ".hif/overlay";
 
 fn sessionStatePath(allocator: std.mem.Allocator) ![]u8 {
     const cwd = try std.process.getCwdAlloc(allocator);

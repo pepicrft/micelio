@@ -50,7 +50,7 @@ Micelio is a minimalist, open-source git forge built with Elixir/Phoenix, design
 
 ### hif (Zig CLI)
 
-- [ ] Implement NFS v3 server for virtual filesystem (hif-fs) in hif/src/fs/nfs.zig
+- [x] Implement NFS v3 server for virtual filesystem (hif-fs) in hif/src/fs/nfs.zig
 - [ ] Create session overlay for tracking local changes before landing
 - [ ] Add `hif mount` command to mount project as virtual filesystem
 - [ ] Add `hif unmount` command to cleanly unmount virtual filesystem

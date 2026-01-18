@@ -1,5 +1,6 @@
 defmodule Micelio.ThemeTest do
   use ExUnit.Case, async: true
+
   import Jason.Encode, only: [encode!: 1]
 
   setup do
