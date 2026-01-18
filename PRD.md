@@ -40,6 +40,9 @@ Micelio is a minimalist, open-source git forge built with Elixir/Phoenix, design
 - [ ] Add JSON-LD structured data for SEO (Schema.org SoftwareSourceCode)
 - [ ] Create embeddable badges for projects (Shields.io-style for Micelio)
 - [ ] Implement ActivityPub federation for projects and profiles
+- [ ] Add GitHub OAuth authentication
+- [ ] Add GitLab OAuth authentication
+- [ ] Add Passkey (WebAuthn) authentication support
 
 ### hif (Zig CLI)
 
