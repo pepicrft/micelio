@@ -601,3 +601,100 @@ And **never** do this:
 <!-- phoenix:liveview-end -->
 
 <!-- usage-rules-end -->
+
+## Debugging Issues in Production
+
+When encountering 500 errors or unexpected behavior in production, follow these steps:
+
+### 1. Check the Logs
+
+The most common way to debug production issues is by checking the logs:
+
+```bash
+# View live logs (requires SSH access to the production server)
+fly logs
+
+# Or tail the log file directly
+tail -f /var/log/phoenix/production.log
+
+# Check recent errors
+grep -i error /var/log/phoenix/production.log | tail -50
+```
+
+### 2. Identify the Error Pattern
+
+Look for:
+- **500 errors**: Check the exact controller and function that failed
+- **Pattern**: Is it happening on specific pages (e.g., legal pages)?
+- **Error messages**: Look for Elixir stacktraces in the logs
+
+### 3. Reproduce Locally
+
+Try to reproduce the issue locally first:
+1. Start the server: `mix phx.server`
+2. Navigate to the problematic page
+3. Check local logs for similar errors
+
+### 4. Common Production Issues
+
+- **Missing assigns**: Production compiles with `phoenix_gen_html` which may expose template errors that work in dev
+- **Environment-specific code**: Check if the error only happens in production
+- **Database issues**: Missing migrations or data that exists in dev but not prod
+- **Asset compilation**: CSS/JS not properly compiled
+
+### 5. Quick Debugging Checklist
+
+- [ ] Check `fly logs` for the exact error
+- [ ] Identify the controller and action from the log
+- [ ] Check the LiveView/controller for missing assigns
+- [ ] Verify templates use correct variable names
+- [ ] Check if any environment variables are missing
+- [ ] Run `mix phx.server` locally and try to reproduce
+- [ ] Check if database migrations need to run
+
+### 6. Common 500 Error Causes in Phoenix
+
+- Accessing `@changeset` directly in template instead of `@form`
+- Missing required assign in LiveView (e.g., `@page_title`, `@current_user`)
+- Pattern match failures in `handle_params`
+- Database connection issues
+- Template syntax errors (especially after renaming files)
+- Missing CSS imports (check `assets/css/app.css`)
+
+### 7. When Fixing
+
+1. Make the fix locally
+2. Run tests: `mix test`
+3. Run formatter: `mix format`
+4. Check warnings: `mix compile --warnings-as-errors`
+5. Commit and push
+6. Verify CI passes
+7. Deploy: `fly deploy`
+8. Check `fly logs` to verify the fix
+
+### 8. Useful Commands
+
+```bash
+# Check production logs
+fly logs
+
+# SSH into production
+fly ssh console
+
+# Run iex in production
+fly ssh console --app "micelio-prod" -C "eval --erl -hidden -sname iex -setcookie $(cat .fly/config.yml | grep -A1 "cookie" | tail -1 | tr -d ' '): iex -name iex@127.0.0.1 -setcookie $(cat .fly/config.yml | grep "cookie" | cut -d'"' -f2)"
+
+# Check database
+fly ssh console -C "micelio_prod -eval 'IO.inspect(Repo.all(Ecto.Query.from p in Micelio.Projects.Project, limit: 5))'"
+
+# Rollback if needed
+fly deploy --strategy=rollback
+```
+
+### 9. Remember
+
+- Production is stricter than development
+- `mix compile --warnings-as-errors` will catch issues that work in dev
+- Always check logs first — they contain the stacktrace
+- Use `grep "error" /var/log/phoenix/production.log | tail -20` for quick error overview
+
