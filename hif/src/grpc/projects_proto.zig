@@ -9,6 +9,7 @@ pub const Project = struct {
     description: []const u8,
     inserted_at: []const u8,
     updated_at: []const u8,
+    visibility: []const u8,
 };
 
 pub const ListProjectsResponse = struct {
@@ -43,6 +44,7 @@ pub fn encodeCreateProjectRequest(
     handle: []const u8,
     name: []const u8,
     description: ?[]const u8,
+    visibility: ?[]const u8,
 ) ![]u8 {
     var buf = std.Io.Writer.Allocating.init(allocator);
     defer buf.deinit();
@@ -52,6 +54,11 @@ pub fn encodeCreateProjectRequest(
     if (description) |value| {
         if (value.len > 0) {
             try proto.encodeStringField(&buf.writer, 5, value);
+        }
+    }
+    if (visibility) |value| {
+        if (value.len > 0) {
+            try proto.encodeStringField(&buf.writer, 6, value);
         }
     }
     return buf.toOwnedSlice();
@@ -64,6 +71,7 @@ pub fn encodeUpdateProjectRequest(
     name: ?[]const u8,
     description: ?[]const u8,
     new_handle: ?[]const u8,
+    visibility: ?[]const u8,
 ) ![]u8 {
     var buf = std.Io.Writer.Allocating.init(allocator);
     defer buf.deinit();
@@ -82,6 +90,11 @@ pub fn encodeUpdateProjectRequest(
     if (description) |value| {
         if (value.len > 0) {
             try proto.encodeStringField(&buf.writer, 6, value);
+        }
+    }
+    if (visibility) |value| {
+        if (value.len > 0) {
+            try proto.encodeStringField(&buf.writer, 7, value);
         }
     }
     return buf.toOwnedSlice();
@@ -178,6 +191,7 @@ fn decodeProject(allocator: std.mem.Allocator, data: []const u8) !Project {
     var description: []const u8 = &[_]u8{};
     var inserted_at: []const u8 = &[_]u8{};
     var updated_at: []const u8 = &[_]u8{};
+    var visibility: []const u8 = &[_]u8{};
 
     while (!decoder.eof()) {
         const key = try decoder.readVarint();
@@ -213,6 +227,10 @@ fn decodeProject(allocator: std.mem.Allocator, data: []const u8) !Project {
                 if (wire_type != .length_delimited) return error.InvalidWireType;
                 updated_at = try decoder.readBytes(allocator);
             },
+            9 => {
+                if (wire_type != .length_delimited) return error.InvalidWireType;
+                visibility = try decoder.readBytes(allocator);
+            },
             else => try decoder.skipField(wire_type),
         }
     }
@@ -225,5 +243,6 @@ fn decodeProject(allocator: std.mem.Allocator, data: []const u8) !Project {
         .description = description,
         .inserted_at = inserted_at,
         .updated_at = updated_at,
+        .visibility = visibility,
     };
 }

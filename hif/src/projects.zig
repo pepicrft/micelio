@@ -55,6 +55,7 @@ pub fn create(allocator: std.mem.Allocator, server: []const u8, organization: []
         handle,
         name,
         description,
+        null,
     );
     defer arena_alloc.free(request);
 
@@ -132,6 +133,7 @@ pub fn update(
         name,
         description,
         new_handle,
+        null,
     );
     defer arena_alloc.free(request);
 
