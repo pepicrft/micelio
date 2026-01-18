@@ -24,7 +24,7 @@ Micelio is a minimalist, open-source git forge built with Elixir/Phoenix, design
 - [x] Implement blame view showing session attribution per line
 - [x] Add tiered caching layer (RAM -> SSD -> CDN -> S3) for fast reads
 - [x] Create admin dashboard for instance management and user oversight
-- [ ] Implement email notifications for repository activity
+- [x] Implement email notifications for repository activity
 - [ ] Convert Micelio repository into a workspace and push to micelio/micelio on micelio.dev
 - [ ] Create skill.md served from /skill.md for agents, and add note to AGENTS.md to keep it updated
 - [ ] Implement dynamic Open Graph images for public projects and pages
@@ -32,6 +32,11 @@ Micelio is a minimalist, open-source git forge built with Elixir/Phoenix, design
   - Use content hash for cache invalidation
   - Support cache invalidation on X, LinkedIn, and other platforms
 - [ ] Create public agent LiveView to watch agent progress on projects
+- [ ] Implement daily theme generation using LLM API
+  - Generate new theme personality each day and apply it
+  - Persist generated themes in S3
+  - Cache in memory for performance
+  - Add footer explaining the daily personality design
 
 ### hif (Zig CLI)
 
