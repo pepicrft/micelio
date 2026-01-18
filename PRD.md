@@ -72,3 +72,34 @@ Micelio is a minimalist, open-source git forge built with Elixir/Phoenix, design
 - [ ] Create project access tokens with scoped permissions
 - [ ] Implement branch protection rules for preventing direct lands to main
 - [ ] Add secret scanning to prevent credential leaks in landed sessions
+
+### Platform Limits & Rate Limiting
+
+- [ ] Implement rate limiting for unauthenticated and authenticated users
+- [ ] Set initial project limits per tenant (prevent spam during early growth)
+- [ ] Add abuse detection and mitigation systems
+
+### Mobile Clients
+
+- [ ] Create iOS native client using Swift (SwiftUI)
+- [ ] Create Android native client using Jetpack Compose
+- [ ] Implement authentication flow for both mobile clients
+- [ ] Add basic project browsing and viewing capabilities
+- [ ] Design API endpoints optimized for mobile (pagination, offline support)
+
+### Agentic Infrastructure
+
+- [ ] Design infrastructure for provisioning VMs and mounting volumes
+- [ ] Evaluate cloud platforms for VM provisioning (AWS, GCP, Hetzner, etc.)
+- [ ] Design abstraction protocol for cloud-agnostic VM management
+- [ ] Implement remote execution service for running CLI tools (Claude, Codex, etc.)
+- [ ] Add support for tenant-configurable LLM models per project
+- [ ] Design secure sandboxed environment for agent execution
+- [ ] Implement resource quota and billing for agentic workflows
+
+### Open Graph & SEO
+
+- [ ] Generate OG images for agents using LLM summaries of code changes
+- [ ] Design template for agent progress OG images showing commits, files changed
+- [ ] Implement cache invalidation strategy for social platform crawlers
+- [ ] Add dynamic OG image generation for commits, PRs, and agent sessions
