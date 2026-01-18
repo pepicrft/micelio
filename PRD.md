@@ -23,9 +23,10 @@ Micelio is a minimalist, open-source git forge built with Elixir/Phoenix, design
 - [x] Create repository file browser with tree navigation
 - [x] Implement blame view showing session attribution per line
 - [x] Add tiered caching layer (RAM -> SSD -> CDN -> S3) for fast reads
-- [ ] Create admin dashboard for instance management and user oversight
+- [x] Create admin dashboard for instance management and user oversight
 - [ ] Implement email notifications for repository activity
 - [ ] Convert Micelio repository into a workspace and push to micelio/micelio on micelio.dev
+- [ ] Create skill.md served from /skill.md for agents, and add note to AGENTS.md to keep it updated
 
 ### hif (Zig CLI)
 
