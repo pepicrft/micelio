@@ -27,6 +27,11 @@ Micelio is a minimalist, open-source git forge built with Elixir/Phoenix, design
 - [ ] Implement email notifications for repository activity
 - [ ] Convert Micelio repository into a workspace and push to micelio/micelio on micelio.dev
 - [ ] Create skill.md served from /skill.md for agents, and add note to AGENTS.md to keep it updated
+- [ ] Implement dynamic Open Graph images for public projects and pages
+  - Generate lazily and persist to S3 for future use
+  - Use content hash for cache invalidation
+  - Support cache invalidation on X, LinkedIn, and other platforms
+- [ ] Create public agent LiveView to watch agent progress on projects
 
 ### hif (Zig CLI)
 
