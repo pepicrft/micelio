@@ -7,25 +7,25 @@ Micelio is a minimalist, open-source git forge built with Elixir/Phoenix, design
 ### Forge (Elixir/Phoenix)
 
 - [x] Add rate limiting middleware for unauthenticated API requests
-- [x] Implement public vs private repository visibility settings in the database schema and authorization
-- [x] Create repository settings page for changing visibility, name, and description
+- [x] Implement public vs private project visibility settings in the database schema and authorization
+- [x] Create project settings page for changing visibility, name, and description
 - [x] Add OpenAPISpex setup for automatic API documentation generation
 - [x] Implement fediverse integration for ActivityPub-compatible forge federation
-- [x] Add repository starring/favorites functionality with database schema and UI
-- [x] Create repository search functionality with full-text search across names and descriptions
-- [x] Implement repository forking with proper ownership and origin tracking
-- [x] Add webhook support for repository events (push, session land, etc.)
+- [x] Add project starring/favorites functionality with database schema and UI
+- [x] Create project search functionality with full-text search across names and descriptions
+- [x] Implement project forking with proper ownership and origin tracking
+- [x] Add webhook support for project events (push, session land, etc.)
 - [x] Create user profile page showing owned repositories and activity
   - Note: Activity graph (like GitHub's contribution graph) should be added
 - [x] Add user activity graph (GitHub-style contribution visualization) to profile page
-- [x] Implement repository README rendering on the repository homepage
+- [x] Implement project README rendering on the project homepage
 - [x] Add syntax highlighting for code file viewing using a server-side highlighter
-- [x] Create repository file browser with tree navigation
+- [x] Create project file browser with tree navigation
 - [x] Implement blame view showing session attribution per line
 - [x] Add tiered caching layer (RAM -> SSD -> CDN -> S3) for fast reads
 - [x] Create admin dashboard for instance management and user oversight
-- [x] Implement email notifications for repository activity
-- [ ] Convert Micelio repository into a workspace and push to micelio/micelio on micelio.dev
+- [x] Implement email notifications for project activity
+- [ ] Convert Micelio project into a workspace and push to micelio/micelio on micelio.dev
 - [ ] Create skill.md served from /skill.md for agents, and add note to AGENTS.md to keep it updated
 - [ ] Implement dynamic Open Graph images for public projects and pages
   - Generate lazily and persist to S3 for future use
@@ -42,7 +42,7 @@ Micelio is a minimalist, open-source git forge built with Elixir/Phoenix, design
 
 - [ ] Implement NFS v3 server for virtual filesystem (hif-fs) in hif/src/fs/nfs.zig
 - [ ] Create session overlay for tracking local changes before landing
-- [ ] Add `hif mount` command to mount repository as virtual filesystem
+- [ ] Add `hif mount` command to mount project as virtual filesystem
 - [ ] Add `hif unmount` command to cleanly unmount virtual filesystem
 - [ ] Implement prefetch on directory open for better performance
 - [ ] Create bloom filter rollup background job for O(log n) conflict detection at scale
@@ -64,8 +64,8 @@ Micelio is a minimalist, open-source git forge built with Elixir/Phoenix, design
 
 ### Security & Compliance
 
-- [ ] Implement audit logging for all repository operations
+- [ ] Implement audit logging for all project operations
 - [ ] Add two-factor authentication (TOTP) support
-- [ ] Create repository access tokens with scoped permissions
+- [ ] Create project access tokens with scoped permissions
 - [ ] Implement branch protection rules for preventing direct lands to main
 - [ ] Add secret scanning to prevent credential leaks in landed sessions
