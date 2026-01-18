@@ -1,0 +1,13 @@
+- Completed unauthenticated API rate limiting task; added retry-after header test.
+- Verified public/private repository visibility is enforced in schema and authorization; marked task complete.
+- Added repository settings LiveView for updating name, description, and visibility with coverage tests.
+- Verified OpenAPISpex setup is in place (spec module, routes, and tests) and marked the task complete.
+- Implemented ActivityPub follower storage with inbox handling and updated controller/tests.
+- Added favorites list to account profile using starred projects with coverage tests.
+- Implemented repository search with full-text lookup across names/descriptions, plus controller/UI and coverage tests.
+- Marked repository forking as complete after confirming ownership/origin tracking and coverage tests.
+- Verified user profile pages show owned repositories and activity; marked task complete.
+- Verified repository README rendering on the homepage with existing tests; marked task complete.
+- Verified server-side syntax highlighting for repository file views and added extension alias coverage test.
+- Verified repository file browser with tree navigation (including breadcrumbs, parent links, and redirects) and marked task complete.
+- Added unit tests for session blame attribution logic and marked blame view task complete.
