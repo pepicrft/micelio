@@ -52,7 +52,7 @@ Micelio is a minimalist, open-source git forge built with Elixir/Phoenix, design
 
 - [x] Implement NFS v3 server for virtual filesystem (hif-fs) in hif/src/fs/nfs.zig
 - [x] Create session overlay for tracking local changes before landing
-- [ ] Add `hif mount` command to mount project as virtual filesystem
+- [x] Add `hif mount` command to mount project as virtual filesystem
 - [ ] Add `hif unmount` command to cleanly unmount virtual filesystem
 - [ ] Implement prefetch on directory open for better performance
 - [ ] Create bloom filter rollup background job for O(log n) conflict detection at scale

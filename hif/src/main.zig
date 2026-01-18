@@ -7,6 +7,7 @@ const projects = @import("projects.zig");
 const session = @import("session.zig");
 const content = @import("content.zig");
 const workspace = @import("workspace.zig");
+const mount = @import("mount.zig");
 const log = @import("log.zig");
 const diff = @import("diff.zig");
 const goto = @import("goto.zig");
@@ -73,6 +74,18 @@ pub fn main() !void {
     try checkout_cmd.addArg(Arg.positional("PROJECT", "Account/project (e.g., acme/app)", null));
     try checkout_cmd.addArg(Arg.singleValueOption("path", 'p', "Local directory (defaults to ./<project>)"));
     try root.addSubcommand(checkout_cmd);
+
+    // Mount: Mount project as virtual filesystem
+    var mount_cmd = app.createCommand("mount", "Mount project as virtual filesystem");
+    try mount_cmd.addArg(Arg.positional("PROJECT", "Account/project (e.g., acme/app)", null));
+    try mount_cmd.addArg(Arg.singleValueOption("path", 'p', "Mount point directory (defaults to ./<project>)"));
+    try mount_cmd.addArg(Arg.singleValueOption("port", 'P', "NFS port (default: 20490)"));
+    try root.addSubcommand(mount_cmd);
+
+    // Unmount: Unmount project virtual filesystem
+    var unmount_cmd = app.createCommand("unmount", "Unmount project virtual filesystem");
+    try unmount_cmd.addArg(Arg.positional("PATH", "Mount point directory", null));
+    try root.addSubcommand(unmount_cmd);
 
     // Status: Show workspace changes
     const status_cmd = app.createCommand("status", "Show workspace changes");
@@ -347,6 +360,55 @@ pub fn main() !void {
         }
 
         try workspace.checkout(allocator, parsed.?.account, parsed.?.project, path);
+        return;
+    }
+
+    if (matches.subcommandMatches("mount")) |mount_matches| {
+        const project_ref = mount_matches.getSingleValue("PROJECT");
+        const path = mount_matches.getSingleValue("path");
+        const port_str = mount_matches.getSingleValue("port");
+
+        if (project_ref == null) {
+            std.debug.print("Error: project required\n", .{});
+            std.debug.print("Usage: hif mount <account>/<project> [--path dir] [--port n]\n", .{});
+            return;
+        }
+
+        const parsed = parseProjectRef(project_ref.?);
+        if (parsed == null) {
+            std.debug.print("Error: invalid project format\n", .{});
+            std.debug.print("Usage: hif mount <account>/<project> [--path dir] [--port n]\n", .{});
+            return;
+        }
+
+        const port: u16 = if (port_str) |value|
+            std.fmt.parseInt(u16, value, 10) catch {
+                std.debug.print("Error: invalid port\n", .{});
+                std.debug.print("Usage: hif mount <account>/<project> [--path dir] [--port n]\n", .{});
+                return;
+            }
+        else
+            mount.DefaultPort;
+
+        if (port == 0) {
+            std.debug.print("Error: port must be greater than 0\n", .{});
+            return;
+        }
+
+        try mount.mount(allocator, parsed.?.account, parsed.?.project, path, port);
+        return;
+    }
+
+    if (matches.subcommandMatches("unmount")) |unmount_matches| {
+        const path = unmount_matches.getSingleValue("PATH");
+
+        if (path == null) {
+            std.debug.print("Error: mount path required\n", .{});
+            std.debug.print("Usage: hif unmount <path>\n", .{});
+            return;
+        }
+
+        try mount.unmount(allocator, path.?);
         return;
     }
 
