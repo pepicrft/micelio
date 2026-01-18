@@ -2,8 +2,10 @@ defmodule Micelio.ProjectsTest do
   use Micelio.DataCase, async: true
 
   alias Micelio.Accounts
+  alias Micelio.Hif.Repository, as: MicRepository
   alias Micelio.Projects
   alias Micelio.Projects.Project
+  alias Micelio.Storage
 
   describe "Project changeset" do
     setup do
@@ -107,6 +109,18 @@ defmodule Micelio.ProjectsTest do
                changeset
              ).handle
     end
+
+    test "validates visibility inclusion", %{organization: organization} do
+      changeset =
+        Project.changeset(%Project{}, %{
+          organization_id: organization.id,
+          handle: "visible-project",
+          name: "Visible Project",
+          visibility: "secret"
+        })
+
+      assert "is invalid" in errors_on(changeset).visibility
+    end
   end
 
   describe "create_project/1" do
@@ -123,6 +137,7 @@ defmodule Micelio.ProjectsTest do
       assert project.handle == "my-project"
       assert project.name == "My Project"
       assert project.organization_id == organization.id
+      assert project.visibility == "private"
     end
 
     test "creates a project with description", %{organization: organization} do
@@ -182,6 +197,186 @@ defmodule Micelio.ProjectsTest do
 
       assert project1.handle == project2.handle
       refute project1.organization_id == project2.organization_id
+    end
+  end
+
+  describe "fork_project/3" do
+    setup do
+      {:ok, source_org} =
+        Accounts.create_organization(%{handle: "source-org", name: "Source Org"})
+
+      {:ok, target_org} =
+        Accounts.create_organization(%{handle: "fork-org", name: "Fork Org"})
+
+      {:ok, source} =
+        Projects.create_project(%{
+          handle: "source-project",
+          name: "Source Project",
+          description: "Original description",
+          url: "https://example.com/source",
+          visibility: "public",
+          organization_id: source_org.id
+        })
+
+      {:ok, source: source, target_org: target_org}
+    end
+
+    test "creates a fork with origin tracking and copied storage", %{
+      source: source,
+      target_org: target_org
+    } do
+      head_key = MicRepository.head_key(source.id)
+      blob_hash = <<1::256>>
+      blob_key = MicRepository.blob_key(source.id, blob_hash)
+
+      assert {:ok, _} = Storage.put(head_key, "head-data")
+      assert {:ok, _} = Storage.put(blob_key, "blob-data")
+
+      assert {:ok, %Project{} = forked} =
+               Projects.fork_project(source, target_org, %{
+                 handle: "source-fork",
+                 name: "Source Fork"
+               })
+
+      assert forked.forked_from_id == source.id
+      assert forked.organization_id == target_org.id
+      assert forked.handle == "source-fork"
+      assert forked.name == "Source Fork"
+      assert forked.description == source.description
+      assert forked.url == source.url
+      assert forked.visibility == source.visibility
+
+      assert {:ok, "head-data"} = Storage.get(MicRepository.head_key(forked.id))
+      assert {:ok, "blob-data"} = Storage.get(MicRepository.blob_key(forked.id, blob_hash))
+    end
+
+    test "returns errors when fork data is invalid", %{source: source, target_org: target_org} do
+      assert {:error, changeset} =
+               Projects.fork_project(source, target_org, %{
+                 handle: "invalid handle",
+                 name: "Fork"
+               })
+
+      assert "must contain only alphanumeric characters and single hyphens, cannot start or end with a hyphen" in errors_on(
+               changeset
+             ).handle
+    end
+
+    test "defaults handle and name to the source project", %{
+      source: source,
+      target_org: target_org
+    } do
+      assert {:ok, %Project{} = forked} = Projects.fork_project(source, target_org)
+
+      assert forked.handle == source.handle
+      assert forked.name == source.name
+      assert forked.forked_from_id == source.id
+    end
+  end
+
+  describe "project stars" do
+    setup do
+      {:ok, user} = Accounts.get_or_create_user_by_email("starred@example.com")
+
+      {:ok, organization} =
+        Accounts.create_organization(%{handle: "star-org", name: "Star Org"})
+
+      {:ok, project} =
+        Projects.create_project(%{
+          handle: "star-project",
+          name: "Star Project",
+          organization_id: organization.id
+        })
+
+      {:ok, user: user, project: project}
+    end
+
+    test "stars and unstars a project", %{user: user, project: project} do
+      refute Projects.project_starred?(user, project)
+      assert Projects.count_project_stars(project) == 0
+
+      assert {:ok, _star} = Projects.star_project(user, project)
+      assert Projects.project_starred?(user, project)
+      assert Projects.count_project_stars(project) == 1
+
+      assert {:ok, _star} = Projects.unstar_project(user, project)
+      refute Projects.project_starred?(user, project)
+      assert Projects.count_project_stars(project) == 0
+    end
+
+    test "star_project/2 is idempotent", %{user: user, project: project} do
+      assert {:ok, _star} = Projects.star_project(user, project)
+      assert {:ok, _star} = Projects.star_project(user, project)
+      assert Projects.count_project_stars(project) == 1
+    end
+
+    test "unstar_project/2 returns ok when no star exists", %{user: user, project: project} do
+      assert {:ok, :not_found} = Projects.unstar_project(user, project)
+      refute Projects.project_starred?(user, project)
+    end
+
+    test "counts stars across multiple users", %{user: user, project: project} do
+      {:ok, other_user} = Accounts.get_or_create_user_by_email("starred-2@example.com")
+
+      assert {:ok, _star} = Projects.star_project(user, project)
+      assert {:ok, _star} = Projects.star_project(other_user, project)
+      assert Projects.count_project_stars(project) == 2
+
+      assert {:ok, _star} = Projects.unstar_project(user, project)
+      assert Projects.count_project_stars(project) == 1
+    end
+  end
+
+  describe "list_starred_projects_for_user/1" do
+    setup do
+      {:ok, user} = Accounts.get_or_create_user_by_email("favorites@example.com")
+      {:ok, other_user} = Accounts.get_or_create_user_by_email("favorites-2@example.com")
+
+      {:ok, organization} =
+        Accounts.create_organization(%{handle: "favorite-org", name: "Favorite Org"})
+
+      {:ok, first_project} =
+        Projects.create_project(%{
+          handle: "first-favorite",
+          name: "First Favorite",
+          organization_id: organization.id
+        })
+
+      {:ok, second_project} =
+        Projects.create_project(%{
+          handle: "second-favorite",
+          name: "Second Favorite",
+          organization_id: organization.id
+        })
+
+      {:ok,
+       user: user,
+       other_user: other_user,
+       organization: organization,
+       first_project: first_project,
+       second_project: second_project}
+    end
+
+    test "returns starred projects for the user", %{
+      user: user,
+      other_user: other_user,
+      first_project: first_project,
+      second_project: second_project,
+      organization: organization
+    } do
+      assert Projects.list_starred_projects_for_user(user) == []
+
+      assert {:ok, _star} = Projects.star_project(user, first_project)
+      assert {:ok, _star} = Projects.star_project(user, second_project)
+      assert {:ok, _star} = Projects.star_project(other_user, first_project)
+
+      starred = Projects.list_starred_projects_for_user(user)
+      starred_ids = Enum.map(starred, & &1.id) |> Enum.sort()
+
+      assert starred_ids == Enum.sort([first_project.id, second_project.id])
+
+      first_entry = Enum.find(starred, &(&1.id == first_project.id))
+      assert first_entry.organization.account.handle == organization.account.handle
     end
   end
 
@@ -304,6 +499,76 @@ defmodule Micelio.ProjectsTest do
       projects = Projects.list_projects_for_organization(organization.id)
       assert length(projects) == 1
       assert hd(projects).handle == "mine"
+    end
+  end
+
+  describe "list_public_projects_for_organization/1" do
+    setup do
+      {:ok, organization} =
+        Accounts.create_organization(%{handle: "list-public", name: "List Public"})
+
+      {:ok, organization: organization}
+    end
+
+    test "returns only public projects", %{organization: organization} do
+      {:ok, public_project} =
+        Projects.create_project(%{
+          handle: "public",
+          name: "Public",
+          organization_id: organization.id,
+          visibility: "public"
+        })
+
+      {:ok, _private_project} =
+        Projects.create_project(%{
+          handle: "private",
+          name: "Private",
+          organization_id: organization.id,
+          visibility: "private"
+        })
+
+      projects = Projects.list_public_projects_for_organization(organization.id)
+      assert Enum.map(projects, & &1.id) == [public_project.id]
+    end
+  end
+
+  describe "list_public_projects_for_organizations/1" do
+    test "returns public projects across organizations with preloaded accounts" do
+      {:ok, org_one} =
+        Accounts.create_organization(%{handle: "list-org-a", name: "List Org A"})
+
+      {:ok, org_two} =
+        Accounts.create_organization(%{handle: "list-org-b", name: "List Org B"})
+
+      {:ok, public_one} =
+        Projects.create_project(%{
+          handle: "alpha",
+          name: "Alpha",
+          organization_id: org_one.id,
+          visibility: "public"
+        })
+
+      {:ok, _private_one} =
+        Projects.create_project(%{
+          handle: "private",
+          name: "Private",
+          organization_id: org_one.id,
+          visibility: "private"
+        })
+
+      {:ok, public_two} =
+        Projects.create_project(%{
+          handle: "beta",
+          name: "Beta",
+          organization_id: org_two.id,
+          visibility: "public"
+        })
+
+      projects = Projects.list_public_projects_for_organizations([org_one.id, org_two.id])
+      project_ids = Enum.map(projects, & &1.id)
+
+      assert project_ids == [public_one.id, public_two.id]
+      assert Enum.all?(projects, &is_binary(&1.organization.account.handle))
     end
   end
 
@@ -468,7 +733,19 @@ defmodule Micelio.ProjectsTest do
           organization_id: organization.id
         })
 
-      {:ok, user: user, organization: organization, project: project}
+      {:ok, public_project} =
+        Projects.create_project(%{
+          handle: "public-project",
+          name: "Public Project",
+          organization_id: organization.id,
+          visibility: "public"
+        })
+
+      {:ok,
+       user: user,
+       organization: organization,
+       project: project,
+       public_project: public_project}
     end
 
     test "returns the project for authorized user", %{
@@ -496,6 +773,144 @@ defmodule Micelio.ProjectsTest do
                  "access-org",
                  project.handle
                )
+    end
+
+    test "returns public project for anonymous user", %{
+      organization: organization,
+      public_project: public_project
+    } do
+      assert {:ok, loaded, org} =
+               Projects.get_project_for_user_by_handle(
+                 nil,
+                 organization.account.handle,
+                 public_project.handle
+               )
+
+      assert loaded.id == public_project.id
+      assert org.id == organization.id
+    end
+  end
+
+  describe "search_projects/2" do
+    test "returns public projects for anonymous users" do
+      {:ok, organization} =
+        Accounts.create_organization(%{handle: "search-org", name: "Search Org"})
+
+      {:ok, public_project} =
+        Projects.create_project(%{
+          handle: "public-repo",
+          name: "Searchable Project",
+          description: "Fast search for repositories",
+          organization_id: organization.id,
+          visibility: "public"
+        })
+
+      {:ok, _private_project} =
+        Projects.create_project(%{
+          handle: "private-repo",
+          name: "Private Searchable",
+          description: "Search secrets",
+          organization_id: organization.id,
+          visibility: "private"
+        })
+
+      results = Projects.search_projects("search", user: nil)
+
+      assert Enum.any?(results, &(&1.id == public_project.id))
+      refute Enum.any?(results, &(&1.handle == "private-repo"))
+    end
+
+    test "includes private projects for members" do
+      {:ok, user} = Accounts.get_or_create_user_by_email("searcher@example.com")
+
+      {:ok, organization} =
+        Accounts.create_organization_for_user(user, %{handle: "member-org", name: "Member Org"})
+
+      {:ok, private_project} =
+        Projects.create_project(%{
+          handle: "member-repo",
+          name: "Secret Search",
+          description: "Private search target",
+          organization_id: organization.id,
+          visibility: "private"
+        })
+
+      results = Projects.search_projects("secret", user: user)
+
+      assert Enum.any?(results, &(&1.id == private_project.id))
+    end
+
+    test "returns empty list for blank queries" do
+      assert [] == Projects.search_projects("   ", user: nil)
+    end
+
+    test "matches terms in descriptions" do
+      unique = System.unique_integer([:positive])
+
+      {:ok, organization} =
+        Accounts.create_organization(%{
+          handle: "desc-org-#{unique}",
+          name: "Description Org #{unique}"
+        })
+
+      {:ok, project} =
+        Projects.create_project(%{
+          handle: "desc-repo-#{unique}",
+          name: "Plain Project",
+          description: "A nebula of repository search terms",
+          organization_id: organization.id,
+          visibility: "public"
+        })
+
+      results = Projects.search_projects("nebula", user: nil)
+
+      assert Enum.any?(results, &(&1.id == project.id))
+    end
+
+    test "matches terms in names when descriptions are empty" do
+      unique = System.unique_integer([:positive])
+
+      {:ok, organization} =
+        Accounts.create_organization(%{
+          handle: "name-org-#{unique}",
+          name: "Name Org #{unique}"
+        })
+
+      {:ok, project} =
+        Projects.create_project(%{
+          handle: "name-repo-#{unique}",
+          name: "Aurora Search",
+          description: nil,
+          organization_id: organization.id,
+          visibility: "public"
+        })
+
+      results = Projects.search_projects("aurora", user: nil)
+
+      assert Enum.any?(results, &(&1.id == project.id))
+    end
+
+    test "matches terms split across name and description" do
+      unique = System.unique_integer([:positive])
+
+      {:ok, organization} =
+        Accounts.create_organization(%{
+          handle: "split-org-#{unique}",
+          name: "Split Org #{unique}"
+        })
+
+      {:ok, project} =
+        Projects.create_project(%{
+          handle: "split-repo-#{unique}",
+          name: "Alpha Discovery",
+          description: "Beta catalog entry",
+          organization_id: organization.id,
+          visibility: "public"
+        })
+
+      results = Projects.search_projects("alpha beta", user: nil)
+
+      assert Enum.any?(results, &(&1.id == project.id))
     end
   end
 end

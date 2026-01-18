@@ -12,6 +12,8 @@ defmodule Micelio.Accounts.User do
     has_one :account, Micelio.Accounts.Account
     has_many :organization_memberships, Micelio.Accounts.OrganizationMembership
     has_many :organizations, through: [:organization_memberships, :organization]
+    has_many :project_stars, Micelio.Projects.ProjectStar
+    has_many :starred_projects, through: [:project_stars, :project]
 
     timestamps(type: :utc_datetime)
   end

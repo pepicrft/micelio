@@ -10,6 +10,7 @@ defmodule Micelio.Sessions do
   alias Micelio.Repo
   alias Micelio.Sessions.Session
   alias Micelio.Sessions.SessionChange
+  alias Micelio.Storage
 
   @doc """
   Returns the list of sessions for a project.
@@ -178,6 +179,27 @@ defmodule Micelio.Sessions do
   end
 
   @doc """
+  Lists landed session changes for a file, ordered by landing time.
+  """
+  def list_landed_changes_for_file(project_id, file_path)
+      when is_binary(project_id) and is_binary(file_path) do
+    SessionChange
+    |> join(:inner, [c], s in assoc(c, :session))
+    |> where([c, s], s.project_id == ^project_id and s.status == "landed")
+    |> where([c, _s], c.file_path == ^file_path)
+    |> order_by([c, s], asc: s.landed_at, asc: c.inserted_at)
+    |> preload([_c, s], session: [user: :account])
+    |> Repo.all()
+    |> Enum.map(fn change ->
+      %{
+        change_type: change.change_type,
+        content: load_change_content(change),
+        session: change.session
+      }
+    end)
+  end
+
+  @doc """
   Counts changes for a session, optionally by change type.
   """
   def count_session_changes(%Session{} = session, opts \\ []) do
@@ -196,6 +218,19 @@ defmodule Micelio.Sessions do
 
     Repo.aggregate(query, :count)
   end
+
+  defp load_change_content(%SessionChange{change_type: "deleted"}), do: nil
+
+  defp load_change_content(%SessionChange{content: content}) when is_binary(content), do: content
+
+  defp load_change_content(%SessionChange{storage_key: key}) when is_binary(key) do
+    case Storage.get(key) do
+      {:ok, content} -> content
+      {:error, _} -> nil
+    end
+  end
+
+  defp load_change_content(_change), do: nil
 
   @doc """
   Gets statistics about session changes.
@@ -227,6 +262,30 @@ defmodule Micelio.Sessions do
     |> where([s], not is_nil(s.landed_at))
     |> where([s], s.landed_at >= ^DateTime.new!(start_date, ~T[00:00:00], "Etc/UTC"))
     |> select([s], s.landed_at)
+    |> Repo.all()
+    |> Enum.group_by(&DateTime.to_date/1)
+    |> Map.new(fn {date, sessions} -> {date, length(sessions)} end)
+  end
+
+  @doc """
+  Returns activity counts grouped by date for a user on public projects.
+  Counts landed sessions per day over the specified number of weeks.
+  Returns a map of Date => count.
+  """
+  @spec activity_counts_for_user_public(User.t(), non_neg_integer()) ::
+          %{Date.t() => non_neg_integer()}
+  def activity_counts_for_user_public(%User{} = user, weeks \\ 52) do
+    today = Date.utc_today()
+    start_date = Date.add(today, -(weeks * 7))
+
+    Session
+    |> join(:inner, [s], p in assoc(s, :project))
+    |> where([s, _p], s.user_id == ^user.id)
+    |> where([s, _p], s.status == "landed")
+    |> where([s, _p], not is_nil(s.landed_at))
+    |> where([s, _p], s.landed_at >= ^DateTime.new!(start_date, ~T[00:00:00], "Etc/UTC"))
+    |> where([_s, p], p.visibility == "public")
+    |> select([s, _p], s.landed_at)
     |> Repo.all()
     |> Enum.group_by(&DateTime.to_date/1)
     |> Map.new(fn {date, sessions} -> {date, length(sessions)} end)

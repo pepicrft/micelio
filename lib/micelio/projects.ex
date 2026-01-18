@@ -7,8 +7,9 @@ defmodule Micelio.Projects do
   import Ecto.Query
 
   alias Micelio.Accounts
-  alias Micelio.Projects.Project
+  alias Micelio.Projects.{Project, ProjectStar}
   alias Micelio.Repo
+  alias Micelio.Storage
 
   @doc """
   Gets a project by ID.
@@ -22,6 +23,13 @@ defmodule Micelio.Projects do
     Project
     |> Repo.get(id)
     |> Repo.preload(organization: :account)
+  end
+
+  @doc """
+  Preloads fork origin details for a project.
+  """
+  def preload_fork_origin(%Project{} = project) do
+    Repo.preload(project, forked_from: [organization: :account])
   end
 
   @doc """
@@ -45,10 +53,58 @@ defmodule Micelio.Projects do
   end
 
   @doc """
+  Lists public projects for an organization.
+  """
+  def list_public_projects_for_organization(organization_id) do
+    list_public_projects_for_organizations([organization_id])
+  end
+
+  @doc """
+  Lists public projects for a set of organization IDs.
+  """
+  def list_public_projects_for_organizations([]), do: []
+
+  def list_public_projects_for_organizations(organization_ids) do
+    Project
+    |> where([p], p.organization_id in ^organization_ids and p.visibility == "public")
+    |> join(:left, [p], o in assoc(p, :organization))
+    |> join(:left, [p, o], a in assoc(o, :account))
+    |> preload([_p, o, a], organization: {o, account: a})
+    |> order_by([_p, _o, a], asc: a.handle)
+    |> order_by([p], asc: p.name)
+    |> Repo.all()
+  end
+
+  @doc """
   Lists all projects.
   """
   def list_projects do
     Repo.all(Project)
+  end
+
+  @doc """
+  Searches projects by name and description using full-text search.
+  """
+  def search_projects(raw_query, opts \\ []) do
+    query = normalize_search_query(raw_query)
+
+    if query == "" do
+      []
+    else
+      user = Keyword.get(opts, :user)
+      limit = Keyword.get(opts, :limit, 50)
+
+      Project
+      |> join(:inner, [p], f in "projects_fts", on: field(f, :project_id) == p.id)
+      |> where([_p, f], fragment("? MATCH ?", f, ^query))
+      |> search_visibility_filter(user)
+      |> join(:left, [p, _f], o in assoc(p, :organization))
+      |> join(:left, [p, _f, o], a in assoc(o, :account))
+      |> preload([_p, _f, o, a], organization: {o, account: a})
+      |> order_by([_p, f], fragment("bm25(?)", f))
+      |> limit(^limit)
+      |> Repo.all()
+    end
   end
 
   @doc """
@@ -90,11 +146,45 @@ defmodule Micelio.Projects do
   end
 
   @doc """
+  Forks a project into a new organization, copying storage and tracking origin.
+  """
+  def fork_project(%Project{} = source, %Accounts.Organization{} = organization, attrs \\ %{}) do
+    attrs = normalize_fork_attrs(source, organization, attrs)
+
+    Repo.transaction(fn ->
+      case create_fork_project(source, attrs) do
+        {:ok, project} ->
+          case copy_project_storage(source.id, project.id) do
+            :ok -> project
+            {:error, reason} -> Repo.rollback(reason)
+          end
+
+        {:error, changeset} ->
+          Repo.rollback(changeset)
+      end
+    end)
+    |> case do
+      {:ok, project} -> {:ok, project}
+      {:error, %Ecto.Changeset{} = changeset} -> {:error, changeset}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  @doc """
   Updates a project.
   """
   def update_project(%Project{} = project, attrs) do
     project
     |> Project.changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
+  Updates repository settings (name, description, visibility).
+  """
+  def update_project_settings(%Project{} = project, attrs) do
+    project
+    |> Project.settings_changeset(attrs)
     |> Repo.update()
   end
 
@@ -113,6 +203,75 @@ defmodule Micelio.Projects do
   end
 
   @doc """
+  Returns an `%Ecto.Changeset{}` for repository settings changes.
+  """
+  def change_project_settings(%Project{} = project, attrs \\ %{}) do
+    Project.settings_changeset(project, attrs)
+  end
+
+  @doc """
+  Returns the count of stars for a project.
+  """
+  def count_project_stars(%Project{} = project) do
+    ProjectStar
+    |> where([ps], ps.project_id == ^project.id)
+    |> Repo.aggregate(:count)
+  end
+
+  @doc """
+  Returns true if the user has starred the project.
+  """
+  def project_starred?(%Accounts.User{} = user, %Project{} = project) do
+    not is_nil(get_project_star(user, project))
+  end
+
+  def project_starred?(_, _), do: false
+
+  @doc """
+  Stars a project for a user.
+  """
+  def star_project(%Accounts.User{} = user, %Project{} = project) do
+    case get_project_star(user, project) do
+      %ProjectStar{} = star ->
+        {:ok, star}
+
+      nil ->
+        %ProjectStar{}
+        |> ProjectStar.changeset(%{user_id: user.id, project_id: project.id})
+        |> Repo.insert()
+    end
+  end
+
+  @doc """
+  Removes a star from a project for a user.
+  """
+  def unstar_project(%Accounts.User{} = user, %Project{} = project) do
+    case get_project_star(user, project) do
+      nil -> {:ok, :not_found}
+      %ProjectStar{} = star -> Repo.delete(star)
+    end
+  end
+
+  defp get_project_star(%Accounts.User{} = user, %Project{} = project) do
+    Repo.get_by(ProjectStar, user_id: user.id, project_id: project.id)
+  end
+
+  @doc """
+  Lists starred projects for a user with organization and account preloaded.
+  """
+  def list_starred_projects_for_user(%Accounts.User{} = user) do
+    Project
+    |> join(:inner, [p], ps in ProjectStar, on: ps.project_id == p.id)
+    |> where([_p, ps], ps.user_id == ^user.id)
+    |> join(:left, [p, _ps], o in assoc(p, :organization))
+    |> join(:left, [p, _ps, o], a in assoc(o, :account))
+    |> preload([_p, _ps, o, a], organization: {o, account: a})
+    |> order_by([_p, ps], desc: ps.inserted_at)
+    |> order_by([p], asc: p.name)
+    |> Repo.all()
+  end
+
+  @doc """
   Checks if a handle is available for a given organization.
   """
   def handle_available?(organization_id, handle) do
@@ -124,13 +283,102 @@ defmodule Micelio.Projects do
   """
   def get_project_for_user_by_handle(user, organization_handle, project_handle) do
     with {:ok, organization} <- Accounts.get_organization_by_handle(organization_handle),
-         true <- Accounts.user_in_organization?(user, organization.id),
          %Project{} = project <- get_project_by_handle(organization.id, project_handle) do
-      {:ok, project, organization}
+      cond do
+        project.visibility == "public" ->
+          {:ok, project, organization}
+
+        user_in_organization?(user, organization.id) ->
+          {:ok, project, organization}
+
+        true ->
+          {:error, :unauthorized}
+      end
     else
       nil -> {:error, :not_found}
-      false -> {:error, :unauthorized}
       {:error, :not_found} -> {:error, :not_found}
     end
+  end
+
+  defp user_in_organization?(%Accounts.User{} = user, organization_id),
+    do: Accounts.user_in_organization?(user, organization_id)
+
+  defp user_in_organization?(_, _), do: false
+
+  defp normalize_search_query(query) when is_binary(query) do
+    tokens =
+      query
+      |> String.downcase()
+      |> Regex.scan(~r/[[:alnum:]]+/u)
+      |> List.flatten()
+
+    case tokens do
+      [] -> ""
+      _ -> tokens |> Enum.map(&"#{&1}*") |> Enum.join(" AND ")
+    end
+  end
+
+  defp normalize_search_query(_), do: ""
+
+  defp normalize_fork_attrs(%Project{} = source, %Accounts.Organization{} = organization, attrs) do
+    attrs =
+      attrs
+      |> Map.new(fn {key, value} -> {to_string(key), value} end)
+      |> Map.put_new("handle", source.handle)
+      |> Map.put_new("name", source.name)
+      |> Map.put_new("description", source.description)
+      |> Map.put_new("url", source.url)
+      |> Map.put_new("visibility", source.visibility)
+      |> Map.put("organization_id", organization.id)
+
+    attrs
+  end
+
+  defp create_fork_project(%Project{} = source, attrs) do
+    %Project{}
+    |> Project.changeset(attrs)
+    |> Ecto.Changeset.put_change(:forked_from_id, source.id)
+    |> Repo.insert()
+  end
+
+  defp copy_project_storage(source_id, target_id) do
+    source_prefix = project_storage_prefix(source_id)
+    target_prefix = project_storage_prefix(target_id)
+
+    with {:ok, keys} <- Storage.list(source_prefix) do
+      Enum.reduce_while(keys, :ok, fn key, :ok ->
+        target_key = String.replace_prefix(key, source_prefix, target_prefix)
+
+        with {:ok, content} <- Storage.get(key),
+             {:ok, _} <- Storage.put(target_key, content) do
+          {:cont, :ok}
+        else
+          {:error, reason} -> {:halt, {:error, reason}}
+        end
+      end)
+    end
+  end
+
+  defp project_storage_prefix(project_id), do: "projects/#{project_id}"
+
+  defp search_visibility_filter(query, %Accounts.User{} = user) do
+    organization_ids =
+      user
+      |> Accounts.list_organizations_for_user()
+      |> Enum.map(& &1.id)
+
+    if organization_ids == [] do
+      where(query, [p, _f], p.visibility == "public")
+    else
+      where(
+        query,
+        [p, _f],
+        p.visibility == "public" or p.organization_id in ^organization_ids
+      )
+    end
+  end
+
+  defp search_visibility_filter(query, _user) do
+    where(query, [p, _f], p.visibility == "public")
   end
 end
