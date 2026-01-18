@@ -10,3 +10,4 @@
 - Marked embeddable project badges task complete in PRD after verifying existing badge endpoint, UI snippets, and tests.
 - Added ActivityPub profile/project endpoints with payload helpers, tests for project/profile federation responses, and updated PRD completion.
 - Added GitHub OAuth callback error test, verified auth controller coverage, and marked GitHub OAuth task complete; ran ExUnit via elixir with manual config/format checks due to Mix PubSub socket restrictions.
+- Marked GitLab OAuth task complete in PRD; ran targeted OAuth tests via ExUnit with manual config/app startup (Mix PubSub blocked), and verified formatting for GitLab/auth controller files.
