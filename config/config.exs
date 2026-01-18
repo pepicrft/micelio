@@ -43,13 +43,6 @@ config :micelio, Micelio.GRPC,
   port: 50_051,
   require_auth_token: false
 
-config :micelio, Micelio.Theme,
-  storage: Micelio.Theme.Storage.S3,
-  generator: Micelio.Theme.Generator.LLM,
-  prefix: "themes/daily",
-  llm_endpoint: "https://api.openai.com/v1/responses",
-  llm_model: "gpt-4.1-mini"
-
 # Configure the mailer
 #
 # By default it uses the "Local" adapter which stores the emails
@@ -58,6 +51,13 @@ config :micelio, Micelio.Theme,
 # For production it's recommended to configure a different adapter
 # at the `config/runtime.exs`.
 config :micelio, Micelio.Mailer, adapter: Swoosh.Adapters.Local
+
+config :micelio, Micelio.Theme,
+  storage: Micelio.Theme.Storage.S3,
+  generator: Micelio.Theme.Generator.LLM,
+  prefix: "themes/daily",
+  llm_endpoint: "https://api.openai.com/v1/responses",
+  llm_model: "gpt-4.1-mini"
 
 # Configure the endpoint
 config :micelio, MicelioWeb.Endpoint,

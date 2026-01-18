@@ -14,11 +14,9 @@ defmodule Micelio.Theme.Generator.LLM do
   def generate(%Date{} = date, config) when is_list(config) do
     with {:ok, endpoint} <- fetch_config(config, :llm_endpoint),
          {:ok, api_key} <- fetch_config(config, :llm_api_key),
-         model <- Keyword.get(config, :llm_model, "gpt-4.1-mini"),
+         model = Keyword.get(config, :llm_model, "gpt-4.1-mini"),
          {:ok, response} <- request_theme(endpoint, api_key, model, date) do
       parse_response(response.body)
-    else
-      {:error, reason} -> {:error, reason}
     end
   end
 
@@ -98,9 +96,8 @@ defmodule Micelio.Theme.Generator.LLM do
   defp decode_json_from_text(nil), do: {:error, :unexpected_response}
 
   defp decode_json_from_text(text) when is_binary(text) do
-    with {:ok, decoded} <- JSON.decode(text) do
-      {:ok, decoded}
-    else
+    case JSON.decode(text) do
+      {:ok, decoded} -> {:ok, decoded}
       _ -> extract_json_from_text(text)
     end
   end

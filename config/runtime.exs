@@ -179,9 +179,6 @@ grpc_tls =
       end
   end
 
-config :micelio, Micelio.Storage, storage_config
-config :micelio, :micelio_workspace_path, micelio_workspace_path
-
 github_oauth =
   [
     client_id: System.get_env("GITHUB_OAUTH_CLIENT_ID"),
@@ -189,6 +186,9 @@ github_oauth =
     redirect_uri: System.get_env("GITHUB_OAUTH_REDIRECT_URI")
   ]
   |> Enum.reject(fn {_key, value} -> is_nil(value) or value == "" end)
+
+config :micelio, Micelio.Storage, storage_config
+config :micelio, :micelio_workspace_path, micelio_workspace_path
 
 if github_oauth != [] do
   config :micelio, :github_oauth, github_oauth

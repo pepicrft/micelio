@@ -9,7 +9,7 @@ defmodule MicelioWeb.Badges.ProjectBadgeTest do
     assert svg =~ "<svg"
     assert svg =~ "width=\"110\""
     assert svg =~ "<rect width=\"58\""
-    assert svg =~ "<rect x=\"58\" width=\"52\""
+    assert svg =~ ~s(<rect x="58" width="52")
     assert svg =~ "org/repo"
     assert svg =~ "5 stars"
   end

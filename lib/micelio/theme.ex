@@ -6,6 +6,7 @@ defmodule Micelio.Theme do
   """
 
   require Logger
+
   @type tokens :: %{optional(String.t()) => String.t()}
   @type theme :: %{
           date: Date.t(),
@@ -60,7 +61,7 @@ defmodule Micelio.Theme do
     css(theme)
   end
 
-  def css(%{tokens: tokens}) do
+  defp css(%{tokens: tokens}) do
     light = Map.get(tokens, :light, %{})
     dark = Map.get(tokens, :dark, %{})
 
@@ -76,7 +77,7 @@ defmodule Micelio.Theme do
       |> Enum.reject(&empty_block?/1)
       |> Enum.join("\n")
 
-    if css == "", do: nil, else: css
+    if css != "", do: css
   end
 
   def fetch_or_generate(config, date) do
@@ -265,8 +266,7 @@ defmodule Micelio.Theme do
   defp css_block(selector, tokens) do
     body =
       tokens
-      |> Enum.map(fn {key, value} -> "  #{key}: #{value};" end)
-      |> Enum.join("\n")
+      |> Enum.map_join("\n", fn {key, value} -> "  #{key}: #{value};" end)
 
     "#{selector} {\n#{body}\n}"
   end
@@ -276,8 +276,7 @@ defmodule Micelio.Theme do
   defp css_media_block(tokens) do
     body =
       tokens
-      |> Enum.map(fn {key, value} -> "    #{key}: #{value};" end)
-      |> Enum.join("\n")
+      |> Enum.map_join("\n", fn {key, value} -> "    #{key}: #{value};" end)
 
     "@media (prefers-color-scheme: dark) {\n  :root {\n#{body}\n  }\n}"
   end

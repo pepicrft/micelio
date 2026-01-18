@@ -349,7 +349,9 @@ defmodule MicelioWeb.Browser.ProjectController do
       badge_label = "#{account.handle}/#{project.handle}"
 
       badge_markdown = "[![#{badge_label}](#{badge_url})](#{project_url})"
-      badge_html = "<a href=\"#{project_url}\"><img src=\"#{badge_url}\" alt=\"#{badge_label} badge\" /></a>"
+
+      badge_html =
+        "<a href=\"#{project_url}\"><img src=\"#{badge_url}\" alt=\"#{badge_label} badge\" /></a>"
 
       conn
       |> assign(:badge_visible?, true)

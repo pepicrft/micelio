@@ -266,12 +266,6 @@ defmodule Micelio.Accounts do
     |> Repo.insert()
   end
 
-  defp create_oauth_identity(attrs) do
-    %OAuthIdentity{}
-    |> OAuthIdentity.changeset(attrs)
-    |> Repo.insert()
-  end
-
   defp create_user_for_oauth(provider, provider_user_id, email) do
     Ecto.Multi.new()
     |> Ecto.Multi.insert(:user, User.changeset(%User{}, %{email: email}))
