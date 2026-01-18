@@ -37,6 +37,9 @@ Micelio is a minimalist, open-source git forge built with Elixir/Phoenix, design
   - Persist generated themes in S3
   - Cache in memory for performance
   - Add footer explaining the daily personality design
+- [ ] Add JSON-LD structured data for SEO (Schema.org SoftwareSourceCode)
+- [ ] Create embeddable badges for projects (Shields.io-style for Micelio)
+- [ ] Implement ActivityPub federation for projects and profiles
 
 ### hif (Zig CLI)
 
