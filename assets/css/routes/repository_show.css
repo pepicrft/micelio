@@ -11,6 +11,22 @@
   word-break: break-word;
 }
 
+.repository-forked-from {
+  color: var(--theme-ui-colors-secondary);
+}
+
+.repository-forked-link {
+  color: var(--theme-ui-colors-primary);
+  text-decoration: underline;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.15em;
+}
+
+.repository-forked-link:hover {
+  color: var(--theme-ui-colors-secondary);
+  text-decoration-color: var(--theme-ui-colors-secondary);
+}
+
 .repository-url a {
   color: var(--theme-ui-colors-primary);
   text-decoration: underline;
@@ -21,6 +37,57 @@
 .repository-url a:hover {
   color: var(--theme-ui-colors-secondary);
   text-decoration-color: var(--theme-ui-colors-secondary);
+}
+
+.repository-stars {
+  display: flex;
+  align-items: center;
+  gap: var(--theme-ui-space-1);
+}
+
+.repository-star-form {
+  margin: 0;
+}
+
+.repository-star-toggle {
+  padding: var(--theme-ui-space-1);
+  color: var(--theme-ui-colors-text);
+  background-color: transparent;
+  border: var(--theme-ui-borders-thin);
+  cursor: pointer;
+}
+
+.repository-star-toggle:hover {
+  background-color: var(--theme-ui-colors-border);
+}
+
+.repository-stars-count {
+  color: var(--theme-ui-colors-muted);
+  font-size: var(--theme-ui-fontSizes-small);
+}
+
+.repository-fork-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--theme-ui-space-1);
+  margin: 0;
+}
+
+.repository-fork-fields {
+  display: grid;
+  gap: var(--theme-ui-space-1);
+}
+
+.repository-fork-submit {
+  padding: var(--theme-ui-space-1);
+  color: var(--theme-ui-colors-text);
+  background-color: transparent;
+  border: var(--theme-ui-borders-thin);
+  cursor: pointer;
+}
+
+.repository-fork-submit:hover {
+  background-color: var(--theme-ui-colors-border);
 }
 
 .repository-browser {
@@ -51,6 +118,11 @@
   color: var(--theme-ui-colors-muted);
 }
 
+.repository-breadcrumb-current {
+  color: var(--theme-ui-colors-text);
+  font-family: var(--theme-ui-fonts-mono);
+}
+
 .repository-empty {
   color: var(--theme-ui-colors-secondary);
 }
@@ -79,6 +151,14 @@
   background: var(--theme-ui-colors-border);
 }
 
+.repository-tree-parent-link {
+  color: var(--theme-ui-colors-secondary);
+}
+
+.repository-tree-parent-link:hover {
+  color: var(--theme-ui-colors-text);
+}
+
 .repository-tree-name {
   font-family: var(--theme-ui-fonts-mono);
 }
@@ -87,6 +167,95 @@
   color: var(--theme-ui-colors-muted);
   font-family: var(--theme-ui-fonts-mono);
   font-size: 0.875em;
+}
+
+.repository-readme {
+  margin-top: var(--theme-ui-space-3);
+  border: var(--theme-ui-borders-thin);
+  background-color: var(--theme-ui-colors-background);
+}
+
+.repository-readme-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--theme-ui-space-2);
+  padding: var(--theme-ui-space-2);
+  border-bottom: var(--theme-ui-borders-thin);
+}
+
+.repository-readme-title {
+  font-weight: var(--theme-ui-fontWeights-bold);
+  margin: 0;
+}
+
+.repository-readme-link {
+  color: var(--theme-ui-colors-primary);
+  font-family: var(--theme-ui-fonts-mono);
+  text-decoration: none;
+}
+
+.repository-readme-link:hover {
+  text-decoration: underline;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.15em;
+}
+
+.repository-readme-body {
+  padding: var(--theme-ui-space-2);
+}
+
+.repository-readme-content {
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: var(--theme-ui-fonts-mono);
+  margin: 0;
+}
+
+.repository-readme-markdown {
+  color: var(--theme-ui-colors-text);
+  line-height: 1.6;
+}
+
+.repository-readme-markdown h1,
+.repository-readme-markdown h2,
+.repository-readme-markdown h3,
+.repository-readme-markdown h4 {
+  margin: var(--theme-ui-space-2) 0 var(--theme-ui-space-1);
+  font-weight: var(--theme-ui-fontWeights-bold);
+}
+
+.repository-readme-markdown p {
+  margin: 0 0 var(--theme-ui-space-2);
+}
+
+.repository-readme-markdown code {
+  font-family: var(--theme-ui-fonts-mono);
+  background-color: var(--theme-ui-colors-muted);
+  padding: 0 calc(var(--theme-ui-space-1) / 2);
+}
+
+.repository-readme-markdown pre {
+  margin: 0 0 var(--theme-ui-space-2);
+  padding: var(--theme-ui-space-2);
+  background-color: var(--theme-ui-colors-border);
+  overflow-x: auto;
+}
+
+.repository-readme-markdown a {
+  color: var(--theme-ui-colors-primary);
+  text-decoration: underline;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.15em;
+}
+
+.repository-readme-markdown a:hover {
+  color: var(--theme-ui-colors-secondary);
+  text-decoration-color: var(--theme-ui-colors-secondary);
+}
+
+.repository-readme-binary {
+  color: var(--theme-ui-colors-secondary);
 }
 
 .repository-file-path {
@@ -111,6 +280,84 @@
   overflow: auto;
   font-family: var(--theme-ui-fonts-mono);
   white-space: pre;
+}
+
+.repository-file-content.highlight {
+  background: var(--theme-ui-colors-background);
+  color: var(--theme-ui-colors-text);
+}
+
+.highlight .hll {
+  background: var(--theme-ui-colors-border);
+}
+
+.highlight .k,
+.highlight .kc,
+.highlight .kd,
+.highlight .kn,
+.highlight .kp,
+.highlight .kr,
+.highlight .kt {
+  color: var(--theme-ui-colors-primary);
+  font-weight: var(--theme-ui-fontWeights-bold);
+}
+
+.highlight .s,
+.highlight .s1,
+.highlight .s2,
+.highlight .sa,
+.highlight .sb,
+.highlight .sc,
+.highlight .sd,
+.highlight .se,
+.highlight .sh,
+.highlight .si,
+.highlight .sr,
+.highlight .ss,
+.highlight .sx,
+.highlight .dl {
+  color: var(--theme-ui-colors-secondary);
+}
+
+.highlight .c,
+.highlight .c1,
+.highlight .ch,
+.highlight .cm,
+.highlight .cpf,
+.highlight .cs {
+  color: var(--theme-ui-colors-muted);
+  font-style: italic;
+}
+
+.highlight .m,
+.highlight .mb,
+.highlight .mf,
+.highlight .mh,
+.highlight .mi,
+.highlight .mo,
+.highlight .il {
+  color: var(--theme-ui-colors-secondary);
+}
+
+.highlight .bp,
+.highlight .na,
+.highlight .nb,
+.highlight .nc,
+.highlight .nd,
+.highlight .ne,
+.highlight .nf,
+.highlight .nn,
+.highlight .nt,
+.highlight .nv,
+.highlight .vc,
+.highlight .vg,
+.highlight .vi {
+  color: var(--theme-ui-colors-text);
+}
+
+.highlight .err,
+.highlight .gr {
+  color: var(--theme-ui-colors-danger);
 }
 
 .repository-file-binary {
