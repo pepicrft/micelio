@@ -1,7 +1,7 @@
-defmodule Micelio.Hif.BinaryTest do
+defmodule Micelio.Mic.BinaryTest do
   use ExUnit.Case, async: true
 
-  alias Micelio.Hif.Binary
+  alias Micelio.Mic.Binary
   alias Micelio.Sessions.Conflict
 
   describe "encode_filter_index/1 and decode_filter_index/1" do

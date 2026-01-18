@@ -1,5 +1,6 @@
 const std = @import("std");
 const auth = @import("auth.zig");
+const content_mod = @import("content.zig");
 const grpc_client = @import("grpc/client.zig");
 const grpc_endpoint = @import("grpc/endpoint.zig");
 const content_proto = @import("grpc/content_proto.zig");
@@ -87,8 +88,8 @@ const MountStateStore = struct {
         const state_path = try self.statePath(mount_path);
         defer self.allocator.free(state_path);
 
-        var json_buf: std.ArrayList(u8) = .empty;
-        defer json_buf.deinit(self.allocator);
+        var json_buf = std.Io.Writer.Allocating.init(self.allocator);
+        defer json_buf.deinit();
 
         const payload = .{
             .mount_path = mount_path,
@@ -96,9 +97,11 @@ const MountStateStore = struct {
             .port = port,
         };
         const formatter = std.json.fmt(payload, .{});
-        try formatter.format(json_buf.writer(self.allocator));
+        try formatter.format(&json_buf.writer);
 
-        try workspace_fs.writeFileAtomic(self.allocator, state_path, json_buf.items);
+        const payload_bytes = try json_buf.toOwnedSlice();
+        defer self.allocator.free(payload_bytes);
+        try workspace_fs.writeFileAtomic(self.allocator, state_path, payload_bytes);
     }
 
     fn remove(self: *MountStateStore, mount_path: []const u8) !void {
@@ -163,6 +166,7 @@ pub fn mount(
     var vfs = try buildVirtualFs(
         allocator,
         arena_alloc,
+        tokens.server,
         endpoint,
         tokens.access_token,
         account,
@@ -211,8 +215,8 @@ fn unmountWithStore(
     const resolved_mount = try resolveUnmountPath(allocator, mount_path);
     defer allocator.free(resolved_mount);
 
-    const existing = try store.read(resolved_mount);
-    defer if (existing) |state| state.deinit(allocator);
+    var existing = try store.read(resolved_mount);
+    defer if (existing) |*state| state.deinit(allocator);
 
     var umount_err: ?anyerror = null;
     ops.run_umount(allocator, resolved_mount) catch |err| {
@@ -312,6 +316,7 @@ fn ensureEmptyMountDir(path: []const u8) !void {
 fn buildVirtualFs(
     allocator: std.mem.Allocator,
     arena: std.mem.Allocator,
+    server: []const u8,
     endpoint: grpc_endpoint.Endpoint,
     access_token: []const u8,
     account: []const u8,
@@ -334,6 +339,15 @@ fn buildVirtualFs(
     var vfs = try nfs.VirtualFs.init(allocator);
     errdefer vfs.deinit();
 
+    var blob_options = try content_mod.prepareBlobFetchOptions(
+        allocator,
+        server,
+        account,
+        project,
+        access_token,
+    );
+    defer blob_options.deinit(allocator);
+
     for (tree.entries) |entry| {
         if (!isSafePath(entry.path)) {
             std.debug.print("Error: Unsafe path in tree: {s}\n", .{entry.path});
@@ -345,24 +359,15 @@ fn buildVirtualFs(
 
         try addParentDirs(&vfs, vfs_path);
 
-        const blob_request = try content_proto.encodeGetBlobRequest(
-            arena,
+        const content = try content_mod.fetchBlobWithOptions(
+            allocator,
+            server,
             account,
             project,
             entry.hash,
+            &blob_options,
         );
-        defer arena.free(blob_request);
-
-        const blob_response = try grpc_client.unaryCall(
-            arena,
-            endpoint,
-            "/micelio.content.v1.ContentService/GetBlob",
-            blob_request,
-            access_token,
-        );
-        defer arena.free(blob_response.bytes);
-
-        const content = try content_proto.decodeBlobResponse(arena, blob_response.bytes);
+        defer allocator.free(content);
         try vfs.addFile(vfs_path, content);
     }
 
@@ -561,9 +566,9 @@ test "mount state store write and remove" {
 
     try store.write(mount_path, 4242, 20490);
 
-    const state = try store.read(mount_path);
+    var state = try store.read(mount_path);
     try std.testing.expect(state != null);
-    defer state.?.deinit(allocator);
+    defer if (state) |*value| value.deinit(allocator);
     try std.testing.expectEqualStrings(mount_path, state.?.mount_path);
     try std.testing.expectEqual(@as(u32, 4242), state.?.pid);
     try std.testing.expectEqual(@as(u16, 20490), state.?.port);

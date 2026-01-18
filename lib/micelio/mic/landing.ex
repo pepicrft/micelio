@@ -1,9 +1,9 @@
-defmodule Micelio.Hif.Landing do
+defmodule Micelio.Mic.Landing do
   @moduledoc """
   Coordinator-free landing using compare-and-swap semantics.
   """
 
-  alias Micelio.Hif.{Binary, ConflictIndex, RollupWorker, Tree}
+  alias Micelio.Mic.{Binary, ConflictIndex, DeltaCompression, RollupWorker, Tree}
   alias Micelio.Projects
   alias Micelio.Sessions
   alias Micelio.Sessions.Conflict
@@ -27,7 +27,7 @@ defmodule Micelio.Hif.Landing do
 
   defp do_land(session, project, tree_hash, change_filter, attempt)
        when attempt <= @max_retries do
-    Logger.debug("hif.land start session=#{session.session_id} attempt=#{attempt}")
+    Logger.debug("mic.land start session=#{session.session_id} attempt=#{attempt}")
 
     head_key = head_key(project.id)
 
@@ -251,7 +251,8 @@ defmodule Micelio.Hif.Landing do
   defp apply_change(tree, project_id, %SessionChange{} = change) do
     with {:ok, content} <- load_change_content(change),
          blob_hash = :crypto.hash(:sha256, content),
-         :ok <- store_blob(project_id, blob_hash, content) do
+         base_hash = Map.get(tree, change.file_path),
+         :ok <- store_blob(project_id, blob_hash, content, base_hash) do
       {:ok, Tree.put(tree, change.file_path, blob_hash)}
     end
   end
@@ -275,11 +276,11 @@ defmodule Micelio.Hif.Landing do
           ConflictIndex.expand_ranges(project_id, base_position + 1, current_position, paths)
 
         Logger.debug(
-          "hif.conflict_check ranges=#{length(scan_ranges)} paths=#{length(paths)} project=#{project_id}"
+          "mic.conflict_check ranges=#{length(scan_ranges)} paths=#{length(paths)} project=#{project_id}"
         )
 
         :telemetry.execute(
-          [:micelio, :hif, :conflict_check],
+          [:micelio, :mic, :conflict_check],
           %{scan_ranges: length(scan_ranges), paths: length(paths)},
           %{project_id: project_id}
         )
@@ -290,7 +291,7 @@ defmodule Micelio.Hif.Landing do
           :ok
         else
           Logger.debug(
-            "hif.conflict_check conflict_count=#{length(conflicts)} project=#{project_id}"
+            "mic.conflict_check conflict_count=#{length(conflicts)} project=#{project_id}"
           )
 
           {:error, {:conflicts, conflicts}}
@@ -378,8 +379,23 @@ defmodule Micelio.Hif.Landing do
 
   defp load_change_content(_), do: {:error, :missing_change_content}
 
-  defp store_blob(project_id, blob_hash, content) do
-    case Storage.put_if_none_match(blob_key(project_id, blob_hash), content) do
+  defp store_blob(project_id, blob_hash, content, base_hash) do
+    payload =
+      with base_hash when is_binary(base_hash) <- base_hash,
+           true <- base_hash != blob_hash,
+           {:ok, base_payload} <- Storage.get(blob_key(project_id, base_hash)),
+           {:ok, base_content} <-
+             DeltaCompression.decode(base_payload, fn hash ->
+               Storage.get(blob_key(project_id, hash))
+             end),
+           {:ok, delta_payload} <-
+             DeltaCompression.maybe_encode(base_hash, base_content, content) do
+        delta_payload
+      else
+        _ -> content
+      end
+
+    case Storage.put_if_none_match(blob_key(project_id, blob_hash), payload) do
       {:ok, _} -> :ok
       {:error, :precondition_failed} -> :ok
       {:error, reason} -> {:error, reason}

@@ -1,6 +1,6 @@
-defmodule Micelio.Hif.Binary do
+defmodule Micelio.Mic.Binary do
   @moduledoc """
-  Binary serialization helpers for hif storage artifacts.
+  Binary serialization helpers for mic storage artifacts.
   """
 
   @head_magic "MICH"

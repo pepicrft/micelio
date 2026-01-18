@@ -29,7 +29,7 @@ Store users, tokens, and permissions in SQLite.
 
 #### Phase 2: S3 Storage Layer (Binary)
 
-Read/write hif data to S3 using binary formats.
+Read/write mic data to S3 using binary formats.
 
 - [x] Storage abstraction with local + S3 backends
 - [x] Implement `Micelio.Hif.Binary` serialization (head, landing, session summary, path index, rollup checkpoint)
@@ -57,7 +57,7 @@ Fast reads via multi-tier caching (RAM -> SSD -> CDN -> S3).
 
 ---
 
-## hif (Zig)
+## mic (Zig)
 
 ### Completed
 
@@ -66,7 +66,7 @@ Fast reads via multi-tier caching (RAM -> SSD -> CDN -> S3).
 - [x] `core/bloom.zig` - Bloom filters for conflict detection
 - [x] `core/hlc.zig` - Hybrid Logical Clock for distributed timestamps
 - [x] `core/tree.zig` - B+ tree for directory structures
-- [x] Binary serialization for all types (`hif/src/core/serialize.zig`)
+- [x] Binary serialization for all types (`mic/src/core/serialize.zig`)
 - [x] Integration tests - End-to-end workflow tests
 - [x] gRPC client with TLS support
 - [x] Basic CLI commands (auth, checkout, status, land)
@@ -74,16 +74,16 @@ Fast reads via multi-tier caching (RAM -> SSD -> CDN -> S3).
 - [x] Token refresh with file-system locking
 - [x] Conflict resolution with server-side detection
 - [x] Error recovery and rollback (atomic writes, backups, retry)
-- [x] `hif log` - List landed sessions
-- [x] `hif log --path` - Sessions touching path
-- [x] `hif diff` - Diff between two states
-- [x] `hif goto @N` - View tree at position N
+- [x] `mic log` - List landed sessions
+- [x] `mic log --path` - Sessions touching path
+- [x] `mic diff` - Diff between two states
+- [x] `mic goto @N` - View tree at position N
 
-### Phase 4: Virtual Filesystem (hif-fs)
+### Phase 4: Virtual Filesystem (mic-fs)
 
 - [ ] NFS v3 server implementation
 - [ ] Session overlay for local changes
-- [ ] `hif mount` / `hif unmount` commands
+- [ ] `mic mount` / `mic unmount` commands
 - [ ] Prefetch on directory open
 
 ### Phase 5: Scale
@@ -108,7 +108,7 @@ For large-scale repositories (100K+ files), a proper B-tree or prolly tree with 
 
 ### gRPC Client
 
-The hif CLI uses vendored gRPC C core `v1.76.0` (TLS required) via `hif/vendor/grpc`.
+The mic CLI uses vendored gRPC C core `v1.76.0` (TLS required) via `mic/vendor/grpc`.
 
 ---
 
@@ -125,7 +125,7 @@ These are exploratory ideas for future consideration:
 - PR stacking (like GitHub is working on)
 - Store issues/PRs in the repository itself for portability
 - GitHub Pages-like static site hosting
-- Design tags/releases as first-class hif objects (session-linked, immutable)
+- Design tags/releases as first-class mic objects (session-linked, immutable)
 
 ### Security
 - Sanitize fetch account & repository queries to prevent injection

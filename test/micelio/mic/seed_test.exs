@@ -1,8 +1,8 @@
-defmodule Micelio.Hif.SeedTest do
+defmodule Micelio.Mic.SeedTest do
   use Micelio.DataCase, async: true
 
   alias Micelio.Accounts
-  alias Micelio.Hif.{Project, Seed}
+  alias Micelio.Mic.{Project, Seed}
   alias Micelio.Projects
   alias Micelio.Storage
 

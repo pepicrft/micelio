@@ -1,4 +1,4 @@
-# Micelio + hif: The Complete Vision
+# Micelio + mic: The Complete Vision
 
 **The future of software development is agent-first. We're building the infrastructure to support it.**
 
@@ -10,8 +10,8 @@ Micelio is not just another Git forge. It's a complete reimagining of version co
 
 **Two interconnected projects:**
 
-1. **hif** - Revolutionary version control system designed for agent-first workflows
-2. **Micelio** - Modern forge built specifically for hif (like GitHub is to Git)
+1. **mic** - Revolutionary version control system designed for agent-first workflows
+2. **Micelio** - Modern forge built specifically for mic (like GitHub is to Git)
 
 Together, they solve the fundamental problem: **Git tracks what happened. We need systems that track why.**
 
@@ -39,9 +39,9 @@ Together, they solve the fundamental problem: **Git tracks what happened. We nee
 
 ## Our Solution
 
-### hif: Version Control Reimagined
+### mic: Version Control Reimagined
 
-**Philosophy:** "Git tracks what. hif tracks why."
+**Philosophy:** "Git tracks what. mic tracks why."
 
 #### Core Innovation: Sessions (Not Commits)
 Every unit of work is a **session** containing:
@@ -76,9 +76,9 @@ Session: "Add authentication to API"
 - **Binary everywhere** - no JSON, optimized for performance
 - **Coordinator-free landing** - S3 conditional writes for atomicity
 
-### Micelio: The Forge for hif
+### Micelio: The Forge for mic
 
-**Built with Elixir/Phoenix** - A modern, minimalist forge designed specifically for hif workflows.
+**Built with Elixir/Phoenix** - A modern, minimalist forge designed specifically for mic workflows.
 
 #### Key Features
 - **Session-based workflows** - browse reasoning, not just code changes
@@ -89,7 +89,7 @@ Session: "Add authentication to API"
 
 #### Architecture Highlights
 - **Stateless web agents** - any server handles any request
-- **hif integration via Zig NIFs** - native performance through C FFI
+- **mic integration via Zig NIFs** - native performance through C FFI
 - **SQLite for auth only** - users, tokens, permissions (~KB per user)
 - **S3 for everything else** - repositories, sessions, file trees
 
@@ -121,7 +121,7 @@ Session: "Add authentication to API"
 
 ### Current State (January 2026)
 - ⚠️ **Work in progress** - not ready for production use
-- ✅ **hif core** - Zig implementation with C FFI
+- ✅ **mic core** - Zig implementation with C FFI
 - ✅ **Micelio forge** - Elixir/Phoenix web application  
 - ✅ **Basic workflows** - session start/land operations
 - 🚧 **Active development** - rapid iteration on core concepts
@@ -130,7 +130,7 @@ Session: "Add authentication to API"
 1. **Session UI** - browse sessions with conversation/decision history
 2. **Conflict resolution** - merge sessions with overlapping changes
 3. **Performance optimization** - handle large repositories efficiently
-4. **Agent SDK** - libraries for AI agents to use hif directly
+4. **Agent SDK** - libraries for AI agents to use mic directly
 5. **Migration tools** - import from Git repositories
 
 ### Long-term Vision
@@ -145,7 +145,7 @@ Session: "Add authentication to API"
 
 ### Architecture Overview
 
-hif has three components that work together:
+mic has three components that work together:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -154,7 +154,7 @@ hif has three components that work together:
 │  Core modules (hash · bloom · HLC · tree) are embedded in the CLI.          │
 │                                                                             │
 │  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐                  │
-│  │   hif CLI     │  │   hif-fs      │  │  Tiered Cache │                  │
+│  │   mic CLI     │  │   mic-fs      │  │  Tiered Cache │                  │
 │  │               │  │  (Phase 2)    │  │               │                  │
 │  │ checkout      │  │  NFS daemon   │  │  RAM → SSD    │                  │
 │  │ land          │  │  Mount point  │  │  → S3         │                  │
@@ -207,8 +207,8 @@ hif has three components that work together:
 | Component | Language | Runs | Responsibility |
 |-----------|----------|------|----------------|
 | **Forge Agents** | Elixir | Cloud | Stateless API handlers, any agent handles any request |
-| **hif CLI** | Zig | Local | User/agent interface |
-| **hif-fs** | Zig | Local | Virtual filesystem (Phase 2) |
+| **mic CLI** | Zig | Local | User/agent interface |
+| **mic-fs** | Zig | Local | Virtual filesystem (Phase 2) |
 | **S3** | - | Cloud | Source of truth: landing log, sessions, trees, blobs |
 | **SQLite** | - | Forge | Auth only (users, tokens, permissions) |
 
@@ -250,10 +250,10 @@ hif has three components that work together:
 
 ### S3 Storage Structure
 
-All hif data is stored in S3 using compact binary formats:
+All mic data is stored in S3 using compact binary formats:
 
 ```
-s3://hif-{org}/
+s3://mic-{org}/
 └── projects/
     └── {project_id}/
         │
@@ -304,26 +304,26 @@ Large files (>4MB) are chunked:
 
 ```bash
 # Setup
-hif auth login                    # Authenticate with forge
-hif project create <name>         # Create new project on forge
-hif checkout <account>/<project>  # Create local workspace
+mic auth login                    # Authenticate with forge
+mic project create <name>         # Create new project on forge
+mic checkout <account>/<project>  # Create local workspace
 
 # Workspace
-hif status                        # Workspace status
-hif land <goal>                   # Land workspace changes
+mic status                        # Workspace status
+mic land <goal>                   # Land workspace changes
 
 # Sessions (advanced)
-hif session start "goal"          # Start new session
-hif session status                # Current session info
-hif session list                  # List sessions
+mic session start "goal"          # Start new session
+mic session status                # Current session info
+mic session list                  # List sessions
 
 # Content
-hif cat <path>                    # Print file contents
-hif ls [path]                     # List directory
+mic cat <path>                    # Print file contents
+mic ls [path]                     # List directory
 
 # History
-hif log                           # Show landed sessions
-hif diff <ref1> <ref2>            # Diff between states
+mic log                           # Show landed sessions
+mic diff <ref1> <ref2>            # Diff between states
 ```
 
 ### Concurrency at Scale
@@ -339,7 +339,7 @@ hif diff <ref1> <ref2>            # Diff between states
 
 ### Deterministic Simulation Testing
 
-Inspired by TigerBeetle and FoundationDB, hif uses deterministic simulation to test decades of failures in hours.
+Inspired by TigerBeetle and FoundationDB, mic uses deterministic simulation to test decades of failures in hours.
 
 **What We Verify:**
 - Landing atomicity (all-or-nothing)
@@ -355,7 +355,7 @@ Inspired by TigerBeetle and FoundationDB, hif uses deterministic simulation to t
 
 We're in early development but welcome:
 - **Feedback** on core concepts and user experience
-- **Code contributions** to hif core and Micelio forge
+- **Code contributions** to mic core and Micelio forge
 - **Documentation** improvements and examples
 - **Testing** with real repositories and workflows
 
@@ -369,7 +369,7 @@ We believe the future of software development is collaborative intelligence - hu
 
 Git was revolutionary for its time, enabling distributed human collaboration at unprecedented scale. But the world has changed. We need systems that capture not just what we built, but how we reasoned, why we chose alternatives, and how we can learn from the process.
 
-**hif + Micelio is our bet on that future.**
+**mic + Micelio is our bet on that future.**
 
 ---
 
@@ -406,13 +406,13 @@ S3 Bucket Structure:
 
 #### Agent Build Workflow
 ```
-1. Agent modifies code in hif session
+1. Agent modifies code in mic session
 2. Build system generates Nix derivation from changes
 3. Check S3 for existing artifact: GET /artifacts/sha256:computed-hash
 4. Cache miss → Execute locally: nix-build derivation  
 5. Cache hit → Skip build, validate locally: nix develop --command make verify
 6. Upload results to S3: PUT /artifacts/sha256:new-hash
-7. All tests pass → hif land (session includes build attestation)
+7. All tests pass → mic land (session includes build attestation)
 ```
 
 #### Remote Execution Integration
@@ -436,7 +436,7 @@ Capability-based access via S3 policies:
 │   ├── s3:GetObject on artifacts/* (read builds)
 │   ├── s3:PutObject on artifacts/session-abc123/* (write own builds)
 │   └── secretsmanager:GetSecretValue for session-scoped secrets
-├── Time-bound: role expires with hif session
+├── Time-bound: role expires with mic session
 └── Audit trail: CloudTrail logs every S3/secrets access
 ```
 
@@ -460,7 +460,7 @@ Micelio forge workers (Elixir/Phoenix):
 └── Auto-scaling: workers are completely stateless
 ```
 
-#### Integration with hif Sessions
+#### Integration with mic Sessions
 ```
 Session: "Add payment gateway integration"
 ├── Goal: Integrate Stripe API safely
@@ -499,17 +499,17 @@ This model gives agents the speed of local development with the confidence of en
 
 ---
 
-## hif Build Cache Daemon [TO REVIEW/VALIDATE]
+## mic Build Cache Daemon [TO REVIEW/VALIDATE]
 
 ### Architecture: Local Daemon + Protocol Translation
 
-**Inspired by [Fabrik's](https://github.com/tuist/fabrik) proven architecture**, hif implements a local daemon that speaks existing build system protocols while providing S3-backed global caching.
+**Inspired by [Fabrik's](https://github.com/tuist/fabrik) proven architecture**, mic implements a local daemon that speaks existing build system protocols while providing S3-backed global caching.
 
 #### Core Design Pattern
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                    hif daemon                           │
+│                    mic daemon                           │
 │                  (per-session)                          │
 │                                                         │
 │ ┌─────────────────┐ ┌─────────────────┐ ┌─────────────┐ │
@@ -519,7 +519,7 @@ This model gives agents the speed of local development with the confidence of en
 │ └─────────────────┘ └─────────────────┘ └─────────────┘ │
 │                                                         │
 │ ┌─────────────────────────────────────────────────────┐ │
-│ │            hif Session Engine                       │ │
+│ │            mic Session Engine                       │ │
 │ │  • Content-addressable artifact mapping            │ │
 │ │  • Session-scoped authentication                   │ │
 │ │  • S3 backend with local cache tiers               │ │
@@ -539,11 +539,11 @@ This model gives agents the speed of local development with the confidence of en
 **Shell integration pattern (from Fabrik):**
 ```bash
 # One-time setup
-echo 'eval "$(hif activate zsh)"' >> ~/.zshrc
+echo 'eval "$(mic activate zsh)"' >> ~/.zshrc
 
 # Automatic activation on directory change
 cd ~/my-project
-# → hif detects session context
+# → mic detects session context
 # → starts daemon with session-scoped identity  
 # → exports build tool environment variables
 # → all build commands transparently use cache
@@ -554,7 +554,7 @@ cd ~/my-project
 **Bazel Remote Cache Protocol:**
 ```bash
 # Daemon exports standard Bazel env vars
-export BAZELRC=$HOME/.local/state/hif/sessions/abc123/bazelrc
+export BAZELRC=$HOME/.local/state/mic/sessions/abc123/bazelrc
 
 # Auto-generated bazelrc content:
 # build --remote_cache=grpc://localhost:8080
@@ -562,8 +562,8 @@ export BAZELRC=$HOME/.local/state/hif/sessions/abc123/bazelrc
 
 # Bazel commands work unchanged
 bazel build //...
-# → Talks to hif daemon via gRPC
-# → hif translates to S3 content-addressed storage
+# → Talks to mic daemon via gRPC
+# → mic translates to S3 content-addressed storage
 # → Transparent caching across all agents
 ```
 
@@ -574,8 +574,8 @@ export GRADLE_BUILD_CACHE_URL=http://localhost:8080/gradle-cache/
 
 # Gradle automatically uses remote cache
 ./gradlew build
-# → Gradle sends HTTP requests to hif daemon
-# → hif maps to S3 artifacts with session context
+# → Gradle sends HTTP requests to mic daemon
+# → mic maps to S3 artifacts with session context
 # → Perfect cache sharing without configuration
 ```
 
@@ -586,8 +586,8 @@ export DOCKER_REGISTRY=localhost:8080
 
 # Docker commands work transparently  
 docker build -t myapp .
-# → Docker pushes layers to hif daemon
-# → hif stores layers in S3 content-addressed
+# → Docker pushes layers to mic daemon
+# → mic stores layers in S3 content-addressed
 # → Other agents get instant layer cache hits
 ```
 
@@ -595,9 +595,9 @@ docker build -t myapp .
 
 **Per-session daemon isolation:**
 ```
-hif session start "add-payments"
+mic session start "add-payments"
 ├── Computes session hash: sha256:abc123...
-├── Spawns daemon: ~/.local/state/hif/sessions/abc123/
+├── Spawns daemon: ~/.local/state/mic/sessions/abc123/
 │   ├── daemon.pid
 │   ├── ports.json → {"http": 54321, "grpc": 54322}
 │   ├── session_identity → time-bound S3 credentials
@@ -620,7 +620,7 @@ Build artifacts stored as:
 Cross-toolchain deduplication:
 ├── Same source hash = shared base artifacts
 ├── Different toolchains = different artifact paths
-└── hif daemon handles mapping automatically
+└── mic daemon handles mapping automatically
 ```
 
 #### Advanced Cache Hierarchy
@@ -634,12 +634,12 @@ Agent cache lookup order:
 4. Global S3 bucket (50-200ms)
 5. Rebuild locally (fallback)
 
-hif daemon coordinates all tiers transparently
+mic daemon coordinates all tiers transparently
 ```
 
 #### Build System Integration Matrix
 
-| Build System | Protocol | Configuration | hif Integration |
+| Build System | Protocol | Configuration | mic Integration |
 |--------------|----------|---------------|-----------------|
 | **Bazel** | gRPC Remote Cache | `BAZELRC` env var | Zero-config via auto-generated bazelrc |
 | **Gradle** | HTTP Build Cache | `GRADLE_BUILD_CACHE_URL` | Zero-config via env var export |
@@ -652,7 +652,7 @@ hif daemon coordinates all tiers transparently
 
 #### Agent Workflow Integration
 
-**Seamless integration with hif sessions:**
+**Seamless integration with mic sessions:**
 ```
 Session: "Optimize API performance"
 ├── Goal: Reduce response time by 50ms
@@ -689,7 +689,7 @@ Session: "Optimize API performance"
 - **Performance**: Local daemon eliminates network roundtrips for cache checks
 - **Reliability**: Graceful degradation if cache unavailable
 
-This daemon architecture provides the "narrow waist" that makes hif universally adoptable while enabling revolutionary agent workflows.
+This daemon architecture provides the "narrow waist" that makes mic universally adoptable while enabling revolutionary agent workflows.
 
 ---
 
@@ -725,8 +725,8 @@ Storage path pattern: `sessions/{session_id}/changes/{file_path}`
 - Start session: `SessionService.StartSession`
 - Land session: `SessionService.LandSession`
 - CLI flow:
-  - `hif session start <organization> <project> <goal>`
-  - `hif session land`
+  - `mic session start <organization> <project> <goal>`
+  - `mic session land`
 
 ### Session Changes vs Git Commits
 

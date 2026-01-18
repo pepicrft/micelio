@@ -8,7 +8,7 @@ defmodule Micelio.Projects do
 
   alias Micelio.Accounts
   alias Micelio.Accounts.OrganizationMembership
-  alias Micelio.Hif.Seed
+  alias Micelio.Mic.Seed
   alias Micelio.Projects.{Project, ProjectStar}
   alias Micelio.Repo
   alias Micelio.Storage

@@ -260,6 +260,27 @@
   margin-bottom: var(--theme-ui-space-2);
 }
 
+@media (max-width: 40rem) {
+  .session-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .session-show-title {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .session-show-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .session-action {
+    width: 100%;
+  }
+}
+
 .session-conversation {
   display: flex;
   flex-direction: column;

@@ -22,9 +22,9 @@ In an agent-first world, the cost of “waiting” isn’t just time. It breaks 
 
 The local-first idea is simple: run the same checks locally that would run in a remote pipeline, and treat a passing local run as meaningful. “Checks” here includes tests, compilation, linting, formatting, static analysis, and anything else the project considers required for landing.
 
-This doesn’t mean “trust developers more.” It means shifting the trust boundary from “who ran the checks” to “what exactly was run.” If you can make the environment and the commands reproducible, local execution stops being a weak signal and becomes a verifiable claim.
+This doesn’t mean “trust developers more.” It means smicting the trust boundary from “who ran the checks” to “what exactly was run.” If you can make the environment and the commands reproducible, local execution stops being a weak signal and becomes a verifiable claim.
 
-Note: the exact design for how hif and Micelio will represent and store “checks” is still evolving. The rest of this post describes the shape of a solution, not a finished spec.
+Note: the exact design for how mic and Micelio will represent and store “checks” is still evolving. The rest of this post describes the shape of a solution, not a finished spec.
 
 ## Reproducibility is the missing piece
 
@@ -52,6 +52,6 @@ This is also a simpler operational model. Instead of running every build remotel
 
 Remote execution still has a place for expensive builds, but it stops being the default gate. The default gate becomes: reproducible checks run near the work, with results that can be verified later.
 
-That’s the direction we want for hif and Micelio: sessions that contain the “why” (goal, conversation, decisions) alongside the “proof” (checks in a reproducible environment).
+That’s the direction we want for mic and Micelio: sessions that contain the “why” (goal, conversation, decisions) alongside the “proof” (checks in a reproducible environment).
 
 If you’re interested in this direction, we discuss it on Discord: [https://discord.gg/XKzUPfJe](https://discord.gg/XKzUPfJe)

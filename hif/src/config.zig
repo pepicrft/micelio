@@ -175,6 +175,17 @@ pub const Config = struct {
         return self.servers.get(name);
     }
 
+    /// Find a server configuration by matching grpc_url.
+    pub fn findServerByGrpcUrl(self: *const Config, grpc_url: []const u8) ?ServerConfig {
+        var iter = self.servers.iterator();
+        while (iter.next()) |entry| {
+            if (entry.value_ptr.grpc_url) |url| {
+                if (std.mem.eql(u8, url, grpc_url)) return entry.value_ptr.*;
+            }
+        }
+        return null;
+    }
+
     /// Add or update a server configuration.
     pub fn setServer(self: *Config, name: []const u8, server: ServerConfig) !void {
         const owned_name = try self.allocator.dupe(u8, name);
@@ -273,6 +284,7 @@ pub const Config = struct {
                 const server_config = ServerConfig{
                     .grpc_url = if (entry.value_ptr.grpc_url) |u| try self.allocator.dupe(u8, u) else null,
                     .web_url = if (entry.value_ptr.web_url) |u| try self.allocator.dupe(u8, u) else null,
+                    .cdn_url = if (entry.value_ptr.cdn_url) |u| try self.allocator.dupe(u8, u) else null,
                     .client_id = if (entry.value_ptr.client_id) |u| try self.allocator.dupe(u8, u) else null,
                     .client_secret = if (entry.value_ptr.client_secret) |u|
                         try self.allocator.dupe(u8, u)
@@ -332,6 +344,11 @@ pub const Config = struct {
                 try writer.print("      \"web_url\": \"{s}\"", .{url});
                 wrote = true;
             }
+            if (entry.value_ptr.cdn_url) |url| {
+                if (wrote) try writer.writeAll(",\n") else try writer.writeAll("      ");
+                try writer.print("      \"cdn_url\": \"{s}\"", .{url});
+                wrote = true;
+            }
             if (entry.value_ptr.client_id) |client_id| {
                 if (wrote) try writer.writeAll(",\n") else try writer.writeAll("      ");
                 try writer.print("      \"client_id\": \"{s}\"", .{client_id});
@@ -374,6 +391,7 @@ pub const Config = struct {
 pub const ServerConfig = struct {
     grpc_url: ?[]const u8 = null,
     web_url: ?[]const u8 = null,
+    cdn_url: ?[]const u8 = null,
     client_id: ?[]const u8 = null,
     client_secret: ?[]const u8 = null,
 
@@ -381,6 +399,7 @@ pub const ServerConfig = struct {
         return .{
             .grpc_url = if (self.grpc_url) |u| try allocator.dupe(u8, u) else null,
             .web_url = if (self.web_url) |u| try allocator.dupe(u8, u) else null,
+            .cdn_url = if (self.cdn_url) |u| try allocator.dupe(u8, u) else null,
             .client_id = if (self.client_id) |u| try allocator.dupe(u8, u) else null,
             .client_secret = if (self.client_secret) |u| try allocator.dupe(u8, u) else null,
         };
@@ -389,6 +408,7 @@ pub const ServerConfig = struct {
     pub fn deinit(self: ServerConfig, allocator: std.mem.Allocator) void {
         if (self.grpc_url) |u| allocator.free(u);
         if (self.web_url) |u| allocator.free(u);
+        if (self.cdn_url) |u| allocator.free(u);
         if (self.client_id) |u| allocator.free(u);
         if (self.client_secret) |u| allocator.free(u);
     }
@@ -417,6 +437,7 @@ const ConfigJson = struct {
 const ServerConfigJson = struct {
     grpc_url: ?[]const u8 = null,
     web_url: ?[]const u8 = null,
+    cdn_url: ?[]const u8 = null,
     client_id: ?[]const u8 = null,
     client_secret: ?[]const u8 = null,
 };
@@ -500,12 +521,32 @@ test "Config setServer and getServer" {
     try config.setServer("test", .{
         .grpc_url = "http://test:50051",
         .web_url = "http://test:4000",
+        .cdn_url = "https://cdn.test",
     });
 
     const server = config.getServer("test");
     try std.testing.expect(server != null);
     try std.testing.expectEqualStrings("http://test:50051", server.?.grpc_url.?);
     try std.testing.expectEqualStrings("http://test:4000", server.?.web_url.?);
+    try std.testing.expectEqualStrings("https://cdn.test", server.?.cdn_url.?);
+}
+
+test "Config findServerByGrpcUrl" {
+    var config = try Config.init(std.testing.allocator);
+    defer config.deinit();
+
+    try config.setServer("alpha", .{
+        .grpc_url = "http://alpha:50051",
+    });
+    try config.setServer("beta", .{
+        .grpc_url = "http://beta:50051",
+        .cdn_url = "https://cdn.beta",
+    });
+
+    const server = config.findServerByGrpcUrl("http://beta:50051");
+    try std.testing.expect(server != null);
+    try std.testing.expectEqualStrings("https://cdn.beta", server.?.cdn_url.?);
+    try std.testing.expect(config.findServerByGrpcUrl("http://missing:50051") == null);
 }
 
 test "Config setAlias and getAlias" {

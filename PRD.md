@@ -47,7 +47,7 @@ Micelio is a minimalist, open-source git forge built with Elixir/Phoenix, design
   - Store as OAuthIdentity linked to user by provider_user_id (gitlab_id), NOT by email
   - OAuthIdentity: user_id + provider + provider_user_id
 - [x] Add Passkey (WebAuthn) authentication support
-- [ ] Simplify legal pages with user responsibility disclaimers
+- [x] Simplify legal pages with user responsibility disclaimers
   - Replace detailed privacy/cookies/terms pages with minimal pages
   - Include broad disclaimers: "Users are solely responsible for their content"
   - Example: "By using this service, you agree that you are solely responsible for the content you host"
@@ -61,21 +61,21 @@ Micelio is a minimalist, open-source git forge built with Elixir/Phoenix, design
 - [x] Implement prefetch on directory open for better performance
 - [x] Create bloom filter rollup background job for O(log n) conflict detection at scale
 - [x] Add epoch batching mode for high-throughput landing scenarios
-- [ ] Implement CDN integration for blob serving
-- [ ] Add delta compression for efficient storage of similar files
-- [ ] Create `mic blame` command showing which session introduced each line
-- [ ] Implement `mic cat` command to print file contents at any ref
-- [ ] Add `mic ls` command to list directory contents at any ref
+- [x] Implement CDN integration for blob serving
+- [x] Add delta compression for efficient storage of similar files
+- [x] Create `mic blame` command showing which session introduced each line
+- [x] Implement `mic cat` command to print file contents at any ref
+- [x] Add `mic ls` command to list directory contents at any ref
 
 ### Documentation & Testing
 
-- [ ] Add comprehensive integration tests for gRPC session workflows
-- [ ] Create property-based tests for bloom filter operations using StreamData
-- [ ] Write end-to-end tests for the complete land workflow
-- [ ] Add memory leak detection tests for Zig components
-- [ ] Create user documentation for common mic workflows
-- [ ] Add architecture decision records (ADRs) for key design choices
-- [ ] Ensure website is mobile-responsive and renders correctly on all screen sizes
+- [x] Add comprehensive integration tests for gRPC session workflows
+- [x] Create property-based tests for bloom filter operations using StreamData
+- [x] Write end-to-end tests for the complete land workflow
+- [x] Add memory leak detection tests for Zig components
+- [x] Create user documentation for common mic workflows
+- [x] Add architecture decision records (ADRs) for key design choices
+- [x] Ensure website is mobile-responsive and renders correctly on all screen sizes
 - [ ] Add Playwright tests to verify mobile layout on various viewport sizes
 - [ ] Create automated visual regression tests for mobile breakpoints
 

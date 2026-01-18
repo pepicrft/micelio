@@ -3,7 +3,7 @@ defmodule Micelio.ProjectsTest do
 
   alias Micelio.Accounts
   alias Micelio.Accounts.OrganizationMembership
-  alias Micelio.Hif.Repository, as: MicRepository
+  alias Micelio.Mic.Repository, as: MicRepository
   alias Micelio.Projects
   alias Micelio.Projects.Project
   alias Micelio.Repo

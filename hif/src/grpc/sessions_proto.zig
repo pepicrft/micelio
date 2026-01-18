@@ -34,10 +34,16 @@ pub const FileChange = struct {
     change_type: []const u8,
 };
 
+pub const LandSessionOptions = struct {
+    epoch: u32 = 0,
+    finalize: bool = false,
+};
+
 pub fn encodeLandSessionRequest(
     allocator: std.mem.Allocator,
     session_id: []const u8,
     files: []const FileChange,
+    options: LandSessionOptions,
 ) ![]u8 {
     var buf = std.Io.Writer.Allocating.init(allocator);
     defer buf.deinit();
@@ -46,6 +52,12 @@ pub fn encodeLandSessionRequest(
         const entry = try encodeFileChange(allocator, change);
         defer allocator.free(entry);
         try proto.encodeBytesField(&buf.writer, 5, entry);
+    }
+    if (options.epoch > 0) {
+        try proto.encodeVarintField(&buf.writer, 6, options.epoch);
+    }
+    if (options.finalize) {
+        try proto.encodeVarintField(&buf.writer, 7, 1);
     }
     return buf.toOwnedSlice();
 }

@@ -1,9 +1,9 @@
-defmodule Micelio.Hif.ConflictIndex do
+defmodule Micelio.Mic.ConflictIndex do
   @moduledoc """
   Rollup index for landing conflict filters and path indexes.
   """
 
-  alias Micelio.Hif.Binary
+  alias Micelio.Mic.Binary
   alias Micelio.Sessions.Conflict
   alias Micelio.Storage
 
@@ -159,7 +159,7 @@ defmodule Micelio.Hif.ConflictIndex do
     prev_level = level - 1
 
     Logger.debug(
-      "hif.rollup_build level=#{level} start=#{start_position} end=#{end_position} project=#{project_id}"
+      "mic.rollup_build level=#{level} start=#{start_position} end=#{end_position} project=#{project_id}"
     )
 
     with {:ok, filters} <-

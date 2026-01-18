@@ -11,19 +11,19 @@ Before making changes:
 ```bash
 # Build
 mix compile --warnings-as-errors
-cd hif && zig build
+cd mic && zig build
 
 # Test
 mix test
-cd hif && zig build test
+cd mic && zig build test
 
 # Format
 mix format --check-formatted
-cd hif && zig fmt --check src/
+cd mic && zig fmt --check src/
 
 # Pre-commit (run before pushing)
 mix compile --warnings-as-errors && mix format --check-formatted && mix test
-cd hif && zig build && zig fmt --check src/ && zig build test
+cd mic && zig build && zig fmt --check src/ && zig build test
 ```
 
 ## Shortcut

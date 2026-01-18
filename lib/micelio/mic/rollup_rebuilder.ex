@@ -1,16 +1,16 @@
-defmodule Micelio.Hif.RollupRebuilder do
+defmodule Micelio.Mic.RollupRebuilder do
   @moduledoc """
   Rebuilds rollup indexes over landing ranges.
   """
 
-  alias Micelio.Hif.{Binary, ConflictIndex}
+  alias Micelio.Mic.{Binary, ConflictIndex}
   alias Micelio.Storage
 
   require Logger
 
   def rebuild(project_id, from_position, to_position) when from_position <= to_position do
     Logger.debug(
-      "hif.rollup_rebuild project=#{project_id} from=#{from_position} to=#{to_position}"
+      "mic.rollup_rebuild project=#{project_id} from=#{from_position} to=#{to_position}"
     )
 
     Enum.each([1, 2, 3], fn level ->

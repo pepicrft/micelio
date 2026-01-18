@@ -48,7 +48,7 @@ _ = :sys.get_state(pid)
 ## Zig Tests
 
 ```bash
-cd hif && zig build test
+cd mic && zig build test
 ```
 
 Tests are organized by module. Each core module includes comprehensive unit tests covering normal operation, edge cases, and error conditions.

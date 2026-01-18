@@ -2,14 +2,14 @@ defmodule Micelio.Sessions.SessionChange do
   @moduledoc """
   Represents a file change within a session.
 
-  In hif, we don't track "commits" - we track changes as part of sessions.
+  In mic, we don't track "commits" - we track changes as part of sessions.
   Each change captures:
   - What file was modified (file_path)
   - How it was modified (change_type: added, modified, deleted)
   - The actual content or reference to it (content or storage_key)
   - Context about the change (metadata)
 
-  This aligns with the hif philosophy: "Git tracks what. hif tracks why."
+  This aligns with the mic philosophy: "Git tracks what. mic tracks why."
   The session provides the "why", and changes provide the "what".
   """
   use Ecto.Schema

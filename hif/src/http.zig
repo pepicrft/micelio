@@ -5,6 +5,24 @@ pub const Response = struct {
     body: []u8,
 };
 
+pub fn get(
+    allocator: std.mem.Allocator,
+    client: *std.http.Client,
+    url: []const u8,
+) !Response {
+    var response_storage = std.Io.Writer.Allocating.init(allocator);
+    defer response_storage.deinit();
+
+    const result = try client.fetch(.{
+        .location = .{ .url = url },
+        .method = .GET,
+        .response_writer = &response_storage.writer,
+    });
+
+    const body = try response_storage.toOwnedSlice();
+    return .{ .status = result.status, .body = body };
+}
+
 pub fn postJson(
     allocator: std.mem.Allocator,
     client: *std.http.Client,

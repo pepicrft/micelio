@@ -26,7 +26,6 @@ defmodule Micelio.Handles do
     "contact",
     "terms",
     "privacy",
-    "pricing",
     "features",
     "security",
     "status",

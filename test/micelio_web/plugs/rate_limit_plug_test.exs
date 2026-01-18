@@ -89,7 +89,7 @@ defmodule MicelioWeb.Plugs.RateLimitPlugTest do
   end
 
   defp create_access_token(user) do
-    {:ok, device_client} = OAuth.register_device_client(%{"name" => "hif"})
+    {:ok, device_client} = OAuth.register_device_client(%{"name" => "mic"})
     {:ok, client} = Clients.get_client(device_client.client_id)
 
     params = %{

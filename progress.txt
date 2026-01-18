@@ -15,3 +15,19 @@
 - Fixed CBOR decoding major/additional bits for WebAuthn attestation parsing and adjusted passkey controller tests to recycle conns + validate registration payloads; ran passkey controller tests via elixir runner with manual app boot/migrations and format check due to Mix PubSub socket restrictions (warnings about module redefinition in the custom runner).
 - Implemented initial NFSv3 server core with in-memory virtual filesystem, RPC/XDR handling for NULL/GETATTR/LOOKUP/READ/READDIR, and added NFS module tests plus build integration.
 - Added session overlay storage for hif sessions, wired landing to read overlay contents, updated NFS module for Zig 0.15 API changes, and added session overlay tests; ran zig build test and zig fmt --check src/.
+- Added epoch batching for land requests (proto/server + Zig client batching), merged change filters across batches, added gRPC/ChangeStore tests; ran mix test via mix_no_pubsub, zig build test with cache override, mix precommit with MIX_TEST_PARTITION=99, and zig fmt --check.
+- Synced priv/static/skill.md with AGENTS.md to satisfy alignment tests; reran mix test and mix precommit with MIX_TEST_PARTITION=99.
+- Updated hif mount state JSON writer and const handling for Zig 0.15 tests; reran zig build test with cache override and zig fmt --check.
+- Simplified legal pages to minimal disclaimers, added legal page tests, ran mix test and mix precommit with Mix Sync PubSub shim + MIX_OS_CONCURRENCY_LOCK=0.
+- Added CDN-aware blob fetching in hif (configurable cdn_url, blob URL builder, CDN fallback), updated mount/workspace/cat paths, and added Zig tests; ran ZIG_GLOBAL_CACHE_DIR=/tmp/zig-cache ZIG_LOCAL_CACHE_DIR=/tmp/zig-cache-local zig build test and zig fmt --check src.
+- Marked delta compression for mic blobs complete after verifying existing implementation/tests; ran `elixir -pa /tmp/mix_shim/ebin -S mix test` and `elixir -pa /tmp/mix_shim/ebin -S mix precommit` with MIX_OS_CONCURRENCY_LOCK=0 to bypass Mix PubSub socket restrictions.
+- Added gRPC blame endpoint with line attribution metadata, wired hif blame command + Zig decode test, added content blame gRPC test; ran mix test/precommit with Mix PubSub shim, zig build test with cache override, and zig fmt --check src.
+- Added flexible hif cat argument resolution (workspace, project ref, or explicit account/project), normalized paths, and added CLI tests; ran zig build test and zig fmt --check src.
+- Added position-aware hif ls with directory-style listing, plus tests for ls entry collection; ran zig build test and zig fmt --check src.
+- Added gRPC session workflow integration test covering start/list/get/land with file changes and landing hooks; ran mix test and mix precommit with Mix PubSub shim.
+- Added property-based bloom filter tests with a lightweight StreamData-style generator shim, ran mix test and mix precommit with Mix PubSub shim.
+- Added end-to-end landing workflow test covering change storage, landing artifacts, and rollup completion; ran mix test and mix precommit via Mix PubSub shim.
+- Added Zig memory leak detection tests for bloom/tree lifecycles, wired them into zig build test, and marked the PRD task complete.
+- Added user-facing mic workflow documentation, linked it from docs index, and added a docs presence test; ran mix test and mix precommit with Mix PubSub shim (MIX_TEST_PARTITION=99).
+- Added ADRs for key design choices with index, linked docs README, added ADR presence test, marked PRD task complete; ran `MIX_OS_CONCURRENCY_LOCK=0 elixir -pa /tmp/mix_shim/ebin -S mix test` (reran after a transient SQLite busy failure) and `MIX_OS_CONCURRENCY_LOCK=0 elixir -pa /tmp/mix_shim/ebin -S mix precommit`.
+- Added mobile responsive tweaks for sessions/projects/account profile/project pages, added CSS responsiveness tests, ran mix test and mix precommit with Mix PubSub shim.

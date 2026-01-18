@@ -1,7 +1,7 @@
-defmodule Micelio.Hif.ProjectTest do
+defmodule Micelio.Mic.ProjectTest do
   use ExUnit.Case, async: true
 
-  alias Micelio.Hif.Project
+  alias Micelio.Mic.Project
 
   test "list_entries returns directories before files and sorts by name" do
     tree = %{

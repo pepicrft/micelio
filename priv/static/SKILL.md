@@ -1,10 +1,10 @@
-# Micelio & hif
+# Micelio & mic
 
-Micelio is a minimalist git forge, and hif is its CLI client.
+Micelio is a minimalist git forge, and mic is its CLI client.
 
-## Installing hif
+## Installing mic
 
-hif is built with Zig. To build from source:
+mic is built with Zig. To build from source:
 
 ```bash
 # Clone the micelio repository
@@ -14,9 +14,9 @@ cd micelio/cli
 # Build the CLI
 zig build
 
-# The binary will be at zig-out/bin/hif
+# The binary will be at zig-out/bin/mic
 # Move it to your PATH
-cp zig-out/bin/hif /usr/local/bin/
+cp zig-out/bin/mic /usr/local/bin/
 ```
 
 ## Authentication
@@ -25,42 +25,42 @@ Before using most commands, authenticate with the forge:
 
 ```bash
 # Login via device flow (opens browser)
-hif auth login
+mic auth login
 
 # Check authentication status
-hif auth status
+mic auth status
 
 # Remove stored credentials
-hif auth logout
+mic auth logout
 ```
 
 ## Project Management
 
 ```bash
 # List projects in an organization
-hif project list <organization>
+mic project list <organization>
 
 # Create a new project
-hif project create <organization> <handle> <name> [--description <desc>]
+mic project create <organization> <handle> <name> [--description <desc>]
 
 # Get project details
-hif project get <organization> <handle>
+mic project get <organization> <handle>
 
 # Update project fields
-hif project update <organization> <handle> [--name <name>] [--description <desc>] [--new-handle <handle>]
+mic project update <organization> <handle> [--name <name>] [--description <desc>] [--new-handle <handle>]
 
 # Delete a project
-hif project delete <organization> <handle>
+mic project delete <organization> <handle>
 ```
 
 ## Working with Content
 
 ```bash
 # List files in a project
-hif ls <account> <project> [--path prefix]
+mic ls <account> <project> [--path prefix]
 
 # Print file contents
-hif cat <account> <project> <path>
+mic cat <account> <project> <path>
 ```
 
 ## Workspaces
@@ -69,19 +69,19 @@ Create a local workspace to work on a project:
 
 ```bash
 # Checkout a project (creates local workspace)
-hif checkout <account>/<project> [--path dir]
+mic checkout <account>/<project> [--path dir]
 
 # Show workspace changes
-hif status
+mic status
 
 # Land workspace changes
-hif land <goal>
+mic land <goal>
 
 # Sync workspace with upstream changes
-hif sync [--strategy ours|theirs|interactive]
+mic sync [--strategy ours|theirs|interactive]
 
 # Write content from stdin to a file
-hif write <path>
+mic write <path>
 ```
 
 ## Virtual filesystem
@@ -90,10 +90,10 @@ Mount a project via NFS for read-only browsing:
 
 ```bash
 # Mount a project (serves via NFS)
-hif mount <account>/<project> [--path dir] [--port 20490]
+mic mount <account>/<project> [--path dir] [--port 20490]
 
 # Unmount a project
-hif unmount <mount-path>
+mic unmount <mount-path>
 ```
 
 ## Sessions
@@ -102,40 +102,40 @@ Sessions track work progress with notes and goals:
 
 ```bash
 # Start a new session
-hif session start <organization> <project> <goal>
+mic session start <organization> <project> <goal>
 
 # Show current session status
-hif session status
+mic session status
 
 # Add a note to the session
-hif session note <message> [--role human|agent]
+mic session note <message> [--role human|agent]
 
 # Land the session (push to forge)
-hif session land
+mic session land
 
 # Abandon the current session
-hif session abandon
+mic session abandon
 ```
 
 ## Quick Start
 
 ```bash
 # 1. Authenticate
-hif auth login
+mic auth login
 
 # 2. List available projects
-hif project list micelio
+mic project list micelio
 
 # 3. Checkout a project
-hif checkout micelio/myproject
+mic checkout micelio/myproject
 
 # 4. Start a session
-hif session start micelio myproject "Add feature X"
+mic session start micelio myproject "Add feature X"
 
 # 5. Make changes and add notes
-echo "content" | hif write src/new_file.txt
-hif session note "Added new file for feature X"
+echo "content" | mic write src/new_file.txt
+mic session note "Added new file for feature X"
 
 # 6. Land your changes
-hif session land
+mic session land
 ```

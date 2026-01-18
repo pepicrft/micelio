@@ -1,11 +1,11 @@
-defmodule Micelio.Hif.Project do
+defmodule Micelio.Mic.Project do
   @moduledoc """
   Read-only access to a project's current tree and blob contents.
 
   This is used to render GitHub-like project views from Mic storage.
   """
 
-  alias Micelio.Hif.{Binary, Tree}
+  alias Micelio.Mic.{Binary, DeltaCompression, Tree}
   alias Micelio.Storage
 
   @zero_hash Binary.zero_hash()
@@ -54,7 +54,15 @@ defmodule Micelio.Hif.Project do
 
   @spec get_blob(binary(), binary()) :: {:ok, binary()} | {:error, term()}
   def get_blob(project_id, blob_hash) when is_binary(project_id) and is_binary(blob_hash) do
-    Storage.get(blob_key(project_id, blob_hash))
+    case Storage.get(blob_key(project_id, blob_hash)) do
+      {:ok, content} ->
+        DeltaCompression.decode(content, fn hash ->
+          Storage.get(blob_key(project_id, hash))
+        end)
+
+      error ->
+        error
+    end
   end
 
   @spec blob_hash_for_path(map(), String.t()) :: binary() | nil

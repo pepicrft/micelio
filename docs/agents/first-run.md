@@ -17,7 +17,7 @@ mix deps.get
 mix ecto.setup
 
 # Build Zig CLI
-cd hif && zig build && cd ..
+cd mic && zig build && cd ..
 
 # Start development server
 mix phx.server
@@ -28,7 +28,7 @@ mix phx.server
 ```bash
 # Run all tests
 mix test
-cd hif && zig build test
+cd mic && zig build test
 ```
 
 ## Important Files
@@ -37,4 +37,4 @@ cd hif && zig build test
 |------|---------|
 | `AGENTS.md` | This guide (root hub) |
 | `priv/static/skill.md` | Agent guide served at `/skill.md` - keep in sync with AGENTS.md |
-| `priv/static/SKILL.md` | hif CLI docs served at `/SKILL.md` |
+| `priv/static/SKILL.md` | mic CLI docs served at `/SKILL.md` |

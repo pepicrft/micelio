@@ -1,7 +1,7 @@
-defmodule Micelio.Hif.ConflictIndexTest do
+defmodule Micelio.Mic.ConflictIndexTest do
   use ExUnit.Case, async: true
 
-  alias Micelio.Hif.ConflictIndex
+  alias Micelio.Mic.ConflictIndex
   alias Micelio.Sessions.Conflict
 
   describe "expand_ranges_with/5" do

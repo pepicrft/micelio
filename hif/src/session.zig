@@ -408,46 +408,113 @@ pub fn landSession(allocator: std.mem.Allocator, server: []const u8) !LandResult
     const endpoint = try grpc_endpoint.parseServer(arena_alloc, server);
     const changes = try mapChangesFromOverlay(arena_alloc, session.files);
     defer arena_alloc.free(changes);
-    const request = try sessions_proto.encodeLandSessionRequest(arena_alloc, session.id, changes);
-    defer arena_alloc.free(request);
+    const batch_size = epochBatchSize(arena_alloc);
 
-    const result = try grpc_client.unaryCallResult(
-        arena_alloc,
-        endpoint,
-        "/micelio.sessions.v1.SessionService/LandSession",
-        request,
-        tokens.access_token,
-    );
+    if (batch_size > 0 and changes.len > batch_size) {
+        var epoch: u32 = 0;
+        var offset: usize = 0;
 
-    switch (result) {
-        .ok => |response| {
-            defer arena_alloc.free(response.bytes);
-            const landed = try sessions_proto.decodeSessionResponse(arena_alloc, response.bytes);
-            return .{
-                .success = .{
-                    .session_id = try allocator.dupe(u8, landed.session_id),
-                    .landing_position = landed.landing_position,
+        while (offset < changes.len) {
+            const end = @min(offset + batch_size, changes.len);
+            const finalize = end == changes.len;
+            epoch += 1;
+
+            const request = try sessions_proto.encodeLandSessionRequest(
+                arena_alloc,
+                session.id,
+                changes[offset..end],
+                .{ .epoch = epoch, .finalize = finalize },
+            );
+            defer arena_alloc.free(request);
+
+            const result = try grpc_client.unaryCallResult(
+                arena_alloc,
+                endpoint,
+                "/micelio.sessions.v1.SessionService/LandSession",
+                request,
+                tokens.access_token,
+            );
+
+            switch (result) {
+                .ok => |response| {
+                    defer arena_alloc.free(response.bytes);
+                    if (finalize) {
+                        const landed =
+                            try sessions_proto.decodeSessionResponse(arena_alloc, response.bytes);
+                        return .{
+                            .success = .{
+                                .session_id = try allocator.dupe(u8, landed.session_id),
+                                .landing_position = landed.landing_position,
+                            },
+                        };
+                    }
                 },
-            };
-        },
-        .err => |message| {
-            defer arena_alloc.free(message);
+                .err => |message| {
+                    defer arena_alloc.free(message);
 
-            // Check if this is a conflict error
-            if (std.mem.startsWith(u8, message, "Conflicts detected: ")) {
-                const paths_str = message["Conflicts detected: ".len..];
-                var conflict_paths: std.ArrayList([]const u8) = .empty;
+                    // Check if this is a conflict error
+                    if (std.mem.startsWith(u8, message, "Conflicts detected: ")) {
+                        const paths_str = message["Conflicts detected: ".len..];
+                        var conflict_paths: std.ArrayList([]const u8) = .empty;
 
-                var iter = std.mem.splitSequence(u8, paths_str, ", ");
-                while (iter.next()) |p| {
-                    try conflict_paths.append(allocator, try allocator.dupe(u8, p));
-                }
+                        var iter = std.mem.splitSequence(u8, paths_str, ", ");
+                        while (iter.next()) |p| {
+                            try conflict_paths.append(allocator, try allocator.dupe(u8, p));
+                        }
 
-                return .{ .conflict = .{ .paths = try conflict_paths.toOwnedSlice(allocator) } };
+                        return .{ .conflict = .{ .paths = try conflict_paths.toOwnedSlice(allocator) } };
+                    }
+
+                    return .{ .err = try allocator.dupe(u8, message) };
+                },
             }
 
-            return .{ .err = try allocator.dupe(u8, message) };
-        },
+            offset = end;
+        }
+
+        return .{ .err = "Landing failed." };
+    } else {
+        const request = try sessions_proto.encodeLandSessionRequest(arena_alloc, session.id, changes, .{});
+        defer arena_alloc.free(request);
+
+        const result = try grpc_client.unaryCallResult(
+            arena_alloc,
+            endpoint,
+            "/micelio.sessions.v1.SessionService/LandSession",
+            request,
+            tokens.access_token,
+        );
+
+        switch (result) {
+            .ok => |response| {
+                defer arena_alloc.free(response.bytes);
+                const landed = try sessions_proto.decodeSessionResponse(arena_alloc, response.bytes);
+                return .{
+                    .success = .{
+                        .session_id = try allocator.dupe(u8, landed.session_id),
+                        .landing_position = landed.landing_position,
+                    },
+                };
+            },
+            .err => |message| {
+                defer arena_alloc.free(message);
+
+                // Check if this is a conflict error
+                if (std.mem.startsWith(u8, message, "Conflicts detected: ")) {
+                    const paths_str = message["Conflicts detected: ".len..];
+                    var conflict_paths: std.ArrayList([]const u8) = .empty;
+
+                    var iter = std.mem.splitSequence(u8, paths_str, ", ");
+                    while (iter.next()) |p| {
+                        try conflict_paths.append(allocator, try allocator.dupe(u8, p));
+                    }
+
+                    return .{ .conflict = .{ .paths = try conflict_paths.toOwnedSlice(allocator) } };
+                }
+
+                return .{ .err = try allocator.dupe(u8, message) };
+            },
+        }
     }
 }
 
@@ -490,6 +557,15 @@ fn isSafePath(path: []const u8) bool {
     }
 
     return true;
+}
+
+fn epochBatchSize(allocator: std.mem.Allocator) usize {
+    const value = std.process.getEnvVarOwned(allocator, "HIF_EPOCH_BATCH_SIZE") catch return 0;
+    defer allocator.free(value);
+
+    const parsed = std.fmt.parseInt(usize, value, 10) catch return 0;
+    if (parsed == 0) return 0;
+    return parsed;
 }
 
 fn upsertChange(allocator: std.mem.Allocator, existing: []FileChange, change: FileChange) ![]FileChange {

@@ -1,9 +1,9 @@
-defmodule Micelio.Hif.Repository do
+defmodule Micelio.Mic.Repository do
   @moduledoc """
   Compatibility wrapper for repository storage helpers.
   """
 
-  alias Micelio.Hif.Project
+  alias Micelio.Mic.Project
 
   defdelegate get_head(project_id), to: Project
   defdelegate get_tree(project_id, tree_hash), to: Project

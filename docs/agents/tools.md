@@ -16,7 +16,7 @@
 | `mix help task_name` | Get task docs |
 | `mix precommit` | Run all pre-commit checks |
 
-## Zig (hif CLI)
+## Zig (mic CLI)
 
 | Command | Purpose |
 |---------|---------|
@@ -29,7 +29,7 @@
 
 | File | Served At | Purpose |
 |------|-----------|---------|
-| `priv/static/SKILL.md` | `/SKILL.md` | hif CLI documentation |
+| `priv/static/SKILL.md` | `/SKILL.md` | mic CLI documentation |
 | `priv/static/skill.md` | `/skill.md` | Agent guide (keep aligned with AGENTS.md) |
 
 ## HTTP Requests

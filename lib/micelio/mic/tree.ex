@@ -1,6 +1,6 @@
-defmodule Micelio.Hif.Tree do
+defmodule Micelio.Mic.Tree do
   @moduledoc """
-  Tree serialization and hashing for hif storage.
+  Tree serialization and hashing for mic storage.
   """
 
   @magic "MICT"

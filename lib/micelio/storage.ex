@@ -57,6 +57,24 @@ defmodule Micelio.Storage do
   end
 
   @doc """
+  Returns a CDN URL for the given key when configured.
+
+  Returns nil when no CDN base URL is configured.
+  """
+  def cdn_url(key) when is_binary(key) do
+    config = Application.get_env(:micelio, __MODULE__, [])
+
+    case Keyword.get(config, :cdn_base_url) do
+      base when is_binary(base) and base != "" ->
+        base = String.trim_trailing(base, "/")
+        "#{base}/#{encode_cdn_key(key)}"
+
+      _ ->
+        nil
+    end
+  end
+
+  @doc """
   Returns metadata for a key when available (e.g., ETag).
   """
   def head(key) do
@@ -86,5 +104,13 @@ defmodule Micelio.Storage do
       :s3 -> Micelio.Storage.S3
       :tiered -> Micelio.Storage.Tiered
     end
+  end
+
+  defp encode_cdn_key(key) when is_binary(key) do
+    key
+    |> String.split("/", trim: false)
+    |> Enum.map_join("/", fn segment ->
+      URI.encode(segment, fn ch -> URI.char_unreserved?(ch) end)
+    end)
   end
 end

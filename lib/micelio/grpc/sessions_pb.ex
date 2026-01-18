@@ -56,6 +56,8 @@ defmodule Micelio.GRPC.Sessions.V1.LandSessionRequest do
   field :conversation, 3, repeated: true, type: Micelio.GRPC.Sessions.V1.ConversationMessage
   field :decisions, 4, repeated: true, type: Micelio.GRPC.Sessions.V1.Decision
   field :files, 5, repeated: true, type: Micelio.GRPC.Sessions.V1.FileChange
+  field :epoch, 6, type: :uint32
+  field :finalize, 7, type: :bool
 end
 
 defmodule Micelio.GRPC.Sessions.V1.GetSessionRequest do

@@ -7,7 +7,7 @@ defmodule MicelioWeb.Browser.LegalController do
     conn
     |> PageMeta.put(
       title_parts: ["Privacy Policy"],
-      description: "How Micelio processes personal data under GDPR (EU) and German law.",
+      description: "Plain-language summary of how Micelio handles data.",
       canonical_url: url(~p"/privacy")
     )
     |> render(:privacy)
@@ -17,7 +17,7 @@ defmodule MicelioWeb.Browser.LegalController do
     conn
     |> PageMeta.put(
       title_parts: ["Terms of Service"],
-      description: "Terms governing use of the Micelio service.",
+      description: "Plain-language terms for using the Micelio service.",
       canonical_url: url(~p"/terms")
     )
     |> render(:terms)
@@ -27,7 +27,7 @@ defmodule MicelioWeb.Browser.LegalController do
     conn
     |> PageMeta.put(
       title_parts: ["Cookie Policy"],
-      description: "Information about cookies and similar technologies used by Micelio.",
+      description: "Minimal notice about essential cookies used by Micelio.",
       canonical_url: url(~p"/cookies")
     )
     |> render(:cookies)
@@ -37,7 +37,7 @@ defmodule MicelioWeb.Browser.LegalController do
     conn
     |> PageMeta.put(
       title_parts: ["Impressum"],
-      description: "Provider identification for Micelio (Germany).",
+      description: "Provider information for Micelio (Germany).",
       canonical_url: url(~p"/impressum")
     )
     |> render(:impressum)

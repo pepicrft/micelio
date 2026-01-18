@@ -48,6 +48,8 @@ message LandSessionRequest {
   repeated ConversationMessage conversation = 3;
   repeated Decision decisions = 4;
   repeated FileChange files = 5;
+  uint32 epoch = 6;
+  bool finalize = 7;
 }
 
 message GetSessionRequest {

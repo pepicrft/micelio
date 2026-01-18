@@ -3,7 +3,7 @@
 Micelio is a monorepo containing:
 
 - **Forge** (Elixir/Phoenix) - The web application and gRPC server
-- **hif** (Zig) - The `hif` command-line interface
+- **mic** (Zig) - The `mic` command-line interface
 
 ## Architecture
 
@@ -14,21 +14,21 @@ See [docs/contributors/next.md](../contributors/next.md) for upcoming features a
 | Component | Technology | Location |
 |-----------|------------|----------|
 | Web App | Elixir/Phoenix 1.8 | `/` (root) |
-| CLI | Zig 0.15 | `/hif` |
+| CLI | Zig 0.15 | `/mic` |
 | Database | PostgreSQL + Ecto | - |
 | Frontend | LiveView + vanilla CSS | - |
 
 ## Key Modules
 
-### hif (Zig CLI)
+### mic (Zig CLI)
 
-Located in `hif/`, organized as:
+Located in `mic/`, organized as:
 
-- `hif/src/core/hash.zig` - Blake3 hashing for content-addressed storage
-- `hif/src/core/bloom.zig` - Bloom filters for conflict detection
-- `hif/src/core/hlc.zig` - Hybrid Logical Clocks for distributed timestamps
-- `hif/src/core/tree.zig` - B+ tree for directory structures
-- `hif/src/root.zig` - Library entry point and re-exports
+- `mic/src/core/hash.zig` - Blake3 hashing for content-addressed storage
+- `mic/src/core/bloom.zig` - Bloom filters for conflict detection
+- `mic/src/core/hlc.zig` - Hybrid Logical Clocks for distributed timestamps
+- `mic/src/core/tree.zig` - B+ tree for directory structures
+- `mic/src/root.zig` - Library entry point and re-exports
 
 ### Zig NIFs
 

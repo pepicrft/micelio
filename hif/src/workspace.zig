@@ -1,5 +1,6 @@
 const std = @import("std");
 const auth = @import("auth.zig");
+const content_mod = @import("content.zig");
 const grpc_client = @import("grpc/client.zig");
 const grpc_endpoint = @import("grpc/endpoint.zig");
 const content_proto = @import("grpc/content_proto.zig");
@@ -56,6 +57,14 @@ pub fn checkout(
 
     var entries: std.ArrayList(manifest.WorkspaceEntry) = .empty;
     var cache_hits: u32 = 0;
+    var blob_options = try content_mod.prepareBlobFetchOptions(
+        allocator,
+        tokens.server,
+        account,
+        project,
+        tokens.access_token,
+    );
+    defer blob_options.deinit(allocator);
 
     for (tree.entries) |entry| {
         if (!isSafePath(entry.path)) {
@@ -70,27 +79,16 @@ pub fn checkout(
             cache_hits += 1;
             break :blk cached;
         } else blk: {
-            // Fetch from server
-            const blob_request = try content_proto.encodeGetBlobRequest(
-                arena_alloc,
+            const fetched = try content_mod.fetchBlobWithOptions(
+                allocator,
+                tokens.server,
                 account,
                 project,
                 entry.hash,
+                &blob_options,
             );
-            defer arena_alloc.free(blob_request);
+            defer allocator.free(fetched);
 
-            const blob_response = try grpc_client.unaryCall(
-                arena_alloc,
-                endpoint,
-                "/micelio.content.v1.ContentService/GetBlob",
-                blob_request,
-                tokens.access_token,
-            );
-            defer arena_alloc.free(blob_response.bytes);
-
-            const fetched = try content_proto.decodeBlobResponse(arena_alloc, blob_response.bytes);
-
-            // Store in cache
             try blob_cache.put(hash_hex, fetched);
 
             break :blk try allocator.dupe(u8, fetched);
@@ -197,64 +195,146 @@ pub fn land(allocator: std.mem.Allocator, goal: []const u8) !void {
     const file_changes = try buildFileChanges(arena_alloc, workspace_root, changes);
     defer arena_alloc.free(file_changes);
 
-    const land_request = try sessions_proto.encodeLandSessionRequest(
-        arena_alloc,
-        session_id,
-        file_changes,
-    );
-    defer arena_alloc.free(land_request);
+    const batch_size = epochBatchSize(arena_alloc);
 
-    const land_result = try grpc_client.unaryCallResult(
-        arena_alloc,
-        endpoint,
-        "/micelio.sessions.v1.SessionService/LandSession",
-        land_request,
-        access_token,
-    );
+    if (batch_size > 0 and file_changes.len > batch_size) {
+        var epoch: u32 = 0;
+        var offset: usize = 0;
 
-    switch (land_result) {
-        .ok => |response| {
-            defer arena_alloc.free(response.bytes);
-            const landed = try sessions_proto.decodeSessionResponse(arena_alloc, response.bytes);
+        while (offset < file_changes.len) {
+            const end = @min(offset + batch_size, file_changes.len);
+            const finalize = end == file_changes.len;
+            epoch += 1;
 
-            try refreshManifest(
+            const land_request = try sessions_proto.encodeLandSessionRequest(
                 arena_alloc,
-                state,
-                workspace_root,
+                session_id,
+                file_changes[offset..end],
+                .{ .epoch = epoch, .finalize = finalize },
+            );
+            defer arena_alloc.free(land_request);
+
+            const land_result = try grpc_client.unaryCallResult(
+                arena_alloc,
+                endpoint,
+                "/micelio.sessions.v1.SessionService/LandSession",
+                land_request,
                 access_token,
-                landed.landing_position,
             );
 
-            std.debug.print("Landed session {s}.\n", .{landed.session_id});
-            if (landed.landing_position > 0) {
-                std.debug.print("Landing position: {d}\n", .{landed.landing_position});
+            switch (land_result) {
+                .ok => |response| {
+                    defer arena_alloc.free(response.bytes);
+                    if (finalize) {
+                        const landed = try sessions_proto.decodeSessionResponse(
+                            arena_alloc,
+                            response.bytes,
+                        );
+
+                        try refreshManifest(
+                            arena_alloc,
+                            state,
+                            workspace_root,
+                            access_token,
+                            landed.landing_position,
+                        );
+
+                        std.debug.print("Landed session {s}.\n", .{landed.session_id});
+                        if (landed.landing_position > 0) {
+                            std.debug.print("Landing position: {d}\n", .{landed.landing_position});
+                        }
+                    }
+                },
+                .err => |message| {
+                    defer arena_alloc.free(message);
+
+                    // Check if this is a conflict error
+                    if (std.mem.startsWith(u8, message, "Conflicts detected: ")) {
+                        const paths_str = message["Conflicts detected: ".len..];
+
+                        std.debug.print("Error: Conflicts detected with upstream changes.\n", .{});
+                        std.debug.print("\nConflicting files:\n", .{});
+
+                        var iter = std.mem.splitSequence(u8, paths_str, ", ");
+                        while (iter.next()) |path| {
+                            std.debug.print("  - {s}\n", .{path});
+                        }
+
+                        std.debug.print("\nTo resolve:\n", .{});
+                        std.debug.print("  1. Run 'hif sync' to fetch the latest upstream state\n", .{});
+                        std.debug.print("  2. Review and merge your changes with the upstream versions\n", .{});
+                        std.debug.print("  3. Run 'hif land' again\n", .{});
+                        return error.ConflictsDetected;
+                    }
+
+                    std.debug.print("Error: {s}\n", .{message});
+                    return error.LandingFailed;
+                },
             }
-        },
-        .err => |message| {
-            defer arena_alloc.free(message);
 
-            // Check if this is a conflict error
-            if (std.mem.startsWith(u8, message, "Conflicts detected: ")) {
-                const paths_str = message["Conflicts detected: ".len..];
+            offset = end;
+        }
+    } else {
+        const land_request = try sessions_proto.encodeLandSessionRequest(
+            arena_alloc,
+            session_id,
+            file_changes,
+            .{},
+        );
+        defer arena_alloc.free(land_request);
 
-                std.debug.print("Error: Conflicts detected with upstream changes.\n", .{});
-                std.debug.print("\nConflicting files:\n", .{});
+        const land_result = try grpc_client.unaryCallResult(
+            arena_alloc,
+            endpoint,
+            "/micelio.sessions.v1.SessionService/LandSession",
+            land_request,
+            access_token,
+        );
 
-                var iter = std.mem.splitSequence(u8, paths_str, ", ");
-                while (iter.next()) |path| {
-                    std.debug.print("  - {s}\n", .{path});
+        switch (land_result) {
+            .ok => |response| {
+                defer arena_alloc.free(response.bytes);
+                const landed = try sessions_proto.decodeSessionResponse(arena_alloc, response.bytes);
+
+                try refreshManifest(
+                    arena_alloc,
+                    state,
+                    workspace_root,
+                    access_token,
+                    landed.landing_position,
+                );
+
+                std.debug.print("Landed session {s}.\n", .{landed.session_id});
+                if (landed.landing_position > 0) {
+                    std.debug.print("Landing position: {d}\n", .{landed.landing_position});
+                }
+            },
+            .err => |message| {
+                defer arena_alloc.free(message);
+
+                // Check if this is a conflict error
+                if (std.mem.startsWith(u8, message, "Conflicts detected: ")) {
+                    const paths_str = message["Conflicts detected: ".len..];
+
+                    std.debug.print("Error: Conflicts detected with upstream changes.\n", .{});
+                    std.debug.print("\nConflicting files:\n", .{});
+
+                    var iter = std.mem.splitSequence(u8, paths_str, ", ");
+                    while (iter.next()) |path| {
+                        std.debug.print("  - {s}\n", .{path});
+                    }
+
+                    std.debug.print("\nTo resolve:\n", .{});
+                    std.debug.print("  1. Run 'hif sync' to fetch the latest upstream state\n", .{});
+                    std.debug.print("  2. Review and merge your changes with the upstream versions\n", .{});
+                    std.debug.print("  3. Run 'hif land' again\n", .{});
+                    return error.ConflictsDetected;
                 }
 
-                std.debug.print("\nTo resolve:\n", .{});
-                std.debug.print("  1. Run 'hif sync' to fetch the latest upstream state\n", .{});
-                std.debug.print("  2. Review and merge your changes with the upstream versions\n", .{});
-                std.debug.print("  3. Run 'hif land' again\n", .{});
-                return error.ConflictsDetected;
-            }
-
-            std.debug.print("Error: {s}\n", .{message});
-            return error.LandingFailed;
-        },
+                std.debug.print("Error: {s}\n", .{message});
+                return error.LandingFailed;
+            },
+        }
     }
 }
 
@@ -405,6 +485,15 @@ fn changePrefix(change_type: []const u8) []const u8 {
     return "M";
 }
 
+fn epochBatchSize(allocator: std.mem.Allocator) usize {
+    const value = std.process.getEnvVarOwned(allocator, "HIF_EPOCH_BATCH_SIZE") catch return 0;
+    defer allocator.free(value);
+
+    const parsed = std.fmt.parseInt(usize, value, 10) catch return 0;
+    if (parsed == 0) return 0;
+    return parsed;
+}
+
 fn generateSessionId(allocator: std.mem.Allocator) ![]u8 {
     var random_bytes: [16]u8 = undefined;
     std.crypto.random.bytes(&random_bytes);
@@ -536,6 +625,14 @@ pub fn syncWorkspace(allocator: std.mem.Allocator, strategy: MergeStrategy) !Syn
     var cache_hits: u32 = 0;
     var resolved_conflicts: u32 = 0;
     var conflicts: std.ArrayList([]const u8) = .empty;
+    var blob_options = try content_mod.prepareBlobFetchOptions(
+        allocator,
+        state.server,
+        state.account,
+        state.project,
+        access_token,
+    );
+    defer blob_options.deinit(allocator);
 
     // Process upstream changes
     for (head_tree.entries) |entry| {
@@ -568,30 +665,19 @@ pub fn syncWorkspace(allocator: std.mem.Allocator, strategy: MergeStrategy) !Syn
             cache_hits += 1;
             break :blk cached;
         } else blk: {
-            // Fetch from server
-            const blob_request = try content_proto.encodeGetBlobRequest(
-                arena_alloc,
+            const fetched = try content_mod.fetchBlobWithOptions(
+                allocator,
+                state.server,
                 state.account,
                 state.project,
                 entry.hash,
+                &blob_options,
             );
-            defer arena_alloc.free(blob_request);
+            defer allocator.free(fetched);
 
-            const blob_response = try grpc_client.unaryCall(
-                arena_alloc,
-                endpoint,
-                "/micelio.content.v1.ContentService/GetBlob",
-                blob_request,
-                access_token,
-            );
-            defer arena_alloc.free(blob_response.bytes);
-
-            const fetched = try content_proto.decodeBlobResponse(arena_alloc, blob_response.bytes);
-
-            // Store in cache
             try blob_cache.put(new_hash_hex, fetched);
 
-            break :blk try arena_alloc.dupe(u8, fetched);
+            break :blk try allocator.dupe(u8, fetched);
         };
         defer allocator.free(content);
 

@@ -147,6 +147,28 @@
   color: var(--theme-ui-colors-secondary);
 }
 
+@media (max-width: 40rem) {
+  .account-profile-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .account-profile-section-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .account-passkey-entry {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .account-profile-list-link {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
 /* Activity Graph */
 .activity-graph {
   margin-top: var(--theme-ui-space-4);

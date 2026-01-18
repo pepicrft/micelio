@@ -7,6 +7,7 @@ const projects = @import("projects.zig");
 const session = @import("session.zig");
 const content = @import("content.zig");
 const workspace = @import("workspace.zig");
+const manifest = @import("workspace/manifest.zig");
 const mount = @import("mount.zig");
 const log = @import("log.zig");
 const diff = @import("diff.zig");
@@ -122,7 +123,14 @@ pub fn main() !void {
     try ls_cmd.addArg(Arg.positional("ACCOUNT", "Account handle", null));
     try ls_cmd.addArg(Arg.positional("PROJECT", "Project handle", null));
     try ls_cmd.addArg(Arg.singleValueOption("path", 'p', "Optional path prefix"));
+    try ls_cmd.addArg(Arg.singleValueOption("position", 'r', "Position to list (e.g., @10 or 10, default: @latest)"));
     try root.addSubcommand(ls_cmd);
+
+    var blame_cmd = app.createCommand("blame", "Show session attribution for file lines");
+    try blame_cmd.addArg(Arg.positional("ACCOUNT", "Account handle", null));
+    try blame_cmd.addArg(Arg.positional("PROJECT", "Project handle", null));
+    try blame_cmd.addArg(Arg.positional("PATH", "File path", null));
+    try root.addSubcommand(blame_cmd);
 
     // Write: Update local file and stage change for the session
     var write_cmd = app.createCommand("write", "Write stdin to a file and stage change");
@@ -462,14 +470,70 @@ pub fn main() !void {
     }
 
     if (matches.subcommandMatches("cat")) |cat_matches| {
+        var arena = std.heap.ArenaAllocator.init(allocator);
+        defer arena.deinit();
+        const arena_alloc = arena.allocator();
+
         const account = cat_matches.getSingleValue("ACCOUNT");
         const project = cat_matches.getSingleValue("PROJECT");
         const path = cat_matches.getSingleValue("PATH");
         const position_str = cat_matches.getSingleValue("position");
 
-        if (account == null or project == null or path == null) {
-            std.debug.print("Error: account, project, and path required\n", .{});
-            std.debug.print("Usage: hif cat <account> <project> <path> [--position <@N>]\n", .{});
+        const position: ?u64 = if (position_str) |value| blk: {
+            const parsed = parsePositionOrLatest(value) orelse {
+                std.debug.print("Error: invalid position\n", .{});
+                std.debug.print("  position can be @N, N, @latest, or HEAD\n", .{});
+                return;
+            };
+            break :blk switch (parsed) {
+                .position => |p| p,
+                .latest => null,
+            };
+        } else null;
+
+        var target = resolveCatTarget(arena_alloc, account, project, path) catch |err| {
+            switch (err) {
+                error.InvalidCatArguments => {
+                    std.debug.print("Error: account, project, and path required\n", .{});
+                    std.debug.print("Usage:\n", .{});
+                    std.debug.print("  hif cat <account> <project> <path> [--position <@N>]\n", .{});
+                    std.debug.print("  hif cat <account>/<project> <path> [--position <@N>]\n", .{});
+                    std.debug.print("  hif cat <path> [--position <@N>] (from workspace)\n", .{});
+                },
+                error.NoWorkspace => {
+                    std.debug.print("Error: no workspace found in current directory\n", .{});
+                    std.debug.print("Usage: hif cat <account> <project> <path> [--position <@N>]\n", .{});
+                },
+                error.InvalidPath => {
+                    std.debug.print("Error: path required\n", .{});
+                    std.debug.print("Usage: hif cat <account> <project> <path> [--position <@N>]\n", .{});
+                },
+                else => return err,
+            }
+            return;
+        };
+        defer target.deinit(arena_alloc);
+
+        try content.cat(
+            arena_alloc,
+            target.server,
+            target.account,
+            target.project,
+            target.path,
+            position,
+        );
+        return;
+    }
+
+    if (matches.subcommandMatches("ls")) |ls_matches| {
+        const account = ls_matches.getSingleValue("ACCOUNT");
+        const project = ls_matches.getSingleValue("PROJECT");
+        const path = ls_matches.getSingleValue("path");
+        const position_str = ls_matches.getSingleValue("position");
+
+        if (account == null or project == null) {
+            std.debug.print("Error: account and project required\n", .{});
+            std.debug.print("Usage: hif ls <account> <project> [--path prefix] [--position <@N>]\n", .{});
             return;
         }
 
@@ -485,41 +549,22 @@ pub fn main() !void {
             };
         } else null;
 
-        const blob_hash = try content.getPath(
-            allocator,
-            oauth.default_server,
-            account.?,
-            project.?,
-            path.?,
-            position,
-        );
-        defer allocator.free(blob_hash);
-
-        const content_bytes = try content.fetchBlob(
-            allocator,
-            oauth.default_server,
-            account.?,
-            project.?,
-            blob_hash,
-        );
-        defer allocator.free(content_bytes);
-
-        try std.fs.File.stdout().writeAll(content_bytes);
+        try content.ls(allocator, oauth.default_server, account.?, project.?, path, position);
         return;
     }
 
-    if (matches.subcommandMatches("ls")) |ls_matches| {
-        const account = ls_matches.getSingleValue("ACCOUNT");
-        const project = ls_matches.getSingleValue("PROJECT");
-        const path = ls_matches.getSingleValue("path");
+    if (matches.subcommandMatches("blame")) |blame_matches| {
+        const account = blame_matches.getSingleValue("ACCOUNT");
+        const project = blame_matches.getSingleValue("PROJECT");
+        const path = blame_matches.getSingleValue("PATH");
 
-        if (account == null or project == null) {
-            std.debug.print("Error: account and project required\n", .{});
-            std.debug.print("Usage: hif ls <account> <project> [--path prefix]\n", .{});
+        if (account == null or project == null or path == null) {
+            std.debug.print("Error: account, project, and path required\n", .{});
+            std.debug.print("Usage: hif blame <account> <project> <path>\n", .{});
             return;
         }
 
-        try content.ls(allocator, oauth.default_server, account.?, project.?, path);
+        try content.blame(allocator, oauth.default_server, account.?, project.?, path.?);
         return;
     }
 
@@ -710,6 +755,21 @@ const ProjectRef = struct {
     project: []const u8,
 };
 
+const CatTarget = struct {
+    server: []const u8,
+    account: []const u8,
+    project: []const u8,
+    path: []const u8,
+
+    fn deinit(self: *CatTarget, allocator: std.mem.Allocator) void {
+        allocator.free(self.server);
+        allocator.free(self.account);
+        allocator.free(self.project);
+        allocator.free(self.path);
+        self.* = undefined;
+    }
+};
+
 fn parseProjectRef(value: []const u8) ?ProjectRef {
     const slash_index = std.mem.indexOfScalar(u8, value, '/') orelse return null;
     if (slash_index == 0 or slash_index + 1 >= value.len) return null;
@@ -721,6 +781,73 @@ fn parseProjectRef(value: []const u8) ?ProjectRef {
     };
 }
 
+fn resolveCatTarget(
+    allocator: std.mem.Allocator,
+    account: ?[]const u8,
+    project: ?[]const u8,
+    path: ?[]const u8,
+) !CatTarget {
+    if (account != null and project != null and path != null) {
+        const normalized = normalizeContentPath(path.?);
+        if (normalized.len == 0) return error.InvalidPath;
+
+        return .{
+            .server = try allocator.dupe(u8, oauth.default_server),
+            .account = try allocator.dupe(u8, account.?),
+            .project = try allocator.dupe(u8, project.?),
+            .path = try allocator.dupe(u8, normalized),
+        };
+    }
+
+    if (account != null and project != null and path == null) {
+        if (parseProjectRef(account.?)) |parsed| {
+            const normalized = normalizeContentPath(project.?);
+            if (normalized.len == 0) return error.InvalidPath;
+
+            return .{
+                .server = try allocator.dupe(u8, oauth.default_server),
+                .account = try allocator.dupe(u8, parsed.account),
+                .project = try allocator.dupe(u8, parsed.project),
+                .path = try allocator.dupe(u8, normalized),
+            };
+        }
+    }
+
+    if (account != null and project == null and path == null) {
+        const normalized = normalizeContentPath(account.?);
+        if (normalized.len == 0) return error.InvalidPath;
+        return resolveCatFromWorkspace(allocator, normalized);
+    }
+
+    return error.InvalidCatArguments;
+}
+
+fn resolveCatFromWorkspace(allocator: std.mem.Allocator, path: []const u8) !CatTarget {
+    const workspace_root = try std.process.getCwdAlloc(allocator);
+    defer allocator.free(workspace_root);
+
+    const parsed = try manifest.load(allocator, workspace_root);
+    if (parsed == null) return error.NoWorkspace;
+    defer parsed.?.deinit();
+
+    const state = parsed.?.value;
+
+    return .{
+        .server = try allocator.dupe(u8, state.server),
+        .account = try allocator.dupe(u8, state.account),
+        .project = try allocator.dupe(u8, state.project),
+        .path = try allocator.dupe(u8, path),
+    };
+}
+
+fn normalizeContentPath(path: []const u8) []const u8 {
+    var trimmed = path;
+    while (trimmed.len > 0 and trimmed[0] == '/') {
+        trimmed = trimmed[1..];
+    }
+    return trimmed;
+}
+
 const PositionOrLatest = union(enum) {
     position: u64,
     latest,
@@ -729,14 +856,6 @@ const PositionOrLatest = union(enum) {
 /// Parse a position like "@10", "10", "@position:10", "@latest", or "HEAD" into PositionOrLatest
 /// Returns null for invalid input
 fn parsePositionOrLatest(value: []const u8) ?PositionOrLatest {
-    // Handle @latest / latest / HEAD as special case
-    if (std.mem.eql(u8, value, "@latest") or
-        std.mem.eql(u8, value, "latest") or
-        std.mem.eql(u8, value, "HEAD"))
-    {
-        return .latest;
-    }
-
     // Handle @position:N format
     if (std.mem.startsWith(u8, value, "@position:")) {
         const num_str = value[10..];
@@ -745,10 +864,129 @@ fn parsePositionOrLatest(value: []const u8) ?PositionOrLatest {
         return .{ .position = pos };
     }
 
-    // Strip leading @ if present
-    const num_str = if (value.len > 0 and value[0] == '@') value[1..] else value;
-    if (num_str.len == 0) return null;
+    const trimmed = if (value.len > 0 and value[0] == '@') value[1..] else value;
+    if (trimmed.len == 0) return null;
 
-    const pos = std.fmt.parseInt(u64, num_str, 10) catch return null;
+    if (std.ascii.eqlIgnoreCase(trimmed, "latest") or std.ascii.eqlIgnoreCase(trimmed, "head")) {
+        return .latest;
+    }
+
+    const pos = std.fmt.parseInt(u64, trimmed, 10) catch return null;
     return .{ .position = pos };
+}
+
+test "parsePositionOrLatest handles latest and head tokens" {
+    const head = parsePositionOrLatest("HEAD") orelse return error.TestExpectedEqual;
+    const head_lower = parsePositionOrLatest("head") orelse return error.TestExpectedEqual;
+    const head_prefixed = parsePositionOrLatest("@head") orelse return error.TestExpectedEqual;
+    const latest_prefixed = parsePositionOrLatest("@latest") orelse return error.TestExpectedEqual;
+    const latest = parsePositionOrLatest("latest") orelse return error.TestExpectedEqual;
+
+    switch (head) {
+        .latest => {},
+        else => return error.TestExpectedEqual,
+    }
+    switch (head_lower) {
+        .latest => {},
+        else => return error.TestExpectedEqual,
+    }
+    switch (head_prefixed) {
+        .latest => {},
+        else => return error.TestExpectedEqual,
+    }
+    switch (latest_prefixed) {
+        .latest => {},
+        else => return error.TestExpectedEqual,
+    }
+    switch (latest) {
+        .latest => {},
+        else => return error.TestExpectedEqual,
+    }
+}
+
+test "parsePositionOrLatest parses numeric positions" {
+    const value = parsePositionOrLatest("@42") orelse return error.TestExpectedEqual;
+    switch (value) {
+        .position => |pos| try std.testing.expectEqual(@as(u64, 42), pos),
+        else => return error.TestExpectedEqual,
+    }
+
+    const direct = parsePositionOrLatest("7") orelse return error.TestExpectedEqual;
+    switch (direct) {
+        .position => |pos| try std.testing.expectEqual(@as(u64, 7), pos),
+        else => return error.TestExpectedEqual,
+    }
+}
+
+test "resolveCatTarget supports explicit account and project" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const allocator = arena.allocator();
+
+    var target = try resolveCatTarget(allocator, "acme", "app", "/README.md");
+    defer target.deinit(allocator);
+
+    try std.testing.expectEqualStrings(oauth.default_server, target.server);
+    try std.testing.expectEqualStrings("acme", target.account);
+    try std.testing.expectEqualStrings("app", target.project);
+    try std.testing.expectEqualStrings("README.md", target.path);
+}
+
+test "resolveCatTarget supports project ref plus path" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const allocator = arena.allocator();
+
+    var target = try resolveCatTarget(allocator, "acme/app", "docs/guide.md", null);
+    defer target.deinit(allocator);
+
+    try std.testing.expectEqualStrings(oauth.default_server, target.server);
+    try std.testing.expectEqualStrings("acme", target.account);
+    try std.testing.expectEqualStrings("app", target.project);
+    try std.testing.expectEqualStrings("docs/guide.md", target.path);
+}
+
+test "resolveCatTarget reads workspace manifest when only path provided" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const allocator = arena.allocator();
+
+    var temp = std.testing.tmpDir(.{});
+    defer temp.cleanup();
+
+    const cwd = try std.process.getCwdAlloc(allocator);
+    defer allocator.free(cwd);
+
+    const temp_root = try temp.dir.realpathAlloc(allocator, ".");
+    defer allocator.free(temp_root);
+
+    var restore_dir = try std.fs.openDirAbsolute(cwd, .{});
+    defer {
+        restore_dir.setAsCwd() catch {};
+        restore_dir.close();
+    }
+
+    var temp_dir = try std.fs.openDirAbsolute(temp_root, .{});
+    defer temp_dir.close();
+    try temp_dir.setAsCwd();
+
+    const entries = [_]manifest.WorkspaceEntry{};
+    const state = manifest.WorkspaceState{
+        .version = 1,
+        .server = "http://forge.example:50051",
+        .account = "acme",
+        .project = "app",
+        .tree_hash = "deadbeef",
+        .entries = entries[0..],
+    };
+
+    try manifest.save(allocator, temp_root, state);
+
+    var target = try resolveCatTarget(allocator, "notes.md", null, null);
+    defer target.deinit(allocator);
+
+    try std.testing.expectEqualStrings("http://forge.example:50051", target.server);
+    try std.testing.expectEqualStrings("acme", target.account);
+    try std.testing.expectEqualStrings("app", target.project);
+    try std.testing.expectEqualStrings("notes.md", target.path);
 }

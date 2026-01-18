@@ -1,7 +1,7 @@
 defmodule Micelio.ProjectsWorkspaceTest do
   use Micelio.DataCase, async: true
 
-  alias Micelio.Hif.Project
+  alias Micelio.Mic.Project
   alias Micelio.Projects
   alias Micelio.Storage
 

@@ -3,12 +3,13 @@ defmodule MicelioWeb.Browser.ProjectController do
 
   alias Micelio.Accounts
   alias Micelio.Authorization
-  alias Micelio.Hif.Binary
-  alias Micelio.Hif.Project, as: MicProject
+  alias Micelio.Mic.Binary
+  alias Micelio.Mic.Project, as: MicProject
   alias Micelio.Notifications
   alias Micelio.Projects
   alias Micelio.Sessions
   alias Micelio.Sessions.Blame
+  alias Micelio.Storage
   alias MicelioWeb.CodeHighlighter
   alias MicelioWeb.Markdown
   alias MicelioWeb.PageMeta
@@ -198,6 +199,7 @@ defmodule MicelioWeb.Browser.ProjectController do
                MicProject.blob_hash_for_path(tree, file_path),
              {:ok, content} <- MicProject.get_blob(project.id, blob_hash) do
           title_parts = [file_path, "#{account_handle}/#{project_handle}"]
+          blob_download_url = maybe_blob_cdn_url(project, blob_hash)
 
           conn
           |> PageMeta.put(
@@ -211,6 +213,7 @@ defmodule MicelioWeb.Browser.ProjectController do
           |> assign(:forked_from, project.forked_from)
           |> assign(:head, head)
           |> assign(:file_path, file_path)
+          |> assign(:blob_download_url, blob_download_url)
           |> assign(:file_content, format_blob_content(file_path, content))
           |> assign_star_data(project)
           |> assign_fork_data(project)
@@ -469,6 +472,14 @@ defmodule MicelioWeb.Browser.ProjectController do
       {:binary, byte_size(content)}
     end
   end
+
+  defp maybe_blob_cdn_url(%{visibility: "public", id: project_id}, blob_hash) do
+    project_id
+    |> MicProject.blob_key(blob_hash)
+    |> Storage.cdn_url()
+  end
+
+  defp maybe_blob_cdn_url(_project, _blob_hash), do: nil
 
   @readme_candidates ["readme.md", "readme.markdown", "readme.mdown", "readme.txt", "readme"]
   @readme_markdown_extensions [".md", ".markdown", ".mdown"]

@@ -61,6 +61,8 @@ cache_timeout_ms =
     value -> String.to_integer(value)
   end
 
+cdn_base_url = System.get_env("STORAGE_CDN_BASE_URL")
+
 maybe_put = fn config, key, value ->
   if is_nil(value), do: config, else: Keyword.put(config, key, value)
 end
@@ -76,6 +78,7 @@ storage_config =
         backend: :local,
         local_path: local_path_default
       ]
+      |> maybe_put.(:cdn_base_url, cdn_base_url)
 
     :s3 ->
       [
@@ -86,6 +89,7 @@ storage_config =
         s3_access_key_id: System.get_env("S3_ACCESS_KEY_ID"),
         s3_secret_access_key: System.get_env("S3_SECRET_ACCESS_KEY")
       ]
+      |> maybe_put.(:cdn_base_url, cdn_base_url)
 
     :tiered ->
       base_config =
@@ -95,7 +99,7 @@ storage_config =
           origin_local_path: local_path_default,
           local_path: local_path_default,
           cache_disk_path: cache_path_default,
-          cdn_base_url: System.get_env("STORAGE_CDN_BASE_URL")
+          cdn_base_url: cdn_base_url
         ]
         |> maybe_put.(:cache_memory_max_bytes, cache_memory_max_bytes)
         |> maybe_put.(:cdn_timeout_ms, cache_timeout_ms)

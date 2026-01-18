@@ -5,8 +5,8 @@ defmodule MicelioWeb.Browser.SkillMdTest do
     conn = get(conn, "/skill.md")
 
     assert conn.status == 200
-    assert response(conn, 200) =~ "This is a monorepo containing:"
-    assert response(conn, 200) =~ "hif/src/core/bloom.zig"
+    assert response(conn, 200) =~ "# Micelio for AI Agents"
+    assert response(conn, 200) =~ "Micelio Project Context"
     assert response(conn, 200) =~ "mix precommit"
   end
 

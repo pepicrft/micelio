@@ -1,11 +1,11 @@
-defmodule Micelio.Hif.RollupScheduler do
+defmodule Micelio.Mic.RollupScheduler do
   @moduledoc """
   Periodic rollup rebuild scheduler.
   """
 
   use GenServer
 
-  alias Micelio.Hif.RollupRebuilder
+  alias Micelio.Mic.RollupRebuilder
   alias Micelio.Projects
 
   require Logger
@@ -34,7 +34,7 @@ defmodule Micelio.Hif.RollupScheduler do
 
   @impl true
   def handle_info(:run, %{interval_ms: interval_ms} = state) do
-    Logger.debug("hif.rollup_scheduler tick")
+    Logger.debug("mic.rollup_scheduler tick")
     rebuild_recent_rollups(state)
     Process.send_after(self(), :run, interval_ms)
     {:noreply, state}
@@ -49,7 +49,7 @@ defmodule Micelio.Hif.RollupScheduler do
           _ = RollupRebuilder.rebuild(project.id, from_position, position)
 
         {:error, reason} ->
-          Logger.debug("hif.rollup_scheduler error=#{inspect(reason)} project=#{project.id}")
+          Logger.debug("mic.rollup_scheduler error=#{inspect(reason)} project=#{project.id}")
       end
     end)
   end

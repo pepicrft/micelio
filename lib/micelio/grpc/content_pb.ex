@@ -66,6 +66,31 @@ defmodule Micelio.GRPC.Content.V1.GetPathResponse do
   field :blob_hash, 2, type: :bytes, json_name: "blobHash"
 end
 
+defmodule Micelio.GRPC.Content.V1.BlameLine do
+  use Protobuf, syntax: :proto3
+
+  field :line_number, 1, type: :uint32, json_name: "lineNumber"
+  field :text, 2, type: :string
+  field :session_id, 3, type: :string, json_name: "sessionId"
+  field :author_handle, 4, type: :string, json_name: "authorHandle"
+  field :landed_at, 5, type: :string, json_name: "landedAt"
+end
+
+defmodule Micelio.GRPC.Content.V1.GetBlameRequest do
+  use Protobuf, syntax: :proto3
+
+  field :user_id, 1, type: :string, json_name: "userId"
+  field :account_handle, 2, type: :string, json_name: "accountHandle"
+  field :project_handle, 3, type: :string, json_name: "projectHandle"
+  field :path, 4, type: :string
+end
+
+defmodule Micelio.GRPC.Content.V1.GetBlameResponse do
+  use Protobuf, syntax: :proto3
+
+  field :lines, 1, repeated: true, type: Micelio.GRPC.Content.V1.BlameLine
+end
+
 defmodule Micelio.GRPC.Content.V1.GetTreeAtPositionRequest do
   use Protobuf, syntax: :proto3
 
@@ -106,5 +131,11 @@ defmodule Micelio.GRPC.Content.V1.ContentService.Service do
     :GetPath,
     Micelio.GRPC.Content.V1.GetPathRequest,
     Micelio.GRPC.Content.V1.GetPathResponse
+  )
+
+  rpc(
+    :GetBlame,
+    Micelio.GRPC.Content.V1.GetBlameRequest,
+    Micelio.GRPC.Content.V1.GetBlameResponse
   )
 end

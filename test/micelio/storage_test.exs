@@ -103,4 +103,41 @@ defmodule Micelio.StorageTest do
       assert File.exists?(Path.join(cache_dir, key))
     end
   end
+
+  describe "cdn_url/1" do
+    test "returns a CDN URL when configured" do
+      original = Application.get_env(:micelio, Micelio.Storage, :unset)
+
+      on_exit(fn ->
+        case original do
+          :unset -> Application.delete_env(:micelio, Micelio.Storage)
+          _ -> Application.put_env(:micelio, Micelio.Storage, original)
+        end
+      end)
+
+      Application.put_env(:micelio, Micelio.Storage,
+        cdn_base_url: "https://cdn.example.test/micelio"
+      )
+
+      key = "projects/123/blobs/aa/file name.txt"
+
+      assert Storage.cdn_url(key) ==
+               "https://cdn.example.test/micelio/projects/123/blobs/aa/file%20name.txt"
+    end
+
+    test "returns nil when CDN is not configured" do
+      original = Application.get_env(:micelio, Micelio.Storage, :unset)
+
+      on_exit(fn ->
+        case original do
+          :unset -> Application.delete_env(:micelio, Micelio.Storage)
+          _ -> Application.put_env(:micelio, Micelio.Storage, original)
+        end
+      end)
+
+      Application.put_env(:micelio, Micelio.Storage, [])
+
+      assert Storage.cdn_url("projects/123/blobs/aa/file.txt") == nil
+    end
+  end
 end

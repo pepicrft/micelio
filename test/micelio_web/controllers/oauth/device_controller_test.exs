@@ -4,12 +4,12 @@ defmodule MicelioWeb.Oauth.DeviceControllerTest do
   alias Micelio.OAuth
 
   test "uses existing client when credentials are provided", %{conn: conn} do
-    {:ok, client} = OAuth.register_device_client(%{"name" => "hif"})
+    {:ok, client} = OAuth.register_device_client(%{"name" => "mic"})
 
     payload = %{
       "client_id" => client.client_id,
       "client_secret" => client.client_secret,
-      "device_name" => "hif"
+      "device_name" => "mic"
     }
 
     conn = post(conn, "/auth/device", payload)
@@ -20,12 +20,12 @@ defmodule MicelioWeb.Oauth.DeviceControllerTest do
   end
 
   test "rejects invalid client credentials", %{conn: conn} do
-    {:ok, client} = OAuth.register_device_client(%{"name" => "hif"})
+    {:ok, client} = OAuth.register_device_client(%{"name" => "mic"})
 
     payload = %{
       "client_id" => client.client_id,
       "client_secret" => "bad-secret",
-      "device_name" => "hif"
+      "device_name" => "mic"
     }
 
     conn = post(conn, "/auth/device", payload)

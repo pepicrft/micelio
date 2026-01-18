@@ -7,8 +7,11 @@ defmodule Micelio.GRPC.Content.V1.ContentService.Server do
   alias Micelio.GRPC.Content.V1
 
   alias Micelio.GRPC.Content.V1.{
+    BlameLine,
     GetBlobRequest,
     GetBlobResponse,
+    GetBlameRequest,
+    GetBlameResponse,
     GetHeadTreeRequest,
     GetPathRequest,
     GetPathResponse,
@@ -18,10 +21,13 @@ defmodule Micelio.GRPC.Content.V1.ContentService.Server do
     TreeEntry
   }
 
-  alias Micelio.Hif.Binary
-  alias Micelio.Hif.Tree, as: MicTree
+  alias Micelio.Mic.Binary
+  alias Micelio.Mic.DeltaCompression
+  alias Micelio.Mic.Tree, as: MicTree
   alias Micelio.OAuth.AccessTokens
   alias Micelio.Projects
+  alias Micelio.Sessions
+  alias Micelio.Sessions.Blame
   alias Micelio.Storage
 
   @zero_hash <<0::size(256)>>
@@ -117,6 +123,28 @@ defmodule Micelio.GRPC.Content.V1.ContentService.Server do
     end
   end
 
+  def get_blame(%GetBlameRequest{} = request, stream) do
+    with :ok <- require_field(request.account_handle, "account_handle"),
+         :ok <- require_field(request.project_handle, "project_handle"),
+         :ok <- require_field(request.path, "path"),
+         {:ok, organization, project} <-
+           load_project(request.account_handle, request.project_handle),
+         :ok <- authorize_project_read(organization, project, request.user_id, stream),
+         {:ok, _tree_hash, tree} <- load_head_tree(project.id),
+         {:ok, blob_hash} <- fetch_path_hash(tree, request.path),
+         {:ok, content} <- load_blob(project.id, blob_hash),
+         {:ok, text} <- ensure_text(content) do
+      changes = Sessions.list_landed_changes_for_file(project.id, request.path)
+
+      lines =
+        text
+        |> Blame.build_lines(changes)
+        |> Enum.map(&format_blame_line/1)
+
+      %GetBlameResponse{lines: lines}
+    end
+  end
+
   defp fetch_path_hash(tree, path) do
     case Map.fetch(tree, path) do
       {:ok, hash} -> {:ok, hash}
@@ -162,9 +190,19 @@ defmodule Micelio.GRPC.Content.V1.ContentService.Server do
 
   defp load_blob(project_id, blob_hash) do
     case Storage.get(blob_key(project_id, blob_hash)) do
-      {:ok, content} -> {:ok, content}
-      {:error, :not_found} -> {:error, not_found_status("Blob not found.")}
-      {:error, _reason} -> {:error, internal_status("Failed to load blob.")}
+      {:ok, content} ->
+        case DeltaCompression.decode(content, fn hash ->
+               Storage.get(blob_key(project_id, hash))
+             end) do
+          {:ok, decoded} -> {:ok, decoded}
+          {:error, _} -> {:error, internal_status("Failed to decode blob.")}
+        end
+
+      {:error, :not_found} ->
+        {:error, not_found_status("Blob not found.")}
+
+      {:error, _reason} ->
+        {:error, internal_status("Failed to load blob.")}
     end
   end
 
@@ -293,6 +331,36 @@ defmodule Micelio.GRPC.Content.V1.ContentService.Server do
 
   defp require_hash(_value, field_name),
     do: {:error, invalid_status("#{field_name} is required.")}
+
+  defp ensure_text(content) when is_binary(content) do
+    limit = 200_000
+    content = if byte_size(content) > limit, do: binary_part(content, 0, limit), else: content
+
+    if String.valid?(content) do
+      {:ok, content}
+    else
+      {:error, invalid_status("Binary file cannot be blamed.")}
+    end
+  end
+
+  defp format_blame_line(%{attribution: attribution} = line) do
+    session = if attribution, do: Map.get(attribution, :session)
+    account = if session, do: session.user && session.user.account
+
+    %BlameLine{
+      line_number: line.line_number,
+      text: line.text,
+      session_id: if(session, do: session.session_id, else: ""),
+      author_handle: if(account, do: account.handle, else: ""),
+      landed_at: format_timestamp(session && session.landed_at)
+    }
+  end
+
+  defp format_timestamp(nil), do: ""
+
+  defp format_timestamp(%DateTime{} = timestamp) do
+    DateTime.to_iso8601(timestamp)
+  end
 
   defp invalid_status(message), do: rpc_error(Status.invalid_argument(), message)
   defp not_found_status(message), do: rpc_error(Status.not_found(), message)

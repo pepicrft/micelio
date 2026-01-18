@@ -4,10 +4,11 @@ defmodule Micelio.GRPC.SessionsServerTest do
   import Mimic
 
   alias Micelio.Accounts
+  alias Micelio.GRPC.Sessions.V1.FileChange
   alias Micelio.GRPC.Sessions.V1.LandSessionRequest
   alias Micelio.GRPC.Sessions.V1.SessionResponse
   alias Micelio.GRPC.Sessions.V1.SessionService.Server, as: SessionsServer
-  alias Micelio.Hif.Landing
+  alias Micelio.Mic.Landing
   alias Micelio.Projects
   alias Micelio.Sessions
   alias Micelio.Webhooks
@@ -80,5 +81,58 @@ defmodule Micelio.GRPC.SessionsServerTest do
     assert response.session.status == "landed"
     assert response.session.landing_position == 12
     assert_receive :webhooks_dispatched
+  end
+
+  test "land_session supports epoch batching without landing" do
+    {:ok, user} = Accounts.get_or_create_user_by_email("grpc-session-batch@example.com")
+
+    {:ok, organization} =
+      Accounts.create_organization_for_user(user, %{
+        handle: "grpc-session-batch-org",
+        name: "GRPC Sessions Batch Org"
+      })
+
+    {:ok, project} =
+      Projects.create_project(%{
+        handle: "grpc-session-batch-repo",
+        name: "GRPC Session Batch Repo",
+        organization_id: organization.id
+      })
+
+    {:ok, session} =
+      Sessions.create_session(%{
+        session_id: "session-grpc-batch-1",
+        goal: "Batch land",
+        project_id: project.id,
+        user_id: user.id
+      })
+
+    Mimic.stub(Landing, :land_session, fn _session ->
+      flunk("Landing should not be invoked for non-final epoch batches")
+    end)
+
+    response =
+      SessionsServer.land_session(
+        %LandSessionRequest{
+          user_id: user.id,
+          session_id: session.session_id,
+          conversation: [],
+          decisions: [],
+          files: [
+            %FileChange{path: "lib/example.ex", content: "ok\n", change_type: "added"}
+          ],
+          epoch: 1,
+          finalize: false
+        },
+        nil
+      )
+
+    assert %SessionResponse{} = response
+    assert response.session.session_id == session.session_id
+    assert response.session.status == "active"
+    assert response.session.landing_position == 0
+
+    persisted = Sessions.get_session_by_session_id(session.session_id)
+    assert persisted.metadata["epoch_batch"] == 1
   end
 end

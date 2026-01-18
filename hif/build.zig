@@ -207,6 +207,19 @@ pub fn build(b: *std.Build) void {
     });
     test_step.dependOn(&b.addRunArtifact(integration_tests).step);
 
+    // Memory leak detection tests
+    const memory_leak_tests = b.addTest(.{
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("tests/memory_leak.zig"),
+            .target = target,
+            .optimize = optimize,
+            .imports = &.{
+                .{ .name = "hif", .module = hif_mod },
+            },
+        }),
+    });
+    test_step.dependOn(&b.addRunArtifact(memory_leak_tests).step);
+
     // No FFI artifacts or header sync tests (CLI-first, no libhif-core).
 }
 

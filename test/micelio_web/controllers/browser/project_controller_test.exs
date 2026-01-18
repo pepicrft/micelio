@@ -2,7 +2,7 @@ defmodule MicelioWeb.Browser.RepositoryControllerTest do
   use MicelioWeb.ConnCase, async: true
 
   alias Micelio.Accounts
-  alias Micelio.Hif.{Binary, Repository, Tree}
+  alias Micelio.Mic.{Binary, Repository, Tree}
   alias Micelio.Projects
   alias Micelio.Sessions
   alias Micelio.Storage
@@ -490,6 +490,43 @@ defmodule MicelioWeb.Browser.RepositoryControllerTest do
     assert html =~ "id=\"project-file-content\""
     refute html =~ "project-file-content highlight"
     assert html =~ "Plain notes"
+  end
+
+  test "shows CDN download link for blobs when configured", %{
+    conn: conn,
+    organization: organization,
+    project: project
+  } do
+    original = Application.get_env(:micelio, Micelio.Storage, :unset)
+
+    on_exit(fn ->
+      case original do
+        :unset -> Application.delete_env(:micelio, Micelio.Storage)
+        _ -> Application.put_env(:micelio, Micelio.Storage, original)
+      end
+    end)
+
+    base_config =
+      case original do
+        :unset -> []
+        config when is_list(config) -> config
+      end
+
+    Application.put_env(
+      :micelio,
+      Micelio.Storage,
+      Keyword.put(base_config, :cdn_base_url, "https://cdn.example.test/micelio")
+    )
+
+    app = "IO.puts(\"ok\")\n"
+    app_hash = :crypto.hash(:sha256, app)
+    key = Repository.blob_key(project.id, app_hash)
+
+    conn = get(conn, ~p"/#{organization.account.handle}/#{project.handle}/blob/lib/app.ex")
+    html = html_response(conn, 200)
+
+    assert html =~ "id=\"project-blob-download\""
+    assert html =~ "https://cdn.example.test/micelio/#{key}"
   end
 
   test "shows star action and count for authenticated users", %{

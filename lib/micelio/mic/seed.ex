@@ -1,12 +1,12 @@
-defmodule Micelio.Hif.Seed do
+defmodule Micelio.Mic.Seed do
   @moduledoc """
   Seeds project storage from a local workspace checkout.
   """
 
-  alias Micelio.Hif.{Binary, Project, Tree}
+  alias Micelio.Mic.{Binary, Project, Tree}
   alias Micelio.Storage
 
-  @default_ignore [".git", ".hif", "_build", "deps", "tmp", "node_modules"]
+  @default_ignore [".git", ".mic", "_build", "deps", "tmp", "node_modules"]
 
   @spec seed_project_from_path(binary(), binary(), keyword()) ::
           {:ok, %{file_count: non_neg_integer(), tree_hash: binary()}}

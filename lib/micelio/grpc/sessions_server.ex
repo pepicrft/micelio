@@ -14,8 +14,8 @@ defmodule Micelio.GRPC.Sessions.V1.SessionService.Server do
     StartSessionRequest
   }
 
-  alias Micelio.Hif.Binary
-  alias Micelio.Hif.Landing
+  alias Micelio.Mic.Binary
+  alias Micelio.Mic.Landing
   alias Micelio.Notifications
   alias Micelio.OAuth.AccessTokens
   alias Micelio.Projects
@@ -96,34 +96,49 @@ defmodule Micelio.GRPC.Sessions.V1.SessionService.Server do
           end
         end
 
+      batch_epoch = request.epoch
+      batch_finalize = request.finalize
+
       case session_for_landing do
         {:error, _} = error ->
           error
 
-        %Session{} ->
-          case Landing.land_session(session_for_landing) do
-            {:ok, landing} ->
-              {:ok, landed_session} =
-                Sessions.land_session(session_for_landing, %{
-                  landed_at: landing.landed_at,
-                  metadata:
-                    session_for_landing.metadata
-                    |> normalize_metadata()
-                    |> Map.put("landing_position", landing.position)
-                })
+        %Session{} = updated_session ->
+          case update_epoch_batch(updated_session, batch_epoch) do
+            {:error, status} ->
+              {:error, status}
 
-              Webhooks.dispatch_session_landed(project, landed_session, landing.position)
-              Notifications.dispatch_session_landed(project, landed_session)
+            {:ok, session_with_epoch} ->
+              if batch_epoch > 0 and not batch_finalize do
+                %SessionResponse{
+                  session: session_to_proto(session_with_epoch, project.organization, project)
+                }
+              else
+                case Landing.land_session(session_with_epoch) do
+                  {:ok, landing} ->
+                    {:ok, landed_session} =
+                      Sessions.land_session(session_with_epoch, %{
+                        landed_at: landing.landed_at,
+                        metadata:
+                          session_with_epoch.metadata
+                          |> normalize_metadata()
+                          |> Map.put("landing_position", landing.position)
+                      })
 
-              %SessionResponse{
-                session: session_to_proto(landed_session, project.organization, project)
-              }
+                    Webhooks.dispatch_session_landed(project, landed_session, landing.position)
+                    Notifications.dispatch_session_landed(project, landed_session)
 
-            {:error, {:conflicts, paths}} ->
-              {:error, conflict_status("Conflicts detected: #{Enum.join(paths, ", ")}")}
+                    %SessionResponse{
+                      session: session_to_proto(landed_session, project.organization, project)
+                    }
 
-            {:error, reason} ->
-              {:error, invalid_status("Landing failed: #{inspect(reason)}")}
+                  {:error, {:conflicts, paths}} ->
+                    {:error, conflict_status("Conflicts detected: #{Enum.join(paths, ", ")}")}
+
+                  {:error, reason} ->
+                    {:error, invalid_status("Landing failed: #{inspect(reason)}")}
+                end
+              end
           end
       end
     else
@@ -185,7 +200,7 @@ defmodule Micelio.GRPC.Sessions.V1.SessionService.Server do
   defp normalize_metadata(_), do: %{}
 
   defp filter_sessions_by_path(sessions, project_id, path) do
-    alias Micelio.Hif.ConflictIndex
+    alias Micelio.Mic.ConflictIndex
 
     # Get landing positions for sessions that touched this path
     matching_positions =
@@ -293,6 +308,26 @@ defmodule Micelio.GRPC.Sessions.V1.SessionService.Server do
   end
 
   defp parse_integer(_), do: 0
+
+  defp update_epoch_batch(%Session{} = session, epoch) when is_integer(epoch) and epoch > 0 do
+    last_epoch = parse_integer(Map.get(session.metadata || %{}, "epoch_batch"))
+
+    if epoch <= last_epoch do
+      {:error, conflict_status("Epoch already processed.")}
+    else
+      metadata = Map.put(session.metadata || %{}, "epoch_batch", epoch)
+
+      case Sessions.update_session(session, %{metadata: metadata}) do
+        {:ok, updated_session} ->
+          {:ok, updated_session}
+
+        {:error, changeset} ->
+          {:error, invalid_status("Invalid session: #{format_errors(changeset)}")}
+      end
+    end
+  end
+
+  defp update_epoch_batch(%Session{} = session, _epoch), do: {:ok, session}
 
   defp fetch_head(project_id) do
     case Storage.get(head_key(project_id)) do
