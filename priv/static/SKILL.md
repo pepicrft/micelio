@@ -84,6 +84,18 @@ hif sync [--strategy ours|theirs|interactive]
 hif write <path>
 ```
 
+## Virtual filesystem
+
+Mount a project via NFS for read-only browsing:
+
+```bash
+# Mount a project (serves via NFS)
+hif mount <account>/<project> [--path dir] [--port 20490]
+
+# Unmount a project
+hif unmount <mount-path>
+```
+
 ## Sessions
 
 Sessions track work progress with notes and goals:

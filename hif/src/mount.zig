@@ -5,9 +5,123 @@ const grpc_endpoint = @import("grpc/endpoint.zig");
 const content_proto = @import("grpc/content_proto.zig");
 const nfs = @import("fs/nfs.zig");
 const workspace_fs = @import("workspace/fs.zig");
+const config = @import("config.zig");
+const hash = @import("core/hash.zig");
 
 pub const DefaultPort: u16 = 20490;
 const max_record_bytes: usize = 16 * 1024 * 1024;
+
+const MountState = struct {
+    mount_path: []u8,
+    pid: u32,
+    port: u16,
+
+    fn deinit(self: *MountState, allocator: std.mem.Allocator) void {
+        allocator.free(self.mount_path);
+        self.* = undefined;
+    }
+};
+
+const MountStateStore = struct {
+    allocator: std.mem.Allocator,
+    base_dir: []u8,
+
+    fn init(allocator: std.mem.Allocator) !MountStateStore {
+        const base_dir = try config.configDir(allocator);
+        return .{
+            .allocator = allocator,
+            .base_dir = base_dir,
+        };
+    }
+
+    fn initWithBaseDir(allocator: std.mem.Allocator, base_dir: []const u8) !MountStateStore {
+        return .{
+            .allocator = allocator,
+            .base_dir = try allocator.dupe(u8, base_dir),
+        };
+    }
+
+    fn deinit(self: *MountStateStore) void {
+        self.allocator.free(self.base_dir);
+        self.* = undefined;
+    }
+
+    fn ensureDir(self: *MountStateStore) !void {
+        std.fs.makeDirAbsolute(self.base_dir) catch |err| {
+            if (err != error.PathAlreadyExists) return err;
+        };
+
+        const dir = try mountStateDir(self.allocator, self.base_dir);
+        defer self.allocator.free(dir);
+
+        std.fs.makeDirAbsolute(dir) catch |err| {
+            if (err != error.PathAlreadyExists) return err;
+        };
+    }
+
+    fn read(self: *MountStateStore, mount_path: []const u8) !?MountState {
+        const state_path = try self.statePath(mount_path);
+        defer self.allocator.free(state_path);
+
+        const data = try workspace_fs.readFileAlloc(self.allocator, state_path, 1024 * 1024);
+        if (data == null) return null;
+        defer self.allocator.free(data.?);
+
+        const parsed = try std.json.parseFromSlice(MountState, self.allocator, data.?, .{
+            .ignore_unknown_fields = true,
+            .allocate = .alloc_always,
+        });
+        defer parsed.deinit();
+
+        const stored = parsed.value;
+        return .{
+            .mount_path = try self.allocator.dupe(u8, stored.mount_path),
+            .pid = stored.pid,
+            .port = stored.port,
+        };
+    }
+
+    fn write(self: *MountStateStore, mount_path: []const u8, pid: u32, port: u16) !void {
+        try self.ensureDir();
+
+        const state_path = try self.statePath(mount_path);
+        defer self.allocator.free(state_path);
+
+        var json_buf: std.ArrayList(u8) = .empty;
+        defer json_buf.deinit(self.allocator);
+
+        const payload = .{
+            .mount_path = mount_path,
+            .pid = pid,
+            .port = port,
+        };
+        const formatter = std.json.fmt(payload, .{});
+        try formatter.format(json_buf.writer(self.allocator));
+
+        try workspace_fs.writeFileAtomic(self.allocator, state_path, json_buf.items);
+    }
+
+    fn remove(self: *MountStateStore, mount_path: []const u8) !void {
+        const state_path = try self.statePath(mount_path);
+        defer self.allocator.free(state_path);
+        deleteFile(state_path) catch |err| switch (err) {
+            error.FileNotFound => return,
+            else => return err,
+        };
+    }
+
+    fn statePath(self: *MountStateStore, mount_path: []const u8) ![]u8 {
+        const dir = try mountStateDir(self.allocator, self.base_dir);
+        defer self.allocator.free(dir);
+
+        const digest = hash.hash(mount_path);
+        const hex = hash.formatHex(digest);
+        const filename = try std.fmt.allocPrint(self.allocator, "{s}.json", .{hex[0..]});
+        defer self.allocator.free(filename);
+
+        return std.fs.path.join(self.allocator, &.{ dir, filename });
+    }
+};
 
 pub fn mount(
     allocator: std.mem.Allocator,
@@ -24,6 +138,24 @@ pub fn mount(
     defer allocator.free(resolved_mount);
 
     try ensureEmptyMountDir(resolved_mount);
+
+    var store = try MountStateStore.init(allocator);
+    defer store.deinit();
+
+    if (try store.read(resolved_mount)) |existing| {
+        defer existing.deinit(allocator);
+        if (try isProcessAlive(existing.pid)) {
+            std.debug.print(
+                "Error: mount already active for {s} (pid {d})\n",
+                .{ resolved_mount, existing.pid },
+            );
+            return error.MountAlreadyActive;
+        }
+        try store.remove(resolved_mount);
+    }
+
+    try store.write(resolved_mount, @intCast(std.posix.getpid()), port);
+    defer store.remove(resolved_mount) catch {};
 
     const tokens = try auth.requireTokensWithMessage(arena_alloc);
     const endpoint = try grpc_endpoint.parseServer(arena_alloc, tokens.server);
@@ -51,11 +183,65 @@ pub fn mount(
     try serveNfs(allocator, &vfs, port);
 }
 
+const UnmountOps = struct {
+    run_umount: *const fn (allocator: std.mem.Allocator, mount_path: []const u8) anyerror!void,
+    is_process_alive: *const fn (pid: u32) anyerror!bool,
+    stop_process: *const fn (pid: u32) anyerror!void,
+};
+
 pub fn unmount(allocator: std.mem.Allocator, mount_path: []const u8) !void {
+    var store = try MountStateStore.init(allocator);
+    defer store.deinit();
+
+    const ops = UnmountOps{
+        .run_umount = runUmount,
+        .is_process_alive = isProcessAlive,
+        .stop_process = stopProcess,
+    };
+
+    try unmountWithStore(allocator, mount_path, &store, ops);
+}
+
+fn unmountWithStore(
+    allocator: std.mem.Allocator,
+    mount_path: []const u8,
+    store: *MountStateStore,
+    ops: UnmountOps,
+) !void {
     const resolved_mount = try resolveUnmountPath(allocator, mount_path);
     defer allocator.free(resolved_mount);
 
-    var argv = [_][]const u8{ "umount", resolved_mount };
+    const existing = try store.read(resolved_mount);
+    defer if (existing) |state| state.deinit(allocator);
+
+    try ops.run_umount(allocator, resolved_mount);
+
+    if (existing) |state| {
+        const alive = try ops.is_process_alive(state.pid);
+        if (alive) {
+            ops.stop_process(state.pid) catch |err| switch (err) {
+                error.ProcessNotFound => {},
+                error.PermissionDenied => {
+                    std.debug.print(
+                        "Warning: insufficient permissions to stop mount pid {d}\n",
+                        .{state.pid},
+                    );
+                },
+                else => return err,
+            };
+        }
+
+        const alive_after = if (alive) try ops.is_process_alive(state.pid) else false;
+        if (!alive_after) {
+            try store.remove(resolved_mount);
+        }
+    }
+
+    std.debug.print("Unmounted {s}\n", .{resolved_mount});
+}
+
+fn runUmount(allocator: std.mem.Allocator, mount_path: []const u8) !void {
+    var argv = [_][]const u8{ "umount", mount_path };
     var child = std.process.Child.init(&argv, allocator);
     child.stdin_behavior = .Ignore;
     child.stdout_behavior = .Inherit;
@@ -67,17 +253,15 @@ pub fn unmount(allocator: std.mem.Allocator, mount_path: []const u8) !void {
     switch (term) {
         .Exited => |code| {
             if (code != 0) {
-                std.debug.print("Error: failed to unmount {s}\n", .{resolved_mount});
+                std.debug.print("Error: failed to unmount {s}\n", .{mount_path});
                 return error.UnmountFailed;
             }
         },
         else => {
-            std.debug.print("Error: unmount interrupted for {s}\n", .{resolved_mount});
+            std.debug.print("Error: unmount interrupted for {s}\n", .{mount_path});
             return error.UnmountFailed;
         },
     }
-
-    std.debug.print("Unmounted {s}\n", .{resolved_mount});
 }
 
 fn resolveMountPath(
@@ -86,13 +270,25 @@ fn resolveMountPath(
     mount_path: ?[]const u8,
 ) ![]u8 {
     const raw = mount_path orelse project;
-    if (raw.len == 0) return error.InvalidPath;
-    return allocator.dupe(u8, raw);
+    return normalizeMountPath(allocator, raw);
 }
 
 fn resolveUnmountPath(allocator: std.mem.Allocator, mount_path: []const u8) ![]u8 {
+    return normalizeMountPath(allocator, mount_path);
+}
+
+fn normalizeMountPath(allocator: std.mem.Allocator, mount_path: []const u8) ![]u8 {
     if (mount_path.len == 0) return error.InvalidPath;
-    return allocator.dupe(u8, mount_path);
+    if (std.fs.path.isAbsolute(mount_path)) return allocator.dupe(u8, mount_path);
+
+    const cwd = try std.process.getCwdAlloc(allocator);
+    defer allocator.free(cwd);
+
+    return std.fs.path.join(allocator, &.{ cwd, mount_path });
+}
+
+fn mountStateDir(allocator: std.mem.Allocator, base_dir: []const u8) ![]u8 {
+    return std.fs.path.join(allocator, &.{ base_dir, "mounts" });
 }
 
 fn ensureEmptyMountDir(path: []const u8) !void {
@@ -198,6 +394,26 @@ fn serveNfs(allocator: std.mem.Allocator, fs: *nfs.VirtualFs, port: u16) !void {
     }
 }
 
+fn deleteFile(path: []const u8) !void {
+    if (std.fs.path.isAbsolute(path)) {
+        return std.fs.deleteFileAbsolute(path);
+    }
+    return std.fs.cwd().deleteFile(path);
+}
+
+fn isProcessAlive(pid: u32) !bool {
+    std.posix.kill(@intCast(pid), 0) catch |err| switch (err) {
+        error.ProcessNotFound => return false,
+        error.PermissionDenied => return true,
+        else => return err,
+    };
+    return true;
+}
+
+fn stopProcess(pid: u32) !void {
+    return std.posix.kill(@intCast(pid), std.posix.SIG.TERM);
+}
+
 fn handleConnection(
     allocator: std.mem.Allocator,
     nfs_server: *nfs.NfsServer,
@@ -240,11 +456,51 @@ fn isSafePath(path: []const u8) bool {
     return true;
 }
 
+const FakeUnmountState = struct {
+    calls: [4][]const u8,
+    count: usize,
+    alive: bool,
+};
+
+var fake_unmount_state: ?*FakeUnmountState = null;
+
+fn fakeRunUmount(allocator: std.mem.Allocator, mount_path: []const u8) !void {
+    _ = allocator;
+    _ = mount_path;
+    if (fake_unmount_state) |state| {
+        state.calls[state.count] = "umount";
+        state.count += 1;
+    }
+}
+
+fn fakeIsProcessAlive(pid: u32) !bool {
+    _ = pid;
+    if (fake_unmount_state) |state| {
+        state.calls[state.count] = "alive";
+        state.count += 1;
+        return state.alive;
+    }
+    return false;
+}
+
+fn fakeStopProcess(pid: u32) !void {
+    _ = pid;
+    if (fake_unmount_state) |state| {
+        state.calls[state.count] = "stop";
+        state.count += 1;
+        state.alive = false;
+    }
+}
+
 test "resolveMountPath defaults to project name" {
     const allocator = std.testing.allocator;
     const resolved = try resolveMountPath(allocator, "app", null);
     defer allocator.free(resolved);
-    try std.testing.expectEqualStrings("app", resolved);
+    const cwd = try std.process.getCwdAlloc(allocator);
+    defer allocator.free(cwd);
+    const expected = try std.fs.path.join(allocator, &.{ cwd, "app" });
+    defer allocator.free(expected);
+    try std.testing.expectEqualStrings(expected, resolved);
 }
 
 test "resolveUnmountPath rejects empty path" {
@@ -275,4 +531,109 @@ test "addParentDirs registers nested directories" {
     try addParentDirs(&fs, "/src/lib/main.zig");
     try std.testing.expect(fs.lookup("/src") != null);
     try std.testing.expect(fs.lookup("/src/lib") != null);
+}
+
+test "mount state store write and remove" {
+    const allocator = std.testing.allocator;
+    var temp = std.testing.tmpDir(.{});
+    defer temp.cleanup();
+
+    const base_dir = try temp.dir.realpathAlloc(allocator, ".");
+    defer allocator.free(base_dir);
+
+    var store = try MountStateStore.initWithBaseDir(allocator, base_dir);
+    defer store.deinit();
+
+    const mount_path = try std.fs.path.join(allocator, &.{ base_dir, "mnt" });
+    defer allocator.free(mount_path);
+
+    try store.write(mount_path, 4242, 20490);
+
+    const state = try store.read(mount_path);
+    try std.testing.expect(state != null);
+    defer state.?.deinit(allocator);
+    try std.testing.expectEqualStrings(mount_path, state.?.mount_path);
+    try std.testing.expectEqual(@as(u32, 4242), state.?.pid);
+    try std.testing.expectEqual(@as(u16, 20490), state.?.port);
+
+    try store.remove(mount_path);
+
+    const missing = try store.read(mount_path);
+    try std.testing.expect(missing == null);
+}
+
+test "unmount runs before stopping process and clears state" {
+    const allocator = std.testing.allocator;
+    var temp = std.testing.tmpDir(.{});
+    defer temp.cleanup();
+
+    const base_dir = try temp.dir.realpathAlloc(allocator, ".");
+    defer allocator.free(base_dir);
+
+    var store = try MountStateStore.initWithBaseDir(allocator, base_dir);
+    defer store.deinit();
+
+    const mount_path = try std.fs.path.join(allocator, &.{ base_dir, "mnt" });
+    defer allocator.free(mount_path);
+
+    try store.write(mount_path, 4242, 20490);
+
+    var state = FakeUnmountState{
+        .calls = undefined,
+        .count = 0,
+        .alive = true,
+    };
+    fake_unmount_state = &state;
+    defer fake_unmount_state = null;
+
+    const ops = UnmountOps{
+        .run_umount = fakeRunUmount,
+        .is_process_alive = fakeIsProcessAlive,
+        .stop_process = fakeStopProcess,
+    };
+
+    try unmountWithStore(allocator, mount_path, &store, ops);
+
+    try std.testing.expectEqual(@as(usize, 4), state.count);
+    try std.testing.expectEqualStrings("umount", state.calls[0]);
+    try std.testing.expectEqualStrings("alive", state.calls[1]);
+    try std.testing.expectEqualStrings("stop", state.calls[2]);
+    try std.testing.expectEqualStrings("alive", state.calls[3]);
+
+    const missing = try store.read(mount_path);
+    try std.testing.expect(missing == null);
+}
+
+test "unmount without state only runs umount" {
+    const allocator = std.testing.allocator;
+    var temp = std.testing.tmpDir(.{});
+    defer temp.cleanup();
+
+    const base_dir = try temp.dir.realpathAlloc(allocator, ".");
+    defer allocator.free(base_dir);
+
+    var store = try MountStateStore.initWithBaseDir(allocator, base_dir);
+    defer store.deinit();
+
+    const mount_path = try std.fs.path.join(allocator, &.{ base_dir, "mnt" });
+    defer allocator.free(mount_path);
+
+    var state = FakeUnmountState{
+        .calls = undefined,
+        .count = 0,
+        .alive = false,
+    };
+    fake_unmount_state = &state;
+    defer fake_unmount_state = null;
+
+    const ops = UnmountOps{
+        .run_umount = fakeRunUmount,
+        .is_process_alive = fakeIsProcessAlive,
+        .stop_process = fakeStopProcess,
+    };
+
+    try unmountWithStore(allocator, mount_path, &store, ops);
+
+    try std.testing.expectEqual(@as(usize, 1), state.count);
+    try std.testing.expectEqualStrings("umount", state.calls[0]);
 }

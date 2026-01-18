@@ -276,7 +276,8 @@ defmodule Micelio.Accounts do
     if is_binary(email) and String.trim(email) != "" do
       case get_oauth_identity(provider, provider_user_id) do
         %OAuthIdentity{} = identity ->
-          {:ok, Repo.preload(identity.user, :account)}
+          identity = Repo.preload(identity, user: :account)
+          {:ok, identity.user}
 
         nil ->
           create_user_for_oauth(provider, provider_user_id, email)

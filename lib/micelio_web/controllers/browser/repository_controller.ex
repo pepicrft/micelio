@@ -15,7 +15,7 @@ defmodule MicelioWeb.Browser.RepositoryController do
 
   def badge(conn, _params) do
     with account when not is_nil(account) <- conn.assigns.selected_account,
-         project when not is_nil(project) <- conn.assigns.selected_project,
+         project when not is_nil(project) <- conn.assigns.selected_repository,
          :ok <- Authorization.authorize(:project_read, conn.assigns.current_user, project) do
       stars = Projects.count_project_stars(project)
       label = "#{account.handle}/#{project.handle}"

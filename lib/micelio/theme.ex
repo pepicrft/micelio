@@ -56,8 +56,14 @@ defmodule Micelio.Theme do
     %{name: theme.name, description: theme.description}
   end
 
-  def css(opts \\ []) when is_list(opts) do
+  def css(opts_or_theme \\ [])
+
+  def css(opts) when is_list(opts) do
     theme = daily_theme(opts)
+    theme_css(theme)
+  end
+
+  def css(%{tokens: _} = theme) do
     theme_css(theme)
   end
 
