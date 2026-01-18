@@ -15,21 +15,21 @@ Micelio is a minimalist, open-source git forge built with Elixir/Phoenix, design
 - [x] Create project search functionality with full-text search across names and descriptions
 - [x] Implement project forking with proper ownership and origin tracking
 - [x] Add webhook support for project events (push, session land, etc.)
-- [x] Create user profile page showing owned repositories and activity
+- [x] Create user profile page showing owned projects and activity
   - Note: Activity graph (like GitHub's contribution graph) should be added
 - [x] Add user activity graph (GitHub-style contribution visualization) to profile page
 - [ ] Fix activity graph styling
   - Reduce spacing between "Activity" title and the graph (too much whitespace currently)
   - Change gradient from light gray to green (currently dark gray to green)
   - Ensure consistent visual styling with the rest of the profile page
-- [ ] Rename "Owned repositories" section header to "Repositories"
-  - Simpler, cleaner label that matches common conventions
+- [ ] Rename "Owned repositories" section header to "Projects"
+  - Use "Projects" terminology consistently throughout the platform
   - Update both the heading text and any associated aria labels
 - [ ] Add organizations section to user profile page
   - Display organizations the user belongs to
   - Show organization name, avatar, and member count for each
   - Link each organization to its organization page
-  - Position appropriately in the profile layout (after repositories or in sidebar)
+  - Position appropriately in the profile layout (after projects or in sidebar)
   - Handle case where user belongs to no organizations gracefully
 - [ ] Add profile description and social links support
   - Allow users to add a description/bio to their profile (text field, max ~160 chars)
