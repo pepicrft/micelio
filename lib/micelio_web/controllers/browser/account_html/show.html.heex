@@ -15,38 +15,48 @@
       </:subtitle>
     </.header>
 
-    <%= if Enum.empty?(@projects) do %>
-      <div class="account-empty">
-        <p>No projects yet.</p>
-      </div>
-    <% else %>
-      <div class="account-projects">
-        <%= for project <- @projects do %>
-          <article class="account-project">
-            <h2 class="account-project-title">
-              <a href={~p"/#{@account.handle}/#{project.handle}"}>
-                {project.name}
-              </a>
-            </h2>
-
-            <div class="account-project-handle">
-              {@account.handle}/{project.handle}
-            </div>
-
-            <%= if project.description do %>
-              <p class="account-project-description">{project.description}</p>
-            <% end %>
-
-            <%= if project.url do %>
-              <p class="account-project-url">
-                <a href={project.url} target="_blank" rel="noopener noreferrer">
-                  {project.url}
-                </a>
-              </p>
-            <% end %>
-          </article>
-        <% end %>
-      </div>
+    <%= if @user do %>
+      <section class="account-section" id="account-activity">
+        <h2 class="account-section-title">Activity</h2>
+        <.activity_graph activity_counts={@activity_counts} weeks={52} />
+      </section>
     <% end %>
+
+    <section class="account-section" id="account-owned-projects">
+      <h2 class="account-section-title">{@projects_title}</h2>
+      <%= if Enum.empty?(@projects) do %>
+        <div class="account-empty">
+          <p>{@empty_message}</p>
+        </div>
+      <% else %>
+        <div class="account-projects" id="account-projects-list">
+          <%= for project <- @projects do %>
+            <article class="account-project" id={"account-project-#{project.id}"}>
+              <h3 class="account-project-title">
+                <a href={~p"/#{project.organization.account.handle}/#{project.handle}"}>
+                  {project.name}
+                </a>
+              </h3>
+
+              <div class="account-project-handle">
+                {project.organization.account.handle}/{project.handle}
+              </div>
+
+              <%= if project.description do %>
+                <p class="account-project-description">{project.description}</p>
+              <% end %>
+
+              <%= if project.url do %>
+                <p class="account-project-url">
+                  <a href={project.url} target="_blank" rel="noopener noreferrer">
+                    {project.url}
+                  </a>
+                </p>
+              <% end %>
+            </article>
+          <% end %>
+        </div>
+      <% end %>
+    </section>
   </div>
 </Layouts.app>

@@ -7,6 +7,15 @@
   color: var(--theme-ui-colors-muted);
 }
 
+.account-section {
+  margin-top: var(--theme-ui-space-3);
+}
+
+.account-section-title {
+  font-weight: var(--theme-ui-fontWeights-bold);
+  margin-bottom: var(--theme-ui-space-1);
+}
+
 .account-projects {
   display: flex;
   flex-direction: column;
