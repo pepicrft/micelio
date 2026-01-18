@@ -2,13 +2,16 @@ defmodule Micelio.Storage do
   @moduledoc """
   Storage abstraction for session files and artifacts.
 
-  By default uses local filesystem storage. Can be configured to use S3.
+  By default uses local filesystem storage. Can be configured to use S3 or the
+  tiered cache backend.
 
   Configuration via `config/runtime.exs`:
-      STORAGE_BACKEND=local|s3
+      STORAGE_BACKEND=local|s3|tiered
       STORAGE_LOCAL_PATH=/var/micelio/storage  # defaults to /var/micelio/storage in prod or <tmp>/micelio/storage in dev/test
       S3_BUCKET=micelio-sessions
       S3_REGION=us-east-1
+      STORAGE_CACHE_PATH=/var/micelio/cache
+      STORAGE_CDN_BASE_URL=https://cdn.example.com/micelio
   """
 
   @doc """
@@ -81,6 +84,7 @@ defmodule Micelio.Storage do
     case backend_type do
       :local -> Micelio.Storage.Local
       :s3 -> Micelio.Storage.S3
+      :tiered -> Micelio.Storage.Tiered
     end
   end
 end

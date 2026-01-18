@@ -69,5 +69,38 @@ defmodule Micelio.StorageTest do
       # Cleanup
       Storage.delete(key)
     end
+
+    test "uses tiered backend when configured" do
+      unique = Integer.to_string(:erlang.unique_integer([:positive]))
+      origin_dir = Path.join(System.tmp_dir!(), "micelio-test-origin-#{unique}")
+      cache_dir = Path.join(System.tmp_dir!(), "micelio-test-cache-#{unique}")
+      original = Application.get_env(:micelio, Micelio.Storage, :unset)
+
+      on_exit(fn ->
+        File.rm_rf(origin_dir)
+        File.rm_rf(cache_dir)
+
+        case original do
+          :unset -> Application.delete_env(:micelio, Micelio.Storage)
+          _ -> Application.put_env(:micelio, Micelio.Storage, original)
+        end
+      end)
+
+      Application.put_env(:micelio, Micelio.Storage,
+        backend: :tiered,
+        origin_backend: :local,
+        origin_local_path: origin_dir,
+        cache_disk_path: cache_dir,
+        cache_memory_max_bytes: 1_000_000,
+        cache_namespace: "storage-test-#{unique}"
+      )
+
+      key = "test/tiered.txt"
+      content = "tiered content"
+
+      {:ok, ^key} = Storage.put(key, content)
+      {:ok, ^content} = Storage.get(key)
+      assert File.exists?(Path.join(cache_dir, key))
+    end
   end
 end

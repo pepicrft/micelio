@@ -11,8 +11,8 @@ defmodule Micelio.Storage.Local do
   @doc """
   Stores content at the given key.
   """
-  def put(key, content) do
-    path = build_path(key)
+  def put(key, content, opts \\ []) do
+    path = build_path(key, opts)
 
     with :ok <- ensure_directory(path),
          :ok <- File.write(path, content) do
@@ -23,8 +23,8 @@ defmodule Micelio.Storage.Local do
   @doc """
   Retrieves content by key.
   """
-  def get(key) do
-    path = build_path(key)
+  def get(key, opts \\ []) do
+    path = build_path(key, opts)
 
     case File.read(path) do
       {:ok, content} -> {:ok, content}
@@ -36,8 +36,8 @@ defmodule Micelio.Storage.Local do
   @doc """
   Retrieves content by key along with a synthetic ETag.
   """
-  def get_with_metadata(key) do
-    with {:ok, content} <- get(key) do
+  def get_with_metadata(key, opts \\ []) do
+    with {:ok, content} <- get(key, opts) do
       {:ok, %{content: content, etag: etag_for(content)}}
     end
   end
@@ -45,8 +45,8 @@ defmodule Micelio.Storage.Local do
   @doc """
   Deletes a file by key.
   """
-  def delete(key) do
-    path = build_path(key)
+  def delete(key, opts \\ []) do
+    path = build_path(key, opts)
 
     case File.rm(path) do
       :ok -> {:ok, key}
@@ -58,8 +58,8 @@ defmodule Micelio.Storage.Local do
   @doc """
   Lists files with the given prefix.
   """
-  def list(prefix) do
-    base_path = base_path()
+  def list(prefix, opts \\ []) do
+    base_path = base_path(opts)
     pattern = Path.join([base_path, prefix, "**", "*"])
 
     files =
@@ -76,16 +76,16 @@ defmodule Micelio.Storage.Local do
   @doc """
   Checks if a file exists.
   """
-  def exists?(key) do
-    path = build_path(key)
+  def exists?(key, opts \\ []) do
+    path = build_path(key, opts)
     File.exists?(path)
   end
 
   @doc """
   Returns metadata for a key when available.
   """
-  def head(key) do
-    path = build_path(key)
+  def head(key, opts \\ []) do
+    path = build_path(key, opts)
 
     case File.read(path) do
       {:ok, content} ->
@@ -102,12 +102,12 @@ defmodule Micelio.Storage.Local do
   @doc """
   Stores content only if the current ETag matches.
   """
-  def put_if_match(key, content, etag) do
-    with_lock(key, fn ->
-      case File.read(build_path(key)) do
+  def put_if_match(key, content, etag, opts \\ []) do
+    with_lock(key, opts, fn ->
+      case File.read(build_path(key, opts)) do
         {:ok, existing} ->
           if etag_for(existing) == etag do
-            put(key, content)
+            put(key, content, opts)
           else
             {:error, :precondition_failed}
           end
@@ -124,21 +124,28 @@ defmodule Micelio.Storage.Local do
   @doc """
   Stores content only if the key does not exist.
   """
-  def put_if_none_match(key, content) do
-    with_lock(key, fn ->
-      if exists?(key) do
+  def put_if_none_match(key, content, opts \\ []) do
+    with_lock(key, opts, fn ->
+      if exists?(key, opts) do
         {:error, :precondition_failed}
       else
-        put(key, content)
+        put(key, content, opts)
       end
     end)
   end
 
-  defp build_path(key) do
-    Path.join(base_path(), key)
+  defp build_path(key, opts) do
+    Path.join(base_path(opts), key)
   end
 
-  defp base_path do
+  defp base_path(opts) do
+    case Keyword.get(opts, :base_path) do
+      path when is_binary(path) -> path
+      _ -> config_base_path()
+    end
+  end
+
+  defp config_base_path do
     config = Application.get_env(:micelio, Micelio.Storage, [])
     Keyword.get(config, :local_path, default_path())
   end
@@ -158,7 +165,7 @@ defmodule Micelio.Storage.Local do
     |> Base.encode16(case: :lower)
   end
 
-  defp with_lock(key, fun) do
-    :global.trans({:storage_local_lock, key}, fun)
+  defp with_lock(key, opts, fun) do
+    :global.trans({:storage_local_lock, base_path(opts), key}, fun)
   end
 end

@@ -64,6 +64,37 @@ AWS_SECRET_ACCESS_KEY=your-secret-key
 S3_ENDPOINT=https://nyc3.digitaloceanspaces.com
 ```
 
+### Tiered Cache Storage (RAM -> SSD -> CDN -> Origin)
+
+For fast reads with multiple cache tiers, enable the tiered backend. It uses:
+- RAM cache via ETS
+- Disk cache on local SSD
+- Optional CDN for read-through cache
+- Origin storage (local filesystem or S3)
+
+Environment configuration:
+```bash
+STORAGE_BACKEND=tiered
+STORAGE_ORIGIN_BACKEND=s3            # or local (defaults based on S3_BUCKET)
+STORAGE_LOCAL_PATH=/var/micelio/storage
+STORAGE_CACHE_PATH=/var/micelio/cache
+STORAGE_CACHE_MEMORY_MAX_BYTES=64000000
+STORAGE_CDN_BASE_URL=https://cdn.example.com/micelio
+STORAGE_CDN_TIMEOUT_MS=2000
+```
+
+Example application config:
+```elixir
+config :micelio, Micelio.Storage,
+  backend: :tiered,
+  origin_backend: :s3,
+  cache_disk_path: "/var/micelio/cache",
+  cache_memory_max_bytes: 64_000_000,
+  cdn_base_url: "https://cdn.example.com/micelio",
+  s3_bucket: "micelio-sessions",
+  s3_region: "us-east-1"
+```
+
 ## Usage
 
 ```elixir
