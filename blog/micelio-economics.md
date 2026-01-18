@@ -1,40 +1,18 @@
-# LLMs Are Reshaping Software Economics, and I'm Building Into That Future
+I've been thinking a lot about economics lately. Not macroeconomics per se, but the economics of software. The artificial limits, the churn, the upgrades, the subscriptions. The things that keep you paying and keep you engaged.
 
-The economics of software are shifting beneath our feet. Not in the way venture capitalists predict at conferences, and not in the way incumbents fear in their quarterly reports. The shift is quieter, more fundamental, and it's happening in the gap between what software companies sell us and what we actually need.
+LLMs have the power to workaround all of that. I can't stop thinking about it.
 
-I've been thinking about this a lot lately, and I've started building something that embodies this thinking. It's called Micelio. But before I explain what it is, I want to share the observation that led me here.
+## The TODO Example
 
-## The Artificial Scarcity of Modern Software
+Let me use TODO applications as an example, but not to suggest that replicating one is trivial or that building one proves something about your engineering skills. That's missing the point.
 
-Here's something that should bother you: most software products exist not because of what they do, but because of what they prevent you from doing yourself.
+A TODO app represents everything we've normalized in software. Subscription fees. Vendor lock-in. Data stored somewhere you don't control. The promise of synchronization that never quite works. The slow accumulation of features you never asked for.
 
-Take the TODO app market. There are hundreds of companies, backed by millions in venture capital, building increasingly sophisticated task management tools. They add AI features, collaboration layers, integrations with everything, and charge monthly subscriptions for the privilege of organizing your thoughts.
+Now imagine building that same functionality without any of that. Just markdown files in an environment you control. Git for synchronization. No subscriptions. No vendor lock-in. Your data, your rules.
 
-But what is a TODO app, really? At its core, it's a list. It's text. It could be a markdown file sitting in a folder on your computer. A simple `todos.md` file that you edit with any text editor you prefer. You could sync it with Git, share it with your team, automate it with scripts. You own it completely. No subscription, no lock-in, no company that might pivot or shut down.
+This isn't about how easy it is to replicate a TODO app. It's about demonstrating that the economics we've accepted, the monthly fees, the SaaS model, the enterprise agreements, are choices, not necessities. They are design decisions that could be made differently.
 
-The reason TODO apps are businesses isn't because managing tasks is technically hard. It's because until recently, the friction of building your own system was high enough that paying $10/month felt reasonable. The value wasn't in the software; it was in the convenience gap.
-
-LLMs are collapsing that gap.
-
-## The Convenience Moat Is Eroding
-
-Tobi Lütke, the CEO of Shopify, shared an example that stuck with me. He had MRI scans he wanted to visualize in a specific way. In the old world, he would have needed to find specialized medical imaging software, learn its interface, maybe hire a consultant if the requirements were complex enough. Instead, he described what he wanted to an LLM and had working visualization code in minutes.
-
-This isn't a story about AI replacing programmers. It's a story about AI eliminating the accidental complexity that made software businesses viable in the first place.
-
-Consider what this means for the TODO app market. A technically inclined user can now ask an LLM to build them a simple task management system. Not a full SaaS product, just a script that works with their markdown files, adds due dates, sends reminders, syncs with their calendar. The LLM writes it, the user runs it, and suddenly that $10/month subscription feels absurd.
-
-The same pattern applies across countless software categories. Personal finance tracking. Habit logging. Note organization. Content calendars. All these products exist in the space between "technically possible" and "practically accessible." LLMs are bridging that space at an accelerating rate.
-
-## The Churn Economy
-
-The software industry has become addicted to what I call artificial churn: the practice of continuously adding features, changing interfaces, and deprecating functionality to justify ongoing payments. It's not malicious, exactly. It emerges naturally from the subscription business model. If you're charging monthly, you need to demonstrate monthly value. So you ship. You iterate. You "improve."
-
-But often these improvements serve the business more than the user. New UI paradigms require relearning. Features get removed or paywalled. The software you relied on last year looks different this year, and the muscle memory you developed is now obsolete.
-
-LLMs can route around this churn. If a SaaS product changes its API, breaks your workflow, or removes a feature you depended on, you can often ask an LLM to build you a workaround. The switching cost that once locked you into products is diminishing.
-
-This creates an interesting dynamic. Software companies that compete on artificial scarcity and lock-in are becoming more vulnerable. Meanwhile, companies that provide genuine value through infrastructure, scale, or expertise that's truly hard to replicate remain defensible.
+And when you make them differently, you end up with something smaller, simpler, more resilient, and potentially more impactful than the complex alternatives.
 
 ## The Liability Myth
 
@@ -42,7 +20,7 @@ Here's where I expect pushback: "Companies need vendors who can be held liable w
 
 There's truth to this. Enterprises do want someone to blame. They want contracts, SLAs, and legal recourse. But let's be honest about what this actually means in practice.
 
-When a VC-backed SaaS company fails, what happens to their enterprise customers? The company gets acqui-hired, the product gets sunset, and the customer is left migrating to a competitor anyway. The liability was always somewhat illusory. You can't sue a company that no longer exists for damages.
+When a VC-backed SaaS company fails, what happens to their enterprise customers? The company gets acqui-hired, the product gets sunset, and the customer is left migrating to a competitor anyway. The liability was always somewhat illusory.
 
 More importantly, the infrastructure layer is commoditizing rapidly. Cloud providers offer managed databases, authentication, storage, and compute that handle most of the genuinely complex operational concerns. The "liability" that enterprises pay for is increasingly not about technical reliability but about having someone to call when they're confused.
 
@@ -60,70 +38,32 @@ But a significant portion of the VC-backed software landscape is building in the
 
 That's not a comfortable thing to say, but I think it's true.
 
-## What Micelio Represents
+## Micelio as an Alternative Model
 
 This is the context in which I've been building Micelio.
 
-Micelio is a minimalist, open-source git forge. It's designed for what I believe is the next era of software development: an agent-first world where AI assistants collaborate alongside humans on codebases.
+Micelio is not a company I'm trying to build. It's not a product I'm trying to sell. It's a proof of concept that shows you don't need to design things to be expensive.
 
-The traditional forge model is built around human-centric workflows. Pull requests assume a human reviewer with limited time. Code review assumes a reader who needs context because they can't instantly understand the full history. Branch management assumes coordination overhead that's necessary when communication is expensive.
+When you design for enterprise sales, you design for enterprise needs. When you design for venture capital returns, you design for growth at all costs. When you design for acquisition, you design for defensibility.
 
-What if those assumptions don't hold? What if your primary collaborators are AI agents who can process entire codebases instantly, who don't get tired, who can review code 24/7?
+But what if you design for nothing? What if you just build what you think is useful, make it open source, and let people use it if they want?
 
-Micelio integrates with a version control concept called sessions. Unlike traditional commits that track what changed, sessions capture why something changed. The goal, the reasoning, the decisions that led to the code. This makes the repository not just a history of changes but a history of intentions.
+That's Micelio. Tiny. Open source. Agent-first. No sales team. No pricing page. No enterprise tier. Just a different way of thinking about how software gets built.
 
-Is this the right approach? I don't know yet. But I know the current tools weren't designed for where we're heading, and someone needs to experiment with alternatives.
+Maybe that has more impact than another company with another pricing page and another enterprise agreement. Maybe small and open beats big and closed.
 
-## Tiny Yet Powerful
+## A Personal Note
 
-There's a philosophy embedded in Micelio that extends beyond the technical choices. It's about proving that you can build meaningful software without the trappings of modern tech.
+I'm in a privileged position. I'm the CEO of Tuist, which means this can be my guinea pig. I don't have to think about money. I have a job that I like, and an appetite for trying new things outside of work. It's just me.
 
-No VC funding. No growth-at-all-costs mentality. No artificial churn to justify subscriptions. Just software that tries to be genuinely useful, maintained by someone who cares about it, available for anyone to use, host, and modify.
+I like tinkering with things. I like tinkering with new versions of how things can be. And Micelio is a lot of fun.
 
-This is a challenge not just to software economics but to the tech industry's belief system. The narrative we've been fed for decades is that you need massive capital to build anything significant. You need growth teams, product managers, designer-to-developer ratios, and quarterly OKRs. You need to scale.
+This is not Tuist. It's not a new company. It's not a pivot. It's not me signaling that I'm looking for something else. Micelio is what I do in my free time because I like building things, and because I believe the future of software development looks very different from its present.
 
-Maybe that's true for some things. But maybe it's less true than we've assumed. Maybe a single determined developer with good taste and clear thinking can build something that genuinely matters. Maybe the complexity we see in most software organizations is overhead, not necessity.
+If anyone from Tuist is reading this: don't worry. I'm not going anywhere. This is exploration, not abandonment. It's curiosity, not restlessness. It's me being me.
 
-Micelio is an experiment in that hypothesis.
+## What's Next
 
-## A Personal Note About Tuist
+If you're curious about what I'm building, you can find Micelio at micelio.dev. No pressure to use it, no sales pitch, just an experiment in progress.
 
-I should be clear about something: I'm the CEO of Tuist. This is my day job, my primary focus, and a company I'm deeply committed to building. Tuist helps developers manage the complexity of Xcode projects, and we're growing it into something sustainable and impactful.
-
-Micelio is not Tuist. It's not a new company. It's not a pivot. It's not me signaling that I'm looking for something else.
-
-Micelio is what I do in my free time because I like building things.
-
-I'm in a privileged position. Tuist has reached a stage where it doesn't require my constant fire-fighting. I have a co-founder and team members who are excellent at what they do. This creates space for me to think, explore, and tinker.
-
-Some people relax by watching TV or playing video games. I relax by writing code and exploring ideas. Micelio is the current expression of that exploration.
-
-If anything, working on Micelio makes me better at Tuist. It keeps me close to the craft, exposes me to new ideas, and gives me perspective on the industry that's hard to get when you're heads-down on a single product.
-
-## The Joy of Building Without Constraints
-
-There's something liberating about building software without business constraints.
-
-With Tuist, every decision has downstream implications. Product choices affect customers. Pricing affects revenue. Technical decisions affect the team's ability to maintain the codebase. These constraints are healthy and necessary, but they also mean that not every interesting idea gets explored.
-
-With Micelio, I can follow curiosity wherever it leads. Want to experiment with AI agents in version control? Sure. Want to see if Elixir and Phoenix are the right choice for a forge? Let's find out. Want to try a radically minimal approach to features? Why not.
-
-Most of these experiments will fail. That's fine. The ones that succeed might inform how I think about building software more broadly, including at Tuist.
-
-## What Happens Next
-
-I don't have a grand vision for where Micelio goes. It might become something that other people find useful. It might remain a personal project that I maintain for myself. It might teach me things that influence other work. It might just be fun.
-
-That uncertainty is okay. Not everything needs a five-year roadmap and a pitch deck.
-
-What I do know is this: the economic ground under software is shifting. The assumptions that defined the last two decades of tech are becoming less reliable. Convenience moats are eroding. Artificial scarcity is being routed around. The infrastructure layer is commoditizing.
-
-In this new landscape, I think there's value in building things that are small, focused, open, and genuinely useful. Things that don't depend on capturing users or extracting maximum value. Things that exist because they should exist, not because someone needs to make payroll.
-
-Micelio is my attempt to build something in that spirit. Whether it succeeds or fails, the exploration itself has value.
-
-And honestly? It's just fun to build things.
-
----
-
-*If you're curious about Micelio, the code is open source and the main instance runs at [micelio.dev](https://micelio.dev). I'm not asking for anything; there's no newsletter to sign up for or product to buy. It's just there, available, for anyone who finds it interesting.*
+The future of software economics is still being written. I'm just trying to contribute a paragraph or two.
