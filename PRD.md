@@ -17,14 +17,15 @@ Micelio is a minimalist, open-source git forge built with Elixir/Phoenix, design
 - [x] Add webhook support for repository events (push, session land, etc.)
 - [x] Create user profile page showing owned repositories and activity
   - Note: Activity graph (like GitHub's contribution graph) should be added
-- [ ] Add user activity graph (GitHub-style contribution visualization) to profile page
+- [x] Add user activity graph (GitHub-style contribution visualization) to profile page
 - [x] Implement repository README rendering on the repository homepage
 - [x] Add syntax highlighting for code file viewing using a server-side highlighter
 - [x] Create repository file browser with tree navigation
 - [x] Implement blame view showing session attribution per line
-- [ ] Add tiered caching layer (RAM -> SSD -> CDN -> S3) for fast reads
+- [x] Add tiered caching layer (RAM -> SSD -> CDN -> S3) for fast reads
 - [ ] Create admin dashboard for instance management and user oversight
 - [ ] Implement email notifications for repository activity
+- [ ] Convert Micelio repository into a workspace and push to micelio/micelio on micelio.dev
 
 ### hif (Zig CLI)
 
