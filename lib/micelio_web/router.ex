@@ -1,6 +1,10 @@
 defmodule MicelioWeb.Router do
   use MicelioWeb, :router
 
+  @api_rate_limit Application.compile_env(:micelio, :api_rate_limit, [])
+  @api_rate_limit_limit Keyword.get(@api_rate_limit, :limit, 100)
+  @api_rate_limit_window_ms Keyword.get(@api_rate_limit, :window_ms, 60_000)
+
   pipeline :browser do
     plug :accepts, ["html"]
     plug :fetch_session
@@ -14,6 +18,21 @@ defmodule MicelioWeb.Router do
   end
 
   pipeline :api do
+    plug :accepts, ["json"]
+    plug MicelioWeb.Plugs.ApiAuthenticationPlug
+    plug MicelioWeb.Plugs.RateLimitPlug,
+      limit: @api_rate_limit_limit,
+      window_ms: @api_rate_limit_window_ms,
+      bucket_prefix: "api",
+      skip_if_authenticated: true
+  end
+
+  pipeline :api_docs do
+    plug :accepts, ["json"]
+    plug OpenApiSpex.Plug.PutApiSpec, module: MicelioWeb.ApiSpec
+  end
+
+  pipeline :activity_pub do
     plug :accepts, ["json"]
   end
 
@@ -86,6 +105,29 @@ defmodule MicelioWeb.Router do
     post "/device", DeviceController, :create
   end
 
+  scope "/api" do
+    pipe_through :api_docs
+
+    get "/openapi", OpenApiSpex.Plug.RenderSpec, []
+    get "/docs", OpenApiSpex.Plug.SwaggerUI, path: "/api/openapi"
+  end
+
+  scope "/.well-known", MicelioWeb do
+    pipe_through :activity_pub
+
+    get "/webfinger", ActivityPubController, :webfinger
+  end
+
+  scope "/ap", MicelioWeb do
+    pipe_through :activity_pub
+
+    get "/actors/:handle", ActivityPubController, :actor
+    get "/actors/:handle/outbox", ActivityPubController, :outbox
+    post "/actors/:handle/inbox", ActivityPubController, :inbox
+    get "/actors/:handle/followers", ActivityPubController, :followers
+    get "/actors/:handle/following", ActivityPubController, :following
+  end
+
   scope "/oauth", MicelioWeb.Oauth do
     pipe_through :api
 
@@ -129,6 +171,22 @@ defmodule MicelioWeb.Router do
     delete "/devices/:id", DeviceController, :delete
   end
 
+  scope "/", MicelioWeb do
+    pipe_through [:browser, :require_auth, :load_resources]
+
+    live_session :repository_settings, on_mount: {MicelioWeb.LiveAuth, :require_auth} do
+      live "/:account/:repository/settings", RepositoryLive.Settings, :edit
+      live "/:account/:repository/settings/webhooks", RepositoryLive.Webhooks, :index
+    end
+  end
+
+  scope "/", MicelioWeb.Browser do
+    pipe_through [:browser, :require_auth, :load_resources]
+
+    post "/:account/:repository/star", RepositoryController, :toggle_star
+    post "/:account/:repository/fork", RepositoryController, :fork
+  end
+
   scope "/og", MicelioWeb.Browser do
     pipe_through :og_image
 
@@ -144,10 +202,12 @@ defmodule MicelioWeb.Router do
     get "/terms", LegalController, :terms
     get "/cookies", LegalController, :cookies
     get "/impressum", LegalController, :impressum
+    get "/search", SearchController, :index
 
     get "/:account", AccountController, :show
     get "/:account/:repository/tree/*path", RepositoryController, :tree
     get "/:account/:repository/blob/*path", RepositoryController, :blob
+    get "/:account/:repository/blame/*path", RepositoryController, :blame
     get "/:account/:repository", RepositoryController, :show
   end
 end
