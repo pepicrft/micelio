@@ -18,6 +18,34 @@ Micelio is a minimalist, open-source git forge built with Elixir/Phoenix, design
 - [x] Create user profile page showing owned repositories and activity
   - Note: Activity graph (like GitHub's contribution graph) should be added
 - [x] Add user activity graph (GitHub-style contribution visualization) to profile page
+- [ ] Fix activity graph styling
+  - Reduce spacing between "Activity" title and the graph (too much whitespace currently)
+  - Change gradient from light gray to green (currently dark gray to green)
+  - Ensure consistent visual styling with the rest of the profile page
+- [ ] Rename "Owned repositories" section header to "Repositories"
+  - Simpler, cleaner label that matches common conventions
+  - Update both the heading text and any associated aria labels
+- [ ] Add organizations section to user profile page
+  - Display organizations the user belongs to
+  - Show organization name, avatar, and member count for each
+  - Link each organization to its organization page
+  - Position appropriately in the profile layout (after repositories or in sidebar)
+  - Handle case where user belongs to no organizations gracefully
+- [ ] Add profile description and social links support
+  - Allow users to add a description/bio to their profile (text field, max ~160 chars)
+  - Support adding social links: Twitter/X, GitHub, GitLab, Mastodon, LinkedIn, etc.
+  - Support adding a personal website URL
+  - Create settings UI for editing bio and social links
+  - Display bio prominently on user profile page (below name/avatar)
+  - Display social links as icons with hover tooltips
+  - Validate URLs and handle edge cases (missing protocol, etc.)
+- [ ] Show user activity feed on profile page
+  - Display the user's recent activity on the platform
+  - Activity types to include: commits/sessions landed, projects created, projects starred, etc.
+  - Show chronologically with most recent first
+  - Each activity item includes: project name (linked), action description, timestamp
+  - Paginate or lazy-load older activity (initial display: ~20 items)
+  - Design consistent with activity graph aesthetic
 - [x] Implement project README rendering on the project homepage
 - [x] Add syntax highlighting for code file viewing using a server-side highlighter
 - [x] Create project file browser with tree navigation
