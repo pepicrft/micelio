@@ -17,12 +17,23 @@ defmodule MicelioWeb.Plugs.RateLimitPlug do
     %{
       limit: Keyword.get(opts, :limit, @default_limit),
       window_ms: Keyword.get(opts, :window_ms, @default_window_ms),
-      bucket_prefix: Keyword.get(opts, :bucket_prefix, "api")
+      bucket_prefix: Keyword.get(opts, :bucket_prefix, "api"),
+      skip_if_authenticated: Keyword.get(opts, :skip_if_authenticated, false)
     }
   end
 
   @impl true
-  def call(conn, %{limit: limit, window_ms: window_ms, bucket_prefix: prefix}) do
+  def call(conn, %{skip_if_authenticated: true} = opts) do
+    if authenticated?(conn) do
+      conn
+    else
+      apply_rate_limit(conn, opts)
+    end
+  end
+
+  def call(conn, opts), do: apply_rate_limit(conn, opts)
+
+  defp apply_rate_limit(conn, %{limit: limit, window_ms: window_ms, bucket_prefix: prefix}) do
     key = bucket_key(conn, prefix)
 
     case Hammer.check_rate(key, window_ms, limit) do
@@ -39,6 +50,10 @@ defmodule MicelioWeb.Plugs.RateLimitPlug do
         |> send_resp(429, "Rate limit exceeded. Please try again later.")
         |> halt()
     end
+  end
+
+  defp authenticated?(conn) do
+    not is_nil(conn.assigns[:current_user])
   end
 
   defp bucket_key(conn, prefix) do
