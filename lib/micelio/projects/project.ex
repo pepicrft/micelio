@@ -11,8 +11,13 @@ defmodule Micelio.Projects.Project do
     field :name, :string
     field :description, :string
     field :url, :string
+    field :visibility, :string, default: "private"
 
+    belongs_to :forked_from, Micelio.Projects.Project
     belongs_to :organization, Micelio.Accounts.Organization
+    has_many :forks, Micelio.Projects.Project, foreign_key: :forked_from_id
+    has_many :stars, Micelio.Projects.ProjectStar
+    has_many :webhooks, Micelio.Webhooks.Webhook
 
     timestamps(type: :utc_datetime)
   end
@@ -22,10 +27,11 @@ defmodule Micelio.Projects.Project do
   """
   def changeset(project, attrs) do
     project
-    |> cast(attrs, [:handle, :name, :description, :url])
+    |> cast(attrs, [:handle, :name, :description, :url, :visibility])
     |> maybe_put_organization_id(attrs)
-    |> validate_required([:handle, :name, :organization_id])
+    |> validate_required([:handle, :name, :organization_id, :visibility])
     |> validate_handle()
+    |> validate_inclusion(:visibility, ["public", "private"])
     |> normalize_url_change()
     |> validate_url()
     |> unique_constraint(:handle,
@@ -33,6 +39,16 @@ defmodule Micelio.Projects.Project do
       message: "has already been taken for this organization"
     )
     |> assoc_constraint(:organization)
+  end
+
+  @doc """
+  Changeset for updating repository settings.
+  """
+  def settings_changeset(project, attrs) do
+    project
+    |> cast(attrs, [:name, :description, :visibility])
+    |> validate_required([:name, :visibility])
+    |> validate_inclusion(:visibility, ["public", "private"])
   end
 
   defp validate_handle(changeset) do

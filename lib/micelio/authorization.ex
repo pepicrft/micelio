@@ -46,6 +46,7 @@ defmodule Micelio.Authorization do
     end
 
     action :read do
+      allow(:project_public)
       allow(:organization_member)
     end
 
@@ -60,6 +61,7 @@ defmodule Micelio.Authorization do
 
   object :repository do
     action :read do
+      allow(:repository_public)
       allow(:repository_member)
     end
 

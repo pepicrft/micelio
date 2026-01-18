@@ -30,6 +30,12 @@ defmodule Micelio.Authorization.Checks do
 
   def organization_admin(_, _), do: false
 
+  def project_public(_actor, %Project{visibility: "public"}), do: true
+  def project_public(_, _), do: false
+
+  def repository_public(_actor, %Project{visibility: "public"}), do: true
+  def repository_public(_, _), do: false
+
   def repository_member(%User{} = user, %Account{} = account),
     do: Accounts.user_has_account_access?(user, account)
 
