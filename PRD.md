@@ -46,7 +46,7 @@ Micelio is a minimalist, open-source git forge built with Elixir/Phoenix, design
 - [x] Add GitLab OAuth authentication
   - Store as OAuthIdentity linked to user by provider_user_id (gitlab_id), NOT by email
   - OAuthIdentity: user_id + provider + provider_user_id
-- [ ] Add Passkey (WebAuthn) authentication support
+- [x] Add Passkey (WebAuthn) authentication support
 
 ### hif (Zig CLI)
 

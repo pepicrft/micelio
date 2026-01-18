@@ -7,14 +7,15 @@ defmodule Micelio.Accounts.User do
   @foreign_key_type :binary_id
 
   schema "users" do
-    field :email, :string
+    field(:email, :string)
 
-    has_one :account, Micelio.Accounts.Account
-    has_many :organization_memberships, Micelio.Accounts.OrganizationMembership
-    has_many :organizations, through: [:organization_memberships, :organization]
-    has_many :project_stars, Micelio.Projects.ProjectStar
-    has_many :starred_projects, through: [:project_stars, :project]
-    has_many :oauth_identities, Micelio.Accounts.OAuthIdentity
+    has_one(:account, Micelio.Accounts.Account)
+    has_many(:organization_memberships, Micelio.Accounts.OrganizationMembership)
+    has_many(:organizations, through: [:organization_memberships, :organization])
+    has_many(:project_stars, Micelio.Projects.ProjectStar)
+    has_many(:starred_projects, through: [:project_stars, :project])
+    has_many(:oauth_identities, Micelio.Accounts.OAuthIdentity)
+    has_many(:passkeys, Micelio.Accounts.Passkey)
 
     timestamps(type: :utc_datetime)
   end

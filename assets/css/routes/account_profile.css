@@ -42,9 +42,34 @@
   margin-top: var(--theme-ui-space-4);
 }
 
+.account-profile-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--theme-ui-space-2);
+}
+
 .account-profile-section-title {
   margin-bottom: var(--theme-ui-space-1);
   font-size: var(--theme-ui-fontSizes-2);
+}
+
+.account-passkey-button {
+  padding: var(--theme-ui-space-1) var(--theme-ui-space-2);
+  border: var(--theme-ui-borders-thin);
+  background-color: var(--theme-ui-colors-background);
+  color: var(--theme-ui-colors-text);
+  font-weight: var(--theme-ui-fontWeights-bold);
+  cursor: pointer;
+}
+
+.account-passkey-button:hover {
+  background-color: var(--theme-ui-colors-border);
+}
+
+.account-passkey-status {
+  margin-top: var(--theme-ui-space-1);
+  color: var(--theme-ui-colors-secondary);
 }
 
 .account-profile-empty {
@@ -62,6 +87,36 @@
 .account-profile-list-item {
   padding: var(--theme-ui-space-1) 0;
   border-bottom: var(--theme-ui-borders-thin);
+}
+
+.account-passkey-entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--theme-ui-space-2);
+}
+
+.account-passkey-details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--theme-ui-space-1);
+}
+
+.account-passkey-meta {
+  color: var(--theme-ui-colors-muted);
+  font-size: var(--theme-ui-fontSizes-small);
+}
+
+.account-passkey-remove {
+  padding: var(--theme-ui-space-1) var(--theme-ui-space-2);
+  border: var(--theme-ui-borders-thin);
+  background-color: var(--theme-ui-colors-background);
+  color: var(--theme-ui-colors-text);
+  cursor: pointer;
+}
+
+.account-passkey-remove:hover {
+  background-color: var(--theme-ui-colors-border);
 }
 
 .account-profile-list-link {

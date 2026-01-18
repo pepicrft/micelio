@@ -58,10 +58,10 @@ defmodule Micelio.Theme do
 
   def css(opts \\ []) when is_list(opts) do
     theme = daily_theme(opts)
-    css(theme)
+    theme_css(theme)
   end
 
-  defp css(%{tokens: tokens}) do
+  defp theme_css(%{tokens: tokens}) do
     light = Map.get(tokens, :light, %{})
     dark = Map.get(tokens, :dark, %{})
 

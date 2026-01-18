@@ -11,6 +11,7 @@ defmodule Micelio.Accounts do
     Organization,
     OrganizationMembership,
     OrganizationRegistration,
+    Passkey,
     User,
     Token
   }
@@ -216,6 +217,55 @@ defmodule Micelio.Accounts do
   def get_oauth_identity(provider, provider_user_id)
       when is_binary(provider) and is_binary(provider_user_id) do
     Repo.get_by(OAuthIdentity, provider: provider, provider_user_id: provider_user_id)
+  end
+
+  @doc """
+  Lists passkeys for a user.
+  """
+  def list_passkeys_for_user(%User{} = user) do
+    Passkey
+    |> where([p], p.user_id == ^user.id)
+    |> order_by([p], desc: p.inserted_at)
+    |> Repo.all()
+  end
+
+  @doc """
+  Gets a passkey by ID.
+  """
+  def get_passkey(id), do: Repo.get(Passkey, id)
+
+  @doc """
+  Gets a passkey by credential ID.
+  """
+  def get_passkey_by_credential_id(credential_id) when is_binary(credential_id) do
+    Repo.get_by(Passkey, credential_id: credential_id)
+  end
+
+  @doc """
+  Creates a passkey for a user.
+  """
+  def create_passkey(%User{} = user, attrs) do
+    attrs = Map.put(attrs, :user_id, user.id)
+
+    %Passkey{}
+    |> Passkey.changeset(attrs)
+    |> Repo.insert()
+  end
+
+  @doc """
+  Updates passkey usage metadata.
+  """
+  def update_passkey_usage(%Passkey{} = passkey, attrs) do
+    passkey
+    |> Passkey.usage_changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
+  Deletes a passkey.
+  """
+  def delete_passkey(%Passkey{} = passkey) do
+    Repo.delete(passkey)
   end
 
   @doc """

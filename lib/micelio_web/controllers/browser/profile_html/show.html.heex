@@ -31,6 +31,46 @@
       </ul>
     </nav>
 
+    <section class="account-profile-section" id="account-passkeys">
+      <div class="account-profile-section-header">
+        <h2 class="account-profile-section-title">Passkeys</h2>
+        <button type="button" class="account-passkey-button" id="account-passkey-add">
+          Add passkey
+        </button>
+      </div>
+      <p class="account-passkey-status" id="account-passkey-status" hidden></p>
+      <%= if @passkeys == [] do %>
+        <p class="account-profile-empty" id="account-passkeys-empty">
+          No passkeys yet.
+        </p>
+      <% else %>
+        <ul class="account-profile-list" id="account-passkeys-list">
+          <li
+            :for={passkey <- @passkeys}
+            class="account-profile-list-item"
+            id={"passkey-#{passkey.id}"}
+          >
+            <div class="account-passkey-entry">
+              <div class="account-passkey-details">
+                <span class="account-profile-list-name">{passkey.name}</span>
+                <span class="account-passkey-meta">
+                  Added {format_date(passkey.inserted_at)}
+                </span>
+              </div>
+              <button
+                type="button"
+                class="account-passkey-remove"
+                data-passkey-id={passkey.id}
+                id={"passkey-remove-#{passkey.id}"}
+              >
+                Remove
+              </button>
+            </div>
+          </li>
+        </ul>
+      <% end %>
+    </section>
+
     <section class="account-profile-section" id="account-owned-projects">
       <h2 class="account-profile-section-title">Owned repositories</h2>
       <%= if @owned_projects == [] do %>

@@ -83,6 +83,244 @@ function setupProjectHandleGeneration() {
 // Setup project handle generation when DOM is ready
 document.addEventListener('DOMContentLoaded', setupProjectHandleGeneration);
 
+function base64UrlEncode(buffer) {
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  for (let i = 0; i < bytes.length; i += 1) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+function base64UrlDecode(value) {
+  const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
+  const padded =
+    normalized.length % 4 === 0
+      ? normalized
+      : normalized + "=".repeat(4 - (normalized.length % 4));
+  const binary = atob(padded);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes.buffer;
+}
+
+function csrfTokenHeader() {
+  return document
+    .querySelector("meta[name='csrf-token']")
+    .getAttribute("content");
+}
+
+function setStatus(target, message, isError = false) {
+  if (!target) return;
+  target.textContent = message;
+  target.hidden = false;
+  target.dataset.state = isError ? "error" : "ok";
+}
+
+async function fetchJson(url, options) {
+  const response = await fetch(url, options);
+  const data = await response.json();
+  return { response, data };
+}
+
+function supportsPasskeys() {
+  return (
+    window.PublicKeyCredential &&
+    typeof window.PublicKeyCredential === "function" &&
+    navigator.credentials
+  );
+}
+
+function setupPasskeyLogin() {
+  const button = document.getElementById("auth-passkey-button");
+  const status = document.getElementById("auth-passkey-status");
+  if (!button) return;
+
+  if (!supportsPasskeys()) {
+    button.setAttribute("hidden", "");
+    return;
+  }
+
+  button.addEventListener("click", async () => {
+    button.disabled = true;
+    setStatus(status, "Waiting for your passkey...");
+
+    try {
+      const { response, data } = await fetchJson("/auth/passkey/options", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-csrf-token": csrfTokenHeader(),
+        },
+        body: "{}",
+      });
+
+      if (!response.ok) {
+        throw new Error(data.error || "Unable to start passkey login.");
+      }
+
+      const options = data;
+      options.challenge = base64UrlDecode(options.challenge);
+      if (options.allowCredentials) {
+        options.allowCredentials = options.allowCredentials.map((cred) => ({
+          ...cred,
+          id: base64UrlDecode(cred.id),
+        }));
+      }
+
+      const credential = await navigator.credentials.get({
+        publicKey: options,
+      });
+
+      const payload = {
+        id: credential.id,
+        rawId: base64UrlEncode(credential.rawId),
+        type: credential.type,
+        response: {
+          clientDataJSON: base64UrlEncode(credential.response.clientDataJSON),
+          authenticatorData: base64UrlEncode(
+            credential.response.authenticatorData,
+          ),
+          signature: base64UrlEncode(credential.response.signature),
+          userHandle: credential.response.userHandle
+            ? base64UrlEncode(credential.response.userHandle)
+            : null,
+        },
+      };
+
+      const verify = await fetchJson("/auth/passkey/authenticate", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-csrf-token": csrfTokenHeader(),
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!verify.response.ok) {
+        throw new Error(verify.data.error || "Passkey login failed.");
+      }
+
+      window.location = verify.data.redirect_to || "/";
+    } catch (error) {
+      setStatus(status, error.message || "Passkey login failed.", true);
+      button.disabled = false;
+    }
+  });
+}
+
+function setupPasskeyRegistration() {
+  const button = document.getElementById("account-passkey-add");
+  const status = document.getElementById("account-passkey-status");
+  if (!button) return;
+
+  if (!supportsPasskeys()) {
+    button.setAttribute("hidden", "");
+    return;
+  }
+
+  button.addEventListener("click", async () => {
+    button.disabled = true;
+    setStatus(status, "Registering your passkey...");
+
+    try {
+      const { response, data } = await fetchJson("/account/passkeys/options", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-csrf-token": csrfTokenHeader(),
+        },
+        body: "{}",
+      });
+
+      if (!response.ok) {
+        throw new Error(data.error || "Unable to start passkey registration.");
+      }
+
+      const options = data;
+      options.challenge = base64UrlDecode(options.challenge);
+      options.user.id = base64UrlDecode(options.user.id);
+
+      const credential = await navigator.credentials.create({
+        publicKey: options,
+      });
+
+      const payload = {
+        id: credential.id,
+        rawId: base64UrlEncode(credential.rawId),
+        type: credential.type,
+        response: {
+          attestationObject: base64UrlEncode(
+            credential.response.attestationObject,
+          ),
+          clientDataJSON: base64UrlEncode(credential.response.clientDataJSON),
+        },
+      };
+
+      const register = await fetchJson("/account/passkeys", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-csrf-token": csrfTokenHeader(),
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!register.response.ok) {
+        throw new Error(register.data.error || "Passkey registration failed.");
+      }
+
+      window.location.reload();
+    } catch (error) {
+      setStatus(status, error.message || "Passkey registration failed.", true);
+      button.disabled = false;
+    }
+  });
+}
+
+function setupPasskeyRemoval() {
+  const buttons = document.querySelectorAll("[data-passkey-id]");
+  if (buttons.length === 0) return;
+
+  buttons.forEach((button) => {
+    button.addEventListener("click", async () => {
+      const passkeyId = button.getAttribute("data-passkey-id");
+      if (!passkeyId) return;
+      button.disabled = true;
+
+      try {
+        const { response, data } = await fetchJson(`/account/passkeys/${passkeyId}`, {
+          method: "DELETE",
+          headers: {
+            "content-type": "application/json",
+            "x-csrf-token": csrfTokenHeader(),
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(data.error || "Unable to remove passkey.");
+        }
+
+        const row = document.getElementById(`passkey-${passkeyId}`);
+        if (row) {
+          row.remove();
+        }
+      } catch (_error) {
+        button.disabled = false;
+      }
+    });
+  });
+}
+
+function setupPasskeys() {
+  setupPasskeyLogin();
+  setupPasskeyRegistration();
+  setupPasskeyRemoval();
+}
+
 function getPreferredTheme() {
   try {
     const stored = localStorage.getItem("micelio:theme");
@@ -182,6 +420,8 @@ function setupFlashDismiss() {
 initTheme();
 setupThemeToggle();
 setupFlashDismiss();
+setupPasskeys();
+window.addEventListener("phx:page-loading-stop", setupPasskeys);
 
 // The lines below enable quality of life phoenix_live_reload
 // development features:

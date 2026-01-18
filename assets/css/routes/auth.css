@@ -80,6 +80,21 @@
   outline: none;
 }
 
+.auth-button-passkey {
+  background-color: var(--theme-ui-colors-background);
+  color: var(--theme-ui-colors-text);
+  border: var(--theme-ui-borders-thin);
+}
+
+.auth-button-passkey:hover {
+  background-color: var(--theme-ui-colors-border);
+}
+
+.auth-passkey-status {
+  text-align: center;
+  color: var(--theme-ui-colors-secondary);
+}
+
 .auth-divider {
   position: relative;
   text-align: center;
