@@ -7,8 +7,8 @@
 @import "./routes/changelog.css";
 @import "./routes/legal.css";
 @import "./routes/account_show.css";
-@import "./routes/repository_show.css";
-@import "./routes/repository_blame.css";
+@import "./routes/project_show.css";
+@import "./routes/project_blame.css";
 @import "./routes/auth.css";
 @import "./routes/projects.css";
 @import "./routes/sessions.css";
