@@ -38,6 +38,60 @@
   text-decoration: underline;
 }
 
+.account-profile-section {
+  margin-top: var(--theme-ui-space-4);
+}
+
+.account-profile-section-title {
+  margin-bottom: var(--theme-ui-space-1);
+  font-size: var(--theme-ui-fontSizes-2);
+}
+
+.account-profile-empty {
+  color: var(--theme-ui-colors-muted);
+}
+
+.account-profile-list {
+  list-style: none;
+  display: grid;
+  gap: var(--theme-ui-space-2);
+  margin: 0;
+  padding: 0;
+}
+
+.account-profile-list-item {
+  padding: var(--theme-ui-space-1) 0;
+  border-bottom: var(--theme-ui-borders-thin);
+}
+
+.account-profile-list-link {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--theme-ui-space-2);
+  text-decoration: none;
+  color: var(--theme-ui-colors-text);
+}
+
+.account-profile-list-link:hover {
+  text-decoration: underline;
+}
+
+.account-profile-list-name {
+  font-weight: var(--theme-ui-fontWeights-bold);
+}
+
+.account-profile-list-handle {
+  color: var(--theme-ui-colors-muted);
+  font-family: var(--theme-ui-fonts-mono);
+  font-size: var(--theme-ui-fontSizes-small);
+}
+
+.account-profile-list-description {
+  margin: var(--theme-ui-space-1) 0 0;
+  color: var(--theme-ui-colors-secondary);
+}
+
 /* Activity Graph */
 .activity-graph {
   margin-top: var(--theme-ui-space-4);

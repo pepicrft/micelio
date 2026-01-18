@@ -30,5 +30,59 @@
         </li>
       </ul>
     </nav>
+
+    <section class="account-profile-section" id="account-owned-projects">
+      <h2 class="account-profile-section-title">Owned repositories</h2>
+      <%= if @owned_projects == [] do %>
+        <p class="account-profile-empty" id="account-owned-projects-empty">
+          No repositories yet.
+        </p>
+      <% else %>
+        <ul class="account-profile-list" id="account-owned-projects-list">
+          <li :for={project <- @owned_projects} class="account-profile-list-item">
+            <a
+              href={~p"/#{project.organization.account.handle}/#{project.handle}"}
+              class="account-profile-list-link"
+              id={"owned-project-#{project.id}"}
+            >
+              <span class="account-profile-list-name">{project.name}</span>
+              <span class="account-profile-list-handle">
+                {project.organization.account.handle}/{project.handle}
+              </span>
+            </a>
+            <%= if project.description do %>
+              <p class="account-profile-list-description">{project.description}</p>
+            <% end %>
+          </li>
+        </ul>
+      <% end %>
+    </section>
+
+    <section class="account-profile-section" id="account-favorites">
+      <h2 class="account-profile-section-title">Favorites</h2>
+      <%= if @starred_projects == [] do %>
+        <p class="account-profile-empty" id="account-favorites-empty">
+          No favorites yet.
+        </p>
+      <% else %>
+        <ul class="account-profile-list" id="account-favorites-list">
+          <li :for={project <- @starred_projects} class="account-profile-list-item">
+            <a
+              href={~p"/#{project.organization.account.handle}/#{project.handle}"}
+              class="account-profile-list-link"
+              id={"favorite-#{project.id}"}
+            >
+              <span class="account-profile-list-name">{project.name}</span>
+              <span class="account-profile-list-handle">
+                {project.organization.account.handle}/{project.handle}
+              </span>
+            </a>
+            <%= if project.description do %>
+              <p class="account-profile-list-description">{project.description}</p>
+            <% end %>
+          </li>
+        </ul>
+      <% end %>
+    </section>
   </div>
 </Layouts.app>
