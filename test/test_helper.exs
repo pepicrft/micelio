@@ -1,5 +1,3 @@
-Mimic.copy(Micelio.Accounts)
-
 # SQLite allows a single writer per database file. Keep max_cases at 1 by
 # default and use MIX_TEST_PARTITION (mix test --partitions N) to parallelize
 # across multiple database files.
@@ -17,4 +15,6 @@ max_cases =
   end
 
 ExUnit.start(max_cases: max_cases)
+
+Mimic.copy(Micelio.Accounts)
 Ecto.Adapters.SQL.Sandbox.mode(Micelio.Repo, :manual)
