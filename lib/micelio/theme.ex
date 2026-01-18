@@ -5,8 +5,6 @@ defmodule Micelio.Theme do
   Themes are generated once per day, persisted to storage, and cached in memory.
   """
 
-  import Jason, only: [encode: 1]
-
   require Logger
 
   @type tokens :: %{optional(String.t()) => String.t()}
