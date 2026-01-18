@@ -9,6 +9,7 @@ defmodule Micelio.GRPC.Projects.V1.Project do
   field :description, 6, type: :string
   field :inserted_at, 7, type: :string, json_name: "insertedAt"
   field :updated_at, 8, type: :string, json_name: "updatedAt"
+  field :visibility, 9, type: :string
 end
 
 defmodule Micelio.GRPC.Projects.V1.ListProjectsRequest do
@@ -40,6 +41,7 @@ defmodule Micelio.GRPC.Projects.V1.CreateProjectRequest do
   field :handle, 3, type: :string
   field :name, 4, type: :string
   field :description, 5, type: :string
+  field :visibility, 6, type: :string
 end
 
 defmodule Micelio.GRPC.Projects.V1.UpdateProjectRequest do
@@ -51,6 +53,7 @@ defmodule Micelio.GRPC.Projects.V1.UpdateProjectRequest do
   field :new_handle, 4, type: :string, json_name: "newHandle"
   field :name, 5, type: :string
   field :description, 6, type: :string
+  field :visibility, 7, type: :string
 end
 
 defmodule Micelio.GRPC.Projects.V1.DeleteProjectRequest do

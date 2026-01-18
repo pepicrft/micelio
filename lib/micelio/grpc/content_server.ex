@@ -29,16 +29,12 @@ defmodule Micelio.GRPC.Content.V1.ContentService.Server do
   def get_head_tree(%GetHeadTreeRequest{} = request, stream) do
     with :ok <- require_field(request.account_handle, "account_handle"),
          :ok <- require_field(request.project_handle, "project_handle"),
-         {:ok, user} <- fetch_user(request.user_id, stream),
-         {:ok, organization} <- Accounts.get_organization_by_handle(request.account_handle),
-         true <- Accounts.user_in_organization?(user, organization.id),
-         project when not is_nil(project) <-
-           Projects.get_project_by_handle(organization.id, request.project_handle),
+         {:ok, organization, project} <-
+           load_project(request.account_handle, request.project_handle),
+         :ok <- authorize_project_read(organization, project, request.user_id, stream),
          {:ok, tree_hash, tree} <- load_head_tree(project.id) do
       %GetTreeResponse{tree: %V1.Tree{entries: tree_entries(tree)}, tree_hash: tree_hash}
     else
-      nil -> {:error, not_found_status("Project not found.")}
-      false -> {:error, forbidden_status("You do not have access to this account.")}
       {:error, status} -> {:error, status}
     end
   end
@@ -47,16 +43,12 @@ defmodule Micelio.GRPC.Content.V1.ContentService.Server do
     with :ok <- require_field(request.account_handle, "account_handle"),
          :ok <- require_field(request.project_handle, "project_handle"),
          :ok <- require_hash(request.tree_hash, "tree_hash"),
-         {:ok, user} <- fetch_user(request.user_id, stream),
-         {:ok, organization} <- Accounts.get_organization_by_handle(request.account_handle),
-         true <- Accounts.user_in_organization?(user, organization.id),
-         project when not is_nil(project) <-
-           Projects.get_project_by_handle(organization.id, request.project_handle),
+         {:ok, organization, project} <-
+           load_project(request.account_handle, request.project_handle),
+         :ok <- authorize_project_read(organization, project, request.user_id, stream),
          {:ok, tree} <- load_tree(project.id, request.tree_hash) do
       %GetTreeResponse{tree: %V1.Tree{entries: tree_entries(tree)}, tree_hash: request.tree_hash}
     else
-      nil -> {:error, not_found_status("Project not found.")}
-      false -> {:error, forbidden_status("You do not have access to this account.")}
       {:error, status} -> {:error, status}
     end
   end
@@ -64,16 +56,12 @@ defmodule Micelio.GRPC.Content.V1.ContentService.Server do
   def get_tree_at_position(%GetTreeAtPositionRequest{} = request, stream) do
     with :ok <- require_field(request.account_handle, "account_handle"),
          :ok <- require_field(request.project_handle, "project_handle"),
-         {:ok, user} <- fetch_user(request.user_id, stream),
-         {:ok, organization} <- Accounts.get_organization_by_handle(request.account_handle),
-         true <- Accounts.user_in_organization?(user, organization.id),
-         project when not is_nil(project) <-
-           Projects.get_project_by_handle(organization.id, request.project_handle),
+         {:ok, organization, project} <-
+           load_project(request.account_handle, request.project_handle),
+         :ok <- authorize_project_read(organization, project, request.user_id, stream),
          {:ok, tree_hash, tree} <- load_tree_at_position(project.id, request.position) do
       %GetTreeResponse{tree: %V1.Tree{entries: tree_entries(tree)}, tree_hash: tree_hash}
     else
-      nil -> {:error, not_found_status("Project not found.")}
-      false -> {:error, forbidden_status("You do not have access to this account.")}
       {:error, status} -> {:error, status}
     end
   end
@@ -113,16 +101,12 @@ defmodule Micelio.GRPC.Content.V1.ContentService.Server do
     with :ok <- require_field(request.account_handle, "account_handle"),
          :ok <- require_field(request.project_handle, "project_handle"),
          :ok <- require_hash(request.blob_hash, "blob_hash"),
-         {:ok, user} <- fetch_user(request.user_id, stream),
-         {:ok, organization} <- Accounts.get_organization_by_handle(request.account_handle),
-         true <- Accounts.user_in_organization?(user, organization.id),
-         project when not is_nil(project) <-
-           Projects.get_project_by_handle(organization.id, request.project_handle),
+         {:ok, organization, project} <-
+           load_project(request.account_handle, request.project_handle),
+         :ok <- authorize_project_read(organization, project, request.user_id, stream),
          {:ok, content} <- load_blob(project.id, request.blob_hash) do
       %GetBlobResponse{content: content}
     else
-      nil -> {:error, not_found_status("Project not found.")}
-      false -> {:error, forbidden_status("You do not have access to this account.")}
       {:error, status} -> {:error, status}
     end
   end
@@ -131,18 +115,14 @@ defmodule Micelio.GRPC.Content.V1.ContentService.Server do
     with :ok <- require_field(request.account_handle, "account_handle"),
          :ok <- require_field(request.project_handle, "project_handle"),
          :ok <- require_field(request.path, "path"),
-         {:ok, user} <- fetch_user(request.user_id, stream),
-         {:ok, organization} <- Accounts.get_organization_by_handle(request.account_handle),
-         true <- Accounts.user_in_organization?(user, organization.id),
-         project when not is_nil(project) <-
-           Projects.get_project_by_handle(organization.id, request.project_handle),
+         {:ok, organization, project} <-
+           load_project(request.account_handle, request.project_handle),
+         :ok <- authorize_project_read(organization, project, request.user_id, stream),
          {:ok, _tree_hash, tree} <- load_head_tree(project.id),
          {:ok, blob_hash} <- fetch_path_hash(tree, request.path),
          {:ok, content} <- load_blob(project.id, blob_hash) do
       %GetPathResponse{content: content, blob_hash: blob_hash}
     else
-      nil -> {:error, not_found_status("Project not found.")}
-      false -> {:error, forbidden_status("You do not have access to this account.")}
       {:error, status} -> {:error, status}
     end
   end
@@ -268,6 +248,38 @@ defmodule Micelio.GRPC.Content.V1.ContentService.Server do
 
   defp require_field(_value, field_name),
     do: {:error, invalid_status("#{field_name} is required.")}
+
+  defp load_project(account_handle, project_handle) do
+    with {:ok, organization} <- Accounts.get_organization_by_handle(account_handle),
+         %Projects.Project{} = project <-
+           Projects.get_project_by_handle(organization.id, project_handle) do
+      {:ok, organization, project}
+    else
+      nil -> {:error, not_found_status("Project not found.")}
+      {:error, status} -> {:error, status}
+    end
+  end
+
+  defp authorize_project_read(organization, project, user_id, stream) do
+    if project.visibility == "public" do
+      if require_auth_token?() do
+        case fetch_user(user_id, stream) do
+          {:ok, _user} -> :ok
+          {:error, status} -> {:error, status}
+        end
+      else
+        :ok
+      end
+    else
+      with {:ok, user} <- fetch_user(user_id, stream),
+           true <- Accounts.user_in_organization?(user, organization.id) do
+        :ok
+      else
+        false -> {:error, forbidden_status("You do not have access to this account.")}
+        {:error, status} -> {:error, status}
+      end
+    end
+  end
 
   defp require_auth_token? do
     config = Application.get_env(:micelio, Micelio.GRPC, [])

@@ -21,32 +21,45 @@ defmodule Micelio.GRPC.Projects.V1.ProjectService.Server do
 
   def list_projects(%ListProjectsRequest{} = request, stream) do
     with :ok <- require_field(request.organization_handle, "organization_handle"),
-         {:ok, user} <- fetch_user(request.user_id, stream),
-         {:ok, organization} <- Accounts.get_organization_by_handle(request.organization_handle),
-         true <- Accounts.user_in_organization?(user, organization.id) do
-      projects = Projects.list_projects_for_organization(organization.id)
+         {:ok, organization} <- Accounts.get_organization_by_handle(request.organization_handle) do
+      case fetch_optional_user(request.user_id, stream) do
+        {:ok, user} ->
+          projects =
+            if Accounts.user_in_organization?(user, organization.id) do
+              Projects.list_projects_for_organization(organization.id)
+            else
+              Projects.list_public_projects_for_organization(organization.id)
+            end
 
-      %ListProjectsResponse{
-        projects: Enum.map(projects, &project_to_proto(&1, organization))
-      }
+          %ListProjectsResponse{
+            projects: Enum.map(projects, &project_to_proto(&1, organization))
+          }
+
+        :anonymous ->
+          projects = Projects.list_public_projects_for_organization(organization.id)
+
+          %ListProjectsResponse{
+            projects: Enum.map(projects, &project_to_proto(&1, organization))
+          }
+
+        {:error, status} ->
+          {:error, status}
+      end
     else
       {:error, status} -> {:error, status}
-      false -> {:error, forbidden_status("You do not have access to this organization.")}
     end
   end
 
   def get_project(%GetProjectRequest{} = request, stream) do
     with :ok <- require_field(request.organization_handle, "organization_handle"),
          :ok <- require_field(request.handle, "handle"),
-         {:ok, user} <- fetch_user(request.user_id, stream),
          {:ok, organization} <- Accounts.get_organization_by_handle(request.organization_handle),
-         true <- Accounts.user_in_organization?(user, organization.id),
-         %Project{} = project <- Projects.get_project_by_handle(organization.id, request.handle) do
+         %Project{} = project <- Projects.get_project_by_handle(organization.id, request.handle),
+         :ok <- authorize_project_read(organization, project, request.user_id, stream) do
       %V1.ProjectResponse{project: project_to_proto(project, organization)}
     else
       nil -> {:error, not_found_status("Project not found.")}
       {:error, status} -> {:error, status}
-      false -> {:error, forbidden_status("You do not have access to this organization.")}
     end
   end
 
@@ -57,12 +70,14 @@ defmodule Micelio.GRPC.Projects.V1.ProjectService.Server do
          {:ok, user} <- fetch_user(request.user_id, stream),
          {:ok, organization} <- Accounts.get_organization_by_handle(request.organization_handle),
          true <- Accounts.user_in_organization?(user, organization.id) do
-      attrs = %{
-        handle: request.handle,
-        name: request.name,
-        description: empty_to_nil(request.description),
-        organization_id: organization.id
-      }
+      attrs =
+        %{
+          handle: request.handle,
+          name: request.name,
+          description: empty_to_nil(request.description),
+          organization_id: organization.id
+        }
+        |> maybe_put_visibility(request.visibility)
 
       case Projects.create_project(attrs) do
         {:ok, project} ->
@@ -84,11 +99,13 @@ defmodule Micelio.GRPC.Projects.V1.ProjectService.Server do
          {:ok, organization} <- Accounts.get_organization_by_handle(request.organization_handle),
          true <- Accounts.user_in_organization?(user, organization.id),
          %Project{} = project <- Projects.get_project_by_handle(organization.id, request.handle) do
-      attrs = %{
-        handle: empty_to_nil(request.new_handle) || project.handle,
-        name: empty_to_nil(request.name) || project.name,
-        description: empty_to_nil(request.description)
-      }
+      attrs =
+        %{
+          handle: empty_to_nil(request.new_handle) || project.handle,
+          name: empty_to_nil(request.name) || project.name,
+          description: empty_to_nil(request.description)
+        }
+        |> maybe_put_visibility(request.visibility)
 
       case Projects.update_project(project, attrs) do
         {:ok, updated} ->
@@ -130,6 +147,7 @@ defmodule Micelio.GRPC.Projects.V1.ProjectService.Server do
       handle: project.handle,
       name: project.name,
       description: project.description || "",
+      visibility: project.visibility,
       inserted_at: format_timestamp(project.inserted_at),
       updated_at: format_timestamp(project.updated_at)
     }
@@ -196,6 +214,45 @@ defmodule Micelio.GRPC.Projects.V1.ProjectService.Server do
   end
 
   defp empty_to_nil(_value), do: nil
+
+  defp fetch_optional_user(user_id, stream) do
+    if require_auth_token?() do
+      fetch_user(user_id, stream)
+    else
+      case empty_to_nil(user_id) do
+        nil -> :anonymous
+        value -> fetch_user_by_id(value)
+      end
+    end
+  end
+
+  defp authorize_project_read(organization, project, user_id, stream) do
+    if project.visibility == "public" do
+      if require_auth_token?() do
+        case fetch_user(user_id, stream) do
+          {:ok, _user} -> :ok
+          {:error, status} -> {:error, status}
+        end
+      else
+        :ok
+      end
+    else
+      with {:ok, user} <- fetch_user(user_id, stream),
+           true <- Accounts.user_in_organization?(user, organization.id) do
+        :ok
+      else
+        false -> {:error, forbidden_status("You do not have access to this organization.")}
+        {:error, status} -> {:error, status}
+      end
+    end
+  end
+
+  defp maybe_put_visibility(attrs, visibility) do
+    case empty_to_nil(visibility) do
+      nil -> attrs
+      value -> Map.put(attrs, :visibility, value)
+    end
+  end
 
   defp format_timestamp(nil), do: ""
 

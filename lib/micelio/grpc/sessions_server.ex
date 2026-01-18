@@ -22,6 +22,7 @@ defmodule Micelio.GRPC.Sessions.V1.SessionService.Server do
   alias Micelio.Sessions.ChangeStore
   alias Micelio.Sessions.Session
   alias Micelio.Storage
+  alias Micelio.Webhooks
 
   def start_session(%StartSessionRequest{} = request, stream) do
     with :ok <- require_field(request.organization_handle, "organization_handle"),
@@ -109,6 +110,8 @@ defmodule Micelio.GRPC.Sessions.V1.SessionService.Server do
                     |> normalize_metadata()
                     |> Map.put("landing_position", landing.position)
                 })
+
+              Webhooks.dispatch_session_landed(project, landed_session, landing.position)
 
               %SessionResponse{
                 session: session_to_proto(landed_session, project.organization, project)
