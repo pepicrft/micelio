@@ -170,8 +170,22 @@
 }
 
 /* Activity Graph */
+#account-activity {
+  display: grid;
+  gap: 0;
+  --activity-graph-0: oklch(0.94 0 0);
+  --activity-graph-1: var(--theme-ui-colors-activity-1);
+  --activity-graph-2: var(--theme-ui-colors-activity-2);
+  --activity-graph-3: var(--theme-ui-colors-activity-3);
+  --activity-graph-4: var(--theme-ui-colors-activity-4);
+}
+
+#account-activity .account-section-title {
+  margin: 0;
+}
+
 .activity-graph {
-  margin-top: var(--theme-ui-space-4);
+  margin-top: 0;
 }
 
 .activity-graph-container {
@@ -187,28 +201,33 @@
   display: inline-block;
   width: 11px;
   height: 11px;
-  border-radius: 2px;
+  border-radius: var(--theme-ui-radii-small);
 }
 
 /* Level colors - GitHub-style greens with theme awareness */
 .activity-graph-cell--0 {
-  fill: var(--theme-ui-colors-activity-0);
+  fill: var(--activity-graph-0);
+  background-color: var(--activity-graph-0);
 }
 
 .activity-graph-cell--1 {
-  fill: var(--theme-ui-colors-activity-1);
+  fill: var(--activity-graph-1);
+  background-color: var(--activity-graph-1);
 }
 
 .activity-graph-cell--2 {
-  fill: var(--theme-ui-colors-activity-2);
+  fill: var(--activity-graph-2);
+  background-color: var(--activity-graph-2);
 }
 
 .activity-graph-cell--3 {
-  fill: var(--theme-ui-colors-activity-3);
+  fill: var(--activity-graph-3);
+  background-color: var(--activity-graph-3);
 }
 
 .activity-graph-cell--4 {
-  fill: var(--theme-ui-colors-activity-4);
+  fill: var(--activity-graph-4);
+  background-color: var(--activity-graph-4);
 }
 
 /* Legend styles */
@@ -221,24 +240,20 @@
   color: var(--theme-ui-colors-muted);
 }
 
-.activity-graph-legend .activity-graph-cell {
-  background-color: var(--theme-ui-colors-activity-0);
-}
-
 .activity-graph-legend .activity-graph-cell--1 {
-  background-color: var(--theme-ui-colors-activity-1);
+  background-color: var(--activity-graph-1);
 }
 
 .activity-graph-legend .activity-graph-cell--2 {
-  background-color: var(--theme-ui-colors-activity-2);
+  background-color: var(--activity-graph-2);
 }
 
 .activity-graph-legend .activity-graph-cell--3 {
-  background-color: var(--theme-ui-colors-activity-3);
+  background-color: var(--activity-graph-3);
 }
 
 .activity-graph-legend .activity-graph-cell--4 {
-  background-color: var(--theme-ui-colors-activity-4);
+  background-color: var(--activity-graph-4);
 }
 
 .activity-graph-legend-label {

@@ -27,7 +27,7 @@ defmodule MicelioWeb.RequireAdminPlugTest do
 
     assert conn.halted
     assert redirected_to(conn) == ~p"/"
-    assert Phoenix.Controller.get_flash(conn, :error) == "You do not have access to that page."
+    assert Phoenix.Flash.get(conn.assigns.flash, :error) == "You do not have access to that page."
   end
 
   test "redirects when no current user", %{conn: conn} do
@@ -39,6 +39,6 @@ defmodule MicelioWeb.RequireAdminPlugTest do
 
     assert conn.halted
     assert redirected_to(conn) == ~p"/"
-    assert Phoenix.Controller.get_flash(conn, :error) == "You do not have access to that page."
+    assert Phoenix.Flash.get(conn.assigns.flash, :error) == "You do not have access to that page."
   end
 end

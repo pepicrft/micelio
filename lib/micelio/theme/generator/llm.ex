@@ -134,6 +134,7 @@ defmodule Micelio.Theme.Generator.LLM do
     - description: one sentence, ASCII only
     - light: object with keys primary, secondary, muted, border, activity0..activity4
     - dark: object with keys primary, secondary, muted, border, activity0..activity4
+    Activity colors must fade from light gray (activity0) to green (activity4).
     Colors must be valid CSS color values.
     No emojis. No extra text.
     """

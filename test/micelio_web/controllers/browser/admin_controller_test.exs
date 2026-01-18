@@ -14,7 +14,7 @@ defmodule MicelioWeb.Browser.AdminControllerTest do
       |> get(~p"/admin")
 
     assert redirected_to(conn) == ~p"/"
-    assert Phoenix.Controller.get_flash(conn, :error) == "You do not have access to that page."
+    assert Phoenix.Flash.get(conn.assigns.flash, :error) == "You do not have access to that page."
   end
 
   test "shows admin dashboard for admins", %{conn: conn} do

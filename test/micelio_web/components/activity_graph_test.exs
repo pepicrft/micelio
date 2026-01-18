@@ -19,4 +19,45 @@ defmodule MicelioWeb.ActivityGraphComponentTest do
     assert html =~ "data-date=\"#{Date.to_iso8601(today)}\""
     assert html =~ "data-count=\"2\""
   end
+
+  test "renders legend levels for styling consistency" do
+    today = Date.utc_today()
+
+    html =
+      render_component(&CoreComponents.activity_graph/1,
+        activity_counts: %{today => 1},
+        weeks: 1
+      )
+
+    assert html =~ "activity-graph-legend"
+    assert html =~ "activity-graph-cell--0"
+    assert html =~ "activity-graph-cell--1"
+    assert html =~ "activity-graph-cell--2"
+    assert html =~ "activity-graph-cell--3"
+    assert html =~ "activity-graph-cell--4"
+  end
+
+  test "sizes the activity graph SVG based on week count" do
+    today = Date.utc_today()
+
+    html =
+      render_component(&CoreComponents.activity_graph/1,
+        activity_counts: %{today => 1},
+        weeks: 2
+      )
+
+    assert html =~ "activity-graph-svg"
+    assert html =~ "width=\"28\""
+    assert html =~ "height=\"98\""
+  end
+
+  test "activity graph styles use light base and legend colors" do
+    css_path = Path.join(File.cwd!(), "assets/css/routes/account_profile.css")
+    css = File.read!(css_path)
+
+    assert css =~ "--activity-graph-0: oklch(0.94 0 0);"
+    assert css =~ "#account-activity .account-section-title"
+    assert css =~ "margin: 0;"
+    assert css =~ "background-color: var(--activity-graph-1);"
+  end
 end

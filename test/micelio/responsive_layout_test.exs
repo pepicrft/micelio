@@ -28,6 +28,13 @@ defmodule Micelio.ResponsiveLayoutTest do
     assert css =~ ".account-passkey-entry"
   end
 
+  test "account profile activity spacing is compact" do
+    css = File.read!(css_path("assets/css/routes/account_profile.css"))
+
+    assert css =~ "#account-activity .account-section-title"
+    assert css =~ "gap: 0;"
+  end
+
   test "project show css includes mobile tree adjustments" do
     css = File.read!(css_path("assets/css/routes/project_show.css"))
 

@@ -100,7 +100,10 @@ defmodule MicelioWeb.Browser.ProfileControllerTest do
     conn = get(conn, ~p"/account")
     html = html_response(conn, 200)
 
+    assert html =~ "id=\"account-activity\""
+    assert html =~ "class=\"account-section-title\">Activity"
     assert html =~ "activity-graph"
     assert html =~ "aria-label=\"1 contributions\""
+    assert html =~ "activity-graph-legend"
   end
 end
