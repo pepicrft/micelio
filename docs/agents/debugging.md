@@ -6,10 +6,10 @@ When encountering 500 errors or unexpected behavior in production:
 
 ```bash
 # View live logs
-fly logs
+kamal logs
 
-# Check recent errors
-grep -i error /var/log/phoenix/production.log | tail -50
+# Follow logs in real-time
+kamal logs -f
 ```
 
 ## 2. Identify the Error Pattern
@@ -59,20 +59,29 @@ mix compile --warnings-as-errors
 git add . && git commit -m "fix: description" && git push
 # 6. Verify CI passes
 # 7. Check logs
-fly logs
+kamal logs
 ```
 
 ## 7. Useful Commands
 
 ```bash
 # Check production logs
-fly logs
+kamal logs
 
-# SSH into production
-fly ssh console
+# SSH into production container
+kamal ssh
 
-# Rollback if needed
-fly deploy --strategy=rollback
+# Check deployment status
+kamal status
+
+# Check app health
+kamal healthcheck
+
+# Deploy to production
+kamal deploy
+
+# Rollback to previous version
+kamal rollback
 ```
 
 ## Remember
