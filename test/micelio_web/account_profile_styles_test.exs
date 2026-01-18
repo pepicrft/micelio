@@ -8,7 +8,7 @@ defmodule MicelioWeb.AccountProfileStylesTest do
     assert css =~ "gap: 0;"
     assert css =~ "--activity-graph-0: var(--theme-ui-colors-activity-0);"
     assert css =~ "--activity-graph-4: var(--theme-ui-colors-activity-4);"
-    assert css =~ "margin: 0 0 calc(var(--theme-ui-space-1) / 4);"
+    assert css =~ "margin: 0;"
     assert css =~ "margin-top: 0;"
   end
 end

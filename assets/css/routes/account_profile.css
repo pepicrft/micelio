@@ -173,7 +173,7 @@
 #account-activity {
   display: grid;
   gap: 0;
-  --activity-graph-0: oklch(0.94 0 0);
+  --activity-graph-0: var(--theme-ui-colors-activity-0);
   --activity-graph-1: var(--theme-ui-colors-activity-1);
   --activity-graph-2: var(--theme-ui-colors-activity-2);
   --activity-graph-3: var(--theme-ui-colors-activity-3);
@@ -181,7 +181,7 @@
 }
 
 #account-activity .account-section-title {
-  margin: 0;
+  margin-bottom: calc(var(--theme-ui-space-1) / 2);
 }
 
 .activity-graph {

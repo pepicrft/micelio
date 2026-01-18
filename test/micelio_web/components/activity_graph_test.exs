@@ -55,9 +55,9 @@ defmodule MicelioWeb.ActivityGraphComponentTest do
     css_path = Path.join(File.cwd!(), "assets/css/routes/account_profile.css")
     css = File.read!(css_path)
 
-    assert css =~ "--activity-graph-0: oklch(0.94 0 0);"
+    assert css =~ "--activity-graph-0: var(--theme-ui-colors-activity-0);"
     assert css =~ "#account-activity .account-section-title"
-    assert css =~ "margin: 0;"
+    assert css =~ "margin-bottom: calc(var(--theme-ui-space-1) / 2);"
     assert css =~ "background-color: var(--activity-graph-1);"
   end
 end
