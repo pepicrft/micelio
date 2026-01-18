@@ -1,6 +1,6 @@
 # Micelio - Agent-First Git Forge
 
-Micelio is a minimalist, open-source git forge built with Elixir/Phoenix, designed for the agent-first future of software development. It integrates with hif (a Zig-based version control system) to provide session-based workflows that capture not just what changed, but why.
+Micelio is a minimalist, open-source git forge built with Elixir/Phoenix, designed for the agent-first future of software development. It integrates with mic (a Zig-based version control system) to provide session-based workflows that capture not just what changed, but why.
 
 ## Tasks
 
@@ -47,21 +47,25 @@ Micelio is a minimalist, open-source git forge built with Elixir/Phoenix, design
   - Store as OAuthIdentity linked to user by provider_user_id (gitlab_id), NOT by email
   - OAuthIdentity: user_id + provider + provider_user_id
 - [x] Add Passkey (WebAuthn) authentication support
+- [ ] Simplify legal pages with user responsibility disclaimers
+  - Replace detailed privacy/cookies/terms pages with minimal pages
+  - Include broad disclaimers: "Users are solely responsible for their content"
+  - Example: "By using this service, you agree that you are solely responsible for the content you host"
 
-### hif (Zig CLI)
+### mic (Zig CLI)
 
-- [x] Implement NFS v3 server for virtual filesystem (hif-fs) in hif/src/fs/nfs.zig
+- [x] Implement NFS v3 server for virtual filesystem (mic-fs) in mic/src/fs/nfs.zig
 - [x] Create session overlay for tracking local changes before landing
-- [x] Add `hif mount` command to mount project as virtual filesystem
-- [x] Add `hif unmount` command to cleanly unmount virtual filesystem
-- [ ] Implement prefetch on directory open for better performance
-- [ ] Create bloom filter rollup background job for O(log n) conflict detection at scale
-- [ ] Add epoch batching mode for high-throughput landing scenarios
+- [x] Add `mic mount` command to mount project as virtual filesystem
+- [x] Add `mic unmount` command to cleanly unmount virtual filesystem
+- [x] Implement prefetch on directory open for better performance
+- [x] Create bloom filter rollup background job for O(log n) conflict detection at scale
+- [x] Add epoch batching mode for high-throughput landing scenarios
 - [ ] Implement CDN integration for blob serving
 - [ ] Add delta compression for efficient storage of similar files
-- [ ] Create `hif blame` command showing which session introduced each line
-- [ ] Implement `hif cat` command to print file contents at any ref
-- [ ] Add `hif ls` command to list directory contents at any ref
+- [ ] Create `mic blame` command showing which session introduced each line
+- [ ] Implement `mic cat` command to print file contents at any ref
+- [ ] Add `mic ls` command to list directory contents at any ref
 
 ### Documentation & Testing
 
@@ -69,7 +73,7 @@ Micelio is a minimalist, open-source git forge built with Elixir/Phoenix, design
 - [ ] Create property-based tests for bloom filter operations using StreamData
 - [ ] Write end-to-end tests for the complete land workflow
 - [ ] Add memory leak detection tests for Zig components
-- [ ] Create user documentation for common hif workflows
+- [ ] Create user documentation for common mic workflows
 - [ ] Add architecture decision records (ADRs) for key design choices
 - [ ] Ensure website is mobile-responsive and renders correctly on all screen sizes
 - [ ] Add Playwright tests to verify mobile layout on various viewport sizes
@@ -82,6 +86,15 @@ Micelio is a minimalist, open-source git forge built with Elixir/Phoenix, design
 - [ ] Create project access tokens with scoped permissions
 - [ ] Implement branch protection rules for preventing direct lands to main
 - [ ] Add secret scanning to prevent credential leaks in landed sessions
+
+### Legal & Terms
+
+- [ ] Design simplified legal pages with user responsibility disclaimers
+  - Create minimal Terms of Service with broad disclaimers instead of detailed legal pages
+  - Make users solely responsible for the content they host
+  - Example: "By using this service, you agree that you are solely responsible for the content you host"
+  - Remove need for separate detailed privacy/cookie/terms/impressum pages
+  - Single page covering all necessary disclaimers in plain language
 
 ### Platform Limits & Rate Limiting
 
