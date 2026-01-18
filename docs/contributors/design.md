@@ -740,4 +740,4 @@ Storage path pattern: `sessions/{session_id}/changes/{file_path}`
 
 ---
 
-*Built by Ruby and contributors. Apache-2.0 licensed.*
+*Built by Ruby and contributors. MPL-2.0 licensed.*
