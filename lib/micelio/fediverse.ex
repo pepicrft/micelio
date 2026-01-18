@@ -8,6 +8,8 @@ defmodule Micelio.Fediverse do
   alias Micelio.Accounts
   alias Micelio.Accounts.Account
   alias Micelio.Fediverse.Follower
+  alias Micelio.Projects
+  alias Micelio.Projects.Project
   alias Micelio.Repo
 
   @activity_context "https://www.w3.org/ns/activitystreams"
@@ -53,6 +55,17 @@ defmodule Micelio.Fediverse do
     end
   end
 
+  def project_for_handle(account_handle, project_handle)
+      when is_binary(account_handle) and is_binary(project_handle) do
+    with {:ok, organization} <- Accounts.get_organization_by_handle(account_handle),
+         %Project{} = project <- Projects.get_project_by_handle(organization.id, project_handle),
+         true <- project.visibility == "public" do
+      {:ok, {organization.account, project}}
+    else
+      _ -> {:error, :not_found}
+    end
+  end
+
   def actor_payload(%Account{} = account) do
     handle = account.handle
     actor_url = actor_url(handle)
@@ -71,6 +84,36 @@ defmodule Micelio.Fediverse do
       "following" => following_url(handle)
     }
     |> maybe_put_public_key(actor_url)
+  end
+
+  def profile_payload(%Account{} = account) do
+    handle = account.handle
+
+    %{
+      "@context" => @activity_context,
+      "id" => profile_activity_url(handle),
+      "type" => "Profile",
+      "name" => display_name(account),
+      "url" => profile_url(handle),
+      "describes" => actor_url(handle)
+    }
+  end
+
+  def project_payload(%Account{} = account, %Project{} = project) do
+    account_handle = account.handle
+    project_handle = project.handle
+
+    %{
+      "@context" => @activity_context,
+      "id" => project_activity_url(account_handle, project_handle),
+      "type" => "Project",
+      "name" => project.name || project.handle,
+      "url" => project_url(account_handle, project_handle),
+      "attributedTo" => actor_url(account_handle)
+    }
+    |> maybe_put_summary(project.description)
+    |> maybe_put_timestamp("published", project.inserted_at)
+    |> maybe_put_timestamp("updated", project.updated_at)
   end
 
   def outbox_payload(handle) when is_binary(handle) do
@@ -114,6 +157,19 @@ defmodule Micelio.Fediverse do
 
   def following_url(handle) when is_binary(handle),
     do: absolute_url("/ap/actors/#{handle}/following")
+
+  def profile_activity_url(handle) when is_binary(handle),
+    do: absolute_url("/ap/profiles/#{handle}")
+
+  def project_activity_url(account_handle, project_handle)
+      when is_binary(account_handle) and is_binary(project_handle) do
+    absolute_url("/ap/projects/#{account_handle}/#{project_handle}")
+  end
+
+  def project_url(account_handle, project_handle)
+      when is_binary(account_handle) and is_binary(project_handle) do
+    absolute_url("/#{account_handle}/#{project_handle}")
+  end
 
   def profile_url(handle) when is_binary(handle), do: absolute_url("/#{handle}")
 
@@ -211,6 +267,33 @@ defmodule Micelio.Fediverse do
         payload
     end
   end
+
+  defp maybe_put_summary(payload, summary) when is_binary(summary) do
+    if summary == "" do
+      payload
+    else
+      Map.put(payload, "summary", summary)
+    end
+  end
+
+  defp maybe_put_summary(payload, _summary), do: payload
+
+  defp maybe_put_timestamp(payload, key, timestamp) do
+    case format_datetime(timestamp) do
+      nil -> payload
+      formatted -> Map.put(payload, key, formatted)
+    end
+  end
+
+  defp format_datetime(%DateTime{} = timestamp), do: DateTime.to_iso8601(timestamp)
+
+  defp format_datetime(%NaiveDateTime{} = timestamp) do
+    timestamp
+    |> DateTime.from_naive!("Etc/UTC")
+    |> DateTime.to_iso8601()
+  end
+
+  defp format_datetime(_timestamp), do: nil
 
   defp absolute_url(path) do
     MicelioWeb.Endpoint.url() <> path

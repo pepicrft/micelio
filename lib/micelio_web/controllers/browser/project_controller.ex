@@ -12,6 +12,7 @@ defmodule MicelioWeb.Browser.ProjectController do
   alias MicelioWeb.CodeHighlighter
   alias MicelioWeb.Markdown
   alias MicelioWeb.PageMeta
+  alias MicelioWeb.SchemaOrg
 
   def show(conn, %{"account" => account_handle, "project" => project_handle}) do
     render_tree(conn, account_handle, project_handle, "")
@@ -29,18 +30,11 @@ defmodule MicelioWeb.Browser.ProjectController do
     render_blob(conn, account_handle, project_handle, Enum.join(path, "/"))
   end
 
-  def blame(conn, %{
-        "account" => account_handle,
-        "project" => project_handle,
-        "path" => path
-      }) do
+  def blame(conn, %{"account" => account_handle, "project" => project_handle, "path" => path}) do
     render_blame(conn, account_handle, project_handle, Enum.join(path, "/"))
   end
 
-  def toggle_star(
-        conn,
-        %{"account" => account_handle, "project" => project_handle} = params
-      ) do
+  def toggle_star(conn, %{"account" => account_handle, "project" => project_handle} = params) do
     return_to = get_in(params, ["star", "return_to"])
 
     with account when not is_nil(account) <- conn.assigns.selected_account,
@@ -184,6 +178,8 @@ defmodule MicelioWeb.Browser.ProjectController do
     |> assign(:readme, readme)
     |> assign_star_data(project)
     |> assign_fork_data(project)
+    |> assign_badge_data(account, project)
+    |> maybe_assign_schema_json_ld(dir_path, account, project)
     |> render(:show)
   end
 
@@ -283,6 +279,27 @@ defmodule MicelioWeb.Browser.ProjectController do
     end
   end
 
+  defp maybe_assign_schema_json_ld(conn, dir_path, account, project) do
+    if dir_path == "" do
+      assign(conn, :schema_json_ld, project_schema_json_ld(account, project))
+    else
+      conn
+    end
+  end
+
+  defp project_schema_json_ld(account, project) do
+    project_url = url(~p"/#{account.handle}/#{project.handle}")
+    author_url = url(~p"/#{account.handle}")
+
+    account
+    |> SchemaOrg.software_source_code(project,
+      url: project_url,
+      code_repository: project_url,
+      author_url: author_url
+    )
+    |> SchemaOrg.encode()
+  end
+
   defp assign_star_data(conn, project) do
     return_to = current_path(conn)
 
@@ -323,6 +340,25 @@ defmodule MicelioWeb.Browser.ProjectController do
     |> assign(:fork_form, form)
     |> assign(:fork_organizations, fork_organizations)
     |> assign(:fork_organization_options, fork_organization_options(fork_organizations))
+  end
+
+  defp assign_badge_data(conn, account, project) do
+    if project.visibility == "public" do
+      badge_url = url(~p"/#{account.handle}/#{project.handle}/badge.svg")
+      project_url = url(~p"/#{account.handle}/#{project.handle}")
+      badge_label = "#{account.handle}/#{project.handle}"
+
+      badge_markdown = "[![#{badge_label}](#{badge_url})](#{project_url})"
+      badge_html = "<a href=\"#{project_url}\"><img src=\"#{badge_url}\" alt=\"#{badge_label} badge\" /></a>"
+
+      conn
+      |> assign(:badge_visible?, true)
+      |> assign(:badge_url, badge_url)
+      |> assign(:badge_markdown, badge_markdown)
+      |> assign(:badge_html, badge_html)
+    else
+      assign(conn, :badge_visible?, false)
+    end
   end
 
   defp safe_return_path(return_to, account_handle, project_handle) do

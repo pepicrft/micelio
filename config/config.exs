@@ -43,6 +43,13 @@ config :micelio, Micelio.GRPC,
   port: 50_051,
   require_auth_token: false
 
+config :micelio, Micelio.Theme,
+  storage: Micelio.Theme.Storage.S3,
+  generator: Micelio.Theme.Generator.LLM,
+  prefix: "themes/daily",
+  llm_endpoint: "https://api.openai.com/v1/responses",
+  llm_model: "gpt-4.1-mini"
+
 # Configure the mailer
 #
 # By default it uses the "Local" adapter which stores the emails
@@ -64,6 +71,8 @@ config :micelio, MicelioWeb.Endpoint,
   live_view: [signing_salt: "uBaIW6yU"]
 
 config :micelio, :admin_emails, []
+config :micelio, :github_oauth, []
+config :micelio, :gitlab_oauth, []
 
 config :micelio,
   ecto_repos: [Micelio.Repo],

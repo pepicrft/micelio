@@ -3,11 +3,30 @@ defmodule MicelioWeb.ActivityPubControllerTest do
 
   alias Micelio.Accounts
   alias Micelio.Fediverse
+  alias Micelio.Projects
 
   defp create_handle do
     email = "ap#{System.unique_integer()}@example.com"
     {:ok, user} = Accounts.get_or_create_user_by_email(email)
     user.account.handle
+  end
+
+  defp create_project(attrs \\ %{}) do
+    suffix = System.unique_integer([:positive])
+
+    {:ok, organization} =
+      Accounts.create_organization(%{handle: "org#{suffix}", name: "Org #{suffix}"})
+
+    {:ok, project} =
+      Projects.create_project(%{
+        handle: Map.get(attrs, :handle, "proj#{suffix}"),
+        name: Map.get(attrs, :name, "Project #{suffix}"),
+        description: Map.get(attrs, :description, "ActivityPub project"),
+        organization_id: organization.id,
+        visibility: Map.get(attrs, :visibility, "public")
+      })
+
+    {organization, project}
   end
 
   test "webfinger returns actor link", %{conn: conn} do
@@ -37,6 +56,34 @@ defmodule MicelioWeb.ActivityPubControllerTest do
     assert response["followers"] == Fediverse.followers_url(handle)
     assert response["following"] == Fediverse.following_url(handle)
     assert "https://www.w3.org/ns/activitystreams" in response["@context"]
+  end
+
+  test "profile returns activitypub payload", %{conn: conn} do
+    handle = create_handle()
+
+    conn = get(conn, ~p"/ap/profiles/#{handle}")
+    response = json_response(conn, 200)
+
+    assert response["id"] == Fediverse.profile_activity_url(handle)
+    assert response["type"] == "Profile"
+    assert response["name"] == handle
+    assert response["url"] == Fediverse.profile_url(handle)
+    assert response["describes"] == Fediverse.actor_url(handle)
+  end
+
+  test "project returns activitypub payload", %{conn: conn} do
+    {organization, project} = create_project()
+    account_handle = organization.account.handle
+
+    conn = get(conn, ~p"/ap/projects/#{account_handle}/#{project.handle}")
+    response = json_response(conn, 200)
+
+    assert response["id"] == Fediverse.project_activity_url(account_handle, project.handle)
+    assert response["type"] == "Project"
+    assert response["name"] == project.name
+    assert response["summary"] == project.description
+    assert response["url"] == Fediverse.project_url(account_handle, project.handle)
+    assert response["attributedTo"] == Fediverse.actor_url(account_handle)
   end
 
   test "outbox is an empty ordered collection", %{conn: conn} do
@@ -125,6 +172,13 @@ defmodule MicelioWeb.ActivityPubControllerTest do
 
   test "unknown actor returns 404", %{conn: conn} do
     conn = get(conn, ~p"/ap/actors/unknown")
+    assert conn.status == 404
+  end
+
+  test "private project returns 404", %{conn: conn} do
+    {organization, project} = create_project(%{visibility: "private"})
+
+    conn = get(conn, ~p"/ap/projects/#{organization.account.handle}/#{project.handle}")
     assert conn.status == 404
   end
 end

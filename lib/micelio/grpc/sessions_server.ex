@@ -16,8 +16,8 @@ defmodule Micelio.GRPC.Sessions.V1.SessionService.Server do
 
   alias Micelio.Hif.Binary
   alias Micelio.Hif.Landing
-  alias Micelio.OAuth.AccessTokens
   alias Micelio.Notifications
+  alias Micelio.OAuth.AccessTokens
   alias Micelio.Projects
   alias Micelio.Sessions
   alias Micelio.Sessions.ChangeStore

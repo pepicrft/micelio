@@ -40,7 +40,7 @@ Micelio is a minimalist, open-source git forge built with Elixir/Phoenix, design
 - [x] Add JSON-LD structured data for SEO (Schema.org SoftwareSourceCode)
 - [x] Create embeddable badges for projects (Shields.io-style for Micelio)
 - [x] Implement ActivityPub federation for projects and profiles
-- [ ] Add GitHub OAuth authentication
+- [x] Add GitHub OAuth authentication
   - Store as OAuthIdentity linked to user by provider_user_id (github_id), NOT by email
   - OAuthIdentity: user_id + provider + provider_user_id
 - [ ] Add GitLab OAuth authentication
@@ -236,3 +236,233 @@ This section addresses critical challenges with AI-generated contributions ident
   - Low confidence = require human review
   - Display confidence score on all contributions
   - Learn from historical data to improve scoring accuracy
+
+### Per-Account S3 Artifact Storage
+
+Allow users to configure their own S3-compatible storage for artifacts (OG images, themes, agent outputs, etc.) instead of using the instance-level bucket. This enables data sovereignty, cost control, and compliance requirements.
+
+- [ ] **Design S3Config Schema and Migration**
+  - Create `s3_configs` table with fields:
+    - `id` (UUID primary key)
+    - `user_id` (foreign key to users, unique constraint for one config per user)
+    - `provider` (enum: aws_s3 | cloudflare_r2 | minio | digitalocean_spaces | backblaze_b2 | wasabi | custom)
+    - `bucket_name` (string, required)
+    - `region` (string, required for AWS/DO/Wasabi, optional for R2/MinIO)
+    - `endpoint_url` (string, required for non-AWS providers like R2, MinIO)
+    - `access_key_id` (string, encrypted at rest)
+    - `secret_access_key` (string, encrypted at rest using Cloak)
+    - `path_prefix` (string, optional - for organizing files within bucket)
+    - `validated_at` (datetime, null until validation passes)
+    - `last_error` (text, stores last validation/usage error)
+    - `inserted_at`, `updated_at` timestamps
+  - Add database index on `user_id` for fast lookups
+  - Create Ecto schema with Cloak.Ecto.Binary for encrypted fields
+
+- [ ] **Implement Credential Encryption with Cloak**
+  - Add `cloak` and `cloak_ecto` dependencies
+  - Configure Cloak vault with AES-GCM-256 encryption
+  - Store encryption key in environment variable (CLOAK_KEY)
+  - Create custom Ecto type `EncryptedBinary` for S3 credentials
+  - Implement key rotation strategy for Cloak vault
+  - Ensure encrypted fields are never logged or exposed in error messages
+  - Add `redact: true` to credential fields in Ecto schema
+
+- [ ] **Build S3 Credential Validation Service**
+  - Create `Micelio.Storage.S3Validator` module
+  - Implement validation steps:
+    1. Parse and validate endpoint URL format
+    2. Test connection with `HeadBucket` operation (verify bucket exists)
+    3. Test write permission with `PutObject` to `.micelio-test` file
+    4. Test read permission with `GetObject` on the test file
+    5. Test delete permission with `DeleteObject` on the test file
+    6. Verify bucket is not public (optional security check)
+  - Return structured validation result with specific error messages
+  - Handle provider-specific quirks:
+    - Cloudflare R2: no region required, use account ID in endpoint
+    - MinIO: custom endpoint, may not support all S3 operations
+    - Backblaze B2: S3-compatible endpoint differs from native API
+  - Implement timeout and retry logic for validation requests
+  - Cache validation results to avoid repeated checks
+
+- [ ] **Create Fallback Logic for Storage Operations**
+  - Create `Micelio.Storage` behaviour with `put/3`, `get/2`, `delete/2`, `url/2`
+  - Implement `Micelio.Storage.UserS3` adapter that:
+    1. Looks up user's S3Config (with caching via ETS or ConCache)
+    2. Falls back to instance S3 if user has no config or config is invalid
+    3. Logs which storage backend was used for debugging
+  - Handle graceful degradation when user S3 fails:
+    - Log error and alert user
+    - Optionally fall back to instance storage with notification
+    - Mark S3Config as invalid after N consecutive failures
+  - Add telemetry events for storage operations (success, failure, fallback)
+  - Create background job to periodically revalidate S3 configs
+
+- [ ] **Build S3 Configuration UI**
+  - Create LiveView at `/settings/storage` for S3 configuration
+  - Form fields with provider-specific dynamic sections:
+    - Provider dropdown (shows/hides relevant fields based on selection)
+    - Bucket name with validation (alphanumeric, hyphens, 3-63 chars)
+    - Region dropdown (populated based on provider)
+    - Endpoint URL (auto-populated for known providers, editable for custom)
+    - Access Key ID input
+    - Secret Access Key input (masked, with show/hide toggle)
+    - Path prefix (optional)
+  - "Test Connection" button that validates without saving
+  - Real-time validation feedback (spinner, success/error states)
+  - Show current validation status and last error if any
+  - "Remove Configuration" button to delete and revert to instance storage
+  - Help text explaining each provider's setup requirements
+  - Link to documentation for obtaining credentials from each provider
+
+- [ ] **Document Security Considerations and IAM Policies**
+  - Create documentation for recommended IAM policies per provider:
+    - AWS: minimal IAM policy with only required S3 permissions
+    - R2: API token with Object Read & Write permissions
+    - MinIO: policy JSON for bucket-specific access
+  - Document encryption requirements:
+    - Encryption at rest in Micelio database (Cloak)
+    - Recommend users enable server-side encryption on their buckets
+  - Security checklist for users:
+    - Use dedicated credentials (not root/admin)
+    - Enable bucket versioning for data recovery
+    - Configure bucket lifecycle policies for cost control
+    - Disable public access on bucket
+  - Add rate limiting on validation endpoint to prevent credential stuffing
+  - Implement audit logging for S3 config changes
+
+### Error Tracking & Monitoring
+
+Implement a self-hosted error tracking system that persists errors to the database with admin-only access. This avoids external service dependencies while providing visibility into application health.
+
+- [ ] **Choose Error Tracking Approach: Custom + Sentry (Hybrid)**
+  - **Recommended approach**: Custom database persistence + optional Sentry integration
+  - Rationale:
+    - Custom DB storage ensures errors are queryable and never leave the instance
+    - Sentry integration (via `sentry` hex package) is optional for users who want it
+    - Admin-only access is easier to implement with custom solution
+    - No external dependency for core functionality
+  - Create feature flag `ENABLE_EXTERNAL_SENTRY` for optional forwarding
+  - Alternative considered: Rollbax (Rollbar), AppSignal, Honeybadger
+    - All require external services, not ideal for self-hosted forge
+
+- [ ] **Design Error Schema and Database Storage**
+  - Create `errors` table with fields:
+    - `id` (UUID primary key)
+    - `fingerprint` (string, hash of error for deduplication)
+    - `kind` (enum: exception | oban_job | liveview_crash | plug_error | agent_crash)
+    - `message` (text, error message)
+    - `stacktrace` (text, full stacktrace as string)
+    - `metadata` (jsonb, request params, user_id, agent_id, job args, etc.)
+    - `context` (jsonb, Phoenix assigns, LiveView socket info, etc.)
+    - `severity` (enum: debug | info | warning | error | critical)
+    - `occurred_at` (datetime with timezone)
+    - `user_id` (foreign key, nullable - who triggered the error)
+    - `project_id` (foreign key, nullable - which project context)
+    - `resolved_at` (datetime, null until marked resolved)
+    - `resolved_by_id` (foreign key to admins)
+    - `occurrence_count` (integer, incremented on duplicate fingerprint)
+    - `first_seen_at`, `last_seen_at` (datetimes for tracking)
+  - Add indexes on: `fingerprint`, `kind`, `severity`, `occurred_at`, `resolved_at`
+  - Implement retention policy: auto-delete errors older than N days (configurable)
+  - Create `Micelio.Errors.Error` Ecto schema
+
+- [ ] **Implement Error Capture Pipeline**
+  - Create `Micelio.Errors.Capture` module with:
+    - `capture_exception/2` - capture any exception with context
+    - `capture_message/3` - capture string message with severity
+  - Integrate capture points:
+    - `Plug.ErrorHandler` - capture all unhandled Plug/Phoenix errors
+    - Custom `Logger` backend to capture error-level logs
+    - `Oban.Telemetry` handler for job failures and crashes
+    - `Phoenix.LiveView` error boundary for LiveView crashes
+  - Implement fingerprinting algorithm:
+    - Hash of: exception module + message pattern + first N stack frames
+    - Normalize dynamic values in messages (IDs, timestamps)
+  - Add deduplication: increment `occurrence_count` for same fingerprint within window
+  - Implement async capture via `Task.Supervisor` to avoid blocking requests
+  - Add telemetry events for error capture metrics
+
+- [ ] **Add LiveView Error Boundaries**
+  - Implement `Micelio.ErrorBoundary` component wrapper
+  - Catch `{:EXIT, ...}` and render fallback UI instead of crashing
+  - Capture error to database with LiveView context:
+    - Socket assigns (sanitized - no sensitive data)
+    - Current route and params
+    - User ID if authenticated
+  - Show user-friendly error message with "Report" button (optional)
+  - Allow retry/refresh from error state
+  - Create error boundary for agent progress LiveView specifically
+  - Document pattern for wrapping components in error boundaries
+
+- [ ] **Capture Agent and Background Job Errors**
+  - Hook into Oban telemetry events:
+    - `:oban, :job, :exception` - job crashed
+    - `:oban, :job, :discard` - job discarded after max attempts
+  - Capture job context: worker module, args, attempt count, queue
+  - For agent errors specifically:
+    - Capture agent ID and project context
+    - Store last N agent actions before crash
+    - Link error to agent session for debugging
+  - Create `Micelio.Errors.ObanReporter` telemetry handler
+  - Implement `Micelio.Errors.AgentReporter` for agent-specific crashes
+  - Add correlation ID to trace errors across job retries
+
+- [ ] **Build Admin Error Dashboard**
+  - Create admin-only LiveView at `/admin/errors`
+  - Dashboard views:
+    - **Overview**: error count by severity (last 24h, 7d, 30d), trend charts
+    - **List view**: paginated error list with filtering and sorting
+    - **Detail view**: full error info, stacktrace, metadata, occurrences timeline
+  - Filtering options:
+    - By kind (exception, oban, liveview, agent)
+    - By severity (error, critical)
+    - By date range
+    - By resolved/unresolved status
+    - By project or user
+    - Full-text search on message
+  - Actions:
+    - Mark as resolved (with optional note)
+    - Bulk resolve similar errors
+    - Delete error (with confirmation)
+    - Copy stacktrace to clipboard
+  - Display occurrence count and first/last seen times
+  - Show affected users count per error
+  - Require admin role (`is_admin: true`) for all error routes
+
+- [ ] **Implement Error Notifications**
+  - Create `Micelio.Errors.Notifier` module
+  - Notification triggers:
+    - First occurrence of new error fingerprint (severity >= error)
+    - Error occurrence rate exceeds threshold (e.g., >10 in 5 minutes)
+    - Critical severity errors (always notify immediately)
+  - Notification channels:
+    - Email to admin users (use existing email infrastructure)
+    - Webhook to configured URL (for Slack/Discord integration)
+    - Optional: Slack incoming webhook with formatted message
+  - Notification content:
+    - Error message and kind
+    - First occurrence time
+    - Occurrence count
+    - Link to error detail in admin dashboard
+  - Implement notification rate limiting:
+    - Max 1 notification per error fingerprint per hour
+    - Max 10 notifications total per hour (prevent notification storms)
+  - Create admin settings page for notification preferences
+  - Support quiet hours configuration (no notifications during certain times)
+
+- [ ] **Add Rate Limiting and Retention Policies**
+  - Implement error capture rate limiting:
+    - Max 100 errors per minute per error kind
+    - Max 1000 total errors per minute instance-wide
+    - When limit hit, log warning and drop excess errors
+  - Create Oban job for error retention cleanup:
+    - Run daily at low-traffic time
+    - Delete resolved errors older than 30 days (configurable)
+    - Delete unresolved errors older than 90 days (configurable)
+    - Archive to S3 before deletion (optional, for compliance)
+  - Implement error sampling for high-volume errors:
+    - After N occurrences of same fingerprint, sample at 10%
+    - Always capture first occurrence in full
+  - Add database vacuum/analyze after bulk deletions
+  - Monitor errors table size and alert if growing too large
+  - Create admin setting for retention policy configuration

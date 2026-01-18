@@ -12,6 +12,7 @@
 @import "./routes/auth.css";
 @import "./routes/projects.css";
 @import "./routes/sessions.css";
+@import "./routes/agent_progress.css";
 @import "./routes/organizations.css";
 @import "./routes/device_auth.css";
 @import "./routes/account_devices.css";

@@ -29,3 +29,7 @@
   color: var(--theme-ui-colors-muted);
 }
 
+.site-footer-personality {
+  margin-top: var(--theme-ui-space-2);
+  color: var(--theme-ui-colors-text);
+}

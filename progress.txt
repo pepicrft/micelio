@@ -1,3 +1,12 @@
 - Marked user activity graph task complete in PRD; verified existing activity graph UI/data/tests.
 - Completed tiered storage caching layer checks: fixed cache metadata handling, added tiered cache tests, and improved local lock fallback; ran scoped mix test/format with pubsub override.
 - Completed admin dashboard readiness work: fixed admin access guard, search query FTS usage, fork target UUID handling, repository path link encoding, and updated related tests; ran mix test/format/precommit with Mix pubsub workaround in sandbox.
+- Added sync reminder to AGENTS/skill guide, added static asset alignment test, and verified guide parity via ExUnit and formatter check (Mix PubSub blocked in sandbox).
+- Added Schema.org SoftwareSourceCode JSON-LD for project pages, added schema generator tests, and ran targeted mix test/format with Mix PubSub/lock sandbox workaround.
+- Added configurable Micelio workspace seeding, allowed reserved handle for system org creation, updated repository UI tests to match project IDs, and ran mix test/format/precommit with Mix PubSub/lock workaround.
+- Added OG image cache-bust query param for social invalidation, updated OG image test coverage, ran mix test/format/precommit with Mix PubSub/lock workaround in sandbox.
+- Verified public agent LiveView behavior for private repos, aligned redirect expectation in agent LiveView tests, ran mix test/format with Mix PubSub sandbox workaround.
+- Added LLM theme generator tests, updated PRD completion, ran direct ExUnit test and formatter check with Mix PubSub restriction workaround.
+- Marked embeddable project badges task complete in PRD after verifying existing badge endpoint, UI snippets, and tests.
+- Added ActivityPub profile/project endpoints with payload helpers, tests for project/profile federation responses, and updated PRD completion.
+- Added GitHub OAuth callback error test, verified auth controller coverage, and marked GitHub OAuth task complete; ran ExUnit via elixir with manual config/format checks due to Mix PubSub socket restrictions.

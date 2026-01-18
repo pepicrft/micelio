@@ -89,8 +89,43 @@
             Settings
           </a>
         <% end %>
+        <%= if Micelio.Authorization.authorize(:project_read, @current_user, @project) == :ok do %>
+          <a
+            href={~p"/#{@account.handle}/#{@project.handle}/agents"}
+            class="project-show-action project-show-action-agents"
+            id="project-agents-link"
+          >
+            Agents
+          </a>
+        <% end %>
       </:actions>
     </.header>
+
+    <%= if @badge_visible? do %>
+      <section class="project-badge" id="project-badge">
+        <h2 class="project-badge-title">Badge</h2>
+        <p class="project-badge-description">
+          Embed this badge in your README to show project stars.
+        </p>
+        <div class="project-badge-preview">
+          <img src={@badge_url} alt={"#{@account.handle}/#{@project.handle} badge"} />
+        </div>
+        <div class="project-badge-snippets">
+          <div class="project-badge-snippet">
+            <h3>Markdown</h3>
+            <pre class="project-badge-code" id="project-badge-markdown">
+              <code>{@badge_markdown}</code>
+            </pre>
+          </div>
+          <div class="project-badge-snippet">
+            <h3>HTML</h3>
+            <pre class="project-badge-code" id="project-badge-html">
+              <code>{@badge_html}</code>
+            </pre>
+          </div>
+        </div>
+      </section>
+    <% end %>
 
     <div class="project-browser">
       <% segments = if @dir_path == "", do: [], else: String.split(@dir_path, "/") %>

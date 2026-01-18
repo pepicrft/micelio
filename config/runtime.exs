@@ -121,6 +121,16 @@ grpc_tls_certfile = System.get_env("MICELIO_GRPC_TLS_CERTFILE")
 grpc_tls_keyfile = System.get_env("MICELIO_GRPC_TLS_KEYFILE")
 grpc_tls_cacertfile = System.get_env("MICELIO_GRPC_TLS_CACERTFILE")
 
+micelio_workspace_path =
+  case System.get_env("MICELIO_WORKSPACE_PATH") do
+    nil ->
+      nil
+
+    value ->
+      trimmed = String.trim(value)
+      if trimmed != "", do: trimmed
+  end
+
 grpc_tls_mode =
   case System.get_env("MICELIO_GRPC_TLS_MODE") do
     "proxy" -> :proxy
@@ -170,6 +180,48 @@ grpc_tls =
   end
 
 config :micelio, Micelio.Storage, storage_config
+config :micelio, :micelio_workspace_path, micelio_workspace_path
+
+github_oauth =
+  [
+    client_id: System.get_env("GITHUB_OAUTH_CLIENT_ID"),
+    client_secret: System.get_env("GITHUB_OAUTH_CLIENT_SECRET"),
+    redirect_uri: System.get_env("GITHUB_OAUTH_REDIRECT_URI")
+  ]
+  |> Enum.reject(fn {_key, value} -> is_nil(value) or value == "" end)
+
+if github_oauth != [] do
+  config :micelio, :github_oauth, github_oauth
+end
+
+gitlab_oauth =
+  [
+    client_id: System.get_env("GITLAB_OAUTH_CLIENT_ID"),
+    client_secret: System.get_env("GITLAB_OAUTH_CLIENT_SECRET"),
+    redirect_uri: System.get_env("GITLAB_OAUTH_REDIRECT_URI")
+  ]
+  |> Enum.reject(fn {_key, value} -> is_nil(value) or value == "" end)
+
+if gitlab_oauth != [] do
+  config :micelio, :gitlab_oauth, gitlab_oauth
+end
+
+if config_env() == :prod do
+  theme_llm_endpoint =
+    System.get_env("THEME_LLM_ENDPOINT") || "https://api.openai.com/v1/responses"
+
+  theme_llm_api_key = System.get_env("THEME_LLM_API_KEY")
+  theme_llm_model = System.get_env("THEME_LLM_MODEL") || "gpt-4.1-mini"
+  theme_storage_prefix = System.get_env("THEME_STORAGE_PREFIX") || "themes/daily"
+
+  config :micelio, Micelio.Theme,
+    storage: Micelio.Theme.Storage.S3,
+    generator: Micelio.Theme.Generator.LLM,
+    prefix: theme_storage_prefix,
+    llm_endpoint: theme_llm_endpoint,
+    llm_api_key: theme_llm_api_key,
+    llm_model: theme_llm_model
+end
 
 if grpc_enabled do
   config :micelio, Micelio.GRPC,

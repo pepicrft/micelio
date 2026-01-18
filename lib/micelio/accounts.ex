@@ -7,6 +7,7 @@ defmodule Micelio.Accounts do
 
   alias Micelio.Accounts.{
     Account,
+    OAuthIdentity,
     Organization,
     OrganizationMembership,
     OrganizationRegistration,
@@ -53,18 +54,18 @@ defmodule Micelio.Accounts do
   @doc """
   Creates a new account for a user.
   """
-  def create_user_account(attrs) do
+  def create_user_account(attrs, opts \\ []) do
     %Account{}
-    |> Account.user_changeset(attrs)
+    |> Account.user_changeset(attrs, opts)
     |> Repo.insert()
   end
 
   @doc """
   Creates a new account for an organization.
   """
-  def create_organization_account(attrs) do
+  def create_organization_account(attrs, opts \\ []) do
     %Account{}
-    |> Account.organization_changeset(attrs)
+    |> Account.organization_changeset(attrs, opts)
     |> Repo.insert()
   end
 
@@ -210,6 +211,32 @@ defmodule Micelio.Accounts do
   end
 
   @doc """
+  Gets an OAuth identity by provider and provider user ID.
+  """
+  def get_oauth_identity(provider, provider_user_id)
+      when is_binary(provider) and is_binary(provider_user_id) do
+    Repo.get_by(OAuthIdentity, provider: provider, provider_user_id: provider_user_id)
+  end
+
+  @doc """
+  Gets or creates a user from an OAuth provider profile.
+  """
+  def get_or_create_user_from_oauth(provider, provider_user_id, email)
+      when is_binary(provider) and is_binary(provider_user_id) do
+    if is_binary(email) and String.trim(email) != "" do
+      case get_oauth_identity(provider, provider_user_id) do
+        %OAuthIdentity{} = identity ->
+          {:ok, Repo.preload(identity.user, :account)}
+
+        nil ->
+          create_user_for_oauth(provider, provider_user_id, email)
+      end
+    else
+      {:error, :missing_email}
+    end
+  end
+
+  @doc """
   Creates a new user with an associated personal account.
   If the user with this email already exists, returns the existing user.
   """
@@ -237,6 +264,47 @@ defmodule Micelio.Accounts do
     %User{}
     |> User.changeset(attrs)
     |> Repo.insert()
+  end
+
+  defp create_oauth_identity(attrs) do
+    %OAuthIdentity{}
+    |> OAuthIdentity.changeset(attrs)
+    |> Repo.insert()
+  end
+
+  defp create_user_for_oauth(provider, provider_user_id, email) do
+    Ecto.Multi.new()
+    |> Ecto.Multi.insert(:user, User.changeset(%User{}, %{email: email}))
+    |> Ecto.Multi.insert(:account, fn %{user: user} ->
+      Account.user_changeset(%Account{}, %{
+        handle: generate_handle_from_email(email),
+        user_id: user.id
+      })
+    end)
+    |> Ecto.Multi.insert(:identity, fn %{user: user} ->
+      OAuthIdentity.changeset(%OAuthIdentity{}, %{
+        provider: provider,
+        provider_user_id: provider_user_id,
+        user_id: user.id
+      })
+    end)
+    |> Repo.transaction()
+    |> case do
+      {:ok, %{user: user, account: account}} ->
+        {:ok, %{user | account: account}}
+
+      {:error, :identity, %Ecto.Changeset{} = changeset, _changes} ->
+        case get_oauth_identity(provider, provider_user_id) do
+          %OAuthIdentity{} = identity ->
+            {:ok, Repo.preload(identity.user, :account)}
+
+          nil ->
+            {:error, changeset}
+        end
+
+      {:error, _step, %Ecto.Changeset{} = changeset, _changes} ->
+        {:error, changeset}
+    end
   end
 
   defp generate_handle_from_email(email) do
@@ -313,14 +381,17 @@ defmodule Micelio.Accounts do
   @doc """
   Creates a new organization with an associated account.
   """
-  def create_organization(attrs) do
+  def create_organization(attrs, opts \\ []) do
     handle = Map.get(attrs, :handle) || Map.get(attrs, "handle")
     name = Map.get(attrs, :name) || Map.get(attrs, "name")
+    allow_reserved = Keyword.get(opts, :allow_reserved, false)
 
     Repo.transaction(fn ->
       with {:ok, org} <- do_create_organization(%{name: name}),
            {:ok, account} <-
-             create_organization_account(%{handle: handle, organization_id: org.id}) do
+             create_organization_account(%{handle: handle, organization_id: org.id},
+               allow_reserved: allow_reserved
+             ) do
         %{org | account: account}
       else
         {:error, changeset} -> Repo.rollback(changeset)
@@ -331,14 +402,17 @@ defmodule Micelio.Accounts do
   @doc """
   Creates a new organization and assigns the user as an owner.
   """
-  def create_organization_for_user(%User{} = user, attrs) do
+  def create_organization_for_user(%User{} = user, attrs, opts \\ []) do
     handle = Map.get(attrs, :handle) || Map.get(attrs, "handle")
     name = Map.get(attrs, :name) || Map.get(attrs, "name")
+    allow_reserved = Keyword.get(opts, :allow_reserved, false)
 
     Repo.transaction(fn ->
       with {:ok, org} <- do_create_organization(%{name: name}),
            {:ok, account} <-
-             create_organization_account(%{handle: handle, organization_id: org.id}),
+             create_organization_account(%{handle: handle, organization_id: org.id},
+               allow_reserved: allow_reserved
+             ),
            {:ok, _membership} <-
              create_organization_membership(%{
                user_id: user.id,

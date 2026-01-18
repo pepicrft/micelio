@@ -3,6 +3,8 @@ defmodule MicelioWeb.Browser.AuthController do
 
   alias Micelio.Accounts
   alias Micelio.Accounts.AuthEmail
+  alias Micelio.Auth.GitHub
+  alias Micelio.Auth.GitLab
   alias Micelio.Mailer
   alias MicelioWeb.PageMeta
 
@@ -79,6 +81,134 @@ defmodule MicelioWeb.Browser.AuthController do
   end
 
   @doc """
+  Redirects the user to GitHub for OAuth authentication.
+  """
+  def github_start(conn, _params) do
+    state = generate_oauth_state()
+
+    case GitHub.authorize_url(state) do
+      {:ok, authorize_url} ->
+        conn
+        |> put_session(:github_oauth_state, state)
+        |> redirect(external: authorize_url)
+
+      {:error, reason} ->
+        Logger.warning("GitHub OAuth not configured", reason: inspect(reason))
+
+        conn
+        |> put_flash(:error, "GitHub login is not available right now.")
+        |> redirect(to: ~p"/auth/login")
+    end
+  end
+
+  @doc """
+  Redirects the user to GitLab for OAuth authentication.
+  """
+  def gitlab_start(conn, _params) do
+    state = generate_oauth_state()
+
+    case GitLab.authorize_url(state) do
+      {:ok, authorize_url} ->
+        conn
+        |> put_session(:gitlab_oauth_state, state)
+        |> redirect(external: authorize_url)
+
+      {:error, reason} ->
+        Logger.warning("GitLab OAuth not configured", reason: inspect(reason))
+
+        conn
+        |> put_flash(:error, "GitLab login is not available right now.")
+        |> redirect(to: ~p"/auth/login")
+    end
+  end
+
+  @doc """
+  Handles the GitHub OAuth callback and signs the user in.
+  """
+  def github_callback(conn, %{"error" => error}) do
+    Logger.warning("GitHub OAuth callback error", error: error)
+
+    conn
+    |> put_flash(:error, "GitHub login failed. Please try again.")
+    |> redirect(to: ~p"/auth/login")
+  end
+
+  def github_callback(conn, %{"code" => code, "state" => state}) do
+    session_state = get_session(conn, :github_oauth_state)
+
+    if session_state == state and is_binary(session_state) do
+      conn = delete_session(conn, :github_oauth_state)
+
+      with {:ok, profile} <- GitHub.fetch_user_profile(code),
+           {:ok, user} <-
+             Accounts.get_or_create_user_from_oauth(
+               profile.provider,
+               profile.provider_user_id,
+               profile.email
+             ) do
+        conn
+        |> put_session(:user_id, user.id)
+        |> put_flash(:info, "Welcome back, #{user.account.handle}!")
+        |> redirect(to: login_redirect_path(conn))
+      else
+        {:error, reason} ->
+          Logger.warning("GitHub OAuth callback failed", reason: inspect(reason))
+
+          conn
+          |> put_flash(:error, "GitHub login failed. Please try again.")
+          |> redirect(to: ~p"/auth/login")
+      end
+    else
+      conn
+      |> put_flash(:error, "GitHub login failed. Please try again.")
+      |> redirect(to: ~p"/auth/login")
+    end
+  end
+
+  @doc """
+  Handles the GitLab OAuth callback and signs the user in.
+  """
+  def gitlab_callback(conn, %{"error" => error}) do
+    Logger.warning("GitLab OAuth callback error", error: error)
+
+    conn
+    |> put_flash(:error, "GitLab login failed. Please try again.")
+    |> redirect(to: ~p"/auth/login")
+  end
+
+  def gitlab_callback(conn, %{"code" => code, "state" => state}) do
+    session_state = get_session(conn, :gitlab_oauth_state)
+
+    if session_state == state and is_binary(session_state) do
+      conn = delete_session(conn, :gitlab_oauth_state)
+
+      with {:ok, profile} <- GitLab.fetch_user_profile(code),
+           {:ok, user} <-
+             Accounts.get_or_create_user_from_oauth(
+               profile.provider,
+               profile.provider_user_id,
+               profile.email
+             ) do
+        conn
+        |> put_session(:user_id, user.id)
+        |> put_flash(:info, "Welcome back, #{user.account.handle}!")
+        |> redirect(to: login_redirect_path(conn))
+      else
+        {:error, reason} ->
+          Logger.warning("GitLab OAuth callback failed", reason: inspect(reason))
+
+          conn
+          |> put_flash(:error, "GitLab login failed. Please try again.")
+          |> redirect(to: ~p"/auth/login")
+      end
+    else
+      conn
+      |> put_flash(:error, "GitLab login failed. Please try again.")
+      |> redirect(to: ~p"/auth/login")
+    end
+  end
+
+  @doc """
   Verifies the magic link token and logs the user in.
   """
   def verify(conn, %{"token" => token}) do
@@ -131,5 +261,11 @@ defmodule MicelioWeb.Browser.AuthController do
     else
       ~p"/"
     end
+  end
+
+  defp generate_oauth_state do
+    16
+    |> :crypto.strong_rand_bytes()
+    |> Base.url_encode64(padding: false)
   end
 end

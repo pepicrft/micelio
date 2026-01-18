@@ -16,8 +16,9 @@ defmodule MicelioWeb.OpenGraphImageControllerTest do
     uri = URI.parse(image_url)
     [_, "og", hash] = String.split(uri.path || "", "/", parts: 3)
 
-    assert %{"token" => token} = URI.decode_query(uri.query || "")
+    assert %{"token" => token, "v" => v} = URI.decode_query(uri.query || "")
     assert is_binary(token) and token != ""
+    assert v == hash
 
     svg_key = OpenGraphImage.storage_key(hash, "svg")
     png_key = OpenGraphImage.storage_key(hash, "png")

@@ -66,6 +66,58 @@
   font-size: var(--theme-ui-fontSizes-small);
 }
 
+.project-badge {
+  margin-top: var(--theme-ui-space-2);
+  border: var(--theme-ui-borders-thin);
+  padding: var(--theme-ui-space-2);
+  background-color: var(--theme-ui-colors-background);
+}
+
+.project-badge-title {
+  font-weight: var(--theme-ui-fontWeights-bold);
+  margin-bottom: var(--theme-ui-space-1);
+}
+
+.project-badge-description {
+  color: var(--theme-ui-colors-secondary);
+  margin-bottom: var(--theme-ui-space-2);
+}
+
+.project-badge-preview {
+  display: flex;
+  align-items: center;
+  gap: var(--theme-ui-space-1);
+  margin-bottom: var(--theme-ui-space-2);
+}
+
+.project-badge-preview img {
+  height: 20px;
+}
+
+.project-badge-snippets {
+  display: grid;
+  gap: var(--theme-ui-space-2);
+}
+
+.project-badge-snippet h3 {
+  font-size: var(--theme-ui-fontSizes-body);
+  font-weight: var(--theme-ui-fontWeights-bold);
+  margin-bottom: var(--theme-ui-space-1);
+}
+
+.project-badge-code {
+  border: var(--theme-ui-borders-thin);
+  padding: var(--theme-ui-space-1);
+  background-color: var(--theme-ui-colors-border);
+  overflow-x: auto;
+}
+
+.project-badge-code code {
+  font-family: var(--theme-ui-fonts-mono);
+  font-size: 0.9em;
+  color: var(--theme-ui-colors-text);
+}
+
 .repository-fork-form {
   display: flex;
   flex-direction: column;

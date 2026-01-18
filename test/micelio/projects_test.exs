@@ -924,6 +924,7 @@ defmodule Micelio.ProjectsTest do
       assert project.name == "Micelio"
       assert project.description == "The Micelio platform"
       assert project.url == "https://micelio.dev"
+      assert project.visibility == "public"
 
       assert %OrganizationMembership{} =
                Repo.get_by(OrganizationMembership,
@@ -934,13 +935,16 @@ defmodule Micelio.ProjectsTest do
 
     test "backfills missing project metadata and is idempotent" do
       {:ok, organization} =
-        Accounts.create_organization(%{handle: "micelio", name: "Micelio"})
+        Accounts.create_organization(%{handle: "micelio", name: "Micelio"},
+          allow_reserved: true
+        )
 
       {:ok, project} =
         Projects.create_project(%{
           handle: "micelio",
           name: "Micelio",
-          organization_id: organization.id
+          organization_id: organization.id,
+          visibility: "private"
         })
 
       assert project.description == nil
@@ -950,6 +954,7 @@ defmodule Micelio.ProjectsTest do
       assert updated_project.id == project.id
       assert updated_project.description == "The Micelio platform"
       assert updated_project.url == "https://micelio.dev"
+      assert updated_project.visibility == "public"
 
       assert {:ok, %{project: same_project}} = Projects.ensure_micelio_workspace()
       assert same_project.id == updated_project.id

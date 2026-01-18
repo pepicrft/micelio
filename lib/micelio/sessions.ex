@@ -16,28 +16,19 @@ defmodule Micelio.Sessions do
   Returns the list of sessions for a project.
   """
   def list_sessions_for_project(%Project{} = project, opts \\ []) do
-    status_filter = Keyword.get(opts, :status)
-    sort = Keyword.get(opts, :sort, :newest)
+    project
+    |> build_project_sessions_query(opts)
+    |> Repo.all()
+  end
 
-    query =
-      Session
-      |> where([s], s.project_id == ^project.id)
-
-    query =
-      if status_filter && status_filter != "all" do
-        where(query, [s], s.status == ^status_filter)
-      else
-        query
-      end
-
-    query =
-      case sort do
-        :oldest -> order_by(query, asc: :started_at)
-        :status -> order_by(query, asc: :status, desc: :started_at)
-        _ -> order_by(query, desc: :started_at)
-      end
-
-    Repo.all(query)
+  @doc """
+  Returns the list of sessions for a project with user and change details preloaded.
+  """
+  def list_sessions_for_project_with_details(%Project{} = project, opts \\ []) do
+    project
+    |> build_project_sessions_query(opts)
+    |> preload([:changes, user: :account])
+    |> Repo.all()
   end
 
   @doc """
@@ -217,6 +208,28 @@ defmodule Micelio.Sessions do
       end
 
     Repo.aggregate(query, :count)
+  end
+
+  defp build_project_sessions_query(%Project{} = project, opts) do
+    status_filter = Keyword.get(opts, :status)
+    sort = Keyword.get(opts, :sort, :newest)
+
+    query =
+      Session
+      |> where([s], s.project_id == ^project.id)
+
+    query =
+      if status_filter && status_filter != "all" do
+        where(query, [s], s.status == ^status_filter)
+      else
+        query
+      end
+
+    case sort do
+      :oldest -> order_by(query, asc: :started_at)
+      :status -> order_by(query, asc: :status, desc: :started_at)
+      _ -> order_by(query, desc: :started_at)
+    end
   end
 
   defp load_change_content(%SessionChange{change_type: "deleted"}), do: nil

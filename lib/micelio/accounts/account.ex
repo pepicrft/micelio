@@ -18,11 +18,13 @@ defmodule Micelio.Accounts.Account do
   @doc """
   Changeset for creating a new account for a user.
   """
-  def user_changeset(account, attrs) do
+  def user_changeset(account, attrs, opts \\ []) do
+    allow_reserved = Keyword.get(opts, :allow_reserved, false)
+
     account
     |> cast(attrs, [:handle, :user_id])
     |> validate_required([:handle, :user_id])
-    |> validate_handle()
+    |> validate_handle(allow_reserved)
     |> unique_constraint(:handle, name: :accounts_handle_index)
     |> assoc_constraint(:user)
     |> validate_owner_exclusive()
@@ -31,11 +33,13 @@ defmodule Micelio.Accounts.Account do
   @doc """
   Changeset for creating a new account for an organization.
   """
-  def organization_changeset(account, attrs) do
+  def organization_changeset(account, attrs, opts \\ []) do
+    allow_reserved = Keyword.get(opts, :allow_reserved, false)
+
     account
     |> cast(attrs, [:handle, :organization_id])
     |> validate_required([:handle, :organization_id])
-    |> validate_handle()
+    |> validate_handle(allow_reserved)
     |> unique_constraint(:handle, name: :accounts_handle_index)
     |> assoc_constraint(:organization)
     |> validate_owner_exclusive()
@@ -51,14 +55,20 @@ defmodule Micelio.Accounts.Account do
   """
   def organization?(%__MODULE__{organization_id: org_id}), do: not is_nil(org_id)
 
-  defp validate_handle(changeset) do
-    changeset
-    |> validate_format(:handle, ~r/^[a-z0-9](?:[a-z0-9]|-(?=[a-z0-9])){0,38}$/i,
-      message:
-        "must contain only alphanumeric characters and single hyphens, cannot start or end with a hyphen"
-    )
-    |> validate_length(:handle, min: 1, max: 39)
-    |> validate_exclusion(:handle, Micelio.Handles.reserved(), message: "is reserved")
+  defp validate_handle(changeset, allow_reserved) do
+    changeset =
+      changeset
+      |> validate_format(:handle, ~r/^[a-z0-9](?:[a-z0-9]|-(?=[a-z0-9])){0,38}$/i,
+        message:
+          "must contain only alphanumeric characters and single hyphens, cannot start or end with a hyphen"
+      )
+      |> validate_length(:handle, min: 1, max: 39)
+
+    if allow_reserved do
+      changeset
+    else
+      validate_exclusion(changeset, :handle, Micelio.Handles.reserved(), message: "is reserved")
+    end
   end
 
   defp validate_owner_exclusive(changeset) do

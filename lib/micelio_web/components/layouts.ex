@@ -124,6 +124,12 @@ defmodule MicelioWeb.Layouts do
         <a href={~p"/cookies"}>cookie policy</a>
       </nav>
 
+      <%= if personality = Micelio.Theme.daily_personality() do %>
+        <div class="site-footer-personality" id="daily-personality">
+          Daily personality: {personality.name}. {personality.description}
+        </div>
+      <% end %>
+
       <div class="site-footer-meta">
         © {Date.utc_today().year} Micelio
       </div>

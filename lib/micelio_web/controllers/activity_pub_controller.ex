@@ -27,6 +27,26 @@ defmodule MicelioWeb.ActivityPubController do
     end
   end
 
+  def profile(conn, %{"handle" => handle}) do
+    case Fediverse.account_for_handle(handle) do
+      {:ok, account} ->
+        activity_pub_json(conn, Fediverse.profile_payload(account))
+
+      _ ->
+        send_resp(conn, :not_found, "")
+    end
+  end
+
+  def project(conn, %{"account" => account_handle, "project" => project_handle}) do
+    case Fediverse.project_for_handle(account_handle, project_handle) do
+      {:ok, {account, project}} ->
+        activity_pub_json(conn, Fediverse.project_payload(account, project))
+
+      _ ->
+        send_resp(conn, :not_found, "")
+    end
+  end
+
   def outbox(conn, %{"handle" => handle}) do
     case Fediverse.account_for_handle(handle) do
       {:ok, _account} ->

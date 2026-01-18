@@ -1,6 +1,9 @@
 defmodule MicelioWeb.Browser.RepositoryController do
   use MicelioWeb, :controller
 
+  alias Micelio.Authorization
+  alias Micelio.Projects
+  alias MicelioWeb.Badges.ProjectBadge
   alias MicelioWeb.Browser.ProjectController
 
   def show(conn, params), do: delegate(conn, params, &ProjectController.show/2)
@@ -9,6 +12,23 @@ defmodule MicelioWeb.Browser.RepositoryController do
   def blame(conn, params), do: delegate(conn, params, &ProjectController.blame/2)
   def toggle_star(conn, params), do: delegate(conn, params, &ProjectController.toggle_star/2)
   def fork(conn, params), do: delegate(conn, params, &ProjectController.fork/2)
+
+  def badge(conn, _params) do
+    with account when not is_nil(account) <- conn.assigns.selected_account,
+         project when not is_nil(project) <- conn.assigns.selected_project,
+         :ok <- Authorization.authorize(:project_read, conn.assigns.current_user, project) do
+      stars = Projects.count_project_stars(project)
+      label = "#{account.handle}/#{project.handle}"
+      message = "#{stars} stars"
+
+      conn
+      |> put_resp_content_type("image/svg+xml")
+      |> put_resp_header("cache-control", "public, max-age=300")
+      |> send_resp(200, ProjectBadge.render(label, message))
+    else
+      _ -> send_resp(conn, 404, "Not found")
+    end
+  end
 
   defp delegate(conn, %{"repository" => repository_handle} = params, fun) do
     params =

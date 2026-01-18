@@ -85,7 +85,8 @@ defmodule MicelioWeb.ProjectLive.Show do
           _ = Notifications.dispatch_project_starred(project, user)
           :ok
 
-        {:error, _changeset} -> :error
+        {:error, _changeset} ->
+          :error
       end
     end
 

@@ -2,7 +2,7 @@ defmodule Micelio.AccountsTest do
   use Micelio.DataCase, async: true
 
   alias Micelio.Accounts
-  alias Micelio.Accounts.{Account, Organization, User, Token}
+  alias Micelio.Accounts.{Account, OAuthIdentity, Organization, User, Token}
 
   describe "Account user_changeset" do
     setup do
@@ -163,6 +163,20 @@ defmodule Micelio.AccountsTest do
                Accounts.create_organization(%{handle: "taken-org", name: "Other Org"})
 
       assert "has already been taken" in errors_on(changeset).handle
+    end
+
+    test "create_organization/2 allows reserved handles when configured" do
+      assert {:error, changeset} =
+               Accounts.create_organization(%{handle: "github", name: "GitHub"})
+
+      assert "is reserved" in errors_on(changeset).handle
+
+      assert {:ok, %Organization{} = org} =
+               Accounts.create_organization(%{handle: "github", name: "GitHub"},
+                 allow_reserved: true
+               )
+
+      assert org.account.handle == "github"
     end
 
     test "create_organization_for_user/2 links membership" do
@@ -332,6 +346,55 @@ defmodule Micelio.AccountsTest do
       {:ok, token} = Accounts.initiate_login("expiredcheck@example.com")
       expired_token = %{token | expires_at: ~U[2020-01-01 00:00:00Z]}
       refute Token.valid?(expired_token)
+    end
+  end
+
+  describe "oauth identities" do
+    test "get_or_create_user_from_oauth/3 creates user and identity" do
+      assert {:ok, %User{} = user} =
+               Accounts.get_or_create_user_from_oauth(
+                 "github",
+                 "4242",
+                 "octocat@example.com"
+               )
+
+      identity =
+        Repo.get_by(OAuthIdentity, provider: "github", provider_user_id: "4242")
+
+      assert identity.user_id == user.id
+      assert user.account != nil
+    end
+
+    test "get_or_create_user_from_oauth/3 uses provider_user_id over email" do
+      assert {:ok, %User{} = user} =
+               Accounts.get_or_create_user_from_oauth(
+                 "github",
+                 "1010",
+                 "first@example.com"
+               )
+
+      assert {:ok, %User{} = loaded} =
+               Accounts.get_or_create_user_from_oauth(
+                 "github",
+                 "1010",
+                 "different@example.com"
+               )
+
+      assert loaded.id == user.id
+    end
+
+    test "get_or_create_user_from_oauth/3 does not link by email" do
+      {:ok, %User{} = existing_user} = Accounts.get_or_create_user_by_email("linked@example.com")
+
+      assert {:error, %Ecto.Changeset{}} =
+               Accounts.get_or_create_user_from_oauth(
+                 "github",
+                 "2222",
+                 "linked@example.com"
+               )
+
+      refute Repo.get_by(OAuthIdentity, provider: "github", provider_user_id: "2222")
+      assert Repo.get(User, existing_user.id)
     end
   end
 end

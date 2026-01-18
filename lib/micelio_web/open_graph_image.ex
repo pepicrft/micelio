@@ -29,11 +29,12 @@ defmodule MicelioWeb.OpenGraphImage do
         attrs = attrs_from_meta(meta)
         hash = hash(attrs)
         token = token(attrs)
+        cache_key = hash
 
         canonical_url
         |> URI.parse()
         |> Map.put(:path, "/og/#{hash}")
-        |> Map.put(:query, URI.encode_query(%{"token" => token}))
+        |> Map.put(:query, URI.encode_query(%{"token" => token, "v" => cache_key}))
         |> Map.put(:fragment, nil)
         |> URI.to_string()
 

@@ -3,14 +3,14 @@ defmodule Micelio.Notifications do
   Email notifications for repository activity.
   """
 
-  require Logger
-
   alias Micelio.Accounts
   alias Micelio.Mailer
   alias Micelio.Notifications.ActivityEmail
   alias Micelio.Projects.Project
   alias Micelio.Repo
   alias Micelio.Sessions.Session
+
+  require Logger
 
   @supervisor Micelio.Notifications.Supervisor
 

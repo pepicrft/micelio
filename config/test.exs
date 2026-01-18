@@ -17,7 +17,12 @@ config :logger, level: :warning
 config :micelio, Micelio.GRPC, enabled: false
 config :micelio, Micelio.Hif.RollupScheduler, enabled: false
 config :micelio, Micelio.Mailer, adapter: Swoosh.Adapters.Test
-config :micelio, :notifications_async, false
+
+config :micelio, Micelio.Theme,
+  storage: Micelio.Theme.Storage.Local,
+  generator: Micelio.Theme.Generator.Static,
+  prefix: "themes/daily",
+  local_path: Path.join([System.tmp_dir!(), "micelio", "themes_test"])
 
 config :micelio, Micelio.Repo,
   database: Path.join([System.tmp_dir!(), "micelio", "micelio_test#{test_partition}.sqlite3"]),
@@ -33,6 +38,18 @@ config :micelio, MicelioWeb.Endpoint,
   server: false
 
 config :micelio, :admin_emails, ["admin@example.com"]
+config :micelio, :notifications_async, false
+config :micelio, :github_oauth,
+  client_id: "github-client-id",
+  client_secret: "github-client-secret",
+  redirect_uri: "http://localhost:4002/auth/github/callback",
+  http_client: Micelio.Auth.GitHubClientStub
+
+config :micelio, :gitlab_oauth,
+  client_id: "gitlab-client-id",
+  client_secret: "gitlab-client-secret",
+  redirect_uri: "http://localhost:4002/auth/gitlab/callback",
+  http_client: Micelio.Auth.GitLabClientStub
 
 # Initialize plugs at runtime for faster test compilation
 config :phoenix, :plug_init_mode, :runtime

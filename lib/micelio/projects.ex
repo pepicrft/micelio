@@ -8,6 +8,7 @@ defmodule Micelio.Projects do
 
   alias Micelio.Accounts
   alias Micelio.Accounts.OrganizationMembership
+  alias Micelio.Hif.Seed
   alias Micelio.Projects.{Project, ProjectStar}
   alias Micelio.Repo
   alias Micelio.Storage
@@ -19,6 +20,7 @@ defmodule Micelio.Projects do
   @micelio_workspace_project_name "Micelio"
   @micelio_workspace_project_description "The Micelio platform"
   @micelio_workspace_project_url "https://micelio.dev"
+  @micelio_workspace_project_visibility "public"
 
   @doc """
   Gets a project by ID.
@@ -108,6 +110,35 @@ defmodule Micelio.Projects do
     |> case do
       {:ok, data} -> {:ok, data}
       {:error, reason} -> {:error, reason}
+    end
+  end
+
+  @doc """
+  Seeds the Micelio workspace storage from a local path.
+  """
+  def seed_micelio_workspace(root_path, opts \\ []) when is_binary(root_path) do
+    with {:ok, %{project: project} = data} <- ensure_micelio_workspace() do
+      case Seed.seed_project_from_path(project.id, root_path, opts) do
+        {:ok, seed_result} -> {:ok, Map.merge(data, seed_result)}
+        {:error, :already_seeded} -> {:ok, Map.put(data, :already_seeded, true)}
+        {:error, reason} -> {:error, reason}
+      end
+    end
+  end
+
+  @doc """
+  Seeds the Micelio workspace if a source path is configured or provided.
+  """
+  def seed_micelio_workspace_if_configured(opts \\ []) do
+    seed_opts = Keyword.get(opts, :seed_opts, [])
+    project = Keyword.get(opts, :project)
+
+    case workspace_path_from_opts(opts) do
+      nil ->
+        {:ok, :skipped}
+
+      path ->
+        seed_micelio_workspace_with_project(project, path, seed_opts)
     end
   end
 
@@ -340,10 +371,13 @@ defmodule Micelio.Projects do
         {:ok, organization}
 
       {:error, :not_found} ->
-        Accounts.create_organization(%{
-          handle: @micelio_workspace_org_handle,
-          name: @micelio_workspace_org_name
-        })
+        Accounts.create_organization(
+          %{
+            handle: @micelio_workspace_org_handle,
+            name: @micelio_workspace_org_name
+          },
+          allow_reserved: true
+        )
     end
   end
 
@@ -370,6 +404,7 @@ defmodule Micelio.Projects do
       name: @micelio_workspace_project_name,
       description: @micelio_workspace_project_description,
       url: @micelio_workspace_project_url,
+      visibility: @micelio_workspace_project_visibility,
       organization_id: organization.id
     }
 
@@ -386,11 +421,41 @@ defmodule Micelio.Projects do
             if value in [nil, ""], do: Map.put(acc, key, desired), else: acc
           end)
 
+        update_attrs =
+          if project.visibility == @micelio_workspace_project_visibility do
+            update_attrs
+          else
+            Map.put(update_attrs, :visibility, @micelio_workspace_project_visibility)
+          end
+
         if update_attrs == %{} do
           {:ok, project}
         else
           update_project(project, update_attrs)
         end
+    end
+  end
+
+  defp seed_micelio_workspace_with_project(nil, path, seed_opts) do
+    seed_micelio_workspace(path, seed_opts)
+  end
+
+  defp seed_micelio_workspace_with_project(%Project{} = project, path, seed_opts) do
+    case Seed.seed_project_from_path(project.id, path, seed_opts) do
+      {:ok, seed_result} -> {:ok, Map.merge(%{project: project}, seed_result)}
+      {:error, :already_seeded} -> {:ok, %{project: project, already_seeded: true}}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp workspace_path_from_opts(opts) do
+    case Keyword.get(opts, :path, Application.get_env(:micelio, :micelio_workspace_path)) do
+      path when is_binary(path) ->
+        trimmed = String.trim(path)
+        if trimmed != "", do: trimmed
+
+      _ ->
+        nil
     end
   end
 

@@ -80,6 +80,59 @@
   outline: none;
 }
 
+.auth-divider {
+  position: relative;
+  text-align: center;
+  color: var(--theme-ui-colors-muted);
+  margin: var(--theme-ui-space-1) 0;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 40%;
+  border-top: var(--theme-ui-borders-thin);
+}
+
+.auth-divider::before {
+  left: 0;
+}
+
+.auth-divider::after {
+  right: 0;
+}
+
+.auth-divider span {
+  background-color: var(--theme-ui-colors-background);
+  padding: 0 var(--theme-ui-space-1);
+}
+
+.auth-button-github {
+  background-color: var(--theme-ui-colors-background);
+  color: var(--theme-ui-colors-text);
+  border: var(--theme-ui-borders-thin);
+  text-align: center;
+  text-decoration: none;
+}
+
+.auth-button-github:hover {
+  background-color: var(--theme-ui-colors-border);
+}
+
+.auth-button-gitlab {
+  background-color: var(--theme-ui-colors-background);
+  color: var(--theme-ui-colors-text);
+  border: var(--theme-ui-borders-thin);
+  text-align: center;
+  text-decoration: none;
+}
+
+.auth-button-gitlab:hover {
+  background-color: var(--theme-ui-colors-border);
+}
+
 .auth-body {
   text-align: center;
   color: var(--theme-ui-colors-secondary);

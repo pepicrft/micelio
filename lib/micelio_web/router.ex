@@ -98,6 +98,10 @@ defmodule MicelioWeb.Router do
     pipe_through :browser
 
     get "/login", AuthController, :new
+    get "/github", AuthController, :github_start
+    get "/github/callback", AuthController, :github_callback
+    get "/gitlab", AuthController, :gitlab_start
+    get "/gitlab/callback", AuthController, :gitlab_callback
     post "/login", AuthController, :create
     get "/sent", AuthController, :sent
     get "/verify/:token", AuthController, :verify
@@ -127,6 +131,8 @@ defmodule MicelioWeb.Router do
     pipe_through :activity_pub
 
     get "/actors/:handle", ActivityPubController, :actor
+    get "/profiles/:handle", ActivityPubController, :profile
+    get "/projects/:account/:project", ActivityPubController, :project
     get "/actors/:handle/outbox", ActivityPubController, :outbox
     post "/actors/:handle/inbox", ActivityPubController, :inbox
     get "/actors/:handle/followers", ActivityPubController, :followers
@@ -205,6 +211,14 @@ defmodule MicelioWeb.Router do
     get "/:hash", OpenGraphImageController, :show
   end
 
+  scope "/", MicelioWeb do
+    pipe_through [:browser, :load_resources]
+
+    live_session :public, on_mount: {MicelioWeb.LiveAuth, :current_user} do
+      live "/:account/:repository/agents", AgentLive.Index, :index
+    end
+  end
+
   scope "/", MicelioWeb.Browser do
     pipe_through([:browser, :load_resources])
 
@@ -217,6 +231,7 @@ defmodule MicelioWeb.Router do
     get "/search", SearchController, :index
 
     get "/:account", AccountController, :show
+    get "/:account/:repository/badge.svg", RepositoryController, :badge
     get "/:account/:repository/tree/*path", RepositoryController, :tree
     get "/:account/:repository/blob/*path", RepositoryController, :blob
     get "/:account/:repository/blame/*path", RepositoryController, :blame

@@ -6,11 +6,7 @@ defmodule MicelioWeb.RepositoryLive.Settings do
   alias MicelioWeb.PageMeta
 
   @impl true
-  def mount(
-        %{"account" => account_handle, "repository" => repository_handle},
-        _session,
-        socket
-      ) do
+  def mount(%{"account" => account_handle, "repository" => repository_handle}, _session, socket) do
     case Projects.get_project_for_user_by_handle(
            socket.assigns.current_user,
            account_handle,
@@ -108,9 +104,7 @@ defmodule MicelioWeb.RepositoryLive.Settings do
           </:subtitle>
           <:actions>
             <.link
-              navigate={
-                ~p"/#{@organization.account.handle}/#{@repository.handle}/settings/webhooks"
-              }
+              navigate={~p"/#{@organization.account.handle}/#{@repository.handle}/settings/webhooks"}
               class="project-button project-button-secondary"
               id="repository-webhooks-link"
             >

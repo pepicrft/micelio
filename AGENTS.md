@@ -4,6 +4,8 @@ This is a monorepo containing:
 
 See [docs/contributors/next.md](docs/contributors/next.md) for upcoming features and [docs/contributors/design.md](docs/contributors/design.md) for architecture.
 
+Note: When you update this guide, update `priv/static/skill.md` so `/skill.md` stays in sync.
+
 ---
 
 ## Quick Reference
