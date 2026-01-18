@@ -53,6 +53,7 @@ defmodule MicelioWeb.Layouts do
 
           <a href={~p"/blog"}>blog</a>
           <a href={~p"/changelog"}>changelog</a>
+          <a href={~p"/search"}>search</a>
           <a href="https://discord.gg/XKzUPfJe" target="_blank" rel="noopener noreferrer">discord</a>
         </div>
 

@@ -225,6 +225,27 @@
   background-color: var(--theme-ui-colors-border);
 }
 
+.project-show-action-star {
+  color: var(--theme-ui-colors-text);
+  background-color: transparent;
+  border: var(--theme-ui-borders-thin);
+}
+
+.project-show-action-star:hover {
+  background-color: var(--theme-ui-colors-border);
+}
+
+.project-show-stars {
+  display: flex;
+  align-items: center;
+  gap: var(--theme-ui-space-1);
+}
+
+.project-show-stars-count {
+  color: var(--theme-ui-colors-muted);
+  font-size: var(--theme-ui-fontSizes-small);
+}
+
 .project-show-navigation {
   display: flex;
   gap: var(--theme-ui-space-2);

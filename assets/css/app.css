@@ -8,6 +8,7 @@
 @import "./routes/legal.css";
 @import "./routes/account_show.css";
 @import "./routes/repository_show.css";
+@import "./routes/repository_blame.css";
 @import "./routes/auth.css";
 @import "./routes/projects.css";
 @import "./routes/sessions.css";
@@ -15,3 +16,5 @@
 @import "./routes/device_auth.css";
 @import "./routes/account_devices.css";
 @import "./routes/account_profile.css";
+@import "./routes/search.css";
+@import "./routes/webhooks.css";
