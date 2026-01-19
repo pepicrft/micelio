@@ -7,17 +7,13 @@ defmodule Micelio.AgentInfra.Provider do
   """
 
   alias Micelio.AgentInfra.ProvisioningRequest
+  alias Micelio.AgentInfra.Protocol
 
   @typedoc "Opaque reference returned by a provider when a VM is provisioned."
   @type instance_ref :: term()
 
   @typedoc "Status response returned by providers for a running VM."
-  @type status :: %{
-          state: :starting | :running | :stopped | :terminated | :error,
-          hostname: String.t() | nil,
-          ip_address: String.t() | nil,
-          metadata: map()
-        }
+  @type status :: Protocol.status()
 
   @callback id() :: atom()
   @callback name() :: String.t()
