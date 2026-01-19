@@ -521,3 +521,90 @@ Implement a self-hosted error tracking system that persists errors to the databa
   - Add database vacuum/analyze after bulk deletions
   - Monitor errors table size and alert if growing too large
   - Create admin setting for retention policy configuration
+
+### Live Session UIs from Agents
+
+Enable real-time visualization of agent sessions directly in the browser, providing transparency into what agents are doing during sessions.
+
+#### Two Approaches Evaluated
+
+**Approach 1: Structured Data Approach**
+Agents write structured data (JSON events) to a file or database. The UI polls or subscribes to this data and renders it.
+
+Pros:
+- Clean separation of concerns
+- Easy to debug (JSON is human-readable)
+- Can add types, schemas for validation
+- Works well for dashboards and state visualization
+- Easier to test and mock
+
+Cons:
+- Requires agents to explicitly write structured data
+- Additional latency from write/read cycle
+- Agents need to be modified to output structured data
+
+**Approach 2: Stdout/Stderr Hook + Ghostty Rendering**
+Hook into agent's stdout/stderr streams and render them in real-time using terminal emulation (potentially Ghostty).
+
+Ghostty is a modern terminal emulator that supports:
+- Inline images
+- hyperlinks
+- Sixel graphics
+- True color
+- Fast rendering
+
+Pros:
+- Agents work unmodified (capture existing stdout/stderr)
+- Rich visual output (images, colors, formatting)
+- Real-time streaming without polling
+- Terminal-like experience in browser
+
+Cons:
+- Terminal output can be messy to parse
+- Less structured, harder to extract meaning
+- Requires terminal emulation in browser
+- May need to handle escape sequences carefully
+
+#### Recommendation
+
+**Start with Approach 1 (Structured Data) for Micelio.**
+
+Rationale:
+1. **Agent integration** - Micelio already has session context where agents can output structured events
+2. **Clean architecture** - Fits well with Micelio's session-based workflow
+3. **Extensible** - Can later add terminal-like rendering as a layer on top
+4. **Testable** - Easier to build and test structured output
+
+**Future Enhancement (Approach 2):**
+Once structured data rendering is working, explore:
+- Ghostty WebAssembly for browser rendering
+- Hybrid approach: Structured data + terminal fallback for unformatted output
+- Agent SDK that auto-captures stdout as structured events
+
+#### Implementation Roadmap
+
+- [ ] **Design Session Event Schema**
+  - Define event types: `status`, `progress`, `output`, `error`, `artifact`
+  - Include timestamps, source info, structured payload
+  - Create JSON schema for validation
+
+- [ ] **Build Event Capture Layer**
+  - Agent SDK integration for event output
+  - Capture stdout/stderr as structured events (auto-convert for unformatted output)
+  - Write events to session artifact storage
+
+- [ ] **Create Event Streaming API**
+  - Server-Sent Events (SSE) or WebSocket for real-time updates
+  - Filter events by type and session
+  - Handle reconnection and missed events
+
+- [ ] **Build Event Viewer UI**
+  - Real-time event display component
+  - Filter by event type
+  - Visual indicators for different event types
+  - Expandable details for structured payloads
+
+- [ ] **Add Rich Rendering**
+  - Support inline images from artifact events
+  - Progress bars for long-running operations
+  - Collapsible output sections
