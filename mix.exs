@@ -66,6 +66,7 @@ defmodule Micelio.MixProject do
       {:tidewave, "~> 0.5", only: :dev},
       {:mimic, "~> 2.0", only: :test},
       {:nimble_publisher, "~> 1.0"},
+      {:nimble_totp, "~> 1.0"},
       {:makeup, "~> 1.1"},
       {:makeup_elixir, "~> 0.16"},
       {:makeup_erlang, "~> 1.0"},

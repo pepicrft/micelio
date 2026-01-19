@@ -146,10 +146,7 @@ defmodule MicelioWeb.Browser.AuthController do
                profile.provider_user_id,
                profile.email
              ) do
-        conn
-        |> put_session(:user_id, user.id)
-        |> put_flash(:info, "Welcome back, #{user.account.handle}!")
-        |> redirect(to: login_redirect_path(conn))
+        maybe_require_totp(conn, user)
       else
         {:error, reason} ->
           Logger.warning("GitHub OAuth callback failed", reason: inspect(reason))
@@ -189,10 +186,7 @@ defmodule MicelioWeb.Browser.AuthController do
                profile.provider_user_id,
                profile.email
              ) do
-        conn
-        |> put_session(:user_id, user.id)
-        |> put_flash(:info, "Welcome back, #{user.account.handle}!")
-        |> redirect(to: login_redirect_path(conn))
+        maybe_require_totp(conn, user)
       else
         {:error, reason} ->
           Logger.warning("GitLab OAuth callback failed", reason: inspect(reason))
@@ -214,10 +208,7 @@ defmodule MicelioWeb.Browser.AuthController do
   def verify(conn, %{"token" => token}) do
     case Accounts.verify_login_token(token) do
       {:ok, user} ->
-        conn
-        |> put_session(:user_id, user.id)
-        |> put_flash(:info, "Welcome back, #{user.account.handle}!")
-        |> redirect(to: login_redirect_path(conn))
+        maybe_require_totp(conn, user)
 
       {:error, :invalid_token} ->
         conn
@@ -260,6 +251,20 @@ defmodule MicelioWeb.Browser.AuthController do
       ~p"/device/auth"
     else
       ~p"/"
+    end
+  end
+
+  defp maybe_require_totp(conn, user) do
+    if Accounts.totp_enabled?(user) do
+      conn
+      |> put_session(:totp_pending_user_id, user.id)
+      |> put_session(:totp_pending_redirect, login_redirect_path(conn))
+      |> redirect(to: ~p"/auth/totp")
+    else
+      conn
+      |> put_session(:user_id, user.id)
+      |> put_flash(:info, "Welcome back, #{user.account.handle}!")
+      |> redirect(to: login_redirect_path(conn))
     end
   end
 

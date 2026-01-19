@@ -431,4 +431,46 @@ defmodule Micelio.AccountsTest do
       assert Repo.get(User, existing_user.id)
     end
   end
+
+  describe "TOTP" do
+    setup do
+      {:ok, user} = Accounts.get_or_create_user_by_email("totp@example.com")
+      {:ok, user: user}
+    end
+
+    test "enable_totp/3 stores secret and timestamps", %{user: user} do
+      secret = Accounts.generate_totp_secret()
+      code = NimbleTOTP.verification_code(secret, time: System.os_time(:second))
+
+      assert {:ok, updated} = Accounts.enable_totp(user, secret, code)
+      assert updated.totp_enabled_at
+      assert updated.totp_secret == secret
+    end
+
+    test "verify_totp_code/2 updates last used time", %{user: user} do
+      secret = Accounts.generate_totp_secret()
+      code = NimbleTOTP.verification_code(secret, time: System.os_time(:second))
+
+      {:ok, updated} = Accounts.enable_totp(user, secret, code)
+      {:ok, updated} = Repo.update(Ecto.Changeset.change(updated, totp_last_used_at: nil))
+
+      verify_code = NimbleTOTP.verification_code(secret, time: System.os_time(:second))
+      assert {:ok, verified} = Accounts.verify_totp_code(updated, verify_code)
+      assert verified.totp_last_used_at
+    end
+
+    test "disable_totp/2 clears secret and timestamps", %{user: user} do
+      secret = Accounts.generate_totp_secret()
+      code = NimbleTOTP.verification_code(secret, time: System.os_time(:second))
+
+      {:ok, updated} = Accounts.enable_totp(user, secret, code)
+      {:ok, updated} = Repo.update(Ecto.Changeset.change(updated, totp_last_used_at: nil))
+
+      disable_code = NimbleTOTP.verification_code(secret, time: System.os_time(:second))
+      assert {:ok, disabled} = Accounts.disable_totp(updated, disable_code)
+      assert disabled.totp_secret == nil
+      assert disabled.totp_enabled_at == nil
+      assert disabled.totp_last_used_at == nil
+    end
+  end
 end

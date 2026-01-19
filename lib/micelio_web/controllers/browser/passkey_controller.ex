@@ -59,10 +59,11 @@ defmodule MicelioWeb.Browser.PasskeyController do
              sign_count: result.sign_count,
              last_used_at: DateTime.utc_now()
            }) do
+      user = Accounts.get_user_with_account(passkey.user_id)
+
       conn
       |> delete_session(:passkey_authentication_challenge)
-      |> put_session(:user_id, passkey.user_id)
-      |> json(%{status: "ok", redirect_to: ~p"/"})
+      |> maybe_require_totp(user)
     else
       {:error, :missing_challenge} ->
         conn
@@ -111,5 +112,26 @@ defmodule MicelioWeb.Browser.PasskeyController do
   defp default_passkey_name do
     date = Date.utc_today() |> Date.to_iso8601()
     "Passkey #{date}"
+  end
+
+  defp maybe_require_totp(conn, user) do
+    if Accounts.totp_enabled?(user) do
+      conn
+      |> put_session(:totp_pending_user_id, user.id)
+      |> put_session(:totp_pending_redirect, login_redirect_path(conn))
+      |> json(%{status: "ok", redirect_to: ~p"/auth/totp"})
+    else
+      conn
+      |> put_session(:user_id, user.id)
+      |> json(%{status: "ok", redirect_to: login_redirect_path(conn)})
+    end
+  end
+
+  defp login_redirect_path(conn) do
+    if get_session(conn, :device_user_code) do
+      ~p"/device/auth"
+    else
+      ~p"/"
+    end
   end
 end

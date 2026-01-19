@@ -32,6 +32,9 @@ defmodule Micelio.Accounts.User do
     field(:gitlab_url, :string)
     field(:mastodon_url, :string)
     field(:linkedin_url, :string)
+    field(:totp_secret, :binary)
+    field(:totp_enabled_at, :utc_datetime)
+    field(:totp_last_used_at, :utc_datetime)
 
     has_one(:account, Micelio.Accounts.Account)
     has_many(:organization_memberships, Micelio.Accounts.OrganizationMembership)

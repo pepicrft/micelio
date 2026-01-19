@@ -108,6 +108,8 @@ defmodule MicelioWeb.Router do
     post("/login", AuthController, :create)
     get("/sent", AuthController, :sent)
     get("/verify/:token", AuthController, :verify)
+    get("/totp", TotpController, :new)
+    post("/totp", TotpController, :create)
     delete("/logout", AuthController, :delete)
   end
 
@@ -192,6 +194,10 @@ defmodule MicelioWeb.Router do
     post("/passkeys/options", PasskeyController, :registration_options)
     post("/passkeys", PasskeyController, :register)
     delete("/passkeys/:id", PasskeyController, :delete)
+    post("/totp/start", TotpController, :start)
+    post("/totp/verify", TotpController, :verify)
+    post("/totp/cancel", TotpController, :cancel)
+    post("/totp/disable", TotpController, :disable)
     get("/devices", DeviceController, :index)
     delete("/devices/:id", DeviceController, :delete)
   end

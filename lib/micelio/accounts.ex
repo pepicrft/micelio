@@ -305,6 +305,78 @@ defmodule Micelio.Accounts do
   end
 
   @doc """
+  Generates a new TOTP secret for a user.
+  """
+  def generate_totp_secret do
+    NimbleTOTP.secret()
+  end
+
+  @doc """
+  Returns true if a user has TOTP enabled.
+  """
+  def totp_enabled?(%User{totp_secret: secret, totp_enabled_at: enabled_at})
+      when is_binary(secret) and byte_size(secret) > 0 and not is_nil(enabled_at), do: true
+
+  def totp_enabled?(_), do: false
+
+  @doc """
+  Enables TOTP for a user after validating the setup code.
+  """
+  def enable_totp(%User{} = user, secret, code) when is_binary(code) and is_binary(secret) do
+    cond do
+      totp_enabled?(user) ->
+        {:error, :already_enabled}
+
+      valid_totp_code?(secret, code, nil) ->
+        now = totp_now()
+
+        user
+        |> Ecto.Changeset.change(
+          totp_secret: secret,
+          totp_enabled_at: now,
+          totp_last_used_at: now
+        )
+        |> Repo.update()
+
+      true ->
+        {:error, :invalid_code}
+    end
+  end
+
+  @doc """
+  Verifies a user's TOTP code and updates last used time.
+  """
+  def verify_totp_code(%User{} = user, code) when is_binary(code) do
+    cond do
+      is_nil(user.totp_secret) ->
+        {:error, :not_enabled}
+
+      valid_totp_code?(user.totp_secret, code, user.totp_last_used_at) ->
+        user
+        |> Ecto.Changeset.change(totp_last_used_at: totp_now())
+        |> Repo.update()
+
+      true ->
+        {:error, :invalid_code}
+    end
+  end
+
+  @doc """
+  Disables TOTP for a user after validating the code.
+  """
+  def disable_totp(%User{} = user, code) when is_binary(code) do
+    with {:ok, _user} <- verify_totp_code(user, code) do
+      user
+      |> Ecto.Changeset.change(
+        totp_secret: nil,
+        totp_enabled_at: nil,
+        totp_last_used_at: nil
+      )
+      |> Repo.update()
+    end
+  end
+
+  @doc """
   Gets or creates a user from an OAuth provider profile.
   """
   def get_or_create_user_from_oauth(provider, provider_user_id, email)
@@ -345,6 +417,17 @@ defmodule Micelio.Accounts do
         {:error, changeset} -> Repo.rollback(changeset)
       end
     end)
+  end
+
+  defp valid_totp_code?(secret, code, since) do
+    time = System.os_time(:second)
+
+    NimbleTOTP.valid?(secret, code, time: time, since: since) or
+      NimbleTOTP.valid?(secret, code, time: time - 30, since: since)
+  end
+
+  defp totp_now do
+    DateTime.utc_now() |> DateTime.truncate(:second)
   end
 
   defp create_user(attrs) do

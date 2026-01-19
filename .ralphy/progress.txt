@@ -6,3 +6,5 @@
 - Added circular favicon.ico asset, linked it in the layout, and covered it with a homepage layout test.
 
 - Added audit logging for project operations with audit log schema, persistence, and tests.
+
+- Added TOTP-based two-factor authentication with account setup, login challenge, and tests (plus UI and Playwright verification).
