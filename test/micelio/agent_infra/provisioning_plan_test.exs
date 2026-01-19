@@ -60,7 +60,9 @@ defmodule Micelio.AgentInfra.ProvisioningPlanTest do
     }
 
     assert {:error, changeset} = AgentInfra.build_plan(attrs)
-    assert [%{source: ["must be an absolute path for bind mounts"], target: ["must be an absolute path"]}] =
-             errors_on(changeset).volumes
+
+    [volume_errors] = errors_on(changeset).volumes
+    assert "must be an absolute path for bind mounts" in volume_errors.source
+    assert "must be an absolute path" in volume_errors.target
   end
 end
