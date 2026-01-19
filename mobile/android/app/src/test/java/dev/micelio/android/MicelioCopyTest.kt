@@ -9,5 +9,6 @@ class MicelioCopyTest {
         assertEquals("Micelio", MicelioCopy.welcomeTitle())
         assertEquals("Agent-first forge, now in your pocket.", MicelioCopy.welcomeSubtitle())
         assertEquals("Sign in", MicelioCopy.ctaLabel())
+        assertEquals("Projects", MicelioCopy.projectListTitle())
     }
 }

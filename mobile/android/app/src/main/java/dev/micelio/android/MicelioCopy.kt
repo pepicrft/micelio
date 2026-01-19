@@ -6,4 +6,6 @@ object MicelioCopy {
     fun welcomeSubtitle(): String = "Agent-first forge, now in your pocket."
 
     fun ctaLabel(): String = "Sign in"
+
+    fun projectListTitle(): String = "Projects"
 }
