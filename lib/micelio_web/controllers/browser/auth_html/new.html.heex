@@ -10,25 +10,25 @@
         <p>Enter your email and we'll send you a magic link.</p>
       </header>
 
-      <form action={~p"/auth/login"} method="post" class="auth-form" id="auth-login-form">
-        <input type="hidden" name="_csrf_token" value={Phoenix.Controller.get_csrf_token()} />
-
+      <.form for={@form} action={~p"/auth/login"} method="post" class="auth-form" id="auth-login-form">
         <div class="auth-form-group">
-          <label for="email">Email</label>
-          <input
+          <.input
+            field={@form[:email]}
             type="email"
-            name="email"
-            id="email"
+            label="Email"
             placeholder="you@example.com"
             required
             autofocus
             class="auth-input"
+            error_class="auth-input auth-input-error"
+            autocomplete="email"
           />
         </div>
 
         <button type="submit" class="auth-button">
           Send magic link
         </button>
+<<<<<<< Updated upstream
       </form>
 
       <div class="auth-divider" aria-hidden="true">
@@ -47,6 +47,9 @@
       <.link href={~p"/auth/gitlab"} class="auth-button auth-button-gitlab" id="auth-gitlab-link">
         Continue with GitLab
       </.link>
+=======
+      </.form>
+>>>>>>> Stashed changes
     </div>
   </div>
 </Layouts.app>

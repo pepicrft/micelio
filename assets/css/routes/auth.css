@@ -58,6 +58,10 @@
   border-color: var(--theme-ui-colors-primary);
 }
 
+.auth-input-error {
+  border-color: var(--theme-ui-colors-secondary);
+}
+
 .auth-input::placeholder {
   color: var(--theme-ui-colors-muted);
 }

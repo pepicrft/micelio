@@ -1,6 +1,8 @@
 defmodule MicelioWeb.Browser.AuthController do
   use MicelioWeb, :controller
 
+  import Phoenix.Component, only: [to_form: 2]
+
   alias Micelio.Accounts
   alias Micelio.Accounts.AuthEmail
   alias Micelio.Auth.GitHub
@@ -13,21 +15,38 @@ defmodule MicelioWeb.Browser.AuthController do
   @doc """
   Renders the login form.
   """
-  def new(conn, _params) do
+  def new(conn, params) do
+    email = Map.get(params, "email", "")
+    form = to_form(%{"email" => email}, as: :login)
+
     conn
     |> PageMeta.put(
       title_parts: ["Log in"],
       description: "Log in to Micelio.",
       canonical_url: url(~p"/auth/login")
     )
-    |> render(:new)
+    |> render(:new, form: form)
   end
 
   @doc """
   Handles the login form submission.
   Sends a magic link email to the user.
   """
+  def create(conn, %{"login" => %{"email" => email}}) do
+    handle_login(conn, email)
+  end
+
   def create(conn, %{"email" => email}) do
+    handle_login(conn, email)
+  end
+
+  def create(conn, _params) do
+    conn
+    |> put_flash(:error, "Please enter a valid email.")
+    |> redirect(to: ~p"/auth/login")
+  end
+
+  defp handle_login(conn, email) do
     case Accounts.initiate_login(email) do
       {:ok, login_token} ->
         login_url = url(~p"/auth/verify/#{login_token.token}")
