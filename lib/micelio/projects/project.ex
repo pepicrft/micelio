@@ -18,6 +18,7 @@ defmodule Micelio.Projects.Project do
     belongs_to :organization, Micelio.Accounts.Organization
     has_many :forks, Micelio.Projects.Project, foreign_key: :forked_from_id
     has_many :stars, Micelio.Projects.ProjectStar
+    has_many :access_tokens, Micelio.Projects.ProjectAccessToken
     has_many :webhooks, Micelio.Webhooks.Webhook
 
     timestamps(type: :utc_datetime)

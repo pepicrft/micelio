@@ -322,7 +322,12 @@ defmodule MicelioWeb.CoreComponents do
     ~H"""
     <header class="page-header">
       <div class="page-header-main">
-        <h1 class="page-header-title">{render_slot(@inner_block)}</h1>
+        <h1
+          class="page-header-title"
+          style="overflow-wrap: anywhere; word-break: break-all; white-space: normal;"
+        >
+          {render_slot(@inner_block)}
+        </h1>
         <div :if={@subtitle != []} class="page-header-subtitle">
           {render_slot(@subtitle)}
         </div>

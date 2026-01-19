@@ -242,6 +242,9 @@ main ol:not(.list) {
 .page-header-title {
   font-weight: var(--theme-ui-fontWeights-bold);
   color: var(--theme-ui-colors-text);
+  overflow-wrap: anywhere;
+  word-break: break-all;
+  white-space: normal;
 }
 
 .page-header-subtitle {
@@ -249,6 +252,7 @@ main ol:not(.list) {
   color: var(--theme-ui-colors-secondary);
   display: grid;
   gap: var(--theme-ui-space-1);
+  overflow-wrap: anywhere;
 }
 
 .page-header-actions {

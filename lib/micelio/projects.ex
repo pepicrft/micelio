@@ -10,7 +10,7 @@ defmodule Micelio.Projects do
   alias Micelio.Accounts.OrganizationMembership
   alias Micelio.Audit
   alias Micelio.Mic.Seed
-  alias Micelio.Projects.{Project, ProjectStar}
+  alias Micelio.Projects.{AccessTokens, Project, ProjectAccessToken, ProjectStar}
   alias Micelio.Repo
   alias Micelio.Storage
 
@@ -118,6 +118,27 @@ defmodule Micelio.Projects do
   """
   def list_projects do
     Repo.all(Project)
+  end
+
+  @doc """
+  Creates a project access token.
+  """
+  def create_project_access_token(%Project{} = project, %Accounts.User{} = user, attrs) do
+    AccessTokens.create(project, user, attrs)
+  end
+
+  @doc """
+  Lists project access tokens.
+  """
+  def list_project_access_tokens(%Project{} = project) do
+    AccessTokens.list_for_project(project.id)
+  end
+
+  @doc """
+  Revokes a project access token.
+  """
+  def revoke_project_access_token(%ProjectAccessToken{} = token) do
+    AccessTokens.revoke(token)
   end
 
   @doc """
