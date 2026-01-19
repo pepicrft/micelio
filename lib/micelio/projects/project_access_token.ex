@@ -10,14 +10,15 @@ defmodule Micelio.Projects.ProjectAccessToken do
 
   schema "project_access_tokens" do
     field :name, :string
-    field :token_hash, :string
+    field :token_hash, :binary
+    field :token_prefix, :string
     field :scopes, {:array, :string}, default: []
     field :expires_at, :utc_datetime
     field :last_used_at, :utc_datetime
     field :revoked_at, :utc_datetime
 
     belongs_to :project, Micelio.Projects.Project
-    belongs_to :created_by, Micelio.Accounts.User
+    belongs_to :user, Micelio.Accounts.User
 
     timestamps(type: :utc_datetime)
   end
@@ -30,21 +31,47 @@ defmodule Micelio.Projects.ProjectAccessToken do
     |> cast(attrs, [
       :name,
       :token_hash,
+      :token_prefix,
       :scopes,
       :project_id,
-      :created_by_id,
+      :user_id,
       :expires_at,
       :last_used_at,
       :revoked_at
     ])
     |> normalize_scopes()
-    |> validate_required([:name, :token_hash, :scopes, :project_id, :created_by_id])
+    |> validate_required([:name, :token_hash, :token_prefix, :scopes, :project_id, :user_id])
     |> validate_length(:name, max: 120)
     |> validate_length(:scopes, min: 1)
     |> validate_scopes()
     |> assoc_constraint(:project)
-    |> assoc_constraint(:created_by)
+    |> assoc_constraint(:user)
     |> unique_constraint(:token_hash)
+  end
+
+  @doc """
+  Changeset for creating a new project access token.
+  """
+  def create_changeset(token, attrs) do
+    changeset(token, attrs)
+  end
+
+  @doc """
+  Changeset for revoking an access token.
+  """
+  def revoke_changeset(%__MODULE__{} = token) do
+    change(token,
+      revoked_at: DateTime.utc_now() |> DateTime.truncate(:second)
+    )
+  end
+
+  @doc """
+  Changeset for updating last usage timestamp.
+  """
+  def touch_changeset(%__MODULE__{} = token) do
+    change(token,
+      last_used_at: DateTime.utc_now() |> DateTime.truncate(:second)
+    )
   end
 
   @doc """
@@ -66,7 +93,7 @@ defmodule Micelio.Projects.ProjectAccessToken do
   Hashes a token value for storage lookup.
   """
   def hash_token(token) when is_binary(token) do
-    :crypto.hash(:sha256, token) |> Base.encode16(case: :lower)
+    :crypto.hash(:sha256, token)
   end
 
   @doc """
@@ -92,7 +119,7 @@ defmodule Micelio.Projects.ProjectAccessToken do
   defp expired?(%__MODULE__{expires_at: nil}), do: false
 
   defp expired?(%__MODULE__{expires_at: %DateTime{} = expires_at}) do
-    DateTime.compare(expires_at, DateTime.utc_now()) == :lt
+    DateTime.before?(expires_at, DateTime.utc_now())
   end
 
   defp expired?(_), do: true

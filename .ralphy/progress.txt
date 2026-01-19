@@ -10,3 +10,5 @@
 - Added TOTP-based two-factor authentication with account setup, login challenge, and tests (plus UI and Playwright verification).
 
 - Centralized branch protection checks, added normalization tests, and marked the PRD item complete.
+
+- Added gRPC branch protection test coverage for non-main targets and aligned project access token schema/changesets to clear lint warnings.

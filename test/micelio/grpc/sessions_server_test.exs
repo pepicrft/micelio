@@ -174,6 +174,58 @@ defmodule Micelio.GRPC.SessionsServerTest do
     assert message =~ "Direct lands to main are blocked"
   end
 
+  test "land_session allows protected projects when target branch is non-main" do
+    {:ok, user} =
+      Accounts.get_or_create_user_by_email("grpc-session-protected-feature@example.com")
+
+    {:ok, organization} =
+      Accounts.create_organization_for_user(user, %{
+        handle: "grpc-session-protected-feature-org",
+        name: "GRPC Sessions Protected Feature Org"
+      })
+
+    {:ok, project} =
+      Projects.create_project(%{
+        handle: "grpc-session-protected-feature-repo",
+        name: "GRPC Session Protected Feature Repo",
+        organization_id: organization.id,
+        protect_main_branch: true
+      })
+
+    {:ok, session} =
+      Sessions.create_session(%{
+        session_id: "session-grpc-protected-feature-1",
+        goal: "Protect main via feature branch",
+        project_id: project.id,
+        user_id: user.id
+      })
+
+    landing_time = DateTime.utc_now() |> DateTime.truncate(:second)
+
+    expect(Landing, :land_session, fn %Sessions.Session{} = landed_session ->
+      assert landed_session.metadata["target_branch"] == "feature/branch"
+      {:ok, %{position: 3, landed_at: landing_time}}
+    end)
+
+    response =
+      SessionsServer.land_session(
+        %LandSessionRequest{
+          user_id: user.id,
+          session_id: session.session_id,
+          conversation: [],
+          decisions: [],
+          files: [],
+          target_branch: "feature/branch"
+        },
+        nil
+      )
+
+    assert %SessionResponse{} = response
+    assert response.session.session_id == session.session_id
+    assert response.session.status == "landed"
+    assert response.session.landing_position == 3
+  end
+
   test "land_session allows target branch override when main is protected" do
     {:ok, user} = Accounts.get_or_create_user_by_email("grpc-session-protected-override@example.com")
 
