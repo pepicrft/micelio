@@ -295,6 +295,51 @@ Enable contributors to fund AI agent compute for projects. Instead of paying mai
 - **Budget enforcement** — Stop runs when tokens exhausted
 - **Usage attribution** — Track ROI: tokens spent vs value delivered
 
+### Model Provider Protocol
+
+Goal: unify integration across OpenAI Codex, Claude, OpenCode, GLM, and future providers while enforcing budgets and enabling seamless fallback.
+
+**1) Provider Interface (capabilities, pricing, auth)**
+- **Capabilities**: models, context length, modalities (text/code/vision), tool/function calling, streaming, structured output, rate limits
+- **Pricing**: input/output token price per 1M tokens, min billable units, currency, effective date
+- **Authentication**: api_key, oauth client, custom header, or signed request
+
+Interface (conceptual):
+- `id`, `name`, `base_url`, `auth_config`, `capabilities`, `models[]`, `pricing[]`
+- `supports(model, feature)` and `estimate_tokens(request)` for preflight budgets
+- `invoke(request)` returning `response`, `usage`, `provider_metadata`
+
+**2) Request/Response Flow with Token Metering**
+1. Preflight: validate model, check provider availability, estimate tokens
+2. Budget reserve: lock tokens against task budget (include buffer)
+3. Invoke provider: send request with trace id + budget id
+4. Meter usage: record actual input/output tokens and cost per provider/model
+5. Reconcile: release unused tokens, enforce hard-stop on overage
+6. Persist: usage event stored with provider/model, request id, latency, error code
+
+**3) Fallback + Load Balancing Strategy**
+- Ordered fallback chain per task (primary -> secondary -> tertiary)
+- Weighted routing by cost, latency, health score, and remaining budget
+- Circuit breaker: auto-disable provider/model when error rate/latency exceeds threshold
+- Degrade to cheaper/smaller model when budget low or rate limited
+
+**4) Provider Configuration**
+- Provider-level: `name`, `base_url`, `auth_type`, `auth_secret_ref`, `enabled`
+- Model-level: `model_name`, `context_limit`, `capabilities`, `pricing`, `max_concurrency`
+- Policy-level: `priority`, `fallback_group`, `cost_ceiling`, `rate_limit`, `timeout_ms`
+
+**5) Health/Availability Monitoring**
+- Scheduled health checks (ping or lightweight completion)
+- Track error rate, p95 latency, and uptime per provider/model
+- Status: `healthy`, `degraded`, `down`, `disabled`
+- Auto-recovery after cooldown + successful health checks
+
+**6) Admin UI for Provider Management**
+- Providers list with status badge, health metrics, and cost per 1M tokens
+- Add/edit provider + models, pricing, auth configuration, and fallback order
+- Test connection + simulate request to validate auth and metering
+- Audit log of config changes (who/when/what)
+
 ### Legal/Tax
 
 - Simple: tokens = service credits, not currency
