@@ -140,6 +140,38 @@ defmodule Micelio.Mic.LandingWorkflowTest do
     assert {:error, :protected_branch} = Landing.land_session(session)
   end
 
+  test "blocks landing to main when branch metadata uses origin prefix" do
+    unique = System.unique_integer([:positive])
+
+    {:ok, user} =
+      Accounts.get_or_create_user_by_email("landing-protected-origin-#{unique}@example.com")
+
+    {:ok, organization} =
+      Accounts.create_organization_for_user(user, %{
+        handle: "landing-protected-origin-org-#{unique}",
+        name: "Landing Protected Origin Org #{unique}"
+      })
+
+    {:ok, project} =
+      Projects.create_project(%{
+        handle: "landing-protected-origin-project-#{unique}",
+        name: "Landing Protected Origin Project #{unique}",
+        organization_id: organization.id,
+        protect_main_branch: true
+      })
+
+    {:ok, session} =
+      Sessions.create_session(%{
+        session_id: "landing-protected-origin-session-#{unique}",
+        goal: "Protect main via origin prefix",
+        project_id: project.id,
+        user_id: user.id,
+        metadata: %{"branch" => "origin/main"}
+      })
+
+    assert {:error, :protected_branch} = Landing.land_session(session)
+  end
+
   test "allows landing to non-main branch when main is protected" do
     unique = System.unique_integer([:positive])
 
