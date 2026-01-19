@@ -8,11 +8,11 @@
   --theme-ui-colors-border: #e0e0e0;
   --theme-ui-colors-danger: #b00020;
   --theme-ui-colors-dangerText: var(--theme-ui-colors-background);
-  --theme-ui-colors-activity-0: oklch(0.96 0 0);
-  --theme-ui-colors-activity-1: oklch(0.93 0.01 140);
-  --theme-ui-colors-activity-2: oklch(0.86 0.06 140);
-  --theme-ui-colors-activity-3: oklch(0.78 0.12 140);
-  --theme-ui-colors-activity-4: oklch(0.7 0.18 140);
+  --theme-ui-colors-activity-0: #ebedf0;
+  --theme-ui-colors-activity-1: #9be9a8;
+  --theme-ui-colors-activity-2: #40c463;
+  --theme-ui-colors-activity-3: #30a14e;
+  --theme-ui-colors-activity-4: #216e39;
 
   /* Theme UI - Typography (single size) */
   --theme-ui-fonts-body: system-ui, -apple-system, sans-serif;
@@ -52,11 +52,11 @@
     --theme-ui-colors-border: #232a33;
     --theme-ui-colors-danger: #ff6b6b;
     --theme-ui-colors-dangerText: var(--theme-ui-colors-background);
-    --theme-ui-colors-activity-0: oklch(0.96 0 0);
-    --theme-ui-colors-activity-1: oklch(0.93 0.01 140);
-    --theme-ui-colors-activity-2: oklch(0.86 0.06 140);
-    --theme-ui-colors-activity-3: oklch(0.78 0.12 140);
-    --theme-ui-colors-activity-4: oklch(0.7 0.18 140);
+    --theme-ui-colors-activity-0: #ebedf0;
+    --theme-ui-colors-activity-1: #9be9a8;
+    --theme-ui-colors-activity-2: #40c463;
+    --theme-ui-colors-activity-3: #30a14e;
+    --theme-ui-colors-activity-4: #216e39;
   }
 }
 
@@ -69,11 +69,11 @@
   --theme-ui-colors-border: #e0e0e0;
   --theme-ui-colors-danger: #b00020;
   --theme-ui-colors-dangerText: var(--theme-ui-colors-background);
-  --theme-ui-colors-activity-0: oklch(0.96 0 0);
-  --theme-ui-colors-activity-1: oklch(0.93 0.01 140);
-  --theme-ui-colors-activity-2: oklch(0.86 0.06 140);
-  --theme-ui-colors-activity-3: oklch(0.78 0.12 140);
-  --theme-ui-colors-activity-4: oklch(0.7 0.18 140);
+  --theme-ui-colors-activity-0: #ebedf0;
+  --theme-ui-colors-activity-1: #9be9a8;
+  --theme-ui-colors-activity-2: #40c463;
+  --theme-ui-colors-activity-3: #30a14e;
+  --theme-ui-colors-activity-4: #216e39;
   color-scheme: light;
 }
 
@@ -86,11 +86,11 @@
   --theme-ui-colors-border: #232a33;
   --theme-ui-colors-danger: #ff6b6b;
   --theme-ui-colors-dangerText: var(--theme-ui-colors-background);
-  --theme-ui-colors-activity-0: oklch(0.96 0 0);
-  --theme-ui-colors-activity-1: oklch(0.93 0.01 140);
-  --theme-ui-colors-activity-2: oklch(0.86 0.06 140);
-  --theme-ui-colors-activity-3: oklch(0.78 0.12 140);
-  --theme-ui-colors-activity-4: oklch(0.7 0.18 140);
+  --theme-ui-colors-activity-0: #ebedf0;
+  --theme-ui-colors-activity-1: #9be9a8;
+  --theme-ui-colors-activity-2: #40c463;
+  --theme-ui-colors-activity-3: #30a14e;
+  --theme-ui-colors-activity-4: #216e39;
   color-scheme: dark;
 }
 

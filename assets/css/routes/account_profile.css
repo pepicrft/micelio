@@ -173,24 +173,26 @@
 #account-activity {
   display: grid;
   gap: 0;
-  --activity-graph-0: var(--theme-ui-colors-activity-0);
-  --activity-graph-1: var(--theme-ui-colors-activity-1);
-  --activity-graph-2: var(--theme-ui-colors-activity-2);
-  --activity-graph-3: var(--theme-ui-colors-activity-3);
-  --activity-graph-4: var(--theme-ui-colors-activity-4);
+  --activity-graph-0: #ebedf0;
+  --activity-graph-1: #9be9a8;
+  --activity-graph-2: #40c463;
+  --activity-graph-3: #30a14e;
+  --activity-graph-4: #216e39;
 }
 
 #account-activity .account-section-title {
-  margin-bottom: calc(var(--theme-ui-space-1) / 2);
+  margin: 0;
+  padding: 0 0 0.125rem;
+  line-height: 1;
 }
 
 .activity-graph {
-  margin-top: 0;
+  margin: 0;
 }
 
 .activity-graph-container {
   overflow-x: auto;
-  padding-bottom: var(--theme-ui-space-2);
+  padding-bottom: var(--theme-ui-space-1);
 }
 
 .activity-graph-svg {

@@ -8,6 +8,6 @@ defmodule Micelio.ThemeTokensTest do
   test "activity graph uses a light gray base color" do
     css = File.read!(css_path("assets/css/theme/tokens.css"))
 
-    assert css =~ "--theme-ui-colors-activity-0: oklch(0.96 0 0);"
+    assert css =~ "--theme-ui-colors-activity-0: #ebedf0;"
   end
 end

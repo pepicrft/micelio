@@ -18,7 +18,7 @@ Micelio is a minimalist, open-source git forge built with Elixir/Phoenix, design
 - [x] Create user profile page showing owned projects and activity
   - Note: Activity graph (like GitHub's contribution graph) should be added
 - [x] Add user activity graph (GitHub-style contribution visualization) to profile page
-- [ ] Fix activity graph styling
+- [x] Fix activity graph styling
   - Reduce spacing between "Activity" title and the graph (too much whitespace currently)
   - Change gradient from light gray to green (currently dark gray to green)
   - Ensure consistent visual styling with the rest of the profile page
