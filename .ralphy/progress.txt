@@ -23,3 +23,4 @@
 - Added OAuth token endpoint for mobile refresh flow, fixed Boruta client adapter return types, and covered refresh handling with tests.
 - Added Android project browsing and detail views with in-memory repository data, plus navigation, tests, and lint/test runs.
 - Added Android project browsing and detail screens with in-memory data, navigation, and tests.
+- Added mobile project API endpoints with pagination/sync metadata, visibility filtering, and tests.

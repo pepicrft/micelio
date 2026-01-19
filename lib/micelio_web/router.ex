@@ -139,6 +139,13 @@ defmodule MicelioWeb.Router do
     get("/docs", OpenApiSpex.Plug.SwaggerUI, path: "/api/openapi")
   end
 
+  scope "/api/mobile", MicelioWeb.Api.Mobile do
+    pipe_through(:api)
+
+    get("/projects", ProjectController, :index)
+    get("/projects/:organization_handle/:project_handle", ProjectController, :show)
+  end
+
   scope "/.well-known", MicelioWeb do
     pipe_through(:activity_pub)
 

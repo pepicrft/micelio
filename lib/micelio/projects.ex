@@ -114,6 +114,30 @@ defmodule Micelio.Projects do
   end
 
   @doc """
+  Lists projects for mobile clients with pagination and optional sync filtering.
+  """
+  def list_mobile_projects(opts \\ []) do
+    user = Keyword.get(opts, :user)
+    limit = Keyword.get(opts, :limit, 20)
+    offset = Keyword.get(opts, :offset, 0)
+    updated_since = Keyword.get(opts, :updated_since)
+
+    Project
+    |> mobile_visibility_filter(user)
+    |> maybe_filter_updated_since(updated_since)
+    |> join(:left, [p], ps in ProjectStar, on: ps.project_id == p.id)
+    |> join(:left, [p, _ps], o in assoc(p, :organization))
+    |> join(:left, [p, _ps, o], a in assoc(o, :account))
+    |> preload([_p, _ps, o, a], organization: {o, account: a})
+    |> group_by([p, _ps, o, a], [p.id, o.id, a.id])
+    |> select_merge([_p, ps, _o, _a], %{star_count: count(ps.id)})
+    |> order_by([p, _ps, _o, a], desc: p.updated_at, asc: a.handle, asc: p.name)
+    |> limit(^limit)
+    |> offset(^offset)
+    |> Repo.all()
+  end
+
+  @doc """
   Lists all projects.
   """
   def list_projects do
@@ -495,6 +519,21 @@ defmodule Micelio.Projects do
     end
   end
 
+  @doc """
+  Gets a project by organization handle and project handle with star count for a user.
+  """
+  def get_project_for_user_by_handle_with_star_count(user, organization_handle, project_handle) do
+    with {:ok, project, organization} <-
+           get_project_for_user_by_handle(user, organization_handle, project_handle) do
+      star_count =
+        ProjectStar
+        |> where([ps], ps.project_id == ^project.id)
+        |> Repo.aggregate(:count, :id)
+
+      {:ok, %{project | star_count: star_count}, organization}
+    end
+  end
+
   defp user_in_organization?(%Accounts.User{} = user, organization_id),
     do: Accounts.user_in_organization?(user, organization_id)
 
@@ -669,6 +708,29 @@ defmodule Micelio.Projects do
 
   defp search_visibility_filter(query, _user) do
     where(query, [p, _f], p.visibility == "public")
+  end
+
+  defp mobile_visibility_filter(query, %Accounts.User{} = user) do
+    organization_ids =
+      user
+      |> Accounts.list_organizations_for_user()
+      |> Enum.map(& &1.id)
+
+    if organization_ids == [] do
+      where(query, [p], p.visibility == "public")
+    else
+      where(query, [p], p.visibility == "public" or p.organization_id in ^organization_ids)
+    end
+  end
+
+  defp mobile_visibility_filter(query, _user) do
+    where(query, [p], p.visibility == "public")
+  end
+
+  defp maybe_filter_updated_since(query, nil), do: query
+
+  defp maybe_filter_updated_since(query, %DateTime{} = updated_since) do
+    where(query, [p], p.updated_at > ^updated_since)
   end
 
   defp update_project_with_audit(%Project{} = _project, changeset, action, opts) do
