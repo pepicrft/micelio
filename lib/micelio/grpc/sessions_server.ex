@@ -209,11 +209,28 @@ defmodule Micelio.GRPC.Sessions.V1.SessionService.Server do
   end
 
   defp session_target_branch(%Session{metadata: %{} = metadata}) do
-    case metadata do
-      %{"target_branch" => branch} when is_binary(branch) and branch != "" -> branch
-      %{"branch" => branch} when is_binary(branch) and branch != "" -> branch
-      _ -> "main"
-    end
+    metadata
+    |> extract_target_branch()
+    |> normalize_branch()
+  end
+
+  defp extract_target_branch(%{"target_branch" => branch})
+       when is_binary(branch) and branch != "" do
+    branch
+  end
+
+  defp extract_target_branch(%{"branch" => branch}) when is_binary(branch) and branch != "" do
+    branch
+  end
+
+  defp extract_target_branch(_metadata), do: "main"
+
+  defp normalize_branch(branch) when is_binary(branch) do
+    branch
+    |> String.trim()
+    |> String.replace_prefix("refs/heads/", "")
+    |> String.replace_prefix("refs/remotes/", "")
+    |> String.replace_prefix("origin/", "")
   end
 
   defp filter_sessions_by_path(sessions, project_id, path) do

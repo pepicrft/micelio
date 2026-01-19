@@ -108,6 +108,79 @@ defmodule Micelio.Mic.LandingWorkflowTest do
     assert :ok = wait_for_rollup_tasks()
   end
 
+  test "blocks landing to main when branch protection is enabled" do
+    unique = System.unique_integer([:positive])
+
+    {:ok, user} =
+      Accounts.get_or_create_user_by_email("landing-protected-#{unique}@example.com")
+
+    {:ok, organization} =
+      Accounts.create_organization_for_user(user, %{
+        handle: "landing-protected-org-#{unique}",
+        name: "Landing Protected Org #{unique}"
+      })
+
+    {:ok, project} =
+      Projects.create_project(%{
+        handle: "landing-protected-project-#{unique}",
+        name: "Landing Protected Project #{unique}",
+        organization_id: organization.id,
+        protect_main_branch: true
+      })
+
+    {:ok, session} =
+      Sessions.create_session(%{
+        session_id: "landing-protected-session-#{unique}",
+        goal: "Protect main",
+        project_id: project.id,
+        user_id: user.id,
+        metadata: %{"target_branch" => "refs/heads/main"}
+      })
+
+    assert {:error, :protected_branch} = Landing.land_session(session)
+  end
+
+  test "allows landing to non-main branch when main is protected" do
+    unique = System.unique_integer([:positive])
+
+    {:ok, user} =
+      Accounts.get_or_create_user_by_email("landing-feature-#{unique}@example.com")
+
+    {:ok, organization} =
+      Accounts.create_organization_for_user(user, %{
+        handle: "landing-feature-org-#{unique}",
+        name: "Landing Feature Org #{unique}"
+      })
+
+    {:ok, project} =
+      Projects.create_project(%{
+        handle: "landing-feature-project-#{unique}",
+        name: "Landing Feature Project #{unique}",
+        organization_id: organization.id,
+        protect_main_branch: true
+      })
+
+    {:ok, session} =
+      Sessions.create_session(%{
+        session_id: "landing-feature-session-#{unique}",
+        goal: "Land to feature",
+        project_id: project.id,
+        user_id: user.id,
+        metadata: %{"target_branch" => "feature"}
+      })
+
+    files = [
+      %{"path" => "docs/feature.md", "content" => "ok\n", "change_type" => "added"}
+    ]
+
+    {:ok, session_with_changes, _stats} = ChangeStore.store_session_changes(session, files)
+
+    assert {:ok, %{position: 1, landed_at: %DateTime{}}} =
+             Landing.land_session(session_with_changes)
+
+    assert :ok = wait_for_rollup_tasks()
+  end
+
   defp landing_key(project_id, position) do
     "projects/#{project_id}/landing/#{pad_position(position)}.bin"
   end
