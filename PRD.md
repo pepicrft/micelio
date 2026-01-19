@@ -22,7 +22,7 @@ Micelio is a minimalist, open-source git forge built with Elixir/Phoenix, design
   - Reduce spacing between "Activity" title and the graph (too much whitespace currently)
   - Change gradient from light gray to green (currently dark gray to green)
   - Ensure consistent visual styling with the rest of the profile page
-- [ ] Rename "Owned repositories" section header to "Projects"
+- [x] Rename "Owned repositories" section header to "Projects"
   - Use "Projects" terminology consistently throughout the platform
   - Update both the heading text and any associated aria labels
 - [ ] Add organizations section to user profile page
