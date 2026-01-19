@@ -498,7 +498,7 @@ defmodule MicelioWeb.Browser.RepositoryControllerTest do
     project: project
   } do
     # Configure CDN via process dictionary (no global state!)
-    Process.put(:micelio_storage_config, [cdn_base_url: "https://cdn.example.test/micelio"])
+    Process.put(:micelio_storage_config, cdn_base_url: "https://cdn.example.test/micelio")
 
     on_exit(fn ->
       Process.delete(:micelio_storage_config)

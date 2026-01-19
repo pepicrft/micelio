@@ -23,6 +23,8 @@ organization =
         raise "Failed to create organization: #{inspect(changeset.errors)}"
     end
 
+organization_id = organization.id
+
 account =
   case Accounts.get_account_by_handle(org_handle) do
     nil ->
@@ -37,7 +39,7 @@ account =
           raise "Failed to create organization account: #{inspect(changeset.errors)}"
       end
 
-    %{organization_id: ^organization.id} = account ->
+    %{organization_id: ^organization_id} = account ->
       account
 
     %{organization_id: other_org} ->

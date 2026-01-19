@@ -7,6 +7,7 @@ const viewports = [
   { name: "iphone-se", width: 320, height: 568 },
   { name: "pixel-4a", width: 360, height: 640 },
   { name: "iphone-12", width: 390, height: 844 },
+  { name: "iphone-15-pro", width: 393, height: 852 },
   { name: "iphone-14-pro-max", width: 430, height: 932 },
   { name: "pixel-5", width: 393, height: 851 },
   { name: "galaxy-s20", width: 412, height: 915 },
@@ -31,6 +32,7 @@ for (const viewport of viewports) {
     test("home page is readable without horizontal scroll", async ({ page }) => {
       await page.goto("/", { waitUntil: "domcontentloaded" });
       await expect(page.locator(".home-container")).toBeVisible();
+      await expect(page.locator("#popular-projects")).toBeVisible();
       await expectNoHorizontalOverflow(page);
     });
 

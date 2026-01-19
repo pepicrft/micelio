@@ -276,6 +276,7 @@ defmodule Micelio.Storage.S3 do
     config =
       Process.get(:micelio_storage_config) ||
         Application.get_env(:micelio, Micelio.Storage, [])
+
     env = Keyword.get(config, :env, %{})
 
     bucket = Keyword.get(config, :s3_bucket) || env_get(env, "S3_BUCKET")

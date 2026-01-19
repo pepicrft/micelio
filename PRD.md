@@ -115,7 +115,7 @@ Micelio is a minimalist, open-source git forge built with Elixir/Phoenix, design
 - [x] Create user documentation for common mic workflows
 - [x] Add architecture decision records (ADRs) for key design choices
 - [x] Ensure website is mobile-responsive and renders correctly on all screen sizes
-- [ ] Add Playwright tests to verify mobile layout on various viewport sizes
+- [x] Add Playwright tests to verify mobile layout on various viewport sizes
 - [ ] Create automated visual regression tests for mobile breakpoints
 
 ### Security & Compliance

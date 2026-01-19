@@ -26,7 +26,7 @@ defmodule Micelio.GRPC.AuthRequiredTest do
     end)
 
     # Use process dictionary for Storage config (parallel-safe)
-    Process.put(:micelio_storage_config, [backend: :local])
+    Process.put(:micelio_storage_config, backend: :local)
 
     on_exit(fn ->
       Process.delete(:micelio_storage_config)
