@@ -608,3 +608,70 @@ Once structured data rendering is working, explore:
   - Support inline images from artifact events
   - Progress bars for long-running operations
   - Collapsible output sections
+
+### Sapling SCM Investigation
+
+Sapling is a distributed version control system developed by Meta, designed for large-scale development with Git interoperability. Research its potential for Micelio's agent-first workflow.
+
+#### Key Features
+
+**Stacking Workflow**
+- Sapling excels at "stacked PRs" — managing many small, dependent commits
+- `sl stack` command shows all related commits in a series
+- Ideal for agent workflows where each task produces incremental commits
+- Avoids "detached HEAD" and complex branch management
+
+**User-Friendly UI**
+- `sl status` shows clearer, more intuitive output than `git status`
+- `sl goto` for easy navigation between commits
+- Built-in interactive rebase and amend
+- Better conflict resolution UX
+
+**Git Compatibility**
+- Works with existing Git repositories
+- Can clone from and push to GitHub/GitLab
+- Smooth interoperability: `sl git` aliases for common Git commands
+- No repository migration required
+
+**Scalability**
+- Optimized for monorepos (Meta-scale)
+- Faster than Git for large histories
+- Intelligent caching and data structures
+
+#### Relevance to Micelio
+
+**For Agent Workflows:**
+- Stacked commits match agent task structure (one task = one commit in stack)
+- Clear visualization of task progress
+- Easier to iterate on agent-generated changes
+
+**For mic Integration:**
+- Sapling could replace or enhance `mic` for version control
+- Better UX for reviewing agent sessions
+- Potential for richer session metadata
+
+#### Research Questions
+
+1. **Can Sapling replace or integrate with mic?**
+   - What would migration look like?
+   - What features would be gained/lost?
+
+2. **How does Sapling handle AI-generated code?**
+   - Does it have features for automated commits?
+   - What about commit signing for agents?
+
+3. **Performance comparison:**
+   - Benchmarks against Git for typical mic workflows
+   - Storage overhead and speed
+
+4. **Integration with existing Git hosting:**
+   - GitHub/GitLab PR creation from Sapling
+   - CI/CD pipeline compatibility
+
+#### Next Steps
+
+- [ ] Install and benchmark Sapling vs Git for mic workflows
+- [ ] Test stacking workflow with simulated agent sessions
+- [ ] Evaluate Git interoperability for gradual migration
+- [ ] Design integration layer between mic and Sapling
+- [ ] Create proof-of-concept for agent commit workflow
