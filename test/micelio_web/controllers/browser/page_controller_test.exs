@@ -61,4 +61,12 @@ defmodule MicelioWeb.Browser.PageControllerTest do
 
     assert html =~ "popular-projects-next"
   end
+
+  test "includes favicon link in layout", %{conn: conn} do
+    conn = get(conn, ~p"/")
+    html = html_response(conn, 200)
+
+    assert html =~ ~s(rel="icon")
+    assert html =~ ~s(href="/favicon.ico")
+  end
 end
