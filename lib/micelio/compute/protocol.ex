@@ -44,6 +44,14 @@ defmodule Micelio.AgentInfra.Protocol do
           metadata: map()
         }
 
+  @typedoc "Normalized provider error payload."
+  @type error :: %{
+          code: String.t(),
+          message: String.t() | nil,
+          retryable: boolean(),
+          metadata: map()
+        }
+
   @doc "Returns the allowed VM lifecycle states."
   @spec states() :: [state()]
   def states do
@@ -138,6 +146,29 @@ defmodule Micelio.AgentInfra.Protocol do
 
   def normalize_capabilities(_capabilities), do: {:error, :invalid_capabilities}
 
+  @doc """
+  Normalizes provider error payloads into the canonical protocol shape.
+  """
+  @spec normalize_error(term()) :: {:ok, error()} | {:error, atom()}
+  def normalize_error(%{} = error) do
+    with {:ok, code} <- normalize_error_code(get_field(error, :code)),
+         message <- normalize_error_message(get_field(error, :message)),
+         retryable <- normalize_boolean(get_field(error, :retryable)),
+         metadata <- normalize_metadata(get_field(error, :metadata)) do
+      {:ok,
+       %{
+         code: code,
+         message: message,
+         retryable: retryable,
+         metadata: metadata
+       }}
+    else
+      {:error, _reason} = error -> error
+    end
+  end
+
+  def normalize_error(_error), do: {:error, :invalid_error}
+
   defp normalize_state(state) when state in [:starting, :running, :stopped, :terminated, :error], do: {:ok, state}
 
   defp normalize_state(state) when is_binary(state) do
@@ -210,6 +241,41 @@ defmodule Micelio.AgentInfra.Protocol do
   end
 
   defp normalize_positive_int(_value), do: nil
+
+  defp normalize_error_code(nil), do: {:error, :invalid_error_code}
+
+  defp normalize_error_code(code) when is_atom(code) do
+    {:ok, Atom.to_string(code)}
+  end
+
+  defp normalize_error_code(code) when is_binary(code) do
+    trimmed = String.trim(code)
+
+    if trimmed == "" do
+      {:error, :invalid_error_code}
+    else
+      {:ok, trimmed}
+    end
+  end
+
+  defp normalize_error_code(_code), do: {:error, :invalid_error_code}
+
+  defp normalize_error_message(nil), do: nil
+  defp normalize_error_message(message) when is_binary(message), do: message
+  defp normalize_error_message(message) when is_atom(message), do: Atom.to_string(message)
+  defp normalize_error_message(_message), do: nil
+
+  defp normalize_boolean(value) when is_boolean(value), do: value
+
+  defp normalize_boolean(value) when is_binary(value) do
+    case String.downcase(String.trim(value)) do
+      "true" -> true
+      "false" -> false
+      _ -> false
+    end
+  end
+
+  defp normalize_boolean(_value), do: false
 
   defp get_field(map, key) do
     Map.get(map, key) || Map.get(map, Atom.to_string(key))

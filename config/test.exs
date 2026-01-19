@@ -37,6 +37,10 @@ config :micelio, MicelioWeb.Endpoint,
   secret_key_base: "7CasJHWDMv4jqFHNq+m+JV10UTi5t6g4FH0RJBPjOPwTEbBg2vI/VDZknktJ4B4/",
   server: false
 
+# Configure PubSub with minimal pool size to reduce TCP socket contention in tests
+config :phoenix_pubsub, Micelio.PubSub,
+  pool_size: 1
+
 config :micelio, :admin_emails, ["admin@example.com"]
 
 config :micelio, :github_oauth,

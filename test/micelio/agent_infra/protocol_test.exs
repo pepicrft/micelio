@@ -78,6 +78,53 @@ defmodule Micelio.AgentInfra.ProtocolTest do
     assert {:error, :invalid_status} = Protocol.normalize_instance(payload)
   end
 
+  test "normalize_instances returns normalized instance lists" do
+    payloads = [
+      %{
+        ref: "vm-123",
+        status: %{state: :running, hostname: "host", ip_address: "10.0.0.2"},
+        provider: :fly,
+        metadata: %{"zone" => "iad"}
+      },
+      %{
+        "ref" => "vm-456",
+        "status" => %{"state" => "stopped", "hostname" => nil, "ip_address" => nil},
+        "provider" => "aws",
+        "metadata" => %{"region" => "us-east-1"}
+      }
+    ]
+
+    assert {:ok, instances} = Protocol.normalize_instances(payloads)
+    assert Enum.count(instances) == 2
+
+    assert [
+             %{
+               ref: "vm-123",
+               provider: "fly",
+               status: %{state: :running},
+               metadata: %{"zone" => "iad"}
+             },
+             %{
+               ref: "vm-456",
+               provider: "aws",
+               status: %{state: :stopped},
+               metadata: %{"region" => "us-east-1"}
+             }
+           ] = instances
+  end
+
+  test "normalize_instances reports the first invalid entry" do
+    payloads = [%{ref: "vm-123", status: %{state: :running}}, %{ref: nil, status: %{state: :running}}]
+
+    assert {:error, %{index: 1, reason: :invalid_instance_ref}} =
+             Protocol.normalize_instances(payloads)
+  end
+
+  test "normalize_instances handles nil and invalid inputs" do
+    assert {:ok, []} = Protocol.normalize_instances(nil)
+    assert {:error, :invalid_instances} = Protocol.normalize_instances(:invalid)
+  end
+
   test "normalize_capabilities returns defaults when nil" do
     assert {:ok,
             %{
@@ -113,5 +160,42 @@ defmodule Micelio.AgentInfra.ProtocolTest do
 
   test "normalize_capabilities rejects non-map inputs" do
     assert {:error, :invalid_capabilities} = Protocol.normalize_capabilities(:invalid)
+  end
+
+  test "normalize_error coerces code, message, and retryable" do
+    payload = %{
+      code: :capacity_exhausted,
+      message: "No capacity available",
+      retryable: "true",
+      metadata: %{"region" => "us-east-1"}
+    }
+
+    assert {:ok,
+            %{
+              code: "capacity_exhausted",
+              message: "No capacity available",
+              retryable: true,
+              metadata: %{"region" => "us-east-1"}
+            }} = Protocol.normalize_error(payload)
+  end
+
+  test "normalize_error trims string codes and defaults retryable" do
+    payload = %{"code" => "  quota_exceeded  ", "message" => :rate_limited}
+
+    assert {:ok,
+            %{
+              code: "quota_exceeded",
+              message: "rate_limited",
+              retryable: false,
+              metadata: %{}
+            }} = Protocol.normalize_error(payload)
+  end
+
+  test "normalize_error rejects missing codes" do
+    assert {:error, :invalid_error_code} = Protocol.normalize_error(%{message: "missing code"})
+  end
+
+  test "normalize_error rejects non-map inputs" do
+    assert {:error, :invalid_error} = Protocol.normalize_error("invalid")
   end
 end
