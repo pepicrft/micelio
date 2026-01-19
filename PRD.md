@@ -151,8 +151,8 @@ Micelio is a minimalist, open-source git forge built with Elixir/Phoenix, design
 
 ### Agentic Infrastructure
 
-- [ ] Design infrastructure for provisioning VMs and mounting volumes
-- [ ] Evaluate cloud platforms for VM provisioning (AWS, GCP, Hetzner, etc.)
+- [x] Design infrastructure for provisioning VMs and mounting volumes (use `compute/` directory)
+- [x] Evaluate cloud platforms for VM provisioning (AWS, GCP, Hetzner, etc.)
 - [ ] Design abstraction protocol for cloud-agnostic VM management
 - [ ] Implement remote execution service for running CLI tools (Claude, Codex, etc.)
 - [ ] Add support for tenant-configurable LLM models per project

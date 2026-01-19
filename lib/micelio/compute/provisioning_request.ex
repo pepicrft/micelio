@@ -1,0 +1,66 @@
+defmodule Micelio.AgentInfra.ProvisioningRequest do
+  @moduledoc """
+  Normalizes provisioning plans into provider-ready requests.
+  """
+
+  alias Micelio.AgentInfra.ProvisioningPlan
+  alias Micelio.AgentInfra.VolumeMount
+
+  @enforce_keys [:provider, :image, :cpu_cores, :memory_mb, :disk_gb]
+  defstruct [
+    :provider,
+    :image,
+    :cpu_cores,
+    :memory_mb,
+    :disk_gb,
+    :network,
+    :ttl_seconds,
+    volumes: []
+  ]
+
+  @type volume :: %{
+          name: String.t(),
+          type: String.t(),
+          source: String.t(),
+          target: String.t(),
+          read_only: boolean()
+        }
+
+  @type t :: %__MODULE__{
+          provider: String.t(),
+          image: String.t(),
+          cpu_cores: pos_integer(),
+          memory_mb: pos_integer(),
+          disk_gb: pos_integer(),
+          network: String.t() | nil,
+          ttl_seconds: pos_integer() | nil,
+          volumes: [volume()]
+        }
+
+  @doc """
+  Builds a provisioning request from a validated plan.
+  """
+  @spec from_plan(ProvisioningPlan.t()) :: t()
+  def from_plan(%ProvisioningPlan{} = plan) do
+    %__MODULE__{
+      provider: plan.provider,
+      image: plan.image,
+      cpu_cores: plan.cpu_cores,
+      memory_mb: plan.memory_mb,
+      disk_gb: plan.disk_gb,
+      network: plan.network,
+      ttl_seconds: plan.ttl_seconds,
+      volumes: Enum.map(plan.volumes, &normalize_volume/1)
+    }
+  end
+
+  defp normalize_volume(%VolumeMount{} = mount) do
+    %{
+      name: mount.name,
+      type: mount.type,
+      source: mount.source,
+      target: mount.target,
+      read_only: mount.access == "ro"
+    }
+  end
+end

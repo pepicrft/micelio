@@ -17,6 +17,15 @@ defmodule Micelio.AgentInfra.VolumeMount do
     field :read_only, :boolean, virtual: true
   end
 
+  @type t :: %__MODULE__{
+          name: String.t() | nil,
+          source: String.t() | nil,
+          target: String.t() | nil,
+          access: String.t() | nil,
+          type: String.t() | nil,
+          read_only: boolean() | nil
+        }
+
   @doc """
   Builds a changeset for a volume mount.
   """

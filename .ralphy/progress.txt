@@ -24,3 +24,6 @@
 - Added Android project browsing and detail views with in-memory repository data, plus navigation, tests, and lint/test runs.
 - Added Android project browsing and detail screens with in-memory data, navigation, and tests.
 - Added mobile project API endpoints with pagination/sync metadata, visibility filtering, and tests.
+
+- Added provisioning request normalization for agent VM plans with volume mount mapping, plus types and tests.
+- Evaluated cloud platforms for agent VM provisioning with a curated comparison module, API accessors, and tests.

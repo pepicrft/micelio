@@ -21,6 +21,17 @@ defmodule Micelio.AgentInfra.ProvisioningPlan do
     embeds_many :volumes, VolumeMount, on_replace: :delete
   end
 
+  @type t :: %__MODULE__{
+          provider: String.t() | nil,
+          image: String.t() | nil,
+          cpu_cores: integer() | nil,
+          memory_mb: integer() | nil,
+          disk_gb: integer() | nil,
+          network: String.t() | nil,
+          ttl_seconds: integer() | nil,
+          volumes: [VolumeMount.t()]
+        }
+
   @doc """
   Builds a changeset for a provisioning plan.
   """
