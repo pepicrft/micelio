@@ -200,6 +200,35 @@ defmodule Micelio.ProjectsTest do
       assert project1.handle == project2.handle
       refute project1.organization_id == project2.organization_id
     end
+
+    test "enforces project limit per organization", %{organization: organization} do
+      limit =
+        :micelio
+        |> Application.get_env(:project_limits, [])
+        |> Keyword.get(:max_projects_per_tenant, 25)
+
+      assert is_integer(limit) and limit > 0
+
+      for idx <- 1..limit do
+        attrs = %{
+          handle: "limit-#{idx}",
+          name: "Limit #{idx}",
+          organization_id: organization.id
+        }
+
+        assert {:ok, _project} = Projects.create_project(attrs)
+      end
+
+      extra_attrs = %{
+        handle: "limit-extra",
+        name: "Limit Extra",
+        organization_id: organization.id
+      }
+
+      assert {:error, changeset} = Projects.create_project(extra_attrs)
+
+      assert "project limit reached for this organization" in errors_on(changeset).base
+    end
   end
 
   describe "fork_project/3" do
@@ -250,6 +279,33 @@ defmodule Micelio.ProjectsTest do
 
       assert {:ok, "head-data"} = Storage.get(MicRepository.head_key(forked.id))
       assert {:ok, "blob-data"} = Storage.get(MicRepository.blob_key(forked.id, blob_hash))
+    end
+
+    test "rejects fork when project limit is reached", %{source: source, target_org: target_org} do
+      limit =
+        :micelio
+        |> Application.get_env(:project_limits, [])
+        |> Keyword.get(:max_projects_per_tenant, 25)
+
+      assert is_integer(limit) and limit > 0
+
+      for idx <- 1..limit do
+        attrs = %{
+          handle: "fork-limit-#{idx}",
+          name: "Fork Limit #{idx}",
+          organization_id: target_org.id
+        }
+
+        assert {:ok, _project} = Projects.create_project(attrs)
+      end
+
+      assert {:error, changeset} =
+               Projects.fork_project(source, target_org, %{
+                 handle: "fork-over-limit",
+                 name: "Fork Over Limit"
+               })
+
+      assert "project limit reached for this organization" in errors_on(changeset).base
     end
 
     test "returns errors when fork data is invalid", %{source: source, target_org: target_org} do

@@ -80,6 +80,7 @@ config :micelio, :api_rate_limit,
 
 config :micelio, :github_oauth, []
 config :micelio, :gitlab_oauth, []
+config :micelio, :project_limits, max_projects_per_tenant: 25
 
 config :micelio,
   ecto_repos: [Micelio.Repo],

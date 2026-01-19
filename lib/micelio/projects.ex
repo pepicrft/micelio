@@ -249,16 +249,22 @@ defmodule Micelio.Projects do
   """
   def create_project(attrs, opts \\ []) do
     Repo.transaction(fn ->
-      case %Project{}
-           |> Project.changeset(attrs)
-           |> Repo.insert() do
-        {:ok, project} ->
-          case Audit.log_project_action(project, "project.created",
-                 user: Keyword.get(opts, :user),
-                 metadata: project_audit_metadata(project)
-               ) do
-            {:ok, _log} -> project
-            {:error, changeset} -> Repo.rollback(changeset)
+      case enforce_project_limit(attrs) do
+        :ok ->
+          case %Project{}
+               |> Project.changeset(attrs)
+               |> Repo.insert() do
+            {:ok, project} ->
+              case Audit.log_project_action(project, "project.created",
+                     user: Keyword.get(opts, :user),
+                     metadata: project_audit_metadata(project)
+                   ) do
+                {:ok, _log} -> project
+                {:error, changeset} -> Repo.rollback(changeset)
+              end
+
+            {:error, changeset} ->
+              Repo.rollback(changeset)
           end
 
         {:error, changeset} ->
@@ -280,20 +286,26 @@ defmodule Micelio.Projects do
     attrs = normalize_fork_attrs(source, organization, attrs)
 
     Repo.transaction(fn ->
-      case create_fork_project(source, attrs) do
-        {:ok, project} ->
-          case copy_project_storage(source.id, project.id) do
-            :ok ->
-              case Audit.log_project_action(project, "project.forked",
-                     user: Keyword.get(opts, :user),
-                     metadata: %{forked_from_id: source.id}
-                   ) do
-                {:ok, _log} -> project
-                {:error, changeset} -> Repo.rollback(changeset)
+      case enforce_project_limit(attrs) do
+        :ok ->
+          case create_fork_project(source, attrs) do
+            {:ok, project} ->
+              case copy_project_storage(source.id, project.id) do
+                :ok ->
+                  case Audit.log_project_action(project, "project.forked",
+                         user: Keyword.get(opts, :user),
+                         metadata: %{forked_from_id: source.id}
+                       ) do
+                    {:ok, _log} -> project
+                    {:error, changeset} -> Repo.rollback(changeset)
+                  end
+
+                {:error, reason} ->
+                  Repo.rollback(reason)
               end
 
-            {:error, reason} ->
-              Repo.rollback(reason)
+            {:error, changeset} ->
+              Repo.rollback(changeset)
           end
 
         {:error, changeset} ->
@@ -690,6 +702,53 @@ defmodule Micelio.Projects do
       organization_id: project.organization_id
     }
   end
+
+  defp enforce_project_limit(attrs) do
+    case max_projects_per_tenant() do
+      :unlimited ->
+        :ok
+
+      limit ->
+        organization_id = Map.get(attrs, :organization_id) || Map.get(attrs, "organization_id")
+
+        if is_nil(organization_id) do
+          :ok
+        else
+          existing_count =
+            Project
+            |> where([p], p.organization_id == ^organization_id)
+            |> Repo.aggregate(:count, :id)
+
+          if existing_count >= limit do
+            changeset =
+              %Project{}
+              |> Project.changeset(attrs)
+              |> Ecto.Changeset.add_error(
+                :base,
+                "project limit reached for this organization"
+              )
+
+            {:error, changeset}
+          else
+            :ok
+          end
+        end
+    end
+  end
+
+  defp max_projects_per_tenant do
+    :micelio
+    |> Application.get_env(:project_limits, [])
+    |> Keyword.get(:max_projects_per_tenant, 25)
+    |> normalize_project_limit()
+  end
+
+  defp normalize_project_limit(:unlimited), do: :unlimited
+  defp normalize_project_limit(:infinity), do: :unlimited
+  defp normalize_project_limit(nil), do: :unlimited
+
+  defp normalize_project_limit(limit) when is_integer(limit) and limit >= 0, do: limit
+  defp normalize_project_limit(_limit), do: :unlimited
 
   defp normalize_transaction_result({:ok, result}), do: {:ok, result}
 
