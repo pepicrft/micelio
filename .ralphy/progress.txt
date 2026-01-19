@@ -8,3 +8,5 @@
 - Added audit logging for project operations with audit log schema, persistence, and tests.
 
 - Added TOTP-based two-factor authentication with account setup, login challenge, and tests (plus UI and Playwright verification).
+
+- Centralized branch protection checks, added normalization tests, and marked the PRD item complete.

@@ -15,6 +15,7 @@ defmodule Micelio.GRPC.Sessions.V1.SessionService.Server do
   }
 
   alias Micelio.Mic.Binary
+  alias Micelio.Mic.BranchProtection
   alias Micelio.Mic.Landing
   alias Micelio.Notifications
   alias Micelio.OAuth.AccessTokens
@@ -68,17 +69,20 @@ defmodule Micelio.GRPC.Sessions.V1.SessionService.Server do
   end
 
   def land_session(%LandSessionRequest{} = request, stream) do
+    target_branch = empty_to_nil(request.target_branch)
+
     with :ok <- require_field(request.session_id, "session_id"),
          {:ok, user} <- fetch_user(request.user_id, stream),
          %Session{} = session <- Sessions.get_session_by_session_id(request.session_id),
          project = Projects.get_project_with_organization(session.project_id),
          true <- Accounts.user_in_organization?(user, project.organization.id),
          true <- session.status == "active",
-         {:ok, :allowed} <- ensure_branch_protection(project, session) do
+         {:ok, :allowed} <- ensure_branch_protection(project, session, target_branch) do
       {:ok, updated_session} =
         Sessions.update_session(session, %{
           conversation: map_conversation(request.conversation, session.conversation),
-          decisions: map_decisions(request.decisions, session.decisions)
+          decisions: map_decisions(request.decisions, session.decisions),
+          metadata: merge_target_branch(session.metadata, target_branch)
         })
 
       session_for_landing =
@@ -200,37 +204,19 @@ defmodule Micelio.GRPC.Sessions.V1.SessionService.Server do
   defp normalize_metadata(%{} = metadata), do: metadata
   defp normalize_metadata(_), do: %{}
 
-  defp ensure_branch_protection(project, session) do
-    if project.protect_main_branch and session_target_branch(session) == "main" do
+  defp ensure_branch_protection(project, session, target_branch) do
+    if BranchProtection.blocked_main?(project, session, target_branch) do
       {:error, forbidden_status("Direct lands to main are blocked for this project.")}
     else
       {:ok, :allowed}
     end
   end
 
-  defp session_target_branch(%Session{metadata: %{} = metadata}) do
-    metadata
-    |> extract_target_branch()
-    |> normalize_branch()
-  end
+  defp merge_target_branch(metadata, nil), do: metadata || %{}
 
-  defp extract_target_branch(%{"target_branch" => branch})
-       when is_binary(branch) and branch != "" do
-    branch
-  end
-
-  defp extract_target_branch(%{"branch" => branch}) when is_binary(branch) and branch != "" do
-    branch
-  end
-
-  defp extract_target_branch(_metadata), do: "main"
-
-  defp normalize_branch(branch) when is_binary(branch) do
-    branch
-    |> String.trim()
-    |> String.replace_prefix("refs/heads/", "")
-    |> String.replace_prefix("refs/remotes/", "")
-    |> String.replace_prefix("origin/", "")
+  defp merge_target_branch(metadata, target_branch) when is_binary(target_branch) do
+    (metadata || %{})
+    |> Map.put("target_branch", target_branch)
   end
 
   defp filter_sessions_by_path(sessions, project_id, path) do

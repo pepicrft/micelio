@@ -174,6 +174,109 @@ defmodule Micelio.GRPC.SessionsServerTest do
     assert message =~ "Direct lands to main are blocked"
   end
 
+  test "land_session allows target branch override when main is protected" do
+    {:ok, user} = Accounts.get_or_create_user_by_email("grpc-session-protected-override@example.com")
+
+    {:ok, organization} =
+      Accounts.create_organization_for_user(user, %{
+        handle: "grpc-session-protected-override-org",
+        name: "GRPC Sessions Protected Override Org"
+      })
+
+    {:ok, project} =
+      Projects.create_project(%{
+        handle: "grpc-session-protected-override-repo",
+        name: "GRPC Session Protected Override Repo",
+        organization_id: organization.id,
+        protect_main_branch: true
+      })
+
+    {:ok, session} =
+      Sessions.create_session(%{
+        session_id: "session-grpc-protected-override-1",
+        goal: "Protect main via target override",
+        project_id: project.id,
+        user_id: user.id
+      })
+
+    landing_time = DateTime.utc_now() |> DateTime.truncate(:second)
+
+    Mimic.stub(Landing, :land_session, fn %Sessions.Session{} = landed_session ->
+      assert landed_session.id == session.id
+      {:ok, %{position: 9, landed_at: landing_time}}
+    end)
+
+    Mimic.stub(Webhooks, :dispatch_session_landed, fn _project, _session, _position ->
+      :ok
+    end)
+
+    response =
+      SessionsServer.land_session(
+        %LandSessionRequest{
+          user_id: user.id,
+          session_id: session.session_id,
+          conversation: [],
+          decisions: [],
+          files: [],
+          target_branch: "feature/flag"
+        },
+        nil
+      )
+
+    assert %SessionResponse{} = response
+    assert response.session.status == "landed"
+
+    updated_session = Sessions.get_session_by_session_id(session.session_id)
+    assert updated_session.metadata["target_branch"] == "feature/flag"
+  end
+
+  test "land_session blocks protected main when target branch uses refs remotes prefix" do
+    {:ok, user} =
+      Accounts.get_or_create_user_by_email("grpc-session-protected-remotes@example.com")
+
+    {:ok, organization} =
+      Accounts.create_organization_for_user(user, %{
+        handle: "grpc-session-protected-remotes-org",
+        name: "GRPC Sessions Protected Remotes Org"
+      })
+
+    {:ok, project} =
+      Projects.create_project(%{
+        handle: "grpc-session-protected-remotes-repo",
+        name: "GRPC Session Protected Remotes Repo",
+        organization_id: organization.id,
+        protect_main_branch: true
+      })
+
+    {:ok, session} =
+      Sessions.create_session(%{
+        session_id: "session-grpc-protected-remotes-1",
+        goal: "Protect main via refs remotes",
+        project_id: project.id,
+        user_id: user.id,
+        metadata: %{"branch" => "refs/remotes/origin/main"}
+      })
+
+    Mimic.stub(Landing, :land_session, fn _session ->
+      flunk("Landing should not be invoked for protected main branch")
+    end)
+
+    response =
+      SessionsServer.land_session(
+        %LandSessionRequest{
+          user_id: user.id,
+          session_id: session.session_id,
+          conversation: [],
+          decisions: [],
+          files: []
+        },
+        nil
+      )
+
+    assert {:error, %GRPC.RPCError{message: message}} = response
+    assert message =~ "Direct lands to main are blocked"
+  end
+
   test "land_session supports epoch batching without landing" do
     {:ok, user} = Accounts.get_or_create_user_by_email("grpc-session-batch@example.com")
 

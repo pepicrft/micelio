@@ -37,6 +37,7 @@ pub const FileChange = struct {
 pub const LandSessionOptions = struct {
     epoch: u32 = 0,
     finalize: bool = false,
+    target_branch: ?[]const u8 = null,
 };
 
 pub fn encodeLandSessionRequest(
@@ -58,6 +59,9 @@ pub fn encodeLandSessionRequest(
     }
     if (options.finalize) {
         try proto.encodeVarintField(&buf.writer, 7, 1);
+    }
+    if (options.target_branch) |branch| {
+        try proto.encodeStringField(&buf.writer, 8, branch);
     }
     return buf.toOwnedSlice();
 }

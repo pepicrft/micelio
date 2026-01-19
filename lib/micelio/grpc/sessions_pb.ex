@@ -58,6 +58,7 @@ defmodule Micelio.GRPC.Sessions.V1.LandSessionRequest do
   field :files, 5, repeated: true, type: Micelio.GRPC.Sessions.V1.FileChange
   field :epoch, 6, type: :uint32
   field :finalize, 7, type: :bool
+  field :target_branch, 8, type: :string, json_name: "targetBranch"
 end
 
 defmodule Micelio.GRPC.Sessions.V1.GetSessionRequest do

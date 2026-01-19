@@ -123,7 +123,7 @@ Micelio is a minimalist, open-source git forge built with Elixir/Phoenix, design
 - [x] Implement audit logging for all project operations
 - [x] Add two-factor authentication (TOTP) support
 - [x] Create project access tokens with scoped permissions
-- [ ] Implement branch protection rules for preventing direct lands to main
+- [x] Implement branch protection rules for preventing direct lands to main
 - [ ] Add secret scanning to prevent credential leaks in landed sessions
 
 ### Legal & Terms

@@ -3,7 +3,7 @@ defmodule Micelio.Mic.Landing do
   Coordinator-free landing using compare-and-swap semantics.
   """
 
-  alias Micelio.Mic.{Binary, ConflictIndex, DeltaCompression, RollupWorker, Tree}
+  alias Micelio.Mic.{Binary, BranchProtection, ConflictIndex, DeltaCompression, RollupWorker, Tree}
   alias Micelio.Projects
   alias Micelio.Sessions
   alias Micelio.Sessions.Conflict
@@ -110,41 +110,12 @@ defmodule Micelio.Mic.Landing do
     do_land(session, project, tree_hash, change_filter, attempt + 1)
   end
 
-  defp ensure_branch_protection(%{protect_main_branch: true}, %Session{} = session) do
-    if session_target_branch(session) == "main" do
+  defp ensure_branch_protection(project, %Session{} = session) do
+    if BranchProtection.blocked_main?(project, session) do
       {:error, :protected_branch}
     else
       :ok
     end
-  end
-
-  defp ensure_branch_protection(_project, _session), do: :ok
-
-  defp session_target_branch(%Session{metadata: %{} = metadata}) do
-    metadata
-    |> extract_target_branch()
-    |> normalize_branch()
-  end
-
-  defp session_target_branch(_session), do: "main"
-
-  defp extract_target_branch(%{"target_branch" => branch})
-       when is_binary(branch) and branch != "" do
-    branch
-  end
-
-  defp extract_target_branch(%{"branch" => branch}) when is_binary(branch) and branch != "" do
-    branch
-  end
-
-  defp extract_target_branch(_metadata), do: "main"
-
-  defp normalize_branch(branch) when is_binary(branch) do
-    branch
-    |> String.trim()
-    |> String.replace_prefix("refs/heads/", "")
-    |> String.replace_prefix("refs/remotes/", "")
-    |> String.replace_prefix("origin/", "")
   end
 
   defp fetch_head(head_key) do

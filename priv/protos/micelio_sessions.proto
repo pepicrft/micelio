@@ -50,6 +50,7 @@ message LandSessionRequest {
   repeated FileChange files = 5;
   uint32 epoch = 6;
   bool finalize = 7;
+  string target_branch = 8;
 }
 
 message GetSessionRequest {
