@@ -11,4 +11,6 @@
 
 - Centralized branch protection checks, added normalization tests, and marked the PRD item complete.
 
+- Added secret scanning during session landings to block credential leaks, with GRPC coverage test.
+
 - Added gRPC branch protection test coverage for non-main targets and aligned project access token schema/changesets to clear lint warnings.

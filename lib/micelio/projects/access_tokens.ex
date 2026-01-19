@@ -134,7 +134,8 @@ defmodule Micelio.Projects.AccessTokens do
   defp expand_scope(scope), do: [scope]
 
   defp generate_token do
-    @token_prefix <> (:crypto.strong_rand_bytes(@token_bytes) |> Base.url_encode64(padding: false))
+    @token_prefix <>
+      (:crypto.strong_rand_bytes(@token_bytes) |> Base.url_encode64(padding: false))
   end
 
   defp hash_token(token) when is_binary(token) do

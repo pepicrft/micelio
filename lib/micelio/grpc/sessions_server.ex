@@ -20,6 +20,7 @@ defmodule Micelio.GRPC.Sessions.V1.SessionService.Server do
   alias Micelio.Notifications
   alias Micelio.OAuth.AccessTokens
   alias Micelio.Projects
+  alias Micelio.Security.SecretScanner
   alias Micelio.Sessions
   alias Micelio.Sessions.ChangeStore
   alias Micelio.Sessions.Session
@@ -119,29 +120,40 @@ defmodule Micelio.GRPC.Sessions.V1.SessionService.Server do
                   session: session_to_proto(session_with_epoch, project.organization, project)
                 }
               else
-                case Landing.land_session(session_with_epoch) do
-                  {:ok, landing} ->
-                    {:ok, landed_session} =
-                      Sessions.land_session(session_with_epoch, %{
-                        landed_at: landing.landed_at,
-                        metadata:
-                          session_with_epoch.metadata
-                          |> normalize_metadata()
-                          |> Map.put("landing_position", landing.position)
-                      })
+                case SecretScanner.scan_session_changes(session_with_epoch) do
+                  :ok ->
+                    case Landing.land_session(session_with_epoch) do
+                      {:ok, landing} ->
+                        {:ok, landed_session} =
+                          Sessions.land_session(session_with_epoch, %{
+                            landed_at: landing.landed_at,
+                            metadata:
+                              session_with_epoch.metadata
+                              |> normalize_metadata()
+                              |> Map.put("landing_position", landing.position)
+                          })
 
-                    Webhooks.dispatch_session_landed(project, landed_session, landing.position)
-                    Notifications.dispatch_session_landed(project, landed_session)
+                        Webhooks.dispatch_session_landed(
+                          project,
+                          landed_session,
+                          landing.position
+                        )
 
-                    %SessionResponse{
-                      session: session_to_proto(landed_session, project.organization, project)
-                    }
+                        Notifications.dispatch_session_landed(project, landed_session)
 
-                  {:error, {:conflicts, paths}} ->
-                    {:error, conflict_status("Conflicts detected: #{Enum.join(paths, ", ")}")}
+                        %SessionResponse{
+                          session: session_to_proto(landed_session, project.organization, project)
+                        }
 
-                  {:error, reason} ->
-                    {:error, invalid_status("Landing failed: #{inspect(reason)}")}
+                      {:error, {:conflicts, paths}} ->
+                        {:error, conflict_status("Conflicts detected: #{Enum.join(paths, ", ")}")}
+
+                      {:error, reason} ->
+                        {:error, invalid_status("Landing failed: #{inspect(reason)}")}
+                    end
+
+                  {:error, info} ->
+                    {:error, invalid_status(SecretScanner.format_scan_error(info))}
                 end
               end
           end

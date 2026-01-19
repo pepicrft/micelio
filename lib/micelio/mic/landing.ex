@@ -3,7 +3,15 @@ defmodule Micelio.Mic.Landing do
   Coordinator-free landing using compare-and-swap semantics.
   """
 
-  alias Micelio.Mic.{Binary, BranchProtection, ConflictIndex, DeltaCompression, RollupWorker, Tree}
+  alias Micelio.Mic.{
+    Binary,
+    BranchProtection,
+    ConflictIndex,
+    DeltaCompression,
+    RollupWorker,
+    Tree
+  }
+
   alias Micelio.Projects
   alias Micelio.Sessions
   alias Micelio.Sessions.Conflict

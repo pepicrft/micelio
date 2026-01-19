@@ -128,6 +128,59 @@ defmodule Micelio.GRPC.SessionsServerTest do
     assert message =~ "Direct lands to main are blocked"
   end
 
+  test "land_session blocks when secret scanning detects credentials" do
+    {:ok, user} = Accounts.get_or_create_user_by_email("grpc-session-secret@example.com")
+
+    {:ok, organization} =
+      Accounts.create_organization_for_user(user, %{
+        handle: "grpc-session-secret-org",
+        name: "GRPC Sessions Secret Org"
+      })
+
+    {:ok, project} =
+      Projects.create_project(%{
+        handle: "grpc-session-secret-repo",
+        name: "GRPC Session Secret Repo",
+        organization_id: organization.id
+      })
+
+    {:ok, session} =
+      Sessions.create_session(%{
+        session_id: "session-grpc-secret-1",
+        goal: "Avoid secrets",
+        project_id: project.id,
+        user_id: user.id
+      })
+
+    Mimic.stub(Landing, :land_session, fn _session ->
+      flunk("Landing should not be invoked when secrets are detected")
+    end)
+
+    response =
+      SessionsServer.land_session(
+        %LandSessionRequest{
+          user_id: user.id,
+          session_id: session.session_id,
+          conversation: [],
+          decisions: [],
+          files: [
+            %FileChange{
+              path: "lib/secrets.ex",
+              content: "token = \"ghp_123456789012345678901234567890123456\"\n",
+              change_type: "added"
+            }
+          ]
+        },
+        nil
+      )
+
+    assert {:error, %GRPC.RPCError{message: message}} = response
+    assert message =~ "Potential secrets detected"
+
+    persisted = Sessions.get_session_by_session_id(session.session_id)
+    assert persisted.status == "active"
+  end
+
   test "land_session blocks protected main when target branch uses refs prefix" do
     {:ok, user} = Accounts.get_or_create_user_by_email("grpc-session-protected-ref@example.com")
 
@@ -227,7 +280,8 @@ defmodule Micelio.GRPC.SessionsServerTest do
   end
 
   test "land_session allows target branch override when main is protected" do
-    {:ok, user} = Accounts.get_or_create_user_by_email("grpc-session-protected-override@example.com")
+    {:ok, user} =
+      Accounts.get_or_create_user_by_email("grpc-session-protected-override@example.com")
 
     {:ok, organization} =
       Accounts.create_organization_for_user(user, %{

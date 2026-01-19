@@ -15,7 +15,7 @@ defmodule Micelio.Mic.BranchProtection do
 
   def blocked_main?(_project, _session, _target_branch_override), do: false
 
-  def target_branch(%Session{} = session, target_branch_override)
+  def target_branch(%Session{}, target_branch_override)
       when is_binary(target_branch_override) and target_branch_override != "" do
     target_branch_override
     |> normalize_branch()
