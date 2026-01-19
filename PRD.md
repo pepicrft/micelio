@@ -144,7 +144,7 @@ Micelio is a minimalist, open-source git forge built with Elixir/Phoenix, design
 ### Mobile Clients
 
 - [x] Create iOS native client using Swift (SwiftUI)
-- [ ] Create Android native client using Jetpack Compose
+- [x] Create Android native client using Jetpack Compose
 - [ ] Implement authentication flow for both mobile clients
 - [ ] Add basic project browsing and viewing capabilities
 - [ ] Design API endpoints optimized for mobile (pagination, offline support)

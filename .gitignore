@@ -51,3 +51,8 @@ zig-out/
 /hif/vendor/grpc/third_party/protobuf/
 /hif/vendor/grpc/third_party/re2/
 /hif/vendor/grpc/third_party/zlib/
+
+# Android client artifacts
+/mobile/android/.gradle/
+/mobile/android/local.properties
+/mobile/android/**/build/
