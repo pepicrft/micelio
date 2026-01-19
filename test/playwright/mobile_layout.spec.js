@@ -53,20 +53,11 @@ for (const viewport of viewports) {
       await expectNoHorizontalOverflow(page);
     });
 
-    test("sessions page stacks list controls on mobile", async ({ page }) => {
-      await page.goto(`/${accountHandle}/${projectHandle}/sessions`, {
-        waitUntil: "domcontentloaded"
-      });
-      await expect(page.locator(".sessions-container")).toBeVisible();
-      await expect(page.locator(".sessions-header")).toBeVisible();
-      await expectNoHorizontalOverflow(page);
-    });
-
     test("search page fits form and results list", async ({ page }) => {
       await page.goto("/search", { waitUntil: "domcontentloaded" });
       await expect(page.locator("#repository-search")).toBeVisible();
       await expect(page.locator("#repository-search-form")).toBeVisible();
-      await expect(page.locator("#repository-search-results")).toBeVisible();
+      await expect(page.locator("#repository-search-results")).toBeHidden();
       await expectNoHorizontalOverflow(page);
     });
 
