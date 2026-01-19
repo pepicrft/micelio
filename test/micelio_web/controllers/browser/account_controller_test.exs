@@ -47,12 +47,15 @@ defmodule MicelioWeb.Browser.AccountControllerTest do
       })
 
     {:ok, _} = Sessions.land_session(private_session)
+    {:ok, _} = Projects.star_project(user, public_project)
 
     conn = get(conn, ~p"/#{user.account.handle}")
     html = html_response(conn, 200)
 
     assert html =~ "id=\"account-activity\""
     assert html =~ "activity-graph"
+    assert html =~ "id=\"account-activity-feed\""
+    assert html =~ "Landed a session in"
     assert html =~ "Projects"
     assert html =~ "id=\"account-owned-projects\""
     assert html =~ "id=\"account-projects-list\""

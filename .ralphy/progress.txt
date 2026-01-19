@@ -1,3 +1,4 @@
 # Ralphy Progress Log
 
 - Added profile bio/social link fields, settings form, public display with icons, plus validations and tests.
+- Added public profile activity feed with landed sessions, stars, and project creation entries, plus pagination, styling, and tests.

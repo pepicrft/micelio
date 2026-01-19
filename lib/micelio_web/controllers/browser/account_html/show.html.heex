@@ -41,6 +41,49 @@
       <section class="account-section" id="account-activity">
         <h2 class="account-section-title">Activity</h2>
         <.activity_graph activity_counts={@activity_counts} weeks={52} />
+        <div class="account-activity-feed" id="account-activity-feed">
+          <%= if Enum.empty?(@activity_items) do %>
+            <p class="account-empty">No recent activity yet.</p>
+          <% else %>
+            <ul class="account-activity-list">
+              <li
+                :for={activity <- @activity_items}
+                class="account-activity-item"
+                id={"account-activity-#{activity.type}-#{activity.id}"}
+              >
+                <div class="account-activity-details">
+                  <span class="account-activity-action">
+                    {activity_action_label(activity.type)}
+                  </span>
+                  <a
+                    class="account-activity-project"
+                    href={
+                      ~p"/#{activity.project.organization.account.handle}/#{activity.project.handle}"
+                    }
+                  >
+                    {activity.project.organization.account.handle}/{activity.project.handle}
+                  </a>
+                </div>
+                <time
+                  class="account-activity-time"
+                  datetime={DateTime.to_iso8601(activity.occurred_at)}
+                >
+                  {Calendar.strftime(activity.occurred_at, "%b %d, %Y %H:%M UTC")}
+                </time>
+              </li>
+            </ul>
+          <% end %>
+          <%= if @activity_has_more && @activity_next_before do %>
+            <div class="account-activity-more">
+              <a
+                class="account-activity-more-link"
+                href={~p"/#{@account.handle}?#{%{before: @activity_next_before}}"}
+              >
+                Load more activity
+              </a>
+            </div>
+          <% end %>
+        </div>
       </section>
     <% end %>
 

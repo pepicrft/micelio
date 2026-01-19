@@ -39,7 +39,7 @@ Micelio is a minimalist, open-source git forge built with Elixir/Phoenix, design
   - Display bio prominently on user profile page (below name/avatar)
   - Display social links as icons with hover tooltips
   - Validate URLs and handle edge cases (missing protocol, etc.)
-- [ ] Show user activity feed on profile page
+- [x] Show user activity feed on profile page
   - Display the user's recent activity on the platform
   - Activity types to include: commits/sessions landed, projects created, projects starred, etc.
   - Show chronologically with most recent first

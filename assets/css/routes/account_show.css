@@ -95,6 +95,71 @@
   margin-bottom: var(--theme-ui-space-1);
 }
 
+.account-activity-feed {
+  margin-top: var(--theme-ui-space-2);
+}
+
+.account-activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--theme-ui-space-1);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.account-activity-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--theme-ui-space-2);
+  padding: var(--theme-ui-space-1) var(--theme-ui-space-2);
+  border: var(--theme-ui-borders-thin);
+  background-color: var(--theme-ui-colors-background);
+}
+
+.account-activity-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--theme-ui-space-1);
+  align-items: baseline;
+}
+
+.account-activity-action {
+  color: var(--theme-ui-colors-secondary);
+}
+
+.account-activity-project {
+  color: var(--theme-ui-colors-text);
+  text-decoration: none;
+  font-weight: var(--theme-ui-fontWeights-medium);
+}
+
+.account-activity-project:hover {
+  text-decoration: underline;
+}
+
+.account-activity-time {
+  color: var(--theme-ui-colors-muted);
+  font-size: var(--theme-ui-fontSizes-sm);
+  white-space: nowrap;
+}
+
+.account-activity-more {
+  margin-top: var(--theme-ui-space-1);
+}
+
+.account-activity-more-link {
+  color: var(--theme-ui-colors-primary);
+  text-decoration: underline;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.15em;
+}
+
+.account-activity-more-link:hover {
+  color: var(--theme-ui-colors-secondary);
+}
+
 .account-projects {
   display: flex;
   flex-direction: column;
@@ -145,4 +210,15 @@
 .account-project-url a:hover {
   color: var(--theme-ui-colors-secondary);
   text-decoration-color: var(--theme-ui-colors-secondary);
+}
+
+@media (max-width: 720px) {
+  .account-activity-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .account-activity-time {
+    white-space: normal;
+  }
 }
