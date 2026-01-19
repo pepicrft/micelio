@@ -198,6 +198,57 @@ This section addresses critical challenges with AI-generated contributions ident
   - Penalize contributions that pass CI but get rejected in review (slop detection)
   - Display reputation prominently on contributor profiles and contribution headers
 
+## Token-Based Incentive System for Open Source
+
+### Analysis of existing approaches
+- **Gitcoin Grants (quadratic funding):** donor matching favors breadth of support; strong for public goods, weaker for ongoing maintenance budgeting.
+- **Bounty platforms (IssueHunt, Bountysource):** direct task payments; simple but can bias toward small, well-scoped issues and neglect long-term upkeep.
+- **Layer3 quests / token incentives:** high engagement, but often tied to marketing and can be gamed without quality gating.
+- **Drips / streaming payments (Drips, Sablier):** continuous funding aligned with ongoing maintenance; requires trust or dispute mechanisms.
+- **Open Collective / GitHub Sponsors:** fiat-based recurring support; low volatility but less programmable for automated compute spend.
+- **Reputation-led allocation (SourceCred, Kudos/Hypercerts):** rewards based on contribution metrics; can improve fairness but needs careful anti-gaming controls.
+
+### Proposed architecture for Micelio
+- **Hybrid ledger:** keep primary accounting off-chain in Micelio (credits) with optional on-chain escrow for public transparency.
+- **Project Token Pool:** contributors deposit tokens/credits into a pool tied to a project; pool funds can be earmarked for maintainer budgets or task bounties.
+- **Budgeted spend:** maintainers allocate budgets to work items (agent runs, CI time, bounties) with guardrails and approval flows.
+- **Usage metering:** agent execution, CI, and compute providers emit signed usage records into Micelio for payout settlement.
+- **Settlement options:** direct payout to contributors (fiat via payout provider) or on-chain withdrawals from escrow.
+
+### Smart contract design (if applicable)
+- **Escrow vault per project:** holds ERC-20 stablecoin (or chain-native stable) with role-based controls (maintainer multisig + timelock).
+- **Pull payment model:** payouts claimed by recipients; reduces custodial risk and avoids forced transfers.
+- **Streaming extension:** optional streaming for ongoing maintenance budgets (Drips/Sablier-style).
+- **Oracle attestation:** Micelio signs completion/usage records; contract verifies signatures to authorize payouts.
+- **Emergency controls:** pausable contract, rate limits, and dispute window for contested payouts.
+
+### Distribution mechanisms
+- **Milestone-based payouts:** bounties released when maintainer marks a task as accepted and checks pass.
+- **Quadratic matching pool:** optional matching fund to reward broad community support (anti-whale bias).
+- **Reputation-weighted rewards:** adjust payouts by trust score to discourage spam and reward consistent quality.
+- **Decay and clawback:** unused allocations expire; low-quality or reverted work can be clawed back within a window.
+- **Transparency:** public ledger of pool inflows/outflows and per-task spend to build trust.
+
+### Integration with compute resources (agent execution, CI)
+- **Compute vendors as payees:** Micelio can auto-route budget spend to agent runners, CI providers, or storage/CDN.
+- **Price catalog:** maintainers choose from predefined compute SKUs (per-minute agent runs, per-GB storage, per-build).
+- **Auto-stop and quotas:** enforce per-task caps; stop runs when budgets are exhausted.
+- **Attribution:** each run links to a task/prompt request to track ROI on spend.
+
+### Legal/compliance considerations
+- **Securities risk:** avoid “expectation of profit” language; position as grants/credits for work, not investment.
+- **Money transmission:** if Micelio holds or moves user funds, may trigger MSB/MTL obligations; prefer non-custodial or third-party payout providers.
+- **KYC/AML and sanctions:** required for on-chain payouts or fiat conversion in many jurisdictions.
+- **Tax reporting:** maintainers and contributors may need 1099/K-1 equivalents; provide exportable records.
+- **Employment/contractor risk:** recurring payments for work can create employment classification concerns.
+
+### Next steps for implementation
+- **Define token/credit model:** off-chain credits first, on-chain escrow optional.
+- **Schema + API design:** tables for pools, allocations, tasks, usage, and payouts.
+- **Integrate usage metering:** signed usage records from agent/CI runners.
+- **Prototype escrow contract:** minimal vault + pull payments + signature verification.
+- **Pilot program:** small set of projects to validate incentives and anti-gaming controls.
+
 - [ ] **Design Tiered Contribution Access Model**
   - New agents/contributors start with "sandbox only" access (no PR creation rights)
   - Require N successful sandbox validations before first PR is allowed
