@@ -128,7 +128,7 @@ Micelio is a minimalist, open-source git forge built with Elixir/Phoenix, design
 
 ### Legal & Terms
 
-- [ ] Design simplified legal pages with user responsibility disclaimers
+- [x] Design simplified legal pages with user responsibility disclaimers
   - Create minimal Terms of Service with broad disclaimers instead of detailed legal pages
   - Make users solely responsible for the content they host
   - Example: "By using this service, you agree that you are solely responsible for the content you host"

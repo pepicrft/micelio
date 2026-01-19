@@ -1,26 +1,23 @@
 defmodule MicelioWeb.Browser.LegalControllerTest do
   use MicelioWeb.ConnCase, async: true
 
-  @legal_pages [
-    {"/privacy", "Privacy Policy"},
-    {"/terms", "Terms of Service"},
-    {"/cookies", "Cookie Policy"},
-    {"/impressum", "Impressum"}
-  ]
+  @legacy_pages ["/privacy", "/terms", "/cookies", "/impressum"]
 
-  test "legal pages use simplified responsibility disclaimer" do
-    Enum.each(@legal_pages, fn {path, title} ->
-      conn = build_conn() |> get(path)
+  test "legal page uses simplified responsibility disclaimer" do
+    conn = build_conn() |> get("/legal")
 
-      assert html_response(conn, 200) =~ title
-      assert html_response(conn, 200) =~ "solely responsible for the content you host"
-    end)
+    assert html_response(conn, 200) =~ "Legal"
+    assert html_response(conn, 200) =~ "solely responsible for the content you host"
+    assert html_response(conn, 200) =~ "essential cookies"
+    assert html_response(conn, 200) =~ MicelioWeb.LegalInfo.legal_email()
+    assert html_response(conn, 200) =~ MicelioWeb.LegalInfo.privacy_email()
   end
 
-  test "cookies page states essential cookie usage" do
-    conn = build_conn() |> get("/cookies")
+  test "legacy legal routes redirect to the consolidated page" do
+    Enum.each(@legacy_pages, fn path ->
+      conn = build_conn() |> get(path)
 
-    assert html_response(conn, 200) =~ "essential cookies"
-    assert html_response(conn, 200) =~ "We do not use analytics"
+      assert redirected_to(conn) == "/legal"
+    end)
   end
 end

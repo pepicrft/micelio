@@ -24,6 +24,7 @@ defmodule Micelio.Handles do
     "help",
     "about",
     "contact",
+    "legal",
     "terms",
     "privacy",
     "features",

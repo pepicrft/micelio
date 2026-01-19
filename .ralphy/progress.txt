@@ -14,3 +14,5 @@
 - Added secret scanning during session landings to block credential leaks, with GRPC coverage test.
 
 - Added gRPC branch protection test coverage for non-main targets and aligned project access token schema/changesets to clear lint warnings.
+
+- Consolidated legal pages into a single /legal page with redirects, updated footer link, and added controller tests.
