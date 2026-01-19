@@ -60,7 +60,7 @@ defmodule MicelioWeb.ProjectLive.New do
              :ok do
           attrs = Map.put(params, "organization_id", organization.id)
 
-          case Projects.create_project(attrs) do
+          case Projects.create_project(attrs, user: socket.assigns.current_user) do
             {:ok, project} ->
               {:noreply,
                socket

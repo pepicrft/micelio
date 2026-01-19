@@ -37,7 +37,7 @@ defmodule MicelioWeb.ProjectLive.Index do
 
       project ->
         if Authorization.authorize(:project_delete, user, project) == :ok do
-          {:ok, _} = Projects.delete_project(project)
+          {:ok, _} = Projects.delete_project(project, user: user)
           projects_count = max(socket.assigns.projects_count - 1, 0)
 
           {:noreply,

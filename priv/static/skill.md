@@ -13,6 +13,7 @@ When doing UI work (CSS, templates, components):
 - **Always verify mobile layout** using Playwright before committing
 - Test at common breakpoints: 320px, 375px, 414px (mobile), 768px (tablet)
 - Ensure text is readable, buttons are tappable, and no horizontal scroll
+- **Visual regression testing:** Use Playwright screenshots to catch unintended UI changes
 
 Note: When you update this guide, update `priv/static/skill.md` so `/skill.md` stays in sync.
 

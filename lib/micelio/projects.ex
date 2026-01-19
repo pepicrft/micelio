@@ -8,6 +8,7 @@ defmodule Micelio.Projects do
 
   alias Micelio.Accounts
   alias Micelio.Accounts.OrganizationMembership
+  alias Micelio.Audit
   alias Micelio.Mic.Seed
   alias Micelio.Projects.{Project, ProjectStar}
   alias Micelio.Repo
@@ -225,24 +226,53 @@ defmodule Micelio.Projects do
   @doc """
   Creates a new project.
   """
-  def create_project(attrs) do
-    %Project{}
-    |> Project.changeset(attrs)
-    |> Repo.insert()
+  def create_project(attrs, opts \\ []) do
+    Repo.transaction(fn ->
+      case %Project{}
+           |> Project.changeset(attrs)
+           |> Repo.insert() do
+        {:ok, project} ->
+          case Audit.log_project_action(project, "project.created",
+                 user: Keyword.get(opts, :user),
+                 metadata: project_audit_metadata(project)
+               ) do
+            {:ok, _log} -> project
+            {:error, changeset} -> Repo.rollback(changeset)
+          end
+
+        {:error, changeset} ->
+          Repo.rollback(changeset)
+      end
+    end)
+    |> normalize_transaction_result()
   end
 
   @doc """
   Forks a project into a new organization, copying storage and tracking origin.
   """
-  def fork_project(%Project{} = source, %Accounts.Organization{} = organization, attrs \\ %{}) do
+  def fork_project(
+        %Project{} = source,
+        %Accounts.Organization{} = organization,
+        attrs \\ %{},
+        opts \\ []
+      ) do
     attrs = normalize_fork_attrs(source, organization, attrs)
 
     Repo.transaction(fn ->
       case create_fork_project(source, attrs) do
         {:ok, project} ->
           case copy_project_storage(source.id, project.id) do
-            :ok -> project
-            {:error, reason} -> Repo.rollback(reason)
+            :ok ->
+              case Audit.log_project_action(project, "project.forked",
+                     user: Keyword.get(opts, :user),
+                     metadata: %{forked_from_id: source.id}
+                   ) do
+                {:ok, _log} -> project
+                {:error, changeset} -> Repo.rollback(changeset)
+              end
+
+            {:error, reason} ->
+              Repo.rollback(reason)
           end
 
         {:error, changeset} ->
@@ -259,26 +289,39 @@ defmodule Micelio.Projects do
   @doc """
   Updates a project.
   """
-  def update_project(%Project{} = project, attrs) do
-    project
-    |> Project.changeset(attrs)
-    |> Repo.update()
+  def update_project(%Project{} = project, attrs, opts \\ []) do
+    changeset = Project.changeset(project, attrs)
+    update_project_with_audit(project, changeset, "project.updated", opts)
   end
 
   @doc """
   Updates repository settings (name, description, visibility).
   """
-  def update_project_settings(%Project{} = project, attrs) do
-    project
-    |> Project.settings_changeset(attrs)
-    |> Repo.update()
+  def update_project_settings(%Project{} = project, attrs, opts \\ []) do
+    changeset = Project.settings_changeset(project, attrs)
+    update_project_with_audit(project, changeset, "project.settings_updated", opts)
   end
 
   @doc """
   Deletes a project.
   """
-  def delete_project(%Project{} = project) do
-    Repo.delete(project)
+  def delete_project(%Project{} = project, opts \\ []) do
+    Repo.transaction(fn ->
+      case Audit.log_project_action(project, "project.deleted",
+             user: Keyword.get(opts, :user),
+             metadata: project_audit_metadata(project)
+           ) do
+        {:ok, _log} ->
+          case Repo.delete(project) do
+            {:ok, deleted} -> deleted
+            {:error, changeset} -> Repo.rollback(changeset)
+          end
+
+        {:error, changeset} ->
+          Repo.rollback(changeset)
+      end
+    end)
+    |> normalize_transaction_result()
   end
 
   @doc """
@@ -316,25 +359,58 @@ defmodule Micelio.Projects do
   @doc """
   Stars a project for a user.
   """
-  def star_project(%Accounts.User{} = user, %Project{} = project) do
+  def star_project(%Accounts.User{} = user, %Project{} = project, _opts \\ []) do
     case get_project_star(user, project) do
       %ProjectStar{} = star ->
         {:ok, star}
 
       nil ->
-        %ProjectStar{}
-        |> ProjectStar.changeset(%{user_id: user.id, project_id: project.id})
-        |> Repo.insert()
+        Repo.transaction(fn ->
+          case %ProjectStar{}
+               |> ProjectStar.changeset(%{user_id: user.id, project_id: project.id})
+               |> Repo.insert() do
+            {:ok, star} ->
+              case Audit.log_project_action(project, "project.starred",
+                     user: user,
+                     metadata: %{star_id: star.id}
+                   ) do
+                {:ok, _log} -> star
+                {:error, changeset} -> Repo.rollback(changeset)
+              end
+
+            {:error, changeset} ->
+              Repo.rollback(changeset)
+          end
+        end)
+        |> normalize_transaction_result()
     end
   end
 
   @doc """
   Removes a star from a project for a user.
   """
-  def unstar_project(%Accounts.User{} = user, %Project{} = project) do
+  def unstar_project(%Accounts.User{} = user, %Project{} = project, _opts \\ []) do
     case get_project_star(user, project) do
-      nil -> {:ok, :not_found}
-      %ProjectStar{} = star -> Repo.delete(star)
+      nil ->
+        {:ok, :not_found}
+
+      %ProjectStar{} = star ->
+        Repo.transaction(fn ->
+          case Repo.delete(star) do
+            {:ok, deleted} ->
+              case Audit.log_project_action(project, "project.unstarred",
+                     user: user,
+                     metadata: %{star_id: deleted.id}
+                   ) do
+                {:ok, _log} -> deleted
+                {:error, changeset} -> Repo.rollback(changeset)
+              end
+
+            {:error, changeset} ->
+              Repo.rollback(changeset)
+          end
+        end)
+        |> normalize_transaction_result()
     end
   end
 
@@ -561,4 +637,43 @@ defmodule Micelio.Projects do
   defp search_visibility_filter(query, _user) do
     where(query, [p, _f], p.visibility == "public")
   end
+
+  defp update_project_with_audit(%Project{} = _project, changeset, action, opts) do
+    Repo.transaction(fn ->
+      case Repo.update(changeset) do
+        {:ok, updated} ->
+          if changeset.changes == %{} do
+            updated
+          else
+            case Audit.log_project_action(updated, action,
+                   user: Keyword.get(opts, :user),
+                   metadata: %{changes: changeset.changes}
+                 ) do
+              {:ok, _log} -> updated
+              {:error, changeset} -> Repo.rollback(changeset)
+            end
+          end
+
+        {:error, changeset} ->
+          Repo.rollback(changeset)
+      end
+    end)
+    |> normalize_transaction_result()
+  end
+
+  defp project_audit_metadata(%Project{} = project) do
+    %{
+      handle: project.handle,
+      name: project.name,
+      visibility: project.visibility,
+      organization_id: project.organization_id
+    }
+  end
+
+  defp normalize_transaction_result({:ok, result}), do: {:ok, result}
+
+  defp normalize_transaction_result({:error, %Ecto.Changeset{} = changeset}),
+    do: {:error, changeset}
+
+  defp normalize_transaction_result({:error, reason}), do: {:error, reason}
 end

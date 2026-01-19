@@ -69,7 +69,9 @@ defmodule MicelioWeb.ProjectLive.Edit do
          socket.assigns.project
        ) ==
          :ok do
-      case Projects.update_project(socket.assigns.project, params) do
+      case Projects.update_project(socket.assigns.project, params,
+             user: socket.assigns.current_user
+           ) do
         {:ok, project} ->
           {:noreply,
            socket

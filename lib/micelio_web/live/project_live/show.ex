@@ -61,7 +61,7 @@ defmodule MicelioWeb.ProjectLive.Show do
     user = socket.assigns.current_user
 
     if Authorization.authorize(:project_delete, user, project) == :ok do
-      {:ok, _} = Projects.delete_project(project)
+      {:ok, _} = Projects.delete_project(project, user: user)
 
       {:noreply,
        socket

@@ -66,7 +66,7 @@ defmodule MicelioWeb.RepositoryLive.Webhooks do
          :ok do
       attrs = params_with_project(params, socket.assigns.repository.id)
 
-      case Webhooks.create_webhook(attrs) do
+      case Webhooks.create_webhook(attrs, user: socket.assigns.current_user) do
         {:ok, _webhook} ->
           {:noreply,
            socket
@@ -93,7 +93,9 @@ defmodule MicelioWeb.RepositoryLive.Webhooks do
          :ok do
       case Webhooks.get_webhook_for_project(socket.assigns.repository.id, webhook_id) do
         %Webhook{} = webhook ->
-          case Webhooks.update_webhook(webhook, %{active: !webhook.active}) do
+          case Webhooks.update_webhook(webhook, %{active: !webhook.active},
+                 user: socket.assigns.current_user
+               ) do
             {:ok, _webhook} ->
               {:noreply,
                socket
@@ -125,7 +127,7 @@ defmodule MicelioWeb.RepositoryLive.Webhooks do
          :ok do
       case Webhooks.get_webhook_for_project(socket.assigns.repository.id, webhook_id) do
         %Webhook{} = webhook ->
-          case Webhooks.delete_webhook(webhook) do
+          case Webhooks.delete_webhook(webhook, user: socket.assigns.current_user) do
             {:ok, _webhook} ->
               {:noreply,
                socket

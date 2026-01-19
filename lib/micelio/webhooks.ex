@@ -5,6 +5,8 @@ defmodule Micelio.Webhooks do
 
   import Ecto.Query
 
+  alias Micelio.Audit
+  alias Micelio.Projects
   alias Micelio.Projects.Project
   alias Micelio.Repo
   alias Micelio.Sessions.Session
@@ -43,25 +45,67 @@ defmodule Micelio.Webhooks do
   @doc """
   Creates a webhook.
   """
-  def create_webhook(attrs) do
-    %Webhook{}
-    |> Webhook.changeset(attrs)
-    |> Repo.insert()
+  def create_webhook(attrs, opts \\ []) do
+    Repo.transaction(fn ->
+      case %Webhook{}
+           |> Webhook.changeset(attrs)
+           |> Repo.insert() do
+        {:ok, webhook} ->
+          case maybe_log_webhook_action(webhook, "webhook.created", opts) do
+            :ok -> webhook
+            {:error, changeset} -> Repo.rollback(changeset)
+          end
+
+        {:error, changeset} ->
+          Repo.rollback(changeset)
+      end
+    end)
+    |> normalize_transaction_result()
   end
 
   @doc """
   Updates a webhook.
   """
-  def update_webhook(%Webhook{} = webhook, attrs) do
-    webhook
-    |> Webhook.changeset(attrs)
-    |> Repo.update()
+  def update_webhook(%Webhook{} = webhook, attrs, opts \\ []) do
+    changeset = Webhook.changeset(webhook, attrs)
+
+    Repo.transaction(fn ->
+      case Repo.update(changeset) do
+        {:ok, updated} ->
+          if changeset.changes == %{} do
+            updated
+          else
+            case maybe_log_webhook_action(updated, "webhook.updated", opts, changeset.changes) do
+              :ok -> updated
+              {:error, changeset} -> Repo.rollback(changeset)
+            end
+          end
+
+        {:error, changeset} ->
+          Repo.rollback(changeset)
+      end
+    end)
+    |> normalize_transaction_result()
   end
 
   @doc """
   Deletes a webhook.
   """
-  def delete_webhook(%Webhook{} = webhook), do: Repo.delete(webhook)
+  def delete_webhook(%Webhook{} = webhook, opts \\ []) do
+    Repo.transaction(fn ->
+      case maybe_log_webhook_action(webhook, "webhook.deleted", opts) do
+        :ok ->
+          case Repo.delete(webhook) do
+            {:ok, deleted} -> deleted
+            {:error, changeset} -> Repo.rollback(changeset)
+          end
+
+        {:error, changeset} ->
+          Repo.rollback(changeset)
+      end
+    end)
+    |> normalize_transaction_result()
+  end
 
   @doc """
   Returns a webhook changeset.
@@ -206,4 +250,46 @@ defmodule Micelio.Webhooks do
 
   defp format_datetime(nil), do: nil
   defp format_datetime(%DateTime{} = value), do: DateTime.to_iso8601(value)
+
+  defp maybe_log_webhook_action(%Webhook{} = webhook, action, opts, changes \\ %{}) do
+    case Projects.get_project(webhook.project_id) do
+      %Project{} = project ->
+        metadata = webhook_audit_metadata(webhook, changes)
+
+        case Audit.log_project_action(project, action,
+               user: Keyword.get(opts, :user),
+               metadata: metadata
+             ) do
+          {:ok, _log} -> :ok
+          {:error, changeset} -> {:error, changeset}
+        end
+
+      nil ->
+        :ok
+    end
+  end
+
+  defp webhook_audit_metadata(%Webhook{} = webhook, changes) do
+    %{
+      webhook_id: webhook.id,
+      url: webhook.url,
+      events: webhook.events,
+      active: webhook.active,
+      changes: sanitize_webhook_changes(changes)
+    }
+  end
+
+  defp sanitize_webhook_changes(changes) when changes == %{}, do: %{}
+
+  defp sanitize_webhook_changes(changes) do
+    changes
+    |> Map.delete(:secret)
+  end
+
+  defp normalize_transaction_result({:ok, result}), do: {:ok, result}
+
+  defp normalize_transaction_result({:error, %Ecto.Changeset{} = changeset}),
+    do: {:error, changeset}
+
+  defp normalize_transaction_result({:error, reason}), do: {:error, reason}
 end

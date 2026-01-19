@@ -77,7 +77,7 @@ defmodule Micelio.GRPC.Projects.V1.ProjectService.Server do
         }
         |> maybe_put_visibility(request.visibility)
 
-      case Projects.create_project(attrs) do
+      case Projects.create_project(attrs, user: user) do
         {:ok, project} ->
           %V1.ProjectResponse{project: project_to_proto(project, organization)}
 
@@ -105,7 +105,7 @@ defmodule Micelio.GRPC.Projects.V1.ProjectService.Server do
         }
         |> maybe_put_visibility(request.visibility)
 
-      case Projects.update_project(project, attrs) do
+      case Projects.update_project(project, attrs, user: user) do
         {:ok, updated} ->
           %V1.ProjectResponse{project: project_to_proto(updated, organization)}
 
@@ -126,7 +126,7 @@ defmodule Micelio.GRPC.Projects.V1.ProjectService.Server do
          {:ok, organization} <- Accounts.get_organization_by_handle(request.organization_handle),
          true <- Accounts.user_in_organization?(user, organization.id),
          %Project{} = project <- Projects.get_project_by_handle(organization.id, request.handle),
-         {:ok, _} <- Projects.delete_project(project) do
+         {:ok, _} <- Projects.delete_project(project, user: user) do
       %V1.DeleteProjectResponse{success: true}
     else
       nil -> {:error, not_found_status("Project not found.")}

@@ -67,7 +67,8 @@ defmodule MicelioWeb.Browser.ProjectController do
          user when not is_nil(user) <- conn.assigns.current_user,
          :ok <- Authorization.authorize(:project_read, user, project),
          {:ok, target_org} <- resolve_fork_target(user, params),
-         {:ok, forked} <- Projects.fork_project(project, target_org, fork_attrs(params)) do
+         {:ok, forked} <-
+           Projects.fork_project(project, target_org, fork_attrs(params), user: user) do
       redirect(conn, to: ~p"/#{target_org.account.handle}/#{forked.handle}")
     else
       {:error, %Ecto.Changeset{} = changeset} ->

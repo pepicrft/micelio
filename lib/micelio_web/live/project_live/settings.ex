@@ -66,7 +66,9 @@ defmodule MicelioWeb.RepositoryLive.Settings do
          socket.assigns.repository
        ) ==
          :ok do
-      case Projects.update_project_settings(socket.assigns.repository, params) do
+      case Projects.update_project_settings(socket.assigns.repository, params,
+             user: socket.assigns.current_user
+           ) do
         {:ok, repository} ->
           {:noreply,
            socket
