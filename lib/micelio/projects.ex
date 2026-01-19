@@ -87,6 +87,32 @@ defmodule Micelio.Projects do
   end
 
   @doc """
+  Lists popular public projects ordered by star count and recency.
+  """
+  def list_popular_projects(opts \\ []) do
+    limit = Keyword.get(opts, :limit, 6)
+    offset = Keyword.get(opts, :offset, 0)
+
+    Project
+    |> where([p], p.visibility == "public")
+    |> join(:left, [p], ps in ProjectStar, on: ps.project_id == p.id)
+    |> join(:left, [p, _ps], o in assoc(p, :organization))
+    |> join(:left, [p, _ps, o], a in assoc(o, :account))
+    |> preload([_p, _ps, o, a], organization: {o, account: a})
+    |> group_by([p, _ps, o, a], [p.id, o.id, a.id])
+    |> select_merge([p, ps, _o, _a], %{star_count: count(ps.id)})
+    |> order_by([p, ps, _o, a],
+      desc: count(ps.id),
+      desc: p.inserted_at,
+      asc: a.handle,
+      asc: p.name
+    )
+    |> limit(^limit)
+    |> offset(^offset)
+    |> Repo.all()
+  end
+
+  @doc """
   Lists all projects.
   """
   def list_projects do

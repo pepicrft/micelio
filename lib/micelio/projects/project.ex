@@ -12,6 +12,7 @@ defmodule Micelio.Projects.Project do
     field :description, :string
     field :url, :string
     field :visibility, :string, default: "private"
+    field :star_count, :integer, virtual: true
 
     belongs_to :forked_from, Micelio.Projects.Project
     belongs_to :organization, Micelio.Accounts.Organization

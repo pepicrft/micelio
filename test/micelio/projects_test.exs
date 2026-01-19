@@ -913,6 +913,66 @@ defmodule Micelio.ProjectsTest do
     end
   end
 
+  describe "list_popular_projects/1" do
+    test "returns public projects ordered by stars with counts" do
+      unique = System.unique_integer([:positive])
+
+      {:ok, organization_one} =
+        Accounts.create_organization(%{
+          handle: "popular-org-#{unique}",
+          name: "Popular Org #{unique}"
+        })
+
+      {:ok, organization_two} =
+        Accounts.create_organization(%{
+          handle: "popular-org-2-#{unique}",
+          name: "Popular Org 2 #{unique}"
+        })
+
+      {:ok, star_user_one} =
+        Accounts.get_or_create_user_by_email("popular-star-#{unique}@example.com")
+
+      {:ok, star_user_two} =
+        Accounts.get_or_create_user_by_email("popular-star-2-#{unique}@example.com")
+
+      {:ok, project_top} =
+        Projects.create_project(%{
+          handle: "popular-top-#{unique}",
+          name: "Popular Top",
+          description: "Top project",
+          organization_id: organization_one.id,
+          visibility: "public"
+        })
+
+      {:ok, project_secondary} =
+        Projects.create_project(%{
+          handle: "popular-secondary-#{unique}",
+          name: "Popular Secondary",
+          description: "Secondary project",
+          organization_id: organization_two.id,
+          visibility: "public"
+        })
+
+      {:ok, _project_private} =
+        Projects.create_project(%{
+          handle: "popular-private-#{unique}",
+          name: "Popular Private",
+          description: "Private project",
+          organization_id: organization_two.id,
+          visibility: "private"
+        })
+
+      assert {:ok, _} = Projects.star_project(star_user_one, project_top)
+      assert {:ok, _} = Projects.star_project(star_user_two, project_top)
+      assert {:ok, _} = Projects.star_project(star_user_one, project_secondary)
+
+      results = Projects.list_popular_projects(limit: 10, offset: 0)
+
+      assert Enum.map(results, & &1.id) == [project_top.id, project_secondary.id]
+      assert Enum.map(results, & &1.star_count) == [2, 1]
+    end
+  end
+
   describe "ensure_micelio_workspace/0" do
     test "creates the micelio org, membership, and project" do
       assert {:ok, %{user: user, organization: organization, project: project}} =

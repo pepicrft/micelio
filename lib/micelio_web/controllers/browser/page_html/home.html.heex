@@ -19,6 +19,12 @@
           New Project
         </a>
       </div>
+
+      <.popular_projects_section
+        projects={@popular_projects}
+        page={@popular_page}
+        has_more={@popular_has_more}
+      />
     </div>
   </Layouts.app>
 <% else %>
@@ -100,6 +106,12 @@
           </div>
         </div>
       </div>
+
+      <.popular_projects_section
+        projects={@popular_projects}
+        page={@popular_page}
+        has_more={@popular_has_more}
+      />
     </div>
   </Layouts.app>
 <% end %>

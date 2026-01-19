@@ -79,7 +79,7 @@ Micelio is a minimalist, open-source git forge built with Elixir/Phoenix, design
   - Replace detailed privacy/cookies/terms pages with minimal pages
   - Include broad disclaimers: "Users are solely responsible for their content"
   - Example: "By using this service, you agree that you are solely responsible for the content you host"
-- [ ] Add popular projects section to homepage
+- [x] Add popular projects section to homepage
   - Display trending or most-starred projects on the home screen
   - Include project thumbnail, description, and owner info
   - Make it visually prominent to encourage exploration
