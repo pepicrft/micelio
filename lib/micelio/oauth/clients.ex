@@ -12,14 +12,14 @@ defmodule Micelio.OAuth.Clients do
   @impl Boruta.Oauth.Clients
   def get_client(client_id) do
     case Repo.get_by(DeviceClient, client_id: client_id) do
-      nil -> {:error, :not_found}
-      client -> {:ok, to_oauth_client(client)}
+      nil -> nil
+      client -> to_oauth_client(client)
     end
   end
 
   @impl Boruta.Oauth.Clients
   def public! do
-    {:error, :not_found}
+    nil
   end
 
   @impl Boruta.Oauth.Clients
@@ -27,7 +27,7 @@ defmodule Micelio.OAuth.Clients do
 
   @impl Boruta.Oauth.Clients
   def get_client_by_did(_did) do
-    {:error, "Client lookup by DID not supported"}
+    nil
   end
 
   @impl Boruta.Openid.Clients

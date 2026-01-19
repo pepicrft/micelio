@@ -161,6 +161,7 @@ defmodule MicelioWeb.Router do
     pipe_through(:api)
 
     post("/register", RegistrationController, :register)
+    post("/token", TokenController, :token)
   end
 
   scope "/device", MicelioWeb.Browser do

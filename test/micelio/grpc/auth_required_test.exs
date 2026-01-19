@@ -147,7 +147,7 @@ defmodule Micelio.GRPC.AuthRequiredTest do
 
   defp create_access_token(user) do
     {:ok, device_client} = OAuth.register_device_client(%{"name" => "Test CLI"})
-    {:ok, client} = Clients.get_client(device_client.client_id)
+    client = Clients.get_client(device_client.client_id)
 
     params = %{
       client: client,

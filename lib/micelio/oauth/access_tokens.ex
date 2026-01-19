@@ -98,13 +98,11 @@ defmodule Micelio.OAuth.AccessTokens do
   defp changeset_method(_options), do: :changeset
 
   defp to_oauth_schema(%Token{} = token) do
-    client =
-      case Clients.get_client(token.client_id) do
-        {:ok, client} -> client
-        _ -> nil
-      end
+    client = Clients.get_client(token.client_id)
 
-    token |> OauthMapper.to_oauth_schema() |> Map.put(:client, client)
+    token
+    |> OauthMapper.to_oauth_schema()
+    |> Map.put(:client, client)
   end
 
   @impl AccessTokens

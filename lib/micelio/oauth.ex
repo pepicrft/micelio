@@ -325,15 +325,19 @@ defmodule Micelio.OAuth do
   end
 
   defp create_device_tokens(client_id, %User{} = user, scope) do
-    with {:ok, client} <- Micelio.OAuth.Clients.get_client(client_id) do
-      params = %{
-        client: client,
-        scope: scope,
-        sub: user.id |> to_string(),
-        resource_owner: %ResourceOwner{sub: to_string(user.id), username: user.email}
-      }
+    case Micelio.OAuth.Clients.get_client(client_id) do
+      %Boruta.Oauth.Client{} = client ->
+        params = %{
+          client: client,
+          scope: scope,
+          sub: user.id |> to_string(),
+          resource_owner: %ResourceOwner{sub: to_string(user.id), username: user.email}
+        }
 
-      AccessTokens.create(params, refresh_token: true)
+        AccessTokens.create(params, refresh_token: true)
+
+      nil ->
+        {:error, :invalid_client}
     end
   end
 
@@ -346,7 +350,7 @@ defmodule Micelio.OAuth do
   defp create_device_session(%User{} = user, token, %DeviceGrant{} = grant) do
     client_name =
       case Micelio.OAuth.Clients.get_client(grant.client_id) do
-        {:ok, client} -> client.name
+        %Boruta.Oauth.Client{} = client -> client.name
         _ -> "Device client"
       end
 
