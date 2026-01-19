@@ -31,7 +31,7 @@ Micelio is a minimalist, open-source git forge built with Elixir/Phoenix, design
   - Link each organization to its organization page
   - Position appropriately in the profile layout (after projects or in sidebar)
   - Handle case where user belongs to no organizations gracefully
-- [ ] Add profile description and social links support
+- [x] Add profile description and social links support
   - Allow users to add a description/bio to their profile (text field, max ~160 chars)
   - Support adding social links: Twitter/X, GitHub, GitLab, Mastodon, LinkedIn, etc.
   - Support adding a personal website URL

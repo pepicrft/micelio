@@ -88,6 +88,40 @@ defmodule Micelio.AccountsTest do
     end
   end
 
+  describe "User profile changeset" do
+    setup do
+      {:ok, user} = Accounts.get_or_create_user_by_email("profile@example.com")
+      {:ok, user: user}
+    end
+
+    test "validates bio length", %{user: user} do
+      long_bio = String.duplicate("a", 161)
+      changeset = User.profile_changeset(user, %{bio: long_bio})
+      assert "should be at most 160 character(s)" in errors_on(changeset).bio
+    end
+
+    test "normalizes missing protocol on profile URLs", %{user: user} do
+      changeset = User.profile_changeset(user, %{website_url: "example.com"})
+      assert Ecto.Changeset.get_change(changeset, :website_url) == "https://example.com"
+    end
+
+    test "rejects invalid URLs", %{user: user} do
+      changeset = User.profile_changeset(user, %{website_url: "http://"})
+      assert "must be a valid URL" in errors_on(changeset).website_url
+    end
+
+    test "updates profile fields", %{user: user} do
+      assert {:ok, updated} =
+               Accounts.update_user_profile(user, %{
+                 bio: "Shipping UI systems.",
+                 twitter_url: "x.com/ui-builder"
+               })
+
+      assert updated.bio == "Shipping UI systems."
+      assert updated.twitter_url == "https://x.com/ui-builder"
+    end
+  end
+
   describe "Token changeset" do
     setup do
       {:ok, user} = Accounts.get_or_create_user_by_email("token-test@example.com")

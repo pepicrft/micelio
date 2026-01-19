@@ -127,6 +127,22 @@ defmodule Micelio.Accounts do
   end
 
   @doc """
+  Returns a changeset for editing a user's public profile.
+  """
+  def change_user_profile(%User{} = user, attrs \\ %{}) do
+    User.profile_changeset(user, attrs)
+  end
+
+  @doc """
+  Updates a user's public profile fields.
+  """
+  def update_user_profile(%User{} = user, attrs) do
+    user
+    |> User.profile_changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
   Lists organizations for a user.
   """
   def list_organizations_for_user(%User{} = user), do: list_organizations_for_user(user.id)
@@ -153,9 +169,7 @@ defmodule Micelio.Accounts do
       on: m.organization_id == o.id and m.user_id == ^user_id
     )
     |> join(:left, [o, _m], a in assoc(o, :account))
-    |> join(:left, [o, _m, _a], mc in OrganizationMembership,
-      on: mc.organization_id == o.id
-    )
+    |> join(:left, [o, _m, _a], mc in OrganizationMembership, on: mc.organization_id == o.id)
     |> group_by([o, _m, a, _mc], [o.id, a.id])
     |> preload([_o, _m, a, _mc], account: a)
     |> select_merge([_o, _m, _a, mc], %{member_count: count(mc.id)})

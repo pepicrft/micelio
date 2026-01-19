@@ -34,6 +34,102 @@
       </ul>
     </nav>
 
+    <section class="account-profile-section" id="account-profile-settings">
+      <div class="account-profile-section-header">
+        <h2 class="account-profile-section-title">Profile</h2>
+        <span class="account-profile-section-meta">Shown publicly on your profile.</span>
+      </div>
+      <.form
+        for={@profile_form}
+        id="account-profile-form"
+        action={~p"/account/profile"}
+        method="patch"
+        class="account-profile-form"
+      >
+        <div class="account-profile-form-group">
+          <.input
+            field={@profile_form[:bio]}
+            type="textarea"
+            label="Bio"
+            maxlength="160"
+            placeholder="A short description about you."
+            class="account-profile-input"
+            error_class="account-profile-input account-profile-input-error"
+          />
+          <p class="account-profile-form-hint">Keep it under 160 characters.</p>
+        </div>
+
+        <div class="account-profile-form-grid">
+          <div class="account-profile-form-group">
+            <.input
+              field={@profile_form[:website_url]}
+              type="url"
+              label="Website"
+              placeholder="https://example.com"
+              class="account-profile-input"
+              error_class="account-profile-input account-profile-input-error"
+            />
+          </div>
+          <div class="account-profile-form-group">
+            <.input
+              field={@profile_form[:twitter_url]}
+              type="url"
+              label="Twitter/X"
+              placeholder="https://x.com/handle"
+              class="account-profile-input"
+              error_class="account-profile-input account-profile-input-error"
+            />
+          </div>
+          <div class="account-profile-form-group">
+            <.input
+              field={@profile_form[:github_url]}
+              type="url"
+              label="GitHub"
+              placeholder="https://github.com/handle"
+              class="account-profile-input"
+              error_class="account-profile-input account-profile-input-error"
+            />
+          </div>
+          <div class="account-profile-form-group">
+            <.input
+              field={@profile_form[:gitlab_url]}
+              type="url"
+              label="GitLab"
+              placeholder="https://gitlab.com/handle"
+              class="account-profile-input"
+              error_class="account-profile-input account-profile-input-error"
+            />
+          </div>
+          <div class="account-profile-form-group">
+            <.input
+              field={@profile_form[:mastodon_url]}
+              type="url"
+              label="Mastodon"
+              placeholder="https://mastodon.social/@handle"
+              class="account-profile-input"
+              error_class="account-profile-input account-profile-input-error"
+            />
+          </div>
+          <div class="account-profile-form-group">
+            <.input
+              field={@profile_form[:linkedin_url]}
+              type="url"
+              label="LinkedIn"
+              placeholder="https://www.linkedin.com/in/handle"
+              class="account-profile-input"
+              error_class="account-profile-input account-profile-input-error"
+            />
+          </div>
+        </div>
+
+        <div class="account-profile-form-actions">
+          <button type="submit" class="account-profile-button" id="account-profile-save">
+            Save profile
+          </button>
+        </div>
+      </.form>
+    </section>
+
     <section class="account-profile-section" id="account-passkeys">
       <div class="account-profile-section-header">
         <h2 class="account-profile-section-title">Passkeys</h2>
@@ -124,7 +220,11 @@
                   <span class="account-profile-list-handle">@{organization.account.handle}</span>
                 </span>
               </span>
-              <span class="account-profile-org-members">{organization.member_count} {if organization.member_count == 1, do: "member", else: "members"}</span>
+              <span class="account-profile-org-members">
+                {organization.member_count} {if organization.member_count == 1,
+                  do: "member",
+                  else: "members"}
+              </span>
             </a>
           </li>
         </ul>

@@ -11,7 +11,29 @@
         {@account.handle}
       <% end %>
       <:subtitle>
-        <span class="account-handle">@{@account.handle}</span>
+        <% social_links = MicelioWeb.ProfileLinks.social_links(@user) %>
+        <div class="account-subtitle">
+          <span class="account-handle">@{@account.handle}</span>
+          <%= if @user && @user.bio && @user.bio != "" do %>
+            <p class="account-bio">{@user.bio}</p>
+          <% end %>
+          <%= if @user && social_links != [] do %>
+            <div class="account-social-links" aria-label="Social links">
+              <%= for link <- social_links do %>
+                <a
+                  class="account-social-link"
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={link.label}
+                  data-tooltip={link.label}
+                >
+                  <.icon name={link.icon} class="account-social-icon" />
+                </a>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
       </:subtitle>
     </.header>
 

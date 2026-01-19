@@ -188,6 +188,7 @@ defmodule MicelioWeb.Router do
     pipe_through([:browser, :require_auth])
 
     get("/", ProfileController, :show)
+    patch("/profile", ProfileController, :update)
     post("/passkeys/options", PasskeyController, :registration_options)
     post("/passkeys", PasskeyController, :register)
     delete("/passkeys/:id", PasskeyController, :delete)
