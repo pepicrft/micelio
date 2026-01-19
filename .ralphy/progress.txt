@@ -18,3 +18,5 @@
 - Consolidated legal pages into a single /legal page with redirects, updated footer link, and added controller tests.
 
 - Added authenticated API rate limiting with per-user buckets, config defaults, and updated tests.
+
+- Added abuse detection and mitigation on API rate limiting with blocklist enforcement and plug tests.

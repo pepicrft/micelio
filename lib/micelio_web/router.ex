@@ -10,6 +10,9 @@ defmodule MicelioWeb.Router do
                                             :authenticated_window_ms,
                                             @api_rate_limit_window_ms
                                           )
+  @api_rate_limit_abuse_threshold Keyword.get(@api_rate_limit, :abuse_threshold, 5)
+  @api_rate_limit_abuse_window_ms Keyword.get(@api_rate_limit, :abuse_window_ms, 300_000)
+  @api_rate_limit_abuse_block_ms Keyword.get(@api_rate_limit, :abuse_block_ms, 3_600_000)
 
   pipeline :browser do
     plug(:accepts, ["html"])
@@ -32,7 +35,10 @@ defmodule MicelioWeb.Router do
       window_ms: @api_rate_limit_window_ms,
       bucket_prefix: "api",
       authenticated_limit: @api_rate_limit_authenticated_limit,
-      authenticated_window_ms: @api_rate_limit_authenticated_window_ms
+      authenticated_window_ms: @api_rate_limit_authenticated_window_ms,
+      abuse_threshold: @api_rate_limit_abuse_threshold,
+      abuse_window_ms: @api_rate_limit_abuse_window_ms,
+      abuse_block_ms: @api_rate_limit_abuse_block_ms
     )
   end
 

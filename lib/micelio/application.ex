@@ -12,6 +12,7 @@ defmodule Micelio.Application do
         MicelioWeb.Telemetry,
         Micelio.Mic.Telemetry,
         Micelio.Repo,
+        Micelio.Abuse.Blocklist,
         Micelio.Theme.Server,
         {Task.Supervisor, name: Micelio.Webhooks.Supervisor},
         {Task.Supervisor, name: Micelio.Notifications.Supervisor},

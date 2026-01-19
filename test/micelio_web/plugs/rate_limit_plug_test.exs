@@ -58,6 +58,28 @@ defmodule MicelioWeb.Plugs.RateLimitPlugTest do
     assert conn.status == 429
   end
 
+  test "blocks abusive clients after repeated rate limit violations", %{conn: conn} do
+    opts =
+      RateLimitPlug.init(
+        limit: 1,
+        window_ms: 60_000,
+        bucket_prefix: unique_prefix(),
+        abuse_threshold: 1,
+        abuse_window_ms: 60_000,
+        abuse_block_ms: 120_000
+      )
+
+    conn = RateLimitPlug.call(conn, opts)
+    refute conn.halted
+
+    conn = RateLimitPlug.call(build_conn(), opts)
+
+    assert conn.halted
+    assert conn.status == 429
+    assert get_resp_header(conn, "x-abuse-blocked") == ["true"]
+    assert get_resp_header(conn, "retry-after") == ["120"]
+  end
+
   test "skips rate limiting for authenticated requests when configured", %{conn: conn} do
     {:ok, user} = Micelio.Accounts.get_or_create_user_by_email(unique_email())
     access_token = create_access_token(user)
