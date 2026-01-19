@@ -198,98 +198,118 @@ This section addresses critical challenges with AI-generated contributions ident
   - Penalize contributions that pass CI but get rejected in review (slop detection)
   - Display reputation prominently on contributor profiles and contribution headers
 
-## Token-Based Incentive System for Open Source
+## AI Tokens System for Open Source Contributions
 
-### Analysis of existing approaches
-- **Gitcoin Grants (quadratic funding):** donor matching favors breadth of support; strong for public goods, weaker for ongoing maintenance budgeting.
-- **Bounty platforms (IssueHunt, Bountysource):** direct task payments; simple but can bias toward small, well-scoped issues and neglect long-term upkeep.
-- **Layer3 quests / token incentives:** high engagement, but often tied to marketing and can be gamed without quality gating.
-- **Drips / streaming payments (Drips, Sablier):** continuous funding aligned with ongoing maintenance; requires trust or dispute mechanisms.
-- **Open Collective / GitHub Sponsors:** fiat-based recurring support; low volatility but less programmable for automated compute spend.
-- **Reputation-led allocation (SourceCred, Kudos/Hypercerts):** rewards based on contribution metrics; can improve fairness but needs careful anti-gaming controls.
+### Core Concept
 
-### Proposed architecture for Micelio
-- **Hybrid ledger:** keep primary accounting off-chain in Micelio (credits) with optional on-chain escrow for public transparency.
-- **Project Token Pool:** contributors deposit tokens/credits into a pool tied to a project; pool funds can be earmarked for maintainer budgets or task bounties.
-- **Budgeted spend:** maintainers allocate budgets to work items (agent runs, CI time, bounties) with guardrails and approval flows.
-- **Usage metering:** agent execution, CI, and compute providers emit signed usage records into Micelio for payout settlement.
-- **Settlement options:** direct payout to contributors (fiat via payout provider) or on-chain withdrawals from escrow.
+Enable contributors to fund AI agent compute for projects. Instead of paying maintainers directly, contributors contribute AI tokens (credits) that power coding agents working on the project.
 
-### Smart contract design (if applicable)
-- **Escrow vault per project:** holds ERC-20 stablecoin (or chain-native stable) with role-based controls (maintainer multisig + timelock).
-- **Pull payment model:** payouts claimed by recipients; reduces custodial risk and avoids forced transfers.
-- **Streaming extension:** optional streaming for ongoing maintenance budgets (Drips/Sablier-style).
-- **Oracle attestation:** Micelio signs completion/usage records; contract verifies signatures to authorize payouts.
-- **Emergency controls:** pausable contract, rate limits, and dispute window for contested payouts.
+**Example:** Alice loves a project but doesn't code. She contributes 1000 AI tokens. Bob uses those tokens to run Codex/Claude agents that fix issues and land PRs. The project gets AI-powered work, Alice feels involved, Bob gets free compute.
 
-### Distribution mechanisms
-- **Milestone-based payouts:** bounties released when maintainer marks a task as accepted and checks pass.
-- **Quadratic matching pool:** optional matching fund to reward broad community support (anti-whale bias).
-- **Reputation-weighted rewards:** adjust payouts by trust score to discourage spam and reward consistent quality.
-- **Decay and clawback:** unused allocations expire; low-quality or reverted work can be clawed back within a window.
-- **Transparency:** public ledger of pool inflows/outflows and per-task spend to build trust.
+### How It Works
 
-### Integration with compute resources (agent execution, CI)
-- **Compute vendors as payees:** Micelio can auto-route budget spend to agent runners, CI providers, or storage/CDN.
-- **Price catalog:** maintainers choose from predefined compute SKUs (per-minute agent runs, per-GB storage, per-build).
-- **Auto-stop and quotas:** enforce per-task caps; stop runs when budgets are exhausted.
-- **Attribution:** each run links to a task/prompt request to track ROI on spend.
+**Token Pools**
+- Projects have AI token pools
+- Contributors deposit tokens into pools they care about
+- Maintainers allocate tokens to tasks, bounties, or agent runs
 
-### Legal/compliance considerations
-- **Securities risk:** avoid “expectation of profit” language; position as grants/credits for work, not investment.
-- **Money transmission:** if Micelio holds or moves user funds, may trigger MSB/MTL obligations; prefer non-custodial or third-party payout providers.
-- **KYC/AML and sanctions:** required for on-chain payouts or fiat conversion in many jurisdictions.
-- **Tax reporting:** maintainers and contributors may need 1099/K-1 equivalents; provide exportable records.
-- **Employment/contractor risk:** recurring payments for work can create employment classification concerns.
+**Token Sources**
+- Purchased directly (micelio.com/pricing)
+- Earned through contributions (landed PRs, reviews, community work)
+- Grants from foundations/platform (Quadratic Funding)
 
-### Next steps for implementation
-- **Define token/credit model:** off-chain credits first, on-chain escrow optional.
-- **Schema + API design:** tables for pools, allocations, tasks, usage, and payouts.
-- **Integrate usage metering:** signed usage records from agent/CI runners.
-- **Prototype escrow contract:** minimal vault + pull payments + signature verification.
-- **Pilot program:** small set of projects to validate incentives and anti-gaming controls.
+**Usage**
+- Maintainers create "AI tasks" with token budgets
+- Agents run against tasks, consume tokens per-run
+- Usage logged for transparency
 
-- [ ] **Design Tiered Contribution Access Model**
-  - New agents/contributors start with "sandbox only" access (no PR creation rights)
-  - Require N successful sandbox validations before first PR is allowed
-  - Implement progressive trust levels: sandbox → small PRs → large PRs → automated merge
-  - Allow project maintainers to set trust thresholds per-project
-  - Support "trusted introducer" model where established contributors can vouch for new ones
+### Architecture
 
-- [ ] **Build Token Efficiency Tracking & Metrics**
-  - Measure total token cost per landed contribution (from first prompt to merge)
-  - Track "token waste" from failed attempts, revisions, and context resets
-  - Identify inefficient agent patterns (Ralph-style restart loops that burn context)
-  - Create leaderboard showing most efficient agents by tokens-per-landed-line
-  - Alert maintainers when agents exhibit degrading efficiency patterns
+```
+┌─────────────────────────────────────────────────────────┐
+│                  AI Tokens System                        │
+├─────────────────────────────────────────────────────────┤
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
+│  │ Token Pool   │  │ Task Budget  │  │ Usage Meter  │  │
+│  │ (per project)│  │ (per task)   │  │ (per run)    │  │
+│  └──────────────┘  └──────────────┘  └──────────────┘  │
+├─────────────────────────────────────────────────────────┤
+│  ┌──────────────────────────────────────────────────┐   │
+│  │              Agent Runner Integration             │   │
+│  │  Codex, Claude, OpenCode, GLM → consume tokens   │   │
+│  └──────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────┘
+```
 
-- [ ] **Implement Anti-Slop Rate Limiting**
-  - Rate limit new contributors to max N submissions per day/week until trust earned
-  - Implement exponential backoff for repeated validation failures
-  - Pattern detection for AI-spawned contribution spam (similar prompts, copy-paste patterns)
-  - Require cooling-off period between rejected contribution and next attempt
-  - Create project-level settings for strictness of anti-spam measures
+**Components**
 
-- [ ] **Design Human-in-the-Loop Checkpoints**
-  - Require human review for first N contributions from any new agent
-  - Implement "maintainer attention budget" tracking to prevent review exhaustion
-  - Asymmetric cost accounting: track minutes-to-generate vs minutes-to-review
-  - Alert when review queue depth suggests contribution rate exceeds review capacity
-  - Support "batch review" mode for similar AI contributions to reduce review overhead
+1. **Token Pool** — Per-project balance of AI credits
+2. **Task Budget** — Allocation from pool to specific task/PR
+3. **Usage Meter** — Tracks token consumption per agent run
+4. **Runner Integration** — Agents check budget before running
 
-- [ ] **Build Quality Signal Aggregation Dashboard**
-  - Show project-level metrics: AI vs human contribution ratio, average review time, rejection rate
-  - Track quality trends over time (detect the "addiction loop" of easy AI contributions)
-  - Visualize token efficiency across all contributing agents
-  - Alert maintainers when AI contribution quality is trending downward
-  - Compare contribution quality across different AI models/agents
+### Use Cases
 
-- [ ] **Implement Noise Multiplication Prevention**
-  - Detect when AI agents are responding to other AI-generated issues/PRs (cascade detection)
-  - Require human approval before AI can act on AI-generated context
-  - Track "generation depth" (human → AI → AI → AI) and enforce maximum depth limits
-  - Flag contributions where the prompt itself appears to be AI-generated
-  - Create circuit breakers that pause AI contributions when noise metrics exceed thresholds
+1. **Bounties funded by community**
+   - Alice contributes 500 tokens to "fix auth bug"
+   - Bob claims bounty, runs agent, fixes bug
+   - Tokens consumed, work completed
+
+2. **Maintainer empowerment**
+   - Maintainer gets burnt out
+   - Community funds their AI agent budget
+   - Agent handles routine fixes, maintainer focuses on reviews
+
+3. **Experimentation fund**
+   - Project has experimental feature idea
+   - Community pools tokens for "AI exploration"
+   - Agent prototypes, maintainer reviews
+
+4. **Learning/new contributor onboarding**
+   - New contributor lacks skills
+   - Uses pooled tokens to run agents
+   - Learns by agent-assisted contribution
+
+### Token Economics
+
+**Pricing Model**
+- 1 token = 1 token (simplified)
+- Purchase in bundles (100, 1000, 10000 tokens)
+- Subscription option for ongoing support
+
+**Earn by Contributing**
+- Landed PR: earn tokens proportional to impact
+- Quality review: tokens for thorough reviews
+- Bug reports: tokens for verified bugs
+- Community help: tokens for answered questions
+
+**Anti-Gaming**
+- Require minimum account age to contribute
+- Rate limit contributions per project
+- Veto power for maintainers (reject gaming)
+
+### Integration with Compute Resources
+
+- **Direct billing** — Micelio pays providers from token pools
+- **Runner selection** — Maintainers choose agents (Codex, Claude, etc.)
+- **Budget enforcement** — Stop runs when tokens exhausted
+- **Usage attribution** — Track ROI: tokens spent vs value delivered
+
+### Legal/Tax
+
+- Simple: tokens = service credits, not currency
+- No securities implications
+- No KYC needed for token purchase
+- Easy tax reporting (expense, not income)
+
+### Next Steps
+
+- [ ] Design token pool schema and API
+- [ ] Build contribution flow (deposit tokens to project)
+- [ ] Create task budget allocation UI
+- [ ] Integrate with agent runners (check budget before run)
+- [ ] Build usage dashboard (tokens spent, value delivered)
+- [ ] Design earn-by-contributing mechanics
 
 ### Prompt Request System
 
@@ -667,7 +687,7 @@ Sapling is a distributed version control system developed by Meta, designed for 
 #### Key Features
 
 **Stacking Workflow**
-- Sapling excels at "stacked PRs" — managing many small, dependent commits
+- Sapling excels at "stacked PRs" - managing many small, dependent commits
 - `sl stack` command shows all related commits in a series
 - Ideal for agent workflows where each task produces incremental commits
 - Avoids "detached HEAD" and complex branch management
