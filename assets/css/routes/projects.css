@@ -99,6 +99,18 @@
   gap: var(--theme-ui-space-2);
 }
 
+.project-form .fieldset {
+  display: flex;
+  flex-direction: column;
+  gap: var(--theme-ui-space-1);
+  margin: 0;
+}
+
+.project-form .label {
+  font-weight: var(--theme-ui-fontWeights-bold);
+  color: var(--theme-ui-colors-text);
+}
+
 .project-form-actions {
   display: flex;
   gap: var(--theme-ui-space-1);
@@ -139,6 +151,10 @@
 .project-textarea {
   min-height: 100px;
   resize: vertical;
+}
+
+.project-checkbox {
+  accent-color: var(--theme-ui-colors-primary);
 }
 
 .project-button {

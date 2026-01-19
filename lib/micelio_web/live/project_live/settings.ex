@@ -156,6 +156,18 @@ defmodule MicelioWeb.RepositoryLive.Settings do
             <p class="project-form-hint">Public repositories are visible to everyone.</p>
           </div>
 
+          <div class="project-form-group">
+            <.input
+              field={@form[:protect_main_branch]}
+              type="checkbox"
+              label="Protect main branch"
+              class="project-checkbox"
+            />
+            <p class="project-form-hint">
+              Blocks direct session lands to main, so changes must land via a merge workflow.
+            </p>
+          </div>
+
           <div class="project-form-actions">
             <button type="submit" class="project-button" id="repository-settings-submit">
               Save changes

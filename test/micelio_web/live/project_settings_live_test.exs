@@ -40,7 +40,8 @@ defmodule MicelioWeb.RepositorySettingsLiveTest do
         repository: %{
           name: "Updated Repo",
           description: "Updated description",
-          visibility: "public"
+          visibility: "public",
+          protect_main_branch: "true"
         }
       )
 
@@ -50,6 +51,7 @@ defmodule MicelioWeb.RepositorySettingsLiveTest do
     assert updated.name == "Updated Repo"
     assert updated.description == "Updated description"
     assert updated.visibility == "public"
+    assert updated.protect_main_branch
 
     assert_redirect(view, ~p"/#{organization.account.handle}/#{repository.handle}")
   end

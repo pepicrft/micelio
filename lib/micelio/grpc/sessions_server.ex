@@ -73,7 +73,8 @@ defmodule Micelio.GRPC.Sessions.V1.SessionService.Server do
          %Session{} = session <- Sessions.get_session_by_session_id(request.session_id),
          project = Projects.get_project_with_organization(session.project_id),
          true <- Accounts.user_in_organization?(user, project.organization.id),
-         true <- session.status == "active" do
+         true <- session.status == "active",
+         {:ok, :allowed} <- ensure_branch_protection(project, session) do
       {:ok, updated_session} =
         Sessions.update_session(session, %{
           conversation: map_conversation(request.conversation, session.conversation),
@@ -198,6 +199,22 @@ defmodule Micelio.GRPC.Sessions.V1.SessionService.Server do
 
   defp normalize_metadata(%{} = metadata), do: metadata
   defp normalize_metadata(_), do: %{}
+
+  defp ensure_branch_protection(project, session) do
+    if project.protect_main_branch and session_target_branch(session) == "main" do
+      {:error, forbidden_status("Direct lands to main are blocked for this project.")}
+    else
+      {:ok, :allowed}
+    end
+  end
+
+  defp session_target_branch(%Session{metadata: %{} = metadata}) do
+    case metadata do
+      %{"target_branch" => branch} when is_binary(branch) and branch != "" -> branch
+      %{"branch" => branch} when is_binary(branch) and branch != "" -> branch
+      _ -> "main"
+    end
+  end
 
   defp filter_sessions_by_path(sessions, project_id, path) do
     alias Micelio.Mic.ConflictIndex

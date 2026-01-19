@@ -83,6 +83,51 @@ defmodule Micelio.GRPC.SessionsServerTest do
     assert_receive :webhooks_dispatched
   end
 
+  test "land_session blocks direct lands to protected main" do
+    {:ok, user} = Accounts.get_or_create_user_by_email("grpc-session-protected@example.com")
+
+    {:ok, organization} =
+      Accounts.create_organization_for_user(user, %{
+        handle: "grpc-session-protected-org",
+        name: "GRPC Sessions Protected Org"
+      })
+
+    {:ok, project} =
+      Projects.create_project(%{
+        handle: "grpc-session-protected-repo",
+        name: "GRPC Session Protected Repo",
+        organization_id: organization.id,
+        protect_main_branch: true
+      })
+
+    {:ok, session} =
+      Sessions.create_session(%{
+        session_id: "session-grpc-protected-1",
+        goal: "Protect main",
+        project_id: project.id,
+        user_id: user.id
+      })
+
+    Mimic.stub(Landing, :land_session, fn _session ->
+      flunk("Landing should not be invoked for protected main branch")
+    end)
+
+    response =
+      SessionsServer.land_session(
+        %LandSessionRequest{
+          user_id: user.id,
+          session_id: session.session_id,
+          conversation: [],
+          decisions: [],
+          files: []
+        },
+        nil
+      )
+
+    assert {:error, %GRPC.RPCError{message: message}} = response
+    assert message =~ "Direct lands to main are blocked"
+  end
+
   test "land_session supports epoch batching without landing" do
     {:ok, user} = Accounts.get_or_create_user_by_email("grpc-session-batch@example.com")
 

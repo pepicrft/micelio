@@ -12,6 +12,7 @@ defmodule Micelio.Projects.Project do
     field :description, :string
     field :url, :string
     field :visibility, :string, default: "private"
+    field :protect_main_branch, :boolean, default: false
     field :star_count, :integer, virtual: true
 
     belongs_to :forked_from, Micelio.Projects.Project
@@ -29,7 +30,7 @@ defmodule Micelio.Projects.Project do
   """
   def changeset(project, attrs) do
     project
-    |> cast(attrs, [:handle, :name, :description, :url, :visibility])
+    |> cast(attrs, [:handle, :name, :description, :url, :visibility, :protect_main_branch])
     |> maybe_put_organization_id(attrs)
     |> validate_required([:handle, :name, :organization_id, :visibility])
     |> validate_handle()
@@ -48,7 +49,7 @@ defmodule Micelio.Projects.Project do
   """
   def settings_changeset(project, attrs) do
     project
-    |> cast(attrs, [:name, :description, :visibility])
+    |> cast(attrs, [:name, :description, :visibility, :protect_main_branch])
     |> validate_required([:name, :visibility])
     |> validate_inclusion(:visibility, ["public", "private"])
   end
