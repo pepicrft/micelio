@@ -58,7 +58,7 @@ defmodule MicelioWeb.Plugs.RateLimitPlugTest do
     assert conn.status == 429
   end
 
-  test "skips rate limiting for authenticated requests", %{conn: conn} do
+  test "skips rate limiting for authenticated requests when configured", %{conn: conn} do
     {:ok, user} = Micelio.Accounts.get_or_create_user_by_email(unique_email())
     access_token = create_access_token(user)
 
@@ -86,6 +86,37 @@ defmodule MicelioWeb.Plugs.RateLimitPlugTest do
       |> RateLimitPlug.call(opts)
 
     refute conn.halted
+  end
+
+  test "rate limits authenticated requests when configured", %{conn: conn} do
+    {:ok, user} = Micelio.Accounts.get_or_create_user_by_email(unique_email())
+    access_token = create_access_token(user)
+
+    opts =
+      RateLimitPlug.init(
+        limit: 1,
+        window_ms: 60_000,
+        bucket_prefix: unique_prefix(),
+        authenticated_limit: 1,
+        authenticated_window_ms: 60_000
+      )
+
+    conn =
+      conn
+      |> put_req_header("authorization", "Bearer #{access_token}")
+      |> ApiAuthenticationPlug.call([])
+      |> RateLimitPlug.call(opts)
+
+    refute conn.halted
+
+    conn =
+      build_conn()
+      |> put_req_header("authorization", "Bearer #{access_token}")
+      |> ApiAuthenticationPlug.call([])
+      |> RateLimitPlug.call(opts)
+
+    assert conn.halted
+    assert conn.status == 429
   end
 
   defp create_access_token(user) do

@@ -137,7 +137,7 @@ Micelio is a minimalist, open-source git forge built with Elixir/Phoenix, design
 
 ### Platform Limits & Rate Limiting
 
-- [ ] Implement rate limiting for unauthenticated and authenticated users
+- [x] Implement rate limiting for unauthenticated and authenticated users
 - [ ] Set initial project limits per tenant (prevent spam during early growth)
 - [ ] Add abuse detection and mitigation systems
 

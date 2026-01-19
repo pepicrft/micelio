@@ -71,6 +71,13 @@ config :micelio, MicelioWeb.Endpoint,
   live_view: [signing_salt: "uBaIW6yU"]
 
 config :micelio, :admin_emails, []
+
+config :micelio, :api_rate_limit,
+  limit: 100,
+  window_ms: 60_000,
+  authenticated_limit: 500,
+  authenticated_window_ms: 60_000
+
 config :micelio, :github_oauth, []
 config :micelio, :gitlab_oauth, []
 

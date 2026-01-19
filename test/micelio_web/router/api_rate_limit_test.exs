@@ -16,7 +16,7 @@ defmodule MicelioWeb.Router.ApiRateLimitTest do
     assert get_resp_header(conn, "x-ratelimit-remaining") != []
   end
 
-  test "api routes skip rate limit headers for authenticated requests", %{conn: conn} do
+  test "api routes apply rate limit headers for authenticated requests", %{conn: conn} do
     {:ok, user} = Micelio.Accounts.get_or_create_user_by_email(unique_email())
     access_token = create_access_token(user)
 
@@ -26,8 +26,8 @@ defmodule MicelioWeb.Router.ApiRateLimitTest do
       |> put_req_header("authorization", "Bearer #{access_token}")
       |> post(~p"/oauth/register", %{})
 
-    assert get_resp_header(conn, "x-ratelimit-limit") == []
-    assert get_resp_header(conn, "x-ratelimit-remaining") == []
+    assert get_resp_header(conn, "x-ratelimit-limit") != []
+    assert get_resp_header(conn, "x-ratelimit-remaining") != []
   end
 
   defp create_access_token(user) do
