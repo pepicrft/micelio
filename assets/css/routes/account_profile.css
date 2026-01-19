@@ -147,6 +147,40 @@
   color: var(--theme-ui-colors-secondary);
 }
 
+.account-profile-org-link {
+  align-items: center;
+}
+
+.account-profile-org {
+  display: flex;
+  align-items: center;
+  gap: var(--theme-ui-space-2);
+}
+
+.account-profile-org-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--theme-ui-radii-full);
+  background-color: var(--theme-ui-colors-border);
+  color: var(--theme-ui-colors-text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: var(--theme-ui-fontWeights-bold);
+  text-transform: uppercase;
+}
+
+.account-profile-org-details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--theme-ui-space-1);
+}
+
+.account-profile-org-members {
+  color: var(--theme-ui-colors-muted);
+  font-size: var(--theme-ui-fontSizes-small);
+}
+
 @media (max-width: 40rem) {
   .account-profile-header {
     flex-direction: column;

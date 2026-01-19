@@ -3,7 +3,7 @@ defmodule MicelioWeb.Browser.AccountControllerTest do
 
   alias Micelio.{Accounts, Projects, Sessions}
 
-  test "shows activity and owned repositories for user accounts", %{conn: conn} do
+  test "shows activity and projects for user accounts", %{conn: conn} do
     {:ok, user} = Accounts.get_or_create_user_by_email("public-user@example.com")
 
     {:ok, organization} =
@@ -53,7 +53,7 @@ defmodule MicelioWeb.Browser.AccountControllerTest do
 
     assert html =~ "id=\"account-activity\""
     assert html =~ "activity-graph"
-    assert html =~ "Owned repositories"
+    assert html =~ "Projects"
     assert html =~ "id=\"account-owned-projects\""
     assert html =~ "id=\"account-projects-list\""
     assert html =~ "account-project-#{public_project.id}"

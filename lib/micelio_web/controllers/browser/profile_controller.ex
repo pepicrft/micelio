@@ -11,6 +11,7 @@ defmodule MicelioWeb.Browser.ProfileController do
     activity_counts = Sessions.activity_counts_for_user(user)
     starred_projects = Projects.list_starred_projects_for_user(user)
     passkeys = Accounts.list_passkeys_for_user(user)
+    organizations = Accounts.list_organizations_for_user_with_member_counts(user)
 
     owned_projects =
       user
@@ -29,7 +30,8 @@ defmodule MicelioWeb.Browser.ProfileController do
       activity_counts: activity_counts,
       passkeys: passkeys,
       starred_projects: starred_projects,
-      owned_projects: owned_projects
+      owned_projects: owned_projects,
+      organizations: organizations
     )
   end
 end

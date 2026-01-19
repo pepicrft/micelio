@@ -25,7 +25,7 @@ Micelio is a minimalist, open-source git forge built with Elixir/Phoenix, design
 - [x] Rename "Owned repositories" section header to "Projects"
   - Use "Projects" terminology consistently throughout the platform
   - Update both the heading text and any associated aria labels
-- [ ] Add organizations section to user profile page
+- [x] Add organizations section to user profile page
   - Display organizations the user belongs to
   - Show organization name, avatar, and member count for each
   - Link each organization to its organization page

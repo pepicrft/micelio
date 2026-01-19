@@ -142,6 +142,28 @@ defmodule Micelio.Accounts do
   end
 
   @doc """
+  Lists organizations for a user with member counts.
+  """
+  def list_organizations_for_user_with_member_counts(%User{} = user),
+    do: list_organizations_for_user_with_member_counts(user.id)
+
+  def list_organizations_for_user_with_member_counts(user_id) do
+    Organization
+    |> join(:inner, [o], m in OrganizationMembership,
+      on: m.organization_id == o.id and m.user_id == ^user_id
+    )
+    |> join(:left, [o, _m], a in assoc(o, :account))
+    |> join(:left, [o, _m, _a], mc in OrganizationMembership,
+      on: mc.organization_id == o.id
+    )
+    |> group_by([o, _m, a, _mc], [o.id, a.id])
+    |> preload([_o, _m, a, _mc], account: a)
+    |> select_merge([_o, _m, _a, mc], %{member_count: count(mc.id)})
+    |> order_by([_o, _m, a, _mc], asc: a.handle)
+    |> Repo.all()
+  end
+
+  @doc """
   Checks if a user belongs to an organization.
   """
   def user_in_organization?(%User{} = user, organization_id),

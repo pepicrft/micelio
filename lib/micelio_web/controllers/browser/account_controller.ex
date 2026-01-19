@@ -51,7 +51,7 @@ defmodule MicelioWeb.Browser.AccountController do
 
         description =
           if user do
-            "Repositories and activity for @#{account.handle}."
+            "Projects and activity for @#{account.handle}."
           else
             "Projects for @#{account.handle}."
           end
@@ -66,10 +66,10 @@ defmodule MicelioWeb.Browser.AccountController do
         |> assign(:organization, organization)
         |> assign(:user, user)
         |> assign(:projects, projects)
-        |> assign(:projects_title, if(user, do: "Owned repositories", else: "Repositories"))
+        |> assign(:projects_title, "Projects")
         |> assign(
           :empty_message,
-          if(user, do: "No public repositories yet.", else: "No projects yet.")
+          if(user, do: "No public projects yet.", else: "No projects yet.")
         )
         |> assign(:activity_counts, activity_counts)
         |> render(:show)

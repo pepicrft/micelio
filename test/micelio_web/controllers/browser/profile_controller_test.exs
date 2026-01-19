@@ -48,7 +48,7 @@ defmodule MicelioWeb.Browser.ProfileControllerTest do
     assert html =~ "#{organization.account.handle}/#{project.handle}"
   end
 
-  test "shows owned repositories list for admin organizations", %{conn: conn, user: user} do
+  test "shows owned projects list for admin organizations", %{conn: conn, user: user} do
     {:ok, organization} =
       Accounts.create_organization_for_user(user, %{
         handle: "owned-org",
@@ -70,6 +70,33 @@ defmodule MicelioWeb.Browser.ProfileControllerTest do
     assert html =~ "id=\"account-owned-projects-list\""
     assert html =~ "owned-project-#{project.id}"
     assert html =~ "#{organization.account.handle}/#{project.handle}"
+  end
+
+  test "shows organizations list for memberships", %{conn: conn, user: user} do
+    {:ok, organization} =
+      Accounts.create_organization_for_user(user, %{
+        handle: "team-org",
+        name: "Team Org"
+      })
+
+    {:ok, other_user} = Accounts.get_or_create_user_by_email("member@example.com")
+
+    assert {:ok, _membership} =
+             Accounts.create_organization_membership(%{
+               user_id: other_user.id,
+               organization_id: organization.id,
+               role: "user"
+             })
+
+    conn = get(conn, ~p"/account")
+    html = html_response(conn, 200)
+
+    assert html =~ "id=\"account-organizations\""
+    assert html =~ "id=\"account-organizations-list\""
+    assert html =~ "organization-#{organization.id}"
+    assert html =~ organization.name
+    assert html =~ "@#{organization.account.handle}"
+    assert html =~ "2 members"
   end
 
   test "shows activity graph for landed sessions", %{conn: conn, user: user} do

@@ -8,6 +8,7 @@ defmodule Micelio.Accounts.Organization do
 
   schema "organizations" do
     field :name, :string
+    field :member_count, :integer, virtual: true
 
     has_one :account, Micelio.Accounts.Account
     has_many :memberships, Micelio.Accounts.OrganizationMembership

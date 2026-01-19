@@ -75,10 +75,10 @@
     </section>
 
     <section class="account-profile-section" id="account-owned-projects">
-      <h2 class="account-profile-section-title">Owned repositories</h2>
+      <h2 class="account-profile-section-title">Projects</h2>
       <%= if @owned_projects == [] do %>
         <p class="account-profile-empty" id="account-owned-projects-empty">
-          No repositories yet.
+          No projects yet.
         </p>
       <% else %>
         <ul class="account-profile-list" id="account-owned-projects-list">
@@ -96,6 +96,36 @@
             <%= if project.description do %>
               <p class="account-profile-list-description">{project.description}</p>
             <% end %>
+          </li>
+        </ul>
+      <% end %>
+    </section>
+
+    <section class="account-profile-section" id="account-organizations">
+      <h2 class="account-profile-section-title">Organizations</h2>
+      <%= if @organizations == [] do %>
+        <p class="account-profile-empty" id="account-organizations-empty">
+          No organizations yet.
+        </p>
+      <% else %>
+        <ul class="account-profile-list" id="account-organizations-list">
+          <li :for={organization <- @organizations} class="account-profile-list-item">
+            <a
+              href={~p"/#{organization.account.handle}"}
+              class="account-profile-list-link account-profile-org-link"
+              id={"organization-#{organization.id}"}
+            >
+              <span class="account-profile-org">
+                <span class="account-profile-org-avatar" aria-hidden="true">
+                  {organization.account.handle |> String.first() |> String.upcase()}
+                </span>
+                <span class="account-profile-org-details">
+                  <span class="account-profile-list-name">{organization.name}</span>
+                  <span class="account-profile-list-handle">@{organization.account.handle}</span>
+                </span>
+              </span>
+              <span class="account-profile-org-members">{organization.member_count} {if organization.member_count == 1, do: "member", else: "members"}</span>
+            </a>
           </li>
         </ul>
       <% end %>
