@@ -124,7 +124,7 @@ Micelio is a minimalist, open-source git forge built with Elixir/Phoenix, design
 - [x] Add two-factor authentication (TOTP) support
 - [x] Create project access tokens with scoped permissions
 - [x] Implement branch protection rules for preventing direct lands to main
-- [ ] Add secret scanning to prevent credential leaks in landed sessions
+- [x] Add secret scanning to prevent credential leaks in landed sessions
 
 ### Legal & Terms
 
@@ -675,3 +675,192 @@ Sapling is a distributed version control system developed by Meta, designed for 
 - [ ] Evaluate Git interoperability for gradual migration
 - [ ] Design integration layer between mic and Sapling
 - [ ] Create proof-of-concept for agent commit workflow
+
+### Ephemeral Environments for Coding and CI
+
+Enable ephemeral virtual machines for running coding sessions, agent workloads, and CI tasks securely and efficiently.
+
+#### Background
+
+Inspired by Servo's CI system (https://www.azabani.com/2025/12/18/shoestring-web-engine-ci.html), which uses ephemeral VMs for secure untrusted code execution at 300 EUR/month vs 2000+ EUR on GitHub-hosted runners.
+
+#### Technology Stack
+
+**VM/MicroVM Runtime**
+- **Firecracker** (AWS) - Lightweight microVMs, 125ms startup, minimal overhead
+  - Used by AWS Lambda, Fargate, and Fly.io
+  - Strong security isolation via KVM
+  - Open source: https://github.com/firecracker-microvm/firecracker
+
+- **cloud-hypervisor** - Rust-based alternative, similar to Firecracker
+  - Modern architecture, actively developed
+  - Good alternative if Firecracker has licensing concerns
+
+**Orchestration**
+- **Nomad** - Simple, effective workload orchestration
+  - Native support for ephemeral tasks
+  - Good fit for bare-metal servers
+  - Integrates well with Consul for service discovery
+
+- **K0s/k3s** - Kubernetes light variants
+  - More complex but richer ecosystem
+  - Option if we need advanced k8s features
+
+- **Fly.io Machines API** - Managed alternative
+  - Firecracker-based ephemeral VMs
+  - API-first design
+  - Global distribution built-in
+
+**Image Building**
+- **Packer** - Automated VM image building
+  - Supports multiple providers (AWS, GCP, local)
+  - Reproducible builds
+  - Version-controlled image definitions
+
+- **DispVM/Ahv** (Adamantquake/Antagonist)
+  - Disposable VM architecture
+  - Based on Xen's disaggregation model
+  - Useful reference for security design
+
+#### Architecture Design
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Micelio Control Layer                     │
+├─────────────────────────────────────────────────────────────┤
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  │
+│  │ Session     │  │ VM Pool     │  │ Image Registry      │  │
+│  │ Manager     │  │ Orchestrator│  │ (OCI-compliant)     │  │
+│  └─────────────┘  └─────────────┘  └─────────────────────┘  │
+├─────────────────────────────────────────────────────────────┤
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │        Nomad Cluster (Bare Metal Servers)           │    │
+│  │  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐  │    │
+│  │  │Firecracker│ │Firecracker│ │Firecracker│ │Firecracker│ │    │
+│  │  │  VM #1   │ │  VM #2   │ │  VM #3   │ │  VM #4   │  │    │
+│  │  └─────────┘ └─────────┘ └─────────┘ └─────────┘  │    │
+│  └─────────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Key Components**
+
+1. **Session Manager**
+   - Creates/destroys VMs on demand
+   - Tracks VM lifecycle and resource usage
+   - Handles timeout and cleanup
+   - Provides connection to running VM (SSH/Web terminal)
+
+2. **VM Pool Orchestrator**
+   - Maintains warm pool of pre-started VMs
+   - Hot-allocate VMs from pool (sub-second)
+   - Rebuilds images weekly (not per-run)
+   - Handles image updates without downtime
+
+3. **Image Registry**
+   - OCI-compliant registry for VM images
+   - Signed images for security
+   - Incremental layer updates where possible
+
+4. **Fallback Mechanism**
+   - If self-hosted VMs unavailable, fall back to cloud providers
+   - Fly.io Machines as managed alternative
+   - AWS/GCP as final fallback
+
+#### Security Model
+
+**Isolation Strategy**
+- Each session runs in dedicated microVM
+- No shared compute between sessions
+- Strict network policies (deny by default)
+- Ephemeral disk (destroyed on VM termination)
+
+**Trust Levels**
+- Trusted sessions (own code) → shared warm pool
+- Untrusted sessions (agent/code review) → fresh VMs
+- Compromised code → firecracker Jailer for extra isolation
+
+**Resource Limits**
+- CPU caps per VM (prevent noisy neighbors)
+- Memory limits with OOM killer
+- Network bandwidth throttling
+- Timeouts for all operations
+
+#### Cost Analysis
+
+**Self-Hosted (Bare Metal)**
+- Example: 4x Dell R750 or similar
+- ~300-500 EUR/month for hardware
+- Power, cooling, network extra
+- Servo achieves 300 EUR/month for extensive CI
+
+**Cloud (Fly.io Machines)**
+- Pay-per-second billing
+- ~$0.01-0.05 per second depending on config
+- Good for burst/overflow
+- More expensive at scale
+
+**Hybrid Approach**
+- Self-hosted for steady-state workloads
+- Cloud for burst capacity
+- Cost-optimized based on usage patterns
+
+#### Use Cases
+
+1. **Agent Coding Sessions**
+   - Agent gets dedicated VM for task
+   - Full isolation from host system
+   - Clean environment each time
+   - Can persist work via volumes
+
+2. **Code Review Environments**
+   - Review PR in isolated VM
+   - Run tests safely
+   - No risk to host environment
+
+3. **CI/CD Pipeline**
+   - Fast VM allocation per job
+   - Parallel job execution
+   - No shared state between jobs
+
+4. **Temporary Development Environments**
+   - On-demand dev environments
+   - Pre-configured images per project
+   - Ephemeral - destroyed when done
+
+#### Research Questions
+
+1. **VM Technology Selection**
+   - Firecracker vs cloud-hypervisor vs Kata Containers
+   - Licensing implications (Firecracker uses Apache 2.0)
+   - Performance benchmarks needed
+
+2. **Orchestration Complexity**
+   - Nomad sufficient or need full Kubernetes?
+   - Multi-host coordination for scaling
+   - State management for orchestrator
+
+3. **Image Build Strategy**
+   - How to minimize image rebuild time?
+   - Caching strategy for dependencies
+   - Incremental vs full rebuilds
+
+4. **Network Architecture**
+   - How to route traffic to ephemeral VMs?
+   - Load balancing for parallel jobs
+   - VPN/tunnel requirements
+
+5. **Integration with mic**
+   - How does mic interact with VM system?
+   - API design for session management
+   - Progress streaming from VM
+
+#### Next Steps
+
+- [ ] Research Firecracker benchmarking vs containers
+- [ ] Prototype Nomad + Firecracker setup on test hardware
+- [ ] Build proof-of-concept image builder with Packer
+- [ ] Design Session Manager API
+- [ ] Implement fallback to Fly.io Machines
+- [ ] Benchmark cost/performance vs GitHub Actions
+- [ ] Create integration design for mic
