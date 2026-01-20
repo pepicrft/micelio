@@ -154,15 +154,14 @@ defmodule Micelio.Theme.Generator.LLM do
     - link: hyperlink color (must be distinct and accessible)
     - activity0-4: contribution graph colors (gray to green gradient)
 
-    Font choices (ONLY use system/web-safe fonts that browsers have built-in):
-    - fontBody: body text font stack. Choose from these safe options:
-      * "system-ui, -apple-system, BlinkMacSystemFont, sans-serif" (modern system)
-      * "Georgia, Times New Roman, serif" (classic serif)
-      * "Palatino Linotype, Book Antiqua, serif" (elegant serif)
-      * "Arial, Helvetica, sans-serif" (clean sans-serif)
-      * "Verdana, Geneva, sans-serif" (readable sans-serif)
-      * "Trebuchet MS, sans-serif" (friendly sans-serif)
-    - fontMono: monospace font stack. Use: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace"
+    Font choices (use web-safe fonts available in all browsers without loading):
+    - fontBody: body text font stack. Choose from these options:
+      Sans-serif: Arial, Helvetica, Verdana, Geneva, Tahoma, Trebuchet MS, Lucida Sans, Lucida Grande, Segoe UI, system-ui
+      Serif: Georgia, Times New Roman, Palatino Linotype, Book Antiqua, Garamond, Century Schoolbook, Cambria
+      Casual: Comic Sans MS, Papyrus, Brush Script MT
+      Format as comma-separated with fallbacks, e.g. "Georgia, Cambria, Times New Roman, serif"
+    - fontMono: monospace font stack. Options: Consolas, Monaco, Lucida Console, Courier New, Andale Mono
+      Format with fallbacks, e.g. "Consolas, Monaco, Lucida Console, monospace"
 
     Respond with JSON only. Name should be creative (2-3 words). Description one sentence, ASCII only. No emojis.
     """
