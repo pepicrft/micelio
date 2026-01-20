@@ -1,0 +1,150 @@
+defmodule MicelioWeb.PromptRequestLiveTest do
+  use MicelioWeb.ConnCase, async: true
+
+  import Phoenix.LiveViewTest
+
+  alias Micelio.Accounts
+  alias Micelio.PromptRequests
+  alias Micelio.Projects
+  alias Micelio.Repo
+  alias Micelio.ValidationEnvironments
+  alias Micelio.ValidationEnvironments.ValidationRun
+
+  defp login_user(conn, user) do
+    Plug.Test.init_test_session(conn, %{user_id: user.id})
+  end
+
+  defp setup_project do
+    {:ok, user} = Accounts.get_or_create_user_by_email("prompt-live@example.com")
+
+    {:ok, organization} =
+      Accounts.create_organization_for_user(user, %{
+        handle: "prompt-live-org",
+        name: "Prompt Live Org"
+      })
+
+    {:ok, project} =
+      Projects.create_project(%{
+        handle: "prompt-live-project",
+        name: "Prompt Live Project",
+        organization_id: organization.id
+      })
+
+    {user, organization, project}
+  end
+
+  test "lists prompt requests and creates a new one", %{conn: conn} do
+    {user, organization, project} = setup_project()
+
+    conn = login_user(conn, user)
+    {:ok, view, _html} =
+      live(conn, ~p"/projects/#{organization.account.handle}/#{project.handle}/prompt-requests")
+
+    assert has_element?(view, "#new-prompt-request")
+
+    {:ok, form_view, _html} =
+      live(conn, ~p"/projects/#{organization.account.handle}/#{project.handle}/prompt-requests/new")
+
+    conversation_json = "{\"messages\":[{\"role\":\"user\",\"content\":\"Ship it\"}]}"
+
+    form =
+      form(form_view, "#prompt-request-form",
+        prompt_request: %{
+          title: "Ship prompt request",
+          model: "gpt-4.1",
+          system_prompt: "System",
+          prompt: "Do the thing",
+          result: "Diff output",
+          conversation: conversation_json
+        }
+      )
+
+    render_submit(form)
+
+    [prompt_request] = PromptRequests.list_prompt_requests_for_project(project)
+
+    assert_redirect(
+      form_view,
+      ~p"/projects/#{organization.account.handle}/#{project.handle}/prompt-requests/#{prompt_request.id}"
+    )
+  end
+
+  test "shows prompt request diff and accepts suggestions", %{conn: conn} do
+    {user, organization, project} = setup_project()
+
+    {:ok, prompt_request} =
+      PromptRequests.create_prompt_request(
+        %{
+          title: "Review diff",
+          prompt: "Prompt",
+          result: "Result",
+          model: "gpt-4.1",
+          system_prompt: "System",
+          conversation: %{"messages" => [%{"role" => "user", "content" => "Prompt"}]}
+        },
+        project: project,
+        user: user
+      )
+
+    conn = login_user(conn, user)
+
+    {:ok, view, _html} =
+      live(
+        conn,
+        ~p"/projects/#{organization.account.handle}/#{project.handle}/prompt-requests/#{prompt_request.id}"
+      )
+
+    assert has_element?(view, "#prompt-request-diff")
+
+    suggestion_form =
+      form(view, "#prompt-suggestion-form",
+        prompt_suggestion: %{suggestion: "Make the prompt more specific"}
+      )
+
+    render_submit(suggestion_form)
+
+    assert render(view) =~ "Make the prompt more specific"
+  end
+
+  test "shows validation runs for a prompt request", %{conn: conn} do
+    {user, organization, project} = setup_project()
+
+    {:ok, prompt_request} =
+      PromptRequests.create_prompt_request(
+        %{
+          title: "Review validation",
+          prompt: "Prompt",
+          result: "Result",
+          model: "gpt-4.1",
+          system_prompt: "System",
+          conversation: %{"messages" => [%{"role" => "user", "content" => "Prompt"}]}
+        },
+        project: project,
+        user: user
+      )
+
+    {:ok, run} = ValidationEnvironments.create_run(prompt_request, %{status: :passed})
+
+    run
+    |> ValidationRun.changeset(%{
+      metrics: %{"duration_ms" => 1200},
+      resource_usage: %{"cpu_seconds" => 3.2, "memory_mb" => 256},
+      coverage_delta: 0.01,
+      check_results: %{"checks" => [%{"id" => "test"}]}
+    })
+    |> Repo.update!()
+
+    conn = login_user(conn, user)
+
+    {:ok, view, _html} =
+      live(
+        conn,
+        ~p"/projects/#{organization.account.handle}/#{project.handle}/prompt-requests/#{prompt_request.id}"
+      )
+
+    assert has_element?(view, "#prompt-request-run-validation")
+    assert render(view) =~ "Validation Runs"
+    assert render(view) =~ "Passed"
+    assert render(view) =~ "Coverage delta"
+  end
+end

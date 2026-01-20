@@ -22,6 +22,7 @@ defmodule Micelio.Projects.Project do
     has_many :stars, Micelio.Projects.ProjectStar
     has_many :access_tokens, Micelio.Projects.ProjectAccessToken
     has_many :webhooks, Micelio.Webhooks.Webhook
+    has_many :prompt_requests, Micelio.PromptRequests.PromptRequest
 
     timestamps(type: :utc_datetime)
   end

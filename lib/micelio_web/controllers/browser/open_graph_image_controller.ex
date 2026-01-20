@@ -4,7 +4,8 @@ defmodule MicelioWeb.Browser.OpenGraphImageController do
   alias MicelioWeb.OpenGraphImage
 
   def show(conn, %{"hash" => hash} = params) do
-    etag = ~s|"#{hash}"|
+    cache_key = normalize_cache_key(hash, Map.get(params, "v"))
+    etag = ~s|"#{cache_key}"|
 
     if Enum.member?(get_req_header(conn, "if-none-match"), etag) do
       conn
@@ -31,6 +32,16 @@ defmodule MicelioWeb.Browser.OpenGraphImageController do
         {:error, _reason} ->
           send_resp(conn, 500, "Error")
       end
+    end
+  end
+
+  defp normalize_cache_key(hash, cache_key) when is_binary(hash) do
+    cache_key = if is_binary(cache_key), do: cache_key, else: ""
+
+    if cache_key != "" and String.starts_with?(cache_key, hash) do
+      cache_key
+    else
+      hash
     end
   end
 end

@@ -40,3 +40,10 @@
 - Marked agent OG images with LLM summaries as complete in PRD after confirming implementation and coverage.
 
 - Refined agent progress OG image layout with stat cards, added snapshot fallback test, and marked the PRD item complete.
+
+- Added no-cache headers for social crawlers in OG cache buster plug, with tests, and marked the PRD item complete.
+- Added OG image templates for commits, pull requests, and agent sessions, wired session pages to stats-based OG images, and added coverage.
+
+- Marked the Prompt Request System task complete in the PRD after confirming implementation and coverage.
+
+- Added coverage threshold tests for validation checks and marked the ephemeral validation environments task complete.

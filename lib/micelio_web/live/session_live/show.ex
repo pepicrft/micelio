@@ -40,7 +40,11 @@ defmodule MicelioWeb.SessionLive.Show do
                     canonical_url:
                       url(
                         ~p"/projects/#{organization.account.handle}/#{project.handle}/sessions/#{session.id}"
-                      )
+                      ),
+                    open_graph: %{
+                      image_template: "agent_session",
+                      image_stats: session_og_stats(change_stats)
+                    }
                   )
                   |> assign(:project, project)
                   |> assign(:organization, organization)
@@ -139,6 +143,18 @@ defmodule MicelioWeb.SessionLive.Show do
   end
 
   defp format_file_size(_), do: ""
+
+  defp session_og_stats(%{total: total, added: added, modified: modified, deleted: deleted})
+       when is_integer(total) and is_integer(added) and is_integer(modified) and is_integer(deleted) do
+    %{
+      files: total,
+      added: added,
+      modified: modified,
+      deleted: deleted
+    }
+  end
+
+  defp session_og_stats(_), do: %{}
 
   defp assign_session_og_summary(socket) do
     session = socket.assigns.session

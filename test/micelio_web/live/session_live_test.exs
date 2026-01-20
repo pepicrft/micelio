@@ -436,6 +436,69 @@ defmodule MicelioWeb.SessionLiveTest do
       assert attrs["description"] == summary
     end
 
+    test "sets og:image template and stats for session changes", %{
+      conn: conn,
+      project: project,
+      user: user,
+      organization: organization
+    } do
+      {:ok, session} =
+        Sessions.create_session(%{
+          session_id: "og-session-stats",
+          goal: "Track OG stats",
+          project_id: project.id,
+          user_id: user.id
+        })
+
+      {:ok, _change} =
+        Sessions.create_session_change(%{
+          session_id: session.id,
+          file_path: "lib/micelio/added.ex",
+          change_type: "added",
+          content: "added"
+        })
+
+      {:ok, _change} =
+        Sessions.create_session_change(%{
+          session_id: session.id,
+          file_path: "lib/micelio/modified.ex",
+          change_type: "modified",
+          content: "modified"
+        })
+
+      {:ok, _change} =
+        Sessions.create_session_change(%{
+          session_id: session.id,
+          file_path: "lib/micelio/deleted.ex",
+          change_type: "deleted",
+          content: "deleted"
+        })
+
+      html =
+        conn
+        |> get(
+          "/projects/#{organization.account.handle}/#{project.handle}/sessions/#{session.id}"
+        )
+        |> html_response(200)
+
+      doc = LazyHTML.from_document(html)
+      tag = LazyHTML.query(doc, ~S|meta[property="og:image"]|)
+      [image_url] = LazyHTML.attribute(tag, "content")
+
+      uri = URI.parse(image_url)
+      %{"token" => token} = URI.decode_query(uri.query || "")
+
+      assert {:ok, attrs} = OpenGraphImage.verify_token(token)
+      assert attrs["image_template"] == "agent_session"
+
+      assert attrs["image_stats"] == %{
+               "files" => 3,
+               "added" => 1,
+               "modified" => 1,
+               "deleted" => 1
+             }
+    end
+
     test "returns 404 for non-existent session", %{
       conn: conn,
       project: project,

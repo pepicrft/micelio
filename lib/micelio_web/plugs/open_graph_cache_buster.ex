@@ -31,13 +31,32 @@ defmodule MicelioWeb.Plugs.OpenGraphCacheBuster do
 
   def call(conn, _opts) do
     conn = ensure_vary_user_agent(conn)
+    conn = fetch_query_params(conn)
 
-    with platform when is_binary(platform) <- crawler_platform(conn),
-         cache_buster when is_binary(cache_buster) <- cache_buster_for(platform),
-         cache_buster when cache_buster != "" <- cache_buster do
-      PageMeta.put(conn, open_graph: %{cache_buster: "#{platform}-#{cache_buster}"})
+    manual_cache_buster = cache_buster_from_params(conn)
+    platform = crawler_platform(conn)
+    conn = maybe_disable_crawler_cache(conn, platform)
+
+    og_cache_buster =
+      cond do
+        is_binary(manual_cache_buster) and manual_cache_buster != "" ->
+          manual_cache_buster
+
+        is_binary(platform) ->
+          cache_buster = cache_buster_for(platform)
+          if is_binary(cache_buster) and cache_buster != "", do: "#{platform}-#{cache_buster}"
+
+        true ->
+          nil
+      end
+
+    if is_binary(og_cache_buster) and og_cache_buster != "" do
+
+      conn
+      |> put_session("og_cache_buster", og_cache_buster)
+      |> PageMeta.put(open_graph: %{cache_buster: og_cache_buster})
     else
-      _ -> conn
+      conn
     end
   end
 
@@ -72,6 +91,21 @@ defmodule MicelioWeb.Plugs.OpenGraphCacheBuster do
       Map.put(acc, to_string(key), value)
     end)
   end
+
+  defp cache_buster_from_params(conn) do
+    conn.query_params
+    |> Map.get("og_cache_buster")
+    |> normalize_cache_buster()
+  end
+
+  defp maybe_disable_crawler_cache(conn, platform) when is_binary(platform) do
+    case get_resp_header(conn, "cache-control") do
+      [] -> put_resp_header(conn, "cache-control", "no-cache, max-age=0, must-revalidate")
+      _ -> conn
+    end
+  end
+
+  defp maybe_disable_crawler_cache(conn, _platform), do: conn
 
   defp ensure_vary_user_agent(conn) do
     existing =

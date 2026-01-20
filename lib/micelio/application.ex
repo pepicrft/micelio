@@ -18,6 +18,7 @@ defmodule Micelio.Application do
         {Task.Supervisor, name: Micelio.Webhooks.Supervisor},
         {Task.Supervisor, name: Micelio.Notifications.Supervisor},
         {Task.Supervisor, name: Micelio.RemoteExecution.Supervisor},
+        {Task.Supervisor, name: Micelio.ValidationEnvironments.Supervisor},
         {Task.Supervisor, name: Micelio.Mic.RollupSupervisor},
         Micelio.Mic.RollupScheduler,
         {DNSCluster, query: Application.get_env(:micelio, :dns_cluster_query) || :ignore},

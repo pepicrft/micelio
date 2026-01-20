@@ -2,6 +2,7 @@ defmodule MicelioWeb.Plugs.OpenGraphCacheBusterTest do
   use ExUnit.Case, async: false
 
   import Plug.Test
+  import Plug.Conn, only: [get_session: 2]
 
   alias MicelioWeb.PageMeta
   alias MicelioWeb.Plugs.OpenGraphCacheBuster
@@ -73,6 +74,27 @@ defmodule MicelioWeb.Plugs.OpenGraphCacheBusterTest do
     assert String.contains?(vary, "user-agent")
   end
 
+  test "sets no-cache headers for crawler responses when missing" do
+    conn =
+      conn(:get, "/")
+      |> put_req_header("user-agent", "Twitterbot/1.0")
+      |> OpenGraphCacheBuster.call([])
+
+    assert Plug.Conn.get_resp_header(conn, "cache-control") == [
+             "no-cache, max-age=0, must-revalidate"
+           ]
+  end
+
+  test "does not override existing cache-control headers for crawlers" do
+    conn =
+      conn(:get, "/")
+      |> put_resp_header("cache-control", "public, max-age=60")
+      |> put_req_header("user-agent", "Twitterbot/1.0")
+      |> OpenGraphCacheBuster.call([])
+
+    assert Plug.Conn.get_resp_header(conn, "cache-control") == ["public, max-age=60"]
+  end
+
   test "propagates cache buster into og image query version" do
     Application.put_env(:micelio, :open_graph_cache_busters, %{twitter: "21"})
 
@@ -95,5 +117,28 @@ defmodule MicelioWeb.Plugs.OpenGraphCacheBusterTest do
     uri = URI.parse(image)
     assert %{"v" => version} = URI.decode_query(uri.query || "")
     assert String.ends_with?(version, "-twitter-21")
+  end
+
+  test "stores cache buster in session for LiveView mounts" do
+    Application.put_env(:micelio, :open_graph_cache_busters, %{twitter: "7"})
+
+    conn =
+      conn(:get, "/")
+      |> init_test_session(%{})
+      |> put_req_header("user-agent", "Twitterbot/1.0")
+      |> OpenGraphCacheBuster.call([])
+
+    assert get_session(conn, "og_cache_buster") == "twitter-7"
+  end
+
+  test "uses explicit og_cache_buster query param for manual invalidation" do
+    conn =
+      conn(:get, "/?og_cache_buster=manual-44")
+      |> put_req_header("user-agent", "Twitterbot/1.0")
+      |> OpenGraphCacheBuster.call([])
+
+    meta = PageMeta.from_assigns(conn.assigns)
+
+    assert meta.open_graph[:cache_buster] == "manual-44"
   end
 end

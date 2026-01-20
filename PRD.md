@@ -179,21 +179,21 @@ Micelio is a minimalist, open-source git forge built with Elixir/Phoenix, design
 
 - [x] Generate OG images for agents using LLM summaries of code changes
 - [x] Design template for agent progress OG images showing commits, files changed
-- [ ] Implement cache invalidation strategy for social platform crawlers
-- [ ] Add dynamic OG image generation for commits, PRs, and agent sessions
+- [x] Implement cache invalidation strategy for social platform crawlers
+- [x] Add dynamic OG image generation for commits, PRs, and agent sessions
 
 ### Agent Quality & Contribution Model
 
 This section addresses critical challenges with AI-generated contributions identified by Armin Ronacher ("Agent Psychosis") and tldraw ("Stay away from my trash!"). The core problems: AI contributions are cheap to generate but expensive to review, quality degrades over time, and "slop" (well-formed but low-quality code) is indistinguishable from good work without deep review.
 
-- [ ] **Implement Prompt Request System (replaces traditional Issues/PRs)**
+- [x] **Implement Prompt Request System (replaces traditional Issues/PRs)**
   - Require contributors to submit the prompt + generated result as a unit, not just a diff
   - Store the full agent context (model, system prompt, conversation history) alongside contributions
   - Enable reviewers to replay and understand why code was generated, not just what changed
   - Create UI for browsing prompt-result pairs with side-by-side diff visualization
   - Support "prompt improvement suggestions" as a review feedback mechanism
 
-- [ ] **Build Ephemeral Validation Environments**
+- [x] **Build Ephemeral Validation Environments**
   - Provision temporary sandboxed VMs for each contribution before it becomes a PR
   - Run full test suite, linting, type checking, and style validation automatically
   - Reject contributions that fail quality thresholds before human review is required

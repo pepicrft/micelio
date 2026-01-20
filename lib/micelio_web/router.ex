@@ -190,11 +190,26 @@ defmodule MicelioWeb.Router do
   scope "/projects", MicelioWeb do
     pipe_through([:browser, :require_auth])
 
-    live_session :projects, on_mount: {MicelioWeb.LiveAuth, :require_auth} do
+    live_session :projects,
+      on_mount: [{MicelioWeb.LiveAuth, :require_auth}, MicelioWeb.LiveOpenGraphCacheBuster] do
       live("/", ProjectLive.Index, :index)
       live("/new", ProjectLive.New, :new)
       live("/:organization_handle/:project_handle/edit", ProjectLive.Edit, :edit)
       live("/:organization_handle/:project_handle", ProjectLive.Show, :show)
+      live("/:organization_handle/:project_handle/prompt-requests", PromptRequestLive.Index, :index)
+
+      live(
+        "/:organization_handle/:project_handle/prompt-requests/new",
+        PromptRequestLive.New,
+        :new
+      )
+
+      live(
+        "/:organization_handle/:project_handle/prompt-requests/:id",
+        PromptRequestLive.Show,
+        :show
+      )
+
       live("/:organization_handle/:project_handle/sessions", SessionLive.Index, :index)
       live("/:organization_handle/:project_handle/sessions/:id", SessionLive.Show, :show)
     end
@@ -211,7 +226,8 @@ defmodule MicelioWeb.Router do
   scope "/organizations", MicelioWeb do
     pipe_through([:browser, :require_auth])
 
-    live_session :organization_settings, on_mount: {MicelioWeb.LiveAuth, :require_auth} do
+    live_session :organization_settings,
+      on_mount: [{MicelioWeb.LiveAuth, :require_auth}, MicelioWeb.LiveOpenGraphCacheBuster] do
       live("/:organization_handle/settings", OrganizationLive.Settings, :edit)
     end
   end
@@ -242,7 +258,8 @@ defmodule MicelioWeb.Router do
   scope "/", MicelioWeb do
     pipe_through([:browser, :require_auth, :load_resources])
 
-    live_session :repository_settings, on_mount: {MicelioWeb.LiveAuth, :require_auth} do
+    live_session :repository_settings,
+      on_mount: [{MicelioWeb.LiveAuth, :require_auth}, MicelioWeb.LiveOpenGraphCacheBuster] do
       live("/:account/:repository/settings", RepositoryLive.Settings, :edit)
       live("/:account/:repository/settings/import", RepositoryLive.Import, :edit)
       live("/:account/:repository/settings/webhooks", RepositoryLive.Webhooks, :index)
@@ -265,7 +282,8 @@ defmodule MicelioWeb.Router do
   scope "/", MicelioWeb do
     pipe_through([:browser, :load_resources])
 
-    live_session :public, on_mount: {MicelioWeb.LiveAuth, :current_user} do
+    live_session :public,
+      on_mount: [{MicelioWeb.LiveAuth, :current_user}, MicelioWeb.LiveOpenGraphCacheBuster] do
       live("/:account/:repository/agents", AgentLive.Index, :index)
     end
   end

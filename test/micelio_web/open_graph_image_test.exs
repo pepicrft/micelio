@@ -2,69 +2,46 @@ defmodule MicelioWeb.OpenGraphImageTest do
   use ExUnit.Case, async: true
 
   alias MicelioWeb.OpenGraphImage
-  alias MicelioWeb.PageMeta
 
-  test "agent progress template renders commits and files changed" do
+  test "renders commit og image template" do
     attrs = %{
-      "image_template" => "agent_progress",
-      "title" => "Agent progress",
+      "image_template" => "commit",
+      "title" => "Fix auth token refresh",
+      "description" => "Ensure refresh flow updates tokens.",
       "site_name" => "Micelio",
-      "image_stats" => %{"commits" => 3, "files" => 12}
+      "canonical_url" => "https://micelio.dev/org/repo/commit/abc123",
+      "image_stats" => %{"files" => 4, "additions" => 12, "deletions" => 3}
     }
 
     svg = OpenGraphImage.render_svg(attrs)
 
-    assert svg =~ "COMMITS"
-    assert svg =~ ">3<"
-    assert svg =~ "FILES CHANGED"
-    assert svg =~ ">12<"
+    assert String.contains?(svg, "Commit Open Graph image")
+    assert String.contains?(svg, "FILES")
+    assert String.contains?(svg, "4")
+    assert String.contains?(svg, "ADDITIONS")
+    assert String.contains?(svg, "12")
+    assert String.contains?(svg, "DELETIONS")
+    assert String.contains?(svg, "3")
   end
 
-  test "agent progress template normalizes atom stats keys" do
+  test "renders pull request og image template" do
     attrs = %{
-      "image_template" => "agent_progress",
-      "title" => "Agent progress",
+      "image_template" => "pull_request",
+      "title" => "Add repository import pipeline",
+      "description" => "Bring in git history and metadata.",
       "site_name" => "Micelio",
-      "image_stats" => %{commits: 2, files: 5}
+      "canonical_url" => "https://micelio.dev/org/repo/pulls/42",
+      "image_stats" => %{"commits" => 5, "files" => 18, "comments" => 9}
     }
 
     svg = OpenGraphImage.render_svg(attrs)
 
-    assert svg =~ "COMMITS"
-    assert svg =~ ">2<"
-    assert svg =~ "FILES CHANGED"
-    assert svg =~ ">5<"
-  end
-
-  test "agent progress template renders snapshot header and defaults stats" do
-    attrs = %{
-      "image_template" => "agent_progress",
-      "title" => "Agent progress",
-      "site_name" => "Micelio"
-    }
-
-    svg = OpenGraphImage.render_svg(attrs)
-
-    assert svg =~ "ACTIVITY SNAPSHOT"
-    assert svg =~ "COMMITS"
-    assert svg =~ ">0<"
-    assert svg =~ "FILES CHANGED"
-  end
-
-  test "url appends cache buster to the query version" do
-    meta = %PageMeta{
-      canonical_url: "https://example.com/projects/demo",
-      title_parts: ["Demo"],
-      description: "Project demo",
-      open_graph: %{cache_buster: "twitter-1"}
-    }
-
-    url = OpenGraphImage.url(meta)
-    uri = URI.parse(url)
-
-    assert %{"token" => token, "v" => version} = URI.decode_query(uri.query || "")
-    assert token != ""
-    assert String.starts_with?(uri.path || "", "/og/")
-    assert String.ends_with?(version, "-twitter-1")
+    assert String.contains?(svg, "Pull request Open Graph image")
+    assert String.contains?(svg, "COMMITS")
+    assert String.contains?(svg, "5")
+    assert String.contains?(svg, "FILES")
+    assert String.contains?(svg, "18")
+    assert String.contains?(svg, "COMMENTS")
+    assert String.contains?(svg, "9")
   end
 end

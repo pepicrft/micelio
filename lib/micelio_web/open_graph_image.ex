@@ -218,6 +218,9 @@ defmodule MicelioWeb.OpenGraphImage do
   def render_svg(attrs) when is_map(attrs) do
     case normalize_text(attrs["image_template"]) do
       "agent_progress" -> render_agent_progress_svg(attrs)
+      "agent_session" -> render_agent_session_svg(attrs)
+      "commit" -> render_commit_svg(attrs)
+      "pull_request" -> render_pull_request_svg(attrs)
       _ -> render_default_svg(attrs)
     end
   end
@@ -318,6 +321,193 @@ defmodule MicelioWeb.OpenGraphImage do
       text_el(790, 400, "FILES CHANGED", "20", "700", "#7dd3fc"),
       text_el(790, 445, files, "54", "700", "#e2e8f0"),
       footer_text(80, footer_y, url_line, "24", "500", "#94a3b8"),
+      "</svg>"
+    ]
+    |> IO.iodata_to_binary()
+  end
+
+  defp render_agent_session_svg(attrs) do
+    title = normalize_text(attrs["title"]) || "Agent session"
+    site_name = normalize_text(attrs["site_name"]) || PageMeta.site_name()
+    description = normalize_text(attrs["description"])
+    canonical_url = normalize_text(attrs["canonical_url"])
+    stats = normalize_image_stats(attrs["image_stats"])
+    files = stat_value(stats, "files")
+    added = stat_value(stats, "added")
+    modified = stat_value(stats, "modified")
+    deleted = stat_value(stats, "deleted")
+
+    title_lines = wrap_lines(title, 32, 2)
+    description_lines = wrap_lines(description, 56, 3)
+    url_line = canonical_url && display_url(canonical_url)
+
+    title_y = 200
+    title_line_height = 70
+
+    description_y =
+      title_y + title_line_height * length(title_lines) + 22
+
+    description_line_height = 38
+    footer_y = 560
+
+    [
+      ~s|<svg width="#{@width}" height="#{@height}" viewBox="0 0 #{@width} #{@height}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Agent session Open Graph image">|,
+      ~s|<defs><linearGradient id="bg-session" x1="0" y1="0" x2="1" y2="1">|,
+      ~s|<stop offset="0%" stop-color="#0b0f14"/><stop offset="100%" stop-color="#0c1f24"/>|,
+      ~s|</linearGradient></defs>|,
+      ~s|<rect width="#{@width}" height="#{@height}" fill="url(#bg-session)"/>|,
+      ~s|<rect x="40" y="40" width="#{@width - 80}" height="#{@height - 80}" rx="28" fill="#0b1220" stroke="#1f2a44" stroke-width="2"/>|,
+      ~s|<rect x="40" y="40" width="#{@width - 80}" height="10" rx="5" fill="#38bdf8"/>|,
+      text_el(80, 120, "#{site_name} / Sessions", "26", "600", "#93c5fd"),
+      title_text(80, title_y, title_lines, "58", "700", "#f8fafc", title_line_height),
+      description_text(
+        80,
+        description_y,
+        description_lines,
+        "28",
+        "500",
+        "#cbd5f5",
+        description_line_height
+      ),
+      ~s|<rect x="740" y="160" width="380" height="330" rx="26" fill="#0f172a" stroke="#1f2a44" stroke-width="2"/>|,
+      ~s|<rect x="740" y="160" width="6" height="330" rx="3" fill="#38bdf8"/>|,
+      text_el(780, 205, "SESSION STATS", "20", "700", "#7dd3fc"),
+      ~s|<line x1="780" y1="230" x2="1080" y2="230" stroke="#1f2a44" stroke-width="2"/>|,
+      ~s|<rect x="770" y="250" width="330" height="80" rx="18" fill="#111c2f" stroke="#1f2a44" stroke-width="2"/>|,
+      text_el(790, 282, "FILES", "20", "700", "#7dd3fc"),
+      text_el(790, 318, files, "44", "700", "#e2e8f0"),
+      ~s|<rect x="770" y="340" width="330" height="60" rx="16" fill="#111c2f" stroke="#1f2a44" stroke-width="2"/>|,
+      text_el(790, 370, "ADDED", "18", "700", "#7dd3fc"),
+      text_el(960, 370, added, "26", "700", "#e2e8f0"),
+      ~s|<rect x="770" y="410" width="330" height="60" rx="16" fill="#111c2f" stroke="#1f2a44" stroke-width="2"/>|,
+      text_el(790, 440, "MODIFIED", "18", "700", "#7dd3fc"),
+      text_el(960, 440, modified, "26", "700", "#e2e8f0"),
+      ~s|<rect x="770" y="480" width="330" height="60" rx="16" fill="#111c2f" stroke="#1f2a44" stroke-width="2"/>|,
+      text_el(790, 510, "DELETED", "18", "700", "#7dd3fc"),
+      text_el(960, 510, deleted, "26", "700", "#e2e8f0"),
+      footer_text(80, footer_y, url_line, "24", "500", "#94a3b8"),
+      "</svg>"
+    ]
+    |> IO.iodata_to_binary()
+  end
+
+  defp render_commit_svg(attrs) do
+    title = normalize_text(attrs["title"]) || "Commit"
+    site_name = normalize_text(attrs["site_name"]) || PageMeta.site_name()
+    description = normalize_text(attrs["description"])
+    canonical_url = normalize_text(attrs["canonical_url"])
+    stats = normalize_image_stats(attrs["image_stats"])
+    files = stat_value(stats, "files")
+    additions = stat_value(stats, "additions")
+    deletions = stat_value(stats, "deletions")
+
+    title_lines = wrap_lines(title, 32, 2)
+    description_lines = wrap_lines(description, 54, 3)
+    url_line = canonical_url && display_url(canonical_url)
+
+    title_y = 200
+    title_line_height = 70
+
+    description_y =
+      title_y + title_line_height * length(title_lines) + 22
+
+    description_line_height = 38
+    footer_y = 560
+
+    [
+      ~s|<svg width="#{@width}" height="#{@height}" viewBox="0 0 #{@width} #{@height}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Commit Open Graph image">|,
+      ~s|<defs><linearGradient id="bg-commit" x1="0" y1="0" x2="1" y2="1">|,
+      ~s|<stop offset="0%" stop-color="#0b1220"/><stop offset="100%" stop-color="#111827"/>|,
+      ~s|</linearGradient></defs>|,
+      ~s|<rect width="#{@width}" height="#{@height}" fill="url(#bg-commit)"/>|,
+      ~s|<rect x="40" y="40" width="#{@width - 80}" height="#{@height - 80}" rx="28" fill="#0b1220" stroke="#1f2a44" stroke-width="2"/>|,
+      ~s|<rect x="40" y="40" width="#{@width - 80}" height="10" rx="5" fill="#60a5fa"/>|,
+      text_el(80, 120, "#{site_name} / Commit", "26", "600", "#93c5fd"),
+      title_text(80, title_y, title_lines, "58", "700", "#f8fafc", title_line_height),
+      description_text(
+        80,
+        description_y,
+        description_lines,
+        "28",
+        "500",
+        "#cbd5f5",
+        description_line_height
+      ),
+      ~s|<rect x="740" y="180" width="380" height="300" rx="26" fill="#0f172a" stroke="#1f2a44" stroke-width="2"/>|,
+      ~s|<rect x="740" y="180" width="6" height="300" rx="3" fill="#60a5fa"/>|,
+      text_el(780, 225, "CHANGESET", "20", "700", "#7dd3fc"),
+      ~s|<line x1="780" y1="250" x2="1080" y2="250" stroke="#1f2a44" stroke-width="2"/>|,
+      ~s|<rect x="770" y="270" width="330" height="70" rx="18" fill="#111c2f" stroke="#1f2a44" stroke-width="2"/>|,
+      text_el(790, 300, "FILES", "20", "700", "#7dd3fc"),
+      text_el(790, 330, files, "38", "700", "#e2e8f0"),
+      ~s|<rect x="770" y="350" width="330" height="60" rx="16" fill="#111c2f" stroke="#1f2a44" stroke-width="2"/>|,
+      text_el(790, 380, "ADDITIONS", "18", "700", "#7dd3fc"),
+      text_el(980, 380, additions, "26", "700", "#e2e8f0"),
+      ~s|<rect x="770" y="420" width="330" height="60" rx="16" fill="#111c2f" stroke="#1f2a44" stroke-width="2"/>|,
+      text_el(790, 450, "DELETIONS", "18", "700", "#7dd3fc"),
+      text_el(980, 450, deletions, "26", "700", "#e2e8f0"),
+      footer_text(80, footer_y, url_line, "24", "500", "#94a3b8"),
+      "</svg>"
+    ]
+    |> IO.iodata_to_binary()
+  end
+
+  defp render_pull_request_svg(attrs) do
+    title = normalize_text(attrs["title"]) || "Pull request"
+    site_name = normalize_text(attrs["site_name"]) || PageMeta.site_name()
+    description = normalize_text(attrs["description"])
+    canonical_url = normalize_text(attrs["canonical_url"])
+    stats = normalize_image_stats(attrs["image_stats"])
+    commits = stat_value(stats, "commits")
+    files = stat_value(stats, "files")
+    comments = stat_value(stats, "comments")
+
+    title_lines = wrap_lines(title, 32, 2)
+    description_lines = wrap_lines(description, 54, 3)
+    url_line = canonical_url && display_url(canonical_url)
+
+    title_y = 200
+    title_line_height = 70
+
+    description_y =
+      title_y + title_line_height * length(title_lines) + 22
+
+    description_line_height = 38
+    footer_y = 560
+
+    [
+      ~s|<svg width="#{@width}" height="#{@height}" viewBox="0 0 #{@width} #{@height}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Pull request Open Graph image">|,
+      ~s|<defs><linearGradient id="bg-pr" x1="0" y1="0" x2="1" y2="1">|,
+      ~s|<stop offset="0%" stop-color="#0f172a"/><stop offset="100%" stop-color="#1f2937"/>|,
+      ~s|</linearGradient></defs>|,
+      ~s|<rect width="#{@width}" height="#{@height}" fill="url(#bg-pr)"/>|,
+      ~s|<rect x="40" y="40" width="#{@width - 80}" height="#{@height - 80}" rx="28" fill="#0f172a" stroke="#1f2a44" stroke-width="2"/>|,
+      ~s|<rect x="40" y="40" width="#{@width - 80}" height="10" rx="5" fill="#f59e0b"/>|,
+      text_el(80, 120, "#{site_name} / Pull Requests", "26", "600", "#fcd34d"),
+      title_text(80, title_y, title_lines, "58", "700", "#f8fafc", title_line_height),
+      description_text(
+        80,
+        description_y,
+        description_lines,
+        "28",
+        "500",
+        "#e5e7eb",
+        description_line_height
+      ),
+      ~s|<rect x="740" y="180" width="380" height="300" rx="26" fill="#111827" stroke="#1f2a44" stroke-width="2"/>|,
+      ~s|<rect x="740" y="180" width="6" height="300" rx="3" fill="#f59e0b"/>|,
+      text_el(780, 225, "REVIEW SNAPSHOT", "20", "700", "#fcd34d"),
+      ~s|<line x1="780" y1="250" x2="1080" y2="250" stroke="#1f2a44" stroke-width="2"/>|,
+      ~s|<rect x="770" y="270" width="330" height="70" rx="18" fill="#111c2f" stroke="#1f2a44" stroke-width="2"/>|,
+      text_el(790, 300, "COMMITS", "20", "700", "#fcd34d"),
+      text_el(790, 330, commits, "38", "700", "#f8fafc"),
+      ~s|<rect x="770" y="350" width="330" height="60" rx="16" fill="#111c2f" stroke="#1f2a44" stroke-width="2"/>|,
+      text_el(790, 380, "FILES", "18", "700", "#fcd34d"),
+      text_el(980, 380, files, "26", "700", "#f8fafc"),
+      ~s|<rect x="770" y="420" width="330" height="60" rx="16" fill="#111c2f" stroke="#1f2a44" stroke-width="2"/>|,
+      text_el(790, 450, "COMMENTS", "18", "700", "#fcd34d"),
+      text_el(980, 450, comments, "26", "700", "#f8fafc"),
+      footer_text(80, footer_y, url_line, "24", "500", "#9ca3af"),
       "</svg>"
     ]
     |> IO.iodata_to_binary()

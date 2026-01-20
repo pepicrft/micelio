@@ -11,6 +11,7 @@
 @import "./routes/project_blame.css";
 @import "./routes/auth.css";
 @import "./routes/projects.css";
+@import "./routes/prompt_requests.css";
 @import "./routes/sessions.css";
 @import "./routes/agent_progress.css";
 @import "./routes/organizations.css";
