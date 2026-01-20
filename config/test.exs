@@ -41,6 +41,12 @@ config :micelio, MicelioWeb.Endpoint,
 config :phoenix_pubsub, Micelio.PubSub,
   pool_size: 1
 
+# Use Local adapter for tests to avoid TCP socket permission issues in restricted environments
+# The Local adapter runs entirely in-memory without network dependencies
+# This fixes :eperm errors when running tests in Docker/containerized environments
+# where TCP socket creation is restricted
+config :phoenix_pubsub, Micelio.PubSub, adapter: Phoenix.PubSub.Local
+
 config :micelio, :admin_emails, ["admin@example.com"]
 
 config :micelio, :github_oauth,

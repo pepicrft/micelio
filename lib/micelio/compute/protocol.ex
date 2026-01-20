@@ -64,8 +64,8 @@ defmodule Micelio.AgentInfra.Protocol do
   @spec normalize_status(term()) :: {:ok, status()} | {:error, atom()}
   def normalize_status(%{} = status) do
     with {:ok, state} <- normalize_state(get_field(status, :state)),
-         hostname <- get_field(status, :hostname),
-         ip_address <- get_field(status, :ip_address),
+         hostname <- normalize_hostname(get_field(status, :hostname)),
+         ip_address <- normalize_ip_address(get_field(status, :ip_address)),
          metadata <- normalize_metadata(get_field(status, :metadata)) do
       {:ok,
        %{
@@ -84,7 +84,7 @@ defmodule Micelio.AgentInfra.Protocol do
   @doc """
   Normalizes a provider instance payload into the canonical protocol shape.
   """
-  @spec normalize_instance(map()) :: {:ok, instance()} | {:error, atom()}
+  @spec normalize_instance(term()) :: {:ok, instance()} | {:error, atom()}
   def normalize_instance(%{} = instance) do
     with {:ok, ref} <- normalize_ref(get_field(instance, :ref)),
          {:ok, status} <- normalize_status(get_field(instance, :status)),
@@ -101,6 +101,8 @@ defmodule Micelio.AgentInfra.Protocol do
       {:error, _reason} = error -> error
     end
   end
+
+  def normalize_instance(_instance), do: {:error, :invalid_instance}
 
   @doc """
   Normalizes a list of provider instance payloads into the canonical protocol shape.
@@ -184,6 +186,25 @@ defmodule Micelio.AgentInfra.Protocol do
 
   defp normalize_ref(nil), do: {:error, :invalid_instance_ref}
   defp normalize_ref(ref), do: {:ok, ref}
+
+  defp normalize_hostname(nil), do: nil
+  defp normalize_hostname(value) when is_binary(value), do: value
+  defp normalize_hostname(value) when is_list(value), do: to_string(value)
+  defp normalize_hostname(_value), do: nil
+
+  defp normalize_ip_address(nil), do: nil
+  defp normalize_ip_address(value) when is_binary(value), do: value
+
+  defp normalize_ip_address(value) when is_tuple(value) do
+    value
+    |> :inet.ntoa()
+    |> to_string()
+  rescue
+    _ -> nil
+  end
+
+  defp normalize_ip_address(value) when is_list(value), do: to_string(value)
+  defp normalize_ip_address(_value), do: nil
 
   defp normalize_provider(nil), do: nil
   defp normalize_provider(provider) when is_binary(provider), do: provider

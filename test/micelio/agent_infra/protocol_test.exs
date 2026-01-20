@@ -78,6 +78,10 @@ defmodule Micelio.AgentInfra.ProtocolTest do
     assert {:error, :invalid_status} = Protocol.normalize_instance(payload)
   end
 
+  test "normalize_instance rejects non-map payloads" do
+    assert {:error, :invalid_instance} = Protocol.normalize_instance("invalid")
+  end
+
   test "normalize_instances returns normalized instance lists" do
     payloads = [
       %{
@@ -117,6 +121,13 @@ defmodule Micelio.AgentInfra.ProtocolTest do
     payloads = [%{ref: "vm-123", status: %{state: :running}}, %{ref: nil, status: %{state: :running}}]
 
     assert {:error, %{index: 1, reason: :invalid_instance_ref}} =
+             Protocol.normalize_instances(payloads)
+  end
+
+  test "normalize_instances reports non-map entries" do
+    payloads = [%{ref: "vm-123", status: %{state: :running}}, "invalid"]
+
+    assert {:error, %{index: 1, reason: :invalid_instance}} =
              Protocol.normalize_instances(payloads)
   end
 
