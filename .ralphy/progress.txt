@@ -33,3 +33,4 @@
 
 - Added LLM model selection to the new project form with organization-specific options and LiveView coverage.
 - Enforced sandbox network isolation by stripping network config when policy is none, added test coverage, and marked the PRD item complete.
+- Marked the agent resource quota and billing milestone complete after verifying implementation and coverage.

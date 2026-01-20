@@ -1,7 +1,7 @@
 defmodule Micelio.SessionsTest do
   use Micelio.DataCase
 
-  alias Micelio.Sessions.Session
+  alias Micelio.Sessions.{OGSummary, Session}
   alias Micelio.{Sessions, Projects, Accounts}
 
   describe "sessions" do
@@ -197,6 +197,39 @@ defmodule Micelio.SessionsTest do
       loaded = Sessions.get_session_with_associations(session.id)
       assert loaded.user.id == user.id
       assert loaded.project.id == project.id
+    end
+
+    test "og_summary_for_sessions/2 accepts session snapshots", %{user: user, project: project} do
+      {:ok, session} =
+        Sessions.create_session(%{
+          session_id: "summary-session",
+          goal: "Summarize changes",
+          project_id: project.id,
+          user_id: user.id
+        })
+
+      {:ok, _change} =
+        Sessions.create_session_change(%{
+          session_id: session.id,
+          file_path: "lib/summary.ex",
+          change_type: "added",
+          content: "defmodule Summary do\nend\n"
+        })
+
+      session_with_changes = Sessions.get_session_with_changes(session.id)
+      summary = "Added summary module for agent changes."
+      digest = OGSummary.digest(session_with_changes.changes)
+
+      {:ok, _} =
+        Sessions.update_session(session_with_changes, %{
+          metadata: %{"og_summary" => summary, "og_summary_hash" => digest}
+        })
+
+      session_with_changes = Sessions.get_session_with_changes(session.id)
+      snapshot = %{session: session_with_changes}
+
+      assert {:ok, ^summary} = Sessions.og_summary_for_sessions([snapshot])
+      assert {:ok, ^summary} = Sessions.og_summary_for_sessions([session_with_changes])
     end
 
     test "create_session/1 with valid data creates a session", %{user: user, project: project} do

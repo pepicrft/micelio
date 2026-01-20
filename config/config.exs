@@ -85,6 +85,21 @@ config :micelio, :project_llm_models, ["gpt-4.1-mini", "gpt-4.1"]
 config :micelio, :project_llm_default, "gpt-4.1-mini"
 config :micelio, :remote_execution, allowed_commands: []
 
+config :micelio, Micelio.AgentInfra.Billing,
+  limits: %{
+    cpu_core_seconds: 120_000,
+    memory_mb_seconds: 61_440_000,
+    disk_gb_seconds: 1_800_000,
+    billable_units: 200_000
+  },
+  unit_weights: %{
+    cpu_core_second: 1,
+    memory_mb_second: 1,
+    disk_gb_second: 5
+  },
+  unit_price_cents: 1,
+  default_ttl_seconds: 3600
+
 config :micelio,
   ecto_repos: [Micelio.Repo],
   # Import environment specific config. This must remain at the bottom

@@ -27,6 +27,7 @@ defmodule MicelioWeb.AgentLive.Index do
             |> assign(:refresh_ms, @refresh_ms)
             |> assign(:refresh_seconds, div(@refresh_ms, 1000))
             |> load_sessions()
+            |> assign_agent_og_summary()
 
           {:ok, maybe_schedule_refresh(socket)}
         else
@@ -73,6 +74,16 @@ defmodule MicelioWeb.AgentLive.Index do
       sessions: sessions,
       refreshed_at: DateTime.utc_now() |> DateTime.truncate(:second)
     )
+  end
+
+  defp assign_agent_og_summary(socket) do
+    case Sessions.og_summary_for_sessions(socket.assigns.sessions) do
+      {:ok, summary} when is_binary(summary) and summary != "" ->
+        PageMeta.assign(socket, description: summary)
+
+      _ ->
+        socket
+    end
   end
 
   defp build_session_snapshot(session) do

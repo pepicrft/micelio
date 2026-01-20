@@ -3,10 +3,12 @@ defmodule Micelio.AgentInfra do
   API for shaping agent VM provisioning plans.
   """
 
+  alias Micelio.AgentInfra.Billing
   alias Micelio.AgentInfra.ProvisioningPlan
   alias Micelio.AgentInfra.ProvisioningRequest
   alias Micelio.AgentInfra.ProviderRegistry
   alias Micelio.AgentInfra.CloudPlatforms
+  alias Micelio.Accounts.Account
 
   @doc """
   Builds a provisioning plan from attributes.
@@ -22,6 +24,16 @@ defmodule Micelio.AgentInfra do
   """
   def build_request(attrs) do
     with {:ok, plan} <- build_plan(attrs) do
+      {:ok, ProvisioningRequest.from_plan(plan)}
+    end
+  end
+
+  @doc """
+  Builds a provider-ready request after reserving agent quota for the account.
+  """
+  def build_request_with_quota(%Account{} = account, attrs, opts \\ []) do
+    with {:ok, plan} <- build_plan(attrs),
+         {:ok, _event} <- Billing.reserve_for_plan(account, plan, opts) do
       {:ok, ProvisioningRequest.from_plan(plan)}
     end
   end

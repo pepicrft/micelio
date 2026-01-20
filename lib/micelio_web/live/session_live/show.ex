@@ -46,6 +46,7 @@ defmodule MicelioWeb.SessionLive.Show do
                   |> assign(:organization, organization)
                   |> assign(:session, session)
                   |> assign(:change_stats, change_stats)
+                  |> assign_session_og_summary()
 
                 {:ok, socket}
               else
@@ -138,6 +139,18 @@ defmodule MicelioWeb.SessionLive.Show do
   end
 
   defp format_file_size(_), do: ""
+
+  defp assign_session_og_summary(socket) do
+    session = socket.assigns.session
+
+    case Sessions.get_or_generate_og_summary(session, session.changes) do
+      {:ok, summary} when is_binary(summary) and summary != "" ->
+        PageMeta.assign(socket, description: summary)
+
+      _ ->
+        socket
+    end
+  end
 
   @impl true
   def render(assigns) do

@@ -4,6 +4,7 @@ defmodule MicelioWeb.SessionLiveTest do
   import Phoenix.LiveViewTest
 
   alias Micelio.{Accounts, Projects, Sessions}
+  alias Micelio.Sessions.OGSummary
 
   describe "SessionLive.Index" do
     setup :register_and_log_in_user
@@ -344,6 +345,46 @@ defmodule MicelioWeb.SessionLiveTest do
 
       assert html =~ "Changes"
       assert html =~ "No file changes in this session"
+    end
+
+    test "uses cached og summary for page meta description", %{
+      conn: conn,
+      project: project,
+      user: user,
+      organization: organization
+    } do
+      {:ok, session} =
+        Sessions.create_session(%{
+          session_id: "og-summary-session",
+          goal: "Summarize OG",
+          project_id: project.id,
+          user_id: user.id
+        })
+
+      {:ok, _change} =
+        Sessions.create_session_change(%{
+          session_id: session.id,
+          file_path: "lib/micelio/example.ex",
+          change_type: "modified",
+          content: "updated"
+        })
+
+      changes = Sessions.list_session_changes(session)
+      summary = "Updated example module to refine session behavior."
+      digest = OGSummary.digest(changes)
+
+      {:ok, _session} =
+        Sessions.update_session(session, %{
+          metadata: %{"og_summary" => summary, "og_summary_hash" => digest}
+        })
+
+      {:ok, view, _html} =
+        live(
+          conn,
+          "/projects/#{organization.account.handle}/#{project.handle}/sessions/#{session.id}"
+        )
+
+      assert %MicelioWeb.PageMeta{description: ^summary} = view.assigns.page_meta
     end
 
     test "returns 404 for non-existent session", %{

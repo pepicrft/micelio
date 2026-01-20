@@ -8,6 +8,7 @@ defmodule Micelio.Sessions do
   alias Micelio.Accounts.User
   alias Micelio.Projects.Project
   alias Micelio.Repo
+  alias Micelio.Sessions.OGSummary
   alias Micelio.Sessions.Session
   alias Micelio.Sessions.SessionChange
   alias Micelio.Storage
@@ -117,6 +118,65 @@ defmodule Micelio.Sessions do
     |> Session.changeset(attrs)
     |> Repo.update()
   end
+
+  @doc """
+  Returns an LLM summary for agent Open Graph images and caches it on the session.
+  """
+  def get_or_generate_og_summary(%Session{} = session, changes \\ nil, opts \\ []) do
+    changes = changes || list_session_changes(session)
+
+    if changes == [] do
+      {:ok, nil}
+    else
+      digest = OGSummary.digest(changes)
+      metadata = session.metadata || %{}
+      cached_summary = Map.get(metadata, "og_summary")
+      cached_digest = Map.get(metadata, "og_summary_hash")
+
+      if cached_digest == digest and is_binary(cached_summary) and cached_summary != "" do
+        {:ok, cached_summary}
+      else
+        case OGSummary.generate(session, changes, opts) do
+          {:ok, summary} when is_binary(summary) and summary != "" ->
+            updated_metadata =
+              metadata
+              |> Map.put("og_summary", summary)
+              |> Map.put("og_summary_hash", digest)
+
+            case update_session(session, %{metadata: updated_metadata}) do
+              {:ok, _} -> {:ok, summary}
+              {:error, _} -> {:ok, summary}
+            end
+
+          _ ->
+            {:ok, nil}
+        end
+      end
+    end
+  end
+
+  @doc """
+  Picks a session with changes and returns its OG summary.
+  """
+  def og_summary_for_sessions(sessions, opts \\ [])
+
+  def og_summary_for_sessions(sessions, opts) when is_list(sessions) do
+    sessions
+    |> Enum.map(&extract_session/1)
+    |> Enum.find(fn
+      %Session{changes: [_ | _]} -> true
+      _ -> false
+    end)
+    |> case do
+      nil -> {:ok, nil}
+      %Session{} = session -> get_or_generate_og_summary(session, session.changes, opts)
+      _ -> {:ok, nil}
+    end
+  end
+
+  defp extract_session(%Session{} = session), do: session
+  defp extract_session(%{session: %Session{} = session}), do: session
+  defp extract_session(session), do: session
 
   @doc """
   Deletes a session.
