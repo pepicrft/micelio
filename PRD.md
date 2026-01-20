@@ -153,9 +153,9 @@ Micelio is a minimalist, open-source git forge built with Elixir/Phoenix, design
 
 - [x] Design infrastructure for provisioning VMs and mounting volumes (use `compute/` directory)
 - [x] Evaluate cloud platforms for VM provisioning (AWS, GCP, Hetzner, etc.)
-- [ ] Design abstraction protocol for cloud-agnostic VM management
-- [ ] Implement remote execution service for running CLI tools (Claude, Codex, etc.)
-- [ ] Add support for tenant-configurable LLM models per project
+- [x] Design abstraction protocol for cloud-agnostic VM management
+- [x] Implement remote execution service for running CLI tools (Claude, Codex, etc.)
+- [x] Add support for tenant-configurable LLM models per project
 - [ ] Design secure sandboxed environment for agent execution
 - [ ] Implement resource quota and billing for agentic workflows
 
@@ -355,6 +355,193 @@ Interface (conceptual):
 - [ ] Integrate with agent runners (check budget before run)
 - [ ] Build usage dashboard (tokens spent, value delivered)
 - [ ] Design earn-by-contributing mechanics
+
+### Payments & Monetization
+
+Implement Polar.sh as the Merchant of Record (MoR) solution for handling subscriptions, invoices, and tax compliance. This enables sustainable monetization while maintaining a developer-friendly experience.
+
+#### Core Concept
+
+Polar.sh provides a complete payment infrastructure as a service:
+- **Subscription management** - Tiered plans (free, pro, team, enterprise)
+- **Tax compliance** - VAT, sales tax handling across jurisdictions
+- **Invoicing** - Automated invoice generation and delivery
+- **Payment processing** - Credit cards, PayPal, and regional methods
+- **Customer portal** - Self-service subscription management
+
+#### Subscription Tiers
+
+| Tier | Price | Features |
+|------|-------|----------|
+| Free | $0 | Public projects, basic agent sessions, community support |
+| Pro | $9/month | Private projects, unlimited agents, priority support |
+| Team | $29/month | Team management, organization billing, SSO |
+| Enterprise | Custom | Dedicated infrastructure, SLA, premium support |
+
+#### Architecture
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                  Micelio Application                     │
+├─────────────────────────────────────────────────────────┤
+│  ┌────────────────┐  ┌────────────────┐  ┌───────────┐  │
+│  │ Subscription   │  │ Webhook        │  │ Customer  │  │
+│  │ Controller     │  │ Handler        │  │ Portal    │  │
+│  └────────────────┘  └────────────────┘  └───────────┘  │
+├─────────────────────────────────────────────────────────┤
+│  ┌──────────────────────────────────────────────────┐   │
+│  │              Polar.sh API                         │   │
+│  │  - Checkout sessions                              │   │
+│  │  - Customer management                            │   │
+│  │  - Subscription lifecycle                         │   │
+│  │  - Invoice generation                             │   │
+│  └──────────────────────────────────────────────────┘   │
+├─────────────────────────────────────────────────────────┤
+│  ┌──────────────────────────────────────────────────┐   │
+│  │              Database Schema                      │   │
+│  │  - customers (polar_customer_id, user_id, etc.)   │   │
+│  │  - subscriptions (status, tier, period, etc.)     │   │
+│  │  - invoices (polar_invoice_id, amount, etc.)      │   │
+│  └──────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────┘
+```
+
+#### Self-Hosting Considerations
+
+For self-hosted deployments, payments are optional:
+- **Payments disabled (default)**: Full functionality with rate limits
+- **Payments enabled**: Connect Polar.sh credentials for subscription features
+- **Custom payment solution**: Alternative integration via configuration
+
+Environment variables for self-hosting:
+```bash
+# Disable/enable payments
+MICELIO_PAYMENTS_ENABLED=false
+
+# Polar.sh credentials (optional for cloud)
+POLAR_SH_ACCESS_KEY=pk_test_xxx
+POLAR_SH_WEBHOOK_SECRET=whsec_xxx
+
+# Subscription tier configuration
+MICELIO_TIER_FREE_MAX_PROJECTS=3
+MICELIO_TIER_PRO_PRICE_ID=price_xxx
+MICELIO_TIER_TEAM_PRICE_ID=price_xxx
+```
+
+#### Implementation Tasks
+
+- [ ] **Set up Polar.sh account and configuration**
+  - Create Polar.sh organization and API credentials
+  - Configure product tiers (free, pro, team, enterprise) in Polar dashboard
+  - Set up webhook endpoint in Micelio (`/webhooks/polar`)
+  - Configure pricing page and checkout flow
+  - Test checkout flow with Stripe test cards
+
+- [ ] **Design and implement subscription schema**
+  - Create `subscriptions` table:
+    - `id` (UUID primary key)
+    - `user_id` (foreign key to users)
+    - `organization_id` (nullable, for team subscriptions)
+    - `polar_customer_id` (string, Polar.sh customer ID)
+    - `polar_subscription_id` (string, Polar.sh subscription ID)
+    - `tier` (enum: free, pro, team, enterprise)
+    - `status` (enum: active, past_due, canceled, trialing)
+    - `current_period_start`, `current_period_end` (datetimes)
+    - `cancel_at_period_end` (boolean)
+    - `metadata` (jsonb, for Polar.sh sync data)
+    - `inserted_at`, `updated_at` timestamps
+  - Create `subscription_events` table for audit trail:
+    - `id`, `subscription_id`, `event_type`, `polar_event_id`, `payload`
+  - Add `subscription_id` to users table for quick access
+  - Implement Ecto schemas with proper associations
+
+- [ ] **Build Polar.sh API client**
+  - Create `Micelio.Polar.Client` module
+  - Implement API functions:
+    - `create_customer/2` - Create Polar customer from user
+    - `create_checkout_session/3` - Generate checkout URL
+    - `create_portal_session/2` - Generate customer portal URL
+    - `get_subscription/1` - Fetch subscription details
+    - `cancel_subscription/1` - Cancel at period end
+    - `update_subscription/2` - Change tier
+  - Handle API errors and rate limiting
+  - Add caching for subscription lookups
+  - Implement retry logic for transient failures
+
+- [ ] **Implement webhook handling**
+  - Create `Micelio.Polar.WebhookController`
+  - Handle Polar.sh webhook events:
+    - `checkout.session.completed` - Activate subscription
+    - `customer.subscription.created` - Record new subscription
+    - `customer.subscription.updated` - Sync tier changes
+    - `customer.subscription.deleted` - Handle cancellations
+    - `invoice.payment_succeeded` - Confirm payment
+    - `invoice.payment_failed` - Handle failed payments
+  - Verify webhook signatures using `polar_webhook_secret`
+  - Implement idempotency (check event_id before processing)
+  - Log all webhook events for debugging
+  - Create background job for webhook processing
+
+- [ ] **Implement feature access control based on tier**
+  - Create `Micelio.Policies.Subscription` module
+  - Define permission functions:
+    - `can_create_private_project?/1`
+    - `can_use_ai_tokens?/1`
+    - `can_add_team_members?/1`
+    - `exceeds_project_limit?/2`
+  - Enforce limits in controllers and contexts:
+    - Check subscription tier before private project creation
+    - Limit concurrent agent sessions based on tier
+    - Restrict team management to team/enterprise tiers
+  - Return user-friendly error messages when limits exceeded
+  - Show upgrade prompts in UI when limits approached
+
+- [ ] **Create subscription management UI**
+  - Build `/settings/billing` LiveView:
+    - Display current tier and subscription status
+    - Show billing period and next payment date
+    - "Manage Subscription" button linking to Polar customer portal
+    - Upgrade/downgrade tier options with pricing comparison
+    - Payment method display (last 4 digits, expiry)
+    - Invoice history list with download links
+  - Add tier badges to navigation and feature pages
+  - Show upgrade prompts when free tier limits encountered
+  - Implement graceful degradation UI for canceled subscriptions
+  - Add "Contact Sales" link for enterprise tier
+
+- [ ] **Build pricing page**
+  - Create `/pricing` page with:
+    - Tier comparison table (features vs price)
+    - Monthly/yearly pricing toggle with savings display
+    - FAQ section for common questions
+    - "Get Started" CTA for each tier
+    - Testimonials/social proof section
+  - Link from homepage and signup flow
+  - Make pricing clear before signup
+
+- [ ] **Implement self-hosting configuration**
+  - Add configuration option `payments_enabled` in config.exs
+  - Create `Micelio.Payments.Disabled` adapter for self-hosted:
+    - All subscription checks return free tier permissions
+    - Stripe/Polar API calls return nil or mock data
+    - UI shows "Payments not configured" message
+  - Create `Micelio.Payments.Polar` adapter for cloud:
+    - Normal API integration with Polar.sh
+    - Webhook processing enabled
+  - Add environment variable documentation in README
+  - Create admin UI for payment configuration status
+  - Implement feature flag for gradual rollout
+
+- [ ] **Add subscription analytics and metrics**
+  - Track key metrics:
+    - Conversion rate (free → paid)
+    - Churn rate (canceled subscriptions)
+    - Revenue per user (ARPU)
+    - Lifetime value (LTV) estimation
+  - Create admin dashboard for subscription metrics
+  - Implement cohort analysis for user segments
+  - Set up alerts for unusual churn or conversion changes
+  - Export data for financial reporting
 
 ### Prompt Request System
 
