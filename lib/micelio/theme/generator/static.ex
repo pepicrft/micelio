@@ -22,8 +22,8 @@ defmodule Micelio.Theme.Generator.Static do
         "activity2" => "#7bc96f",
         "activity3" => "#239a3b",
         "activity4" => "#196127",
-        "fontBody" => "system-ui, -apple-system, sans-serif",
-        "fontMono" => "ui-monospace, monospace"
+        "fontBody" => "system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
+        "fontMono" => "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace"
       },
       dark: %{
         "text" => "#f0f0f0",
@@ -38,8 +38,8 @@ defmodule Micelio.Theme.Generator.Static do
         "activity2" => "#006d32",
         "activity3" => "#26a641",
         "activity4" => "#39d353",
-        "fontBody" => "system-ui, -apple-system, sans-serif",
-        "fontMono" => "ui-monospace, monospace"
+        "fontBody" => "system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
+        "fontMono" => "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace"
       }
     },
     %{
@@ -58,8 +58,8 @@ defmodule Micelio.Theme.Generator.Static do
         "activity2" => "#7bc96f",
         "activity3" => "#239a3b",
         "activity4" => "#196127",
-        "fontBody" => "Georgia, serif",
-        "fontMono" => "ui-monospace, monospace"
+        "fontBody" => "Georgia, Times New Roman, serif",
+        "fontMono" => "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace"
       },
       dark: %{
         "text" => "#f5f0eb",
@@ -74,8 +74,8 @@ defmodule Micelio.Theme.Generator.Static do
         "activity2" => "#4d7c0f",
         "activity3" => "#65a30d",
         "activity4" => "#84cc16",
-        "fontBody" => "Georgia, serif",
-        "fontMono" => "ui-monospace, monospace"
+        "fontBody" => "Georgia, Times New Roman, serif",
+        "fontMono" => "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace"
       }
     },
     %{
@@ -94,8 +94,8 @@ defmodule Micelio.Theme.Generator.Static do
         "activity2" => "#7bc96f",
         "activity3" => "#239a3b",
         "activity4" => "#196127",
-        "fontBody" => "Inter, system-ui, sans-serif",
-        "fontMono" => "ui-monospace, monospace"
+        "fontBody" => "Verdana, Geneva, sans-serif",
+        "fontMono" => "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace"
       },
       dark: %{
         "text" => "#e2e8f0",
@@ -110,8 +110,8 @@ defmodule Micelio.Theme.Generator.Static do
         "activity2" => "#0f766e",
         "activity3" => "#14b8a6",
         "activity4" => "#2dd4bf",
-        "fontBody" => "Inter, system-ui, sans-serif",
-        "fontMono" => "ui-monospace, monospace"
+        "fontBody" => "Verdana, Geneva, sans-serif",
+        "fontMono" => "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace"
       }
     }
   ]
