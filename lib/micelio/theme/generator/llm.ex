@@ -23,11 +23,15 @@ defmodule Micelio.Theme.Generator.LLM do
   defp request_theme(endpoint, api_key, model, date) do
     payload = %{
       model: model,
-      input: prompt(date),
+      messages: [
+        %{role: "system", content: "You are a design assistant that creates color themes."},
+        %{role: "user", content: prompt(date)}
+      ],
       response_format: %{
         type: "json_schema",
         json_schema: %{
           name: "daily_theme",
+          strict: true,
           schema: %{
             type: "object",
             properties: %{
@@ -36,15 +40,18 @@ defmodule Micelio.Theme.Generator.LLM do
               light: %{
                 type: "object",
                 properties: color_schema(),
-                required: required_color_keys()
+                required: required_color_keys(),
+                additionalProperties: false
               },
               dark: %{
                 type: "object",
                 properties: color_schema(),
-                required: required_color_keys()
+                required: required_color_keys(),
+                additionalProperties: false
               }
             },
-            required: ["name", "description", "light", "dark"]
+            required: ["name", "description", "light", "dark"],
+            additionalProperties: false
           }
         }
       }

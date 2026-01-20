@@ -446,7 +446,7 @@ end
 
 if config_env() == :prod do
   theme_llm_endpoint =
-    System.get_env("THEME_LLM_ENDPOINT") || "https://api.openai.com/v1/responses"
+    System.get_env("THEME_LLM_ENDPOINT") || "https://api.openai.com/v1/chat/completions"
 
   theme_llm_api_key = System.get_env("THEME_LLM_API_KEY")
   theme_llm_model = System.get_env("THEME_LLM_MODEL") || "gpt-4.1-mini"
