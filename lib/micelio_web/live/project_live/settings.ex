@@ -108,6 +108,13 @@ defmodule MicelioWeb.RepositoryLive.Settings do
           </:subtitle>
           <:actions>
             <.link
+              navigate={~p"/#{@organization.account.handle}/#{@repository.handle}/settings/import"}
+              class="project-button project-button-secondary"
+              id="repository-import-link"
+            >
+              Import
+            </.link>
+            <.link
               navigate={~p"/#{@organization.account.handle}/#{@repository.handle}/settings/webhooks"}
               class="project-button project-button-secondary"
               id="repository-webhooks-link"

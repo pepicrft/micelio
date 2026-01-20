@@ -63,6 +63,8 @@ config :micelio, :gitlab_oauth,
 
 config :micelio, :notifications_async, false
 
+config :micelio, Micelio.Projects.Import, allow_local_imports: true
+
 # Initialize plugs at runtime for faster test compilation
 config :phoenix, :plug_init_mode, :runtime
 

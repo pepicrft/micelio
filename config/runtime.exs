@@ -210,6 +210,32 @@ if gitlab_oauth != [] do
   config :micelio, :gitlab_oauth, gitlab_oauth
 end
 
+og_cache_busters =
+  [
+    {"default", "OG_CACHE_BUSTER_DEFAULT"},
+    {"twitter", "OG_CACHE_BUSTER_TWITTER"},
+    {"linkedin", "OG_CACHE_BUSTER_LINKEDIN"},
+    {"facebook", "OG_CACHE_BUSTER_FACEBOOK"},
+    {"slack", "OG_CACHE_BUSTER_SLACK"},
+    {"discord", "OG_CACHE_BUSTER_DISCORD"},
+    {"telegram", "OG_CACHE_BUSTER_TELEGRAM"},
+    {"pinterest", "OG_CACHE_BUSTER_PINTEREST"}
+  ]
+  |> Enum.reduce(%{}, fn {key, env}, acc ->
+    case System.get_env(env) do
+      nil ->
+        acc
+
+      value ->
+        trimmed = String.trim(value)
+        if trimmed == "", do: acc, else: Map.put(acc, key, trimmed)
+    end
+  end)
+
+if og_cache_busters != %{} do
+  config :micelio, :open_graph_cache_busters, og_cache_busters
+end
+
 if config_env() == :prod do
   theme_llm_endpoint =
     System.get_env("THEME_LLM_ENDPOINT") || "https://api.openai.com/v1/responses"

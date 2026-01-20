@@ -12,7 +12,7 @@ defmodule MicelioWeb.OpenGraphImage do
 
   @width 1200
   @height 630
-  @template_version 1
+  @template_version 2
 
   @storage_prefix "open-graph/og"
 
@@ -29,7 +29,7 @@ defmodule MicelioWeb.OpenGraphImage do
         attrs = attrs_from_meta(meta)
         hash = hash(attrs)
         token = token(attrs)
-        cache_key = hash
+        cache_key = cache_key(hash, meta.open_graph)
 
         canonical_url
         |> URI.parse()
@@ -45,18 +45,57 @@ defmodule MicelioWeb.OpenGraphImage do
     _ -> nil
   end
 
+  defp cache_key(hash, open_graph) when is_binary(hash) and is_map(open_graph) do
+    case cache_buster_from_meta(open_graph) do
+      nil -> hash
+      cache_buster -> hash <> "-" <> cache_buster
+    end
+  end
+
+  defp cache_key(hash, _open_graph), do: hash
+
+  defp cache_buster_from_meta(open_graph) when is_map(open_graph) do
+    open_graph
+    |> Map.get(:cache_buster)
+    |> case do
+      nil -> Map.get(open_graph, "cache_buster")
+      value -> value
+    end
+    |> normalize_cache_buster()
+  end
+
+  defp cache_buster_from_meta(_), do: nil
+
+  defp normalize_cache_buster(nil), do: nil
+
+  defp normalize_cache_buster(value) do
+    value
+    |> to_string()
+    |> String.trim()
+    |> String.replace(~r/\s+/, "-")
+    |> case do
+      "" -> nil
+      normalized -> normalized
+    end
+  end
+
   @doc """
   Builds the attributes used both for hashing and rendering.
   """
   @spec attrs_from_meta(PageMeta.t()) :: map()
   def attrs_from_meta(%PageMeta{} = meta) do
+    image_template = image_template_from_meta(meta.open_graph)
+    image_stats = image_stats_from_meta(meta.open_graph)
+
     %{
       "v" => @template_version,
       "site_name" => PageMeta.site_name(),
       "title" => PageMeta.og_title(meta),
       "description" => PageMeta.description(meta),
       "canonical_url" => meta.canonical_url,
-      "type" => PageMeta.og_type(meta)
+      "type" => PageMeta.og_type(meta),
+      "image_template" => image_template,
+      "image_stats" => image_stats
     }
     |> drop_nil_and_blank()
   end
@@ -177,6 +216,13 @@ defmodule MicelioWeb.OpenGraphImage do
 
   @spec render_svg(map()) :: binary()
   def render_svg(attrs) when is_map(attrs) do
+    case normalize_text(attrs["image_template"]) do
+      "agent_progress" -> render_agent_progress_svg(attrs)
+      _ -> render_default_svg(attrs)
+    end
+  end
+
+  defp render_default_svg(attrs) do
     title = normalize_text(attrs["title"]) || PageMeta.site_name()
     site_name = normalize_text(attrs["site_name"]) || PageMeta.site_name()
     description = normalize_text(attrs["description"])
@@ -214,6 +260,63 @@ defmodule MicelioWeb.OpenGraphImage do
         "#cbd5e1",
         description_line_height
       ),
+      footer_text(80, footer_y, url_line, "24", "500", "#94a3b8"),
+      "</svg>"
+    ]
+    |> IO.iodata_to_binary()
+  end
+
+  defp render_agent_progress_svg(attrs) do
+    title = normalize_text(attrs["title"]) || "Agent progress"
+    site_name = normalize_text(attrs["site_name"]) || PageMeta.site_name()
+    description = normalize_text(attrs["description"])
+    canonical_url = normalize_text(attrs["canonical_url"])
+    stats = normalize_image_stats(attrs["image_stats"])
+    commits = stat_value(stats, "commits")
+    files = stat_value(stats, "files")
+
+    title_lines = wrap_lines(title, 30, 2)
+    description_lines = wrap_lines(description, 52, 3)
+    url_line = canonical_url && display_url(canonical_url)
+
+    title_y = 210
+    title_line_height = 72
+
+    description_y =
+      title_y + title_line_height * length(title_lines) + 18
+
+    description_line_height = 40
+    footer_y = 560
+
+    [
+      ~s|<svg width="#{@width}" height="#{@height}" viewBox="0 0 #{@width} #{@height}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Agent progress Open Graph image">|,
+      ~s|<defs><linearGradient id="bg-agent" x1="0" y1="0" x2="1" y2="1">|,
+      ~s|<stop offset="0%" stop-color="#0a0f18"/><stop offset="100%" stop-color="#0f172a"/>|,
+      ~s|</linearGradient></defs>|,
+      ~s|<rect width="#{@width}" height="#{@height}" fill="url(#bg-agent)"/>|,
+      ~s|<rect x="40" y="40" width="#{@width - 80}" height="#{@height - 80}" rx="30" fill="#0b1220" stroke="#1f2a44" stroke-width="2"/>|,
+      ~s|<rect x="40" y="40" width="#{@width - 80}" height="10" rx="5" fill="#22c55e"/>|,
+      text_el(80, 120, "#{site_name} / Agents", "26", "600", "#94a3b8"),
+      title_text(80, title_y, title_lines, "60", "700", "#f8fafc", title_line_height),
+      description_text(
+        80,
+        description_y,
+        description_lines,
+        "28",
+        "500",
+        "#cbd5f5",
+        description_line_height
+      ),
+      ~s|<rect x="740" y="160" width="380" height="330" rx="26" fill="#0f172a" stroke="#1f2a44" stroke-width="2"/>|,
+      ~s|<rect x="740" y="160" width="6" height="330" rx="3" fill="#22c55e"/>|,
+      text_el(780, 205, "ACTIVITY SNAPSHOT", "20", "700", "#a5b4fc"),
+      ~s|<line x1="780" y1="230" x2="1080" y2="230" stroke="#1f2a44" stroke-width="2"/>|,
+      ~s|<rect x="770" y="250" width="330" height="90" rx="18" fill="#111c2f" stroke="#1f2a44" stroke-width="2"/>|,
+      text_el(790, 285, "COMMITS", "20", "700", "#7dd3fc"),
+      text_el(790, 325, commits, "54", "700", "#e2e8f0"),
+      ~s|<rect x="770" y="360" width="330" height="110" rx="18" fill="#111c2f" stroke="#1f2a44" stroke-width="2"/>|,
+      text_el(790, 400, "FILES CHANGED", "20", "700", "#7dd3fc"),
+      text_el(790, 445, files, "54", "700", "#e2e8f0"),
       footer_text(80, footer_y, url_line, "24", "500", "#94a3b8"),
       "</svg>"
     ]
@@ -270,6 +373,48 @@ defmodule MicelioWeb.OpenGraphImage do
 
   defp font_family do
     "ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif"
+  end
+
+  defp image_template_from_meta(open_graph) when is_map(open_graph) do
+    normalize_text(Map.get(open_graph, "image_template") || Map.get(open_graph, :image_template))
+  end
+
+  defp image_template_from_meta(_), do: nil
+
+  defp image_stats_from_meta(open_graph) when is_map(open_graph) do
+    open_graph
+    |> Map.get("image_stats")
+    |> case do
+      nil -> Map.get(open_graph, :image_stats)
+      stats -> stats
+    end
+    |> normalize_image_stats()
+    |> case do
+      %{} = stats when map_size(stats) > 0 -> stats
+      _ -> nil
+    end
+  end
+
+  defp image_stats_from_meta(_), do: nil
+
+  defp normalize_image_stats(nil), do: %{}
+
+  defp normalize_image_stats(stats) when is_map(stats) do
+    Enum.reduce(stats, %{}, fn {key, value}, acc ->
+      normalized_key = if is_atom(key), do: Atom.to_string(key), else: to_string(key)
+      Map.put(acc, normalized_key, value)
+    end)
+  end
+
+  defp normalize_image_stats(_), do: %{}
+
+  defp stat_value(stats, key) when is_map(stats) do
+    case Map.get(stats, key) do
+      nil -> "0"
+      value when is_integer(value) -> Integer.to_string(value)
+      value when is_binary(value) -> value
+      value -> to_string(value)
+    end
   end
 
   defp wrap_lines(nil, _max_chars, _max_lines), do: []

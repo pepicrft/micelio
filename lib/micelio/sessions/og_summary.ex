@@ -118,8 +118,16 @@ defmodule Micelio.Sessions.OGSummary do
   defp normalize_summary(summary) when is_binary(summary) do
     summary =
       summary
+      |> String.replace(~r/[^\x20-\x7E]/u, "")
       |> String.trim()
       |> String.replace(~r/\s+/, " ")
+
+    summary =
+      if String.length(summary) > 160 do
+        String.slice(summary, 0, 160)
+      else
+        summary
+      end
 
     if summary == "", do: {:error, :empty_summary}, else: {:ok, summary}
   end

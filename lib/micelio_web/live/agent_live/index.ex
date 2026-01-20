@@ -70,10 +70,14 @@ defmodule MicelioWeb.AgentLive.Index do
       Sessions.list_sessions_for_project_with_details(project, status: "active", sort: :newest)
       |> Enum.map(&build_session_snapshot/1)
 
-    assign(socket,
+    stats = build_agent_og_stats(sessions)
+
+    socket
+    |> assign(
       sessions: sessions,
       refreshed_at: DateTime.utc_now() |> DateTime.truncate(:second)
     )
+    |> PageMeta.assign(open_graph: %{image_template: "agent_progress", image_stats: stats})
   end
 
   defp assign_agent_og_summary(socket) do
@@ -110,6 +114,29 @@ defmodule MicelioWeb.AgentLive.Index do
       last_message: last_message
     }
   end
+
+  defp build_agent_og_stats(sessions) when is_list(sessions) do
+    commits =
+      sessions
+      |> Enum.count(fn entry -> entry.change_count > 0 end)
+
+    files =
+      sessions
+      |> Enum.flat_map(&session_file_paths/1)
+      |> MapSet.new()
+      |> MapSet.size()
+
+    %{commits: commits, files: files}
+  end
+
+  defp session_file_paths(%{session: %{changes: changes}})
+       when is_list(changes) do
+    changes
+    |> Enum.map(& &1.file_path)
+    |> Enum.filter(&is_binary/1)
+  end
+
+  defp session_file_paths(_), do: []
 
   defp agent_label(%{account: %{handle: handle}}) when is_binary(handle), do: "@#{handle}"
   defp agent_label(%{email: email}) when is_binary(email), do: email

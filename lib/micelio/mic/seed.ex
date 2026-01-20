@@ -21,6 +21,20 @@ defmodule Micelio.Mic.Seed do
          {:ok, tree} <- store_files(project_id, root_path, files),
          {:ok, tree_hash} <- store_tree(project_id, tree),
          {:ok, _} <- store_head(project_id, position, tree_hash) do
+         {:ok, %{file_count: length(files), tree_hash: tree_hash}}
+    end
+  end
+
+  @spec store_tree_from_path(binary(), binary(), keyword()) ::
+          {:ok, %{file_count: non_neg_integer(), tree_hash: binary()}}
+          | {:error, term()}
+  def store_tree_from_path(project_id, root_path, opts \\ [])
+      when is_binary(project_id) and is_binary(root_path) do
+    ignore = MapSet.new(@default_ignore ++ Keyword.get(opts, :ignore, []))
+
+    with {:ok, files} <- list_files(root_path, ignore),
+         {:ok, tree} <- store_files(project_id, root_path, files),
+         {:ok, tree_hash} <- store_tree(project_id, tree) do
       {:ok, %{file_count: length(files), tree_hash: tree_hash}}
     end
   end

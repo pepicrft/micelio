@@ -85,4 +85,59 @@ defmodule Micelio.Sessions.OGSummaryTest do
     assert {:ok, "Added summary module for agent changes."} =
              Sessions.get_or_generate_og_summary(reloaded, reloaded.changes)
   end
+
+  test "normalizes LLM summaries to ASCII and 160 characters max" do
+    unique = Integer.to_string(System.unique_integer([:positive]))
+
+    {:ok, user} = Accounts.get_or_create_user_by_email("agent-summary-#{unique}@example.com")
+
+    {:ok, organization} =
+      Accounts.create_organization_for_user(user, %{
+        handle: "agent-summary-org-#{unique}",
+        name: "Agent Summary Org"
+      })
+
+    {:ok, project} =
+      Projects.create_project(%{
+        handle: "agent-summary-project-#{unique}",
+        name: "Agent Summary Project",
+        description: "Public project",
+        organization_id: organization.id,
+        visibility: "public"
+      })
+
+    {:ok, session} =
+      Sessions.create_session(%{
+        session_id: "agent-summary-session-#{unique}",
+        goal: "Summarize agent changes",
+        project_id: project.id,
+        user_id: user.id
+      })
+
+    {:ok, _change} =
+      Sessions.create_session_change(%{
+        session_id: session.id,
+        file_path: "lib/summary.ex",
+        change_type: "added",
+        content: "defmodule Summary do\nend\n"
+      })
+
+    non_ascii = <<240, 159, 152, 132>>
+
+    long_summary =
+      "Added report dashboards #{non_ascii} with alerts and expanded metrics for admin monitoring. " <>
+        String.duplicate("More details ", 20)
+
+    expect(Req, :post, fn _endpoint, _opts ->
+      {:ok, %{body: %{"summary" => long_summary}}}
+    end)
+
+    session = Sessions.get_session_with_changes(session.id)
+
+    assert {:ok, summary} = Sessions.get_or_generate_og_summary(session, session.changes)
+    assert String.length(summary) == 160
+    assert summary =~ "Added report dashboards"
+    refute String.contains?(summary, non_ascii)
+    assert String.match?(summary, ~r/^[\x20-\x7E]+$/)
+  end
 end

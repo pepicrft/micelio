@@ -22,6 +22,7 @@ defmodule MicelioWeb.Router do
     plug(:put_root_layout, html: {MicelioWeb.Layouts, :root})
     plug(:protect_from_forgery)
     plug(:put_secure_browser_headers)
+    plug(MicelioWeb.Plugs.OpenGraphCacheBuster)
     plug(MicelioWeb.AuthenticationPlug)
     plug(MicelioWeb.Plugs.RateLimitPlug, limit: 200, window_ms: 60_000, bucket_prefix: "browser")
   end
@@ -243,6 +244,7 @@ defmodule MicelioWeb.Router do
 
     live_session :repository_settings, on_mount: {MicelioWeb.LiveAuth, :require_auth} do
       live("/:account/:repository/settings", RepositoryLive.Settings, :edit)
+      live("/:account/:repository/settings/import", RepositoryLive.Import, :edit)
       live("/:account/:repository/settings/webhooks", RepositoryLive.Webhooks, :index)
     end
   end

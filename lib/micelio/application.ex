@@ -14,6 +14,7 @@ defmodule Micelio.Application do
         Micelio.Repo,
         Micelio.Abuse.Blocklist,
         Micelio.Theme.Server,
+        {Task.Supervisor, name: Micelio.Projects.ImportSupervisor},
         {Task.Supervisor, name: Micelio.Webhooks.Supervisor},
         {Task.Supervisor, name: Micelio.Notifications.Supervisor},
         {Task.Supervisor, name: Micelio.RemoteExecution.Supervisor},

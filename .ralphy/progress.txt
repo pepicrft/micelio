@@ -34,3 +34,9 @@
 - Added LLM model selection to the new project form with organization-specific options and LiveView coverage.
 - Enforced sandbox network isolation by stripping network config when policy is none, added test coverage, and marked the PRD item complete.
 - Marked the agent resource quota and billing milestone complete after verifying implementation and coverage.
+
+- Added repository validation during imports (git fsck), surfaced a validation stage, and covered it with tests.
+
+- Marked agent OG images with LLM summaries as complete in PRD after confirming implementation and coverage.
+
+- Refined agent progress OG image layout with stat cards, added snapshot fallback test, and marked the PRD item complete.

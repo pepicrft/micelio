@@ -45,4 +45,19 @@ defmodule MicelioWeb.OpenGraphImageControllerTest do
 
     assert conn.status == 304
   end
+
+  test "social crawlers receive cache-busted og:image URLs", %{conn: conn} do
+    conn = put_req_header(conn, "user-agent", "Twitterbot/1.0")
+    html = html_response(get(conn, ~p"/"), 200)
+    doc = LazyHTML.from_document(html)
+
+    tag = LazyHTML.query(doc, ~S|meta[property="og:image"]|)
+    [image_url] = LazyHTML.attribute(tag, "content")
+
+    uri = URI.parse(image_url)
+    [_, "og", hash] = String.split(uri.path || "", "/", parts: 3)
+
+    assert %{"v" => v} = URI.decode_query(uri.query || "")
+    assert v == "#{hash}-twitter-1"
+  end
 end

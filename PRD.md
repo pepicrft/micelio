@@ -90,7 +90,7 @@ Micelio is a minimalist, open-source git forge built with Elixir/Phoenix, design
   - Generate .ico format at standard sizes (16x16, 32x32, 48x48)
   - Configure Phoenix to serve favicon.ico
   - Add to layout head section
-- [ ] **Investigate and implement repository import from other git forges**
+- [x] **Investigate and implement repository import from other git forges**
   - Support importing repositories from GitHub, GitLab, Gitea, and other Git forges
   - Clone repository with full history (git clone --mirror or --bare)
   - Preserve git history, branches, tags, and commits
@@ -177,8 +177,8 @@ Micelio is a minimalist, open-source git forge built with Elixir/Phoenix, design
 
 ### Open Graph & SEO
 
-- [ ] Generate OG images for agents using LLM summaries of code changes
-- [ ] Design template for agent progress OG images showing commits, files changed
+- [x] Generate OG images for agents using LLM summaries of code changes
+- [x] Design template for agent progress OG images showing commits, files changed
 - [ ] Implement cache invalidation strategy for social platform crawlers
 - [ ] Add dynamic OG image generation for commits, PRs, and agent sessions
 

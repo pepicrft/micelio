@@ -11,7 +11,7 @@ defmodule Micelio.Projects do
   alias Micelio.Audit
   alias Micelio.LLM
   alias Micelio.Mic.Seed
-  alias Micelio.Projects.{AccessTokens, Project, ProjectAccessToken, ProjectStar}
+  alias Micelio.Projects.{AccessTokens, Import, Project, ProjectAccessToken, ProjectImport, ProjectStar}
   alias Micelio.Repo
   alias Micelio.Storage
 
@@ -387,6 +387,79 @@ defmodule Micelio.Projects do
       end
     end)
     |> normalize_transaction_result()
+  end
+
+  ## Repository Imports
+
+  @doc """
+  Creates a repository import record.
+  """
+  def create_project_import(%Project{} = project, %Accounts.User{} = user, attrs \\ %{}) do
+    attrs =
+      attrs
+      |> Map.put(:project_id, project.id)
+      |> Map.put(:user_id, user.id)
+
+    %ProjectImport{}
+    |> ProjectImport.changeset(attrs)
+    |> Repo.insert()
+  end
+
+  @doc """
+  Starts a repository import asynchronously.
+  """
+  def start_project_import(%Project{} = project, %Accounts.User{} = user, attrs \\ %{}) do
+    with {:ok, import} <- create_project_import(project, user, attrs),
+         :ok <- Import.start_async(import) do
+      {:ok, import}
+    end
+  end
+
+  @doc """
+  Runs a repository import synchronously.
+  """
+  def run_project_import(%ProjectImport{} = import) do
+    Import.run(import)
+  end
+
+  @doc """
+  Rolls back a repository import.
+  """
+  def rollback_project_import(%ProjectImport{} = import) do
+    Import.rollback(import)
+  end
+
+  @doc """
+  Gets a repository import by id.
+  """
+  def get_project_import(id), do: Repo.get(ProjectImport, id)
+
+  @doc """
+  Lists repository imports for a project.
+  """
+  def list_project_imports(%Project{} = project) do
+    ProjectImport
+    |> where([i], i.project_id == ^project.id)
+    |> order_by([i], desc: i.inserted_at)
+    |> Repo.all()
+  end
+
+  @doc """
+  Gets the most recent import for a project.
+  """
+  def get_latest_project_import(%Project{} = project) do
+    ProjectImport
+    |> where([i], i.project_id == ^project.id)
+    |> order_by([i], desc: i.inserted_at)
+    |> limit(1)
+    |> Repo.one()
+  end
+
+  @doc """
+  Returns a changeset for tracking repository import changes.
+  """
+  def change_project_import(%ProjectImport{} = import, attrs \\ %{}) do
+    ProjectImport.changeset(import, attrs)
   end
 
   @doc """

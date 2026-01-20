@@ -107,6 +107,9 @@ defmodule MicelioWeb.AgentLiveTest do
 
     assert {:ok, attrs} = OpenGraphImage.verify_token(token)
     assert attrs["description"] == summary
+    assert attrs["image_template"] == "agent_progress"
+    assert attrs["image_stats"]["commits"] == 1
+    assert attrs["image_stats"]["files"] == 1
   end
 
   test "agent progress og:image generates LLM summary when missing", %{conn: conn} do
