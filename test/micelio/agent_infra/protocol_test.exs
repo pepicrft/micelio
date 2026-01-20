@@ -36,6 +36,18 @@ defmodule Micelio.AgentInfra.ProtocolTest do
             }} = Protocol.normalize_status(payload)
   end
 
+  test "normalize_status normalizes tuple ip addresses and list hostnames" do
+    payload = %{state: :running, hostname: 'vm.local', ip_address: {10, 0, 0, 5}}
+
+    assert {:ok,
+            %{
+              state: :running,
+              hostname: "vm.local",
+              ip_address: "10.0.0.5",
+              metadata: %{}
+            }} = Protocol.normalize_status(payload)
+  end
+
   test "normalize_status rejects unknown states" do
     assert {:error, :invalid_state} = Protocol.normalize_status(%{state: "paused"})
   end
@@ -204,6 +216,10 @@ defmodule Micelio.AgentInfra.ProtocolTest do
 
   test "normalize_error rejects missing codes" do
     assert {:error, :invalid_error_code} = Protocol.normalize_error(%{message: "missing code"})
+  end
+
+  test "normalize_error rejects blank codes" do
+    assert {:error, :invalid_error_code} = Protocol.normalize_error(%{code: "  "})
   end
 
   test "normalize_error rejects non-map inputs" do

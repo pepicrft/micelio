@@ -2,6 +2,7 @@ defmodule Micelio.AgentInfra.ProvisioningRequestTest do
   use Micelio.DataCase, async: true
 
   alias Micelio.AgentInfra
+  alias Micelio.AgentInfra.ProvisioningPlan
   alias Micelio.AgentInfra.ProvisioningRequest
 
   test "from_plan/1 normalizes volume read_only values" do
@@ -23,7 +24,7 @@ defmodule Micelio.AgentInfra.ProvisioningRequestTest do
         %{
           name: "cache",
           source: "/var/lib/micelio/cache",
-          target: "/cache",
+          target: "/workspace/cache",
           type: "bind",
           access: "rw"
         }
@@ -55,10 +56,22 @@ defmodule Micelio.AgentInfra.ProvisioningRequestTest do
                name: "cache",
                type: "bind",
                source: "/var/lib/micelio/cache",
-               target: "/cache",
+               target: "/workspace/cache",
                read_only: false
              }
            ]
+
+    assert request.sandbox == %{
+             isolation: "microvm",
+             network_policy: "egress-only",
+             filesystem_policy: "workspace-rw",
+             run_as_user: "agent",
+             seccomp_profile: "default",
+             capabilities: [],
+             allowlist_hosts: [],
+             max_processes: 256,
+             max_open_files: 1024
+           }
   end
 
   test "build_request/1 returns a request after validation" do
@@ -78,5 +91,30 @@ defmodule Micelio.AgentInfra.ProvisioningRequestTest do
     }
 
     assert {:ok, %ProvisioningRequest{provider: "fly"}} = AgentInfra.build_request(attrs)
+  end
+
+  test "from_plan/1 applies a default sandbox when plan omits it" do
+    plan = %ProvisioningPlan{
+      provider: "firecracker",
+      image: "micelio/agent-runner:latest",
+      cpu_cores: 2,
+      memory_mb: 2048,
+      disk_gb: 20,
+      volumes: []
+    }
+
+    request = ProvisioningRequest.from_plan(plan)
+
+    assert request.sandbox == %{
+             isolation: "microvm",
+             network_policy: "egress-only",
+             filesystem_policy: "workspace-rw",
+             run_as_user: "agent",
+             seccomp_profile: "default",
+             capabilities: [],
+             allowlist_hosts: [],
+             max_processes: 256,
+             max_open_files: 1024
+           }
   end
 end

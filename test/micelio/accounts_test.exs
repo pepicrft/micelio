@@ -267,6 +267,35 @@ defmodule Micelio.AccountsTest do
     end
   end
 
+  describe "organization settings" do
+    test "updates LLM settings for an organization" do
+      {:ok, organization} =
+        Accounts.create_organization(%{handle: "llm-org", name: "LLM Org"})
+
+      assert {:ok, updated} =
+               Accounts.update_organization_settings(organization, %{
+                 "llm_models" => ["gpt-4.1"],
+                 "llm_default_model" => "gpt-4.1"
+               })
+
+      assert updated.llm_models == ["gpt-4.1"]
+      assert updated.llm_default_model == "gpt-4.1"
+    end
+
+    test "rejects default LLM models outside the allowed list" do
+      {:ok, organization} =
+        Accounts.create_organization(%{handle: "llm-org-invalid", name: "LLM Org Invalid"})
+
+      assert {:error, changeset} =
+               Accounts.update_organization_settings(organization, %{
+                 "llm_models" => ["gpt-4.1"],
+                 "llm_default_model" => "gpt-4.1-mini"
+               })
+
+      assert "must be one of gpt-4.1" in errors_on(changeset).llm_default_model
+    end
+  end
+
   describe "users" do
     test "get_or_create_user_by_email/1 creates a new user with account" do
       assert {:ok, %User{} = user} = Accounts.get_or_create_user_by_email("new@example.com")

@@ -81,6 +81,9 @@ config :micelio, :api_rate_limit,
 config :micelio, :github_oauth, []
 config :micelio, :gitlab_oauth, []
 config :micelio, :project_limits, max_projects_per_tenant: 25
+config :micelio, :project_llm_models, ["gpt-4.1-mini", "gpt-4.1"]
+config :micelio, :project_llm_default, "gpt-4.1-mini"
+config :micelio, :remote_execution, allowed_commands: []
 
 config :micelio,
   ecto_repos: [Micelio.Repo],

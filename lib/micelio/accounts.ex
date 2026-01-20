@@ -53,6 +53,11 @@ defmodule Micelio.Accounts do
   end
 
   @doc """
+  Gets an organization by ID.
+  """
+  def get_organization(id), do: Repo.get(Organization, id)
+
+  @doc """
   Creates a new account for a user.
   """
   def create_user_account(attrs, opts \\ []) do
@@ -549,9 +554,10 @@ defmodule Micelio.Accounts do
     handle = Map.get(attrs, :handle) || Map.get(attrs, "handle")
     name = Map.get(attrs, :name) || Map.get(attrs, "name")
     allow_reserved = Keyword.get(opts, :allow_reserved, false)
+    org_attrs = organization_attrs(name, attrs)
 
     Repo.transaction(fn ->
-      with {:ok, org} <- do_create_organization(%{name: name}),
+      with {:ok, org} <- do_create_organization(org_attrs),
            {:ok, account} <-
              create_organization_account(%{handle: handle, organization_id: org.id},
                allow_reserved: allow_reserved
@@ -570,9 +576,10 @@ defmodule Micelio.Accounts do
     handle = Map.get(attrs, :handle) || Map.get(attrs, "handle")
     name = Map.get(attrs, :name) || Map.get(attrs, "name")
     allow_reserved = Keyword.get(opts, :allow_reserved, false)
+    org_attrs = organization_attrs(name, attrs)
 
     Repo.transaction(fn ->
-      with {:ok, org} <- do_create_organization(%{name: name}),
+      with {:ok, org} <- do_create_organization(org_attrs),
            {:ok, account} <-
              create_organization_account(%{handle: handle, organization_id: org.id},
                allow_reserved: allow_reserved
@@ -595,6 +602,30 @@ defmodule Micelio.Accounts do
   """
   def change_organization_registration(attrs \\ %{}) do
     OrganizationRegistration.changeset(%OrganizationRegistration{}, attrs)
+  end
+
+  @doc """
+  Returns a changeset for organization settings.
+  """
+  def change_organization_settings(%Organization{} = organization, attrs \\ %{}) do
+    Organization.settings_changeset(organization, attrs)
+  end
+
+  @doc """
+  Updates organization settings.
+  """
+  def update_organization_settings(%Organization{} = organization, attrs) do
+    organization
+    |> Organization.settings_changeset(attrs)
+    |> Repo.update()
+  end
+
+  defp organization_attrs(name, attrs) do
+    %{
+      name: name,
+      llm_models: Map.get(attrs, :llm_models) || Map.get(attrs, "llm_models"),
+      llm_default_model: Map.get(attrs, :llm_default_model) || Map.get(attrs, "llm_default_model")
+    }
   end
 
   defp do_create_organization(attrs) do

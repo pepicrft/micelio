@@ -142,6 +142,20 @@ defmodule Micelio.ProjectsTest do
       assert project.visibility == "private"
     end
 
+    test "uses the organization default LLM model when creating projects" do
+      {:ok, organization} =
+        Accounts.create_organization(%{
+          handle: "llm-default-org",
+          name: "LLM Default Org",
+          llm_models: ["gpt-4.1"],
+          llm_default_model: "gpt-4.1"
+        })
+
+      attrs = %{handle: "llm-default", name: "LLM Default", organization_id: organization.id}
+      assert {:ok, %Project{} = project} = Projects.create_project(attrs)
+      assert project.llm_model == "gpt-4.1"
+    end
+
     test "creates a project with description", %{organization: organization} do
       attrs = %{
         handle: "described-project",
@@ -715,6 +729,61 @@ defmodule Micelio.ProjectsTest do
     test "fails with invalid handle", %{project: project} do
       assert {:error, changeset} = Projects.update_project(project, %{handle: "invalid_handle"})
       assert Map.has_key?(errors_on(changeset), :handle)
+    end
+  end
+
+  describe "update_project_settings/2" do
+    setup do
+      {:ok, organization} =
+        Accounts.create_organization(%{handle: "settings-project", name: "Settings Project"})
+
+      {:ok, project} =
+        Projects.create_project(%{
+          handle: "settings-llm",
+          name: "Settings LLM",
+          organization_id: organization.id
+        })
+
+      {:ok, project: project}
+    end
+
+    test "updates the project LLM model", %{project: project} do
+      assert {:ok, updated} = Projects.update_project_settings(project, %{llm_model: "gpt-4.1"})
+      assert updated.llm_model == "gpt-4.1"
+    end
+
+    test "rejects invalid LLM models", %{project: project} do
+      assert {:error, changeset} =
+               Projects.update_project_settings(project, %{llm_model: "invalid-model"})
+
+      assert Map.has_key?(errors_on(changeset), :llm_model)
+    end
+  end
+
+  describe "update_project_settings/2 with organization LLM models" do
+    setup do
+      {:ok, organization} =
+        Accounts.create_organization(%{
+          handle: "settings-llm-org",
+          name: "Settings LLM Org",
+          llm_models: ["gpt-4.1-mini"]
+        })
+
+      {:ok, project} =
+        Projects.create_project(%{
+          handle: "settings-llm-repo",
+          name: "Settings LLM Repo",
+          organization_id: organization.id
+        })
+
+      {:ok, project: project}
+    end
+
+    test "rejects LLM models outside the organization list", %{project: project} do
+      assert {:error, changeset} =
+               Projects.update_project_settings(project, %{llm_model: "gpt-4.1"})
+
+      assert Map.has_key?(errors_on(changeset), :llm_model)
     end
   end
 

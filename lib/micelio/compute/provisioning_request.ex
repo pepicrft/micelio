@@ -4,6 +4,7 @@ defmodule Micelio.AgentInfra.ProvisioningRequest do
   """
 
   alias Micelio.AgentInfra.ProvisioningPlan
+  alias Micelio.AgentInfra.SandboxProfile
   alias Micelio.AgentInfra.VolumeMount
 
   @enforce_keys [:provider, :image, :cpu_cores, :memory_mb, :disk_gb]
@@ -15,6 +16,7 @@ defmodule Micelio.AgentInfra.ProvisioningRequest do
     :disk_gb,
     :network,
     :ttl_seconds,
+    :sandbox,
     volumes: []
   ]
 
@@ -34,6 +36,7 @@ defmodule Micelio.AgentInfra.ProvisioningRequest do
           disk_gb: pos_integer(),
           network: String.t() | nil,
           ttl_seconds: pos_integer() | nil,
+          sandbox: map(),
           volumes: [volume()]
         }
 
@@ -50,6 +53,7 @@ defmodule Micelio.AgentInfra.ProvisioningRequest do
       disk_gb: plan.disk_gb,
       network: plan.network,
       ttl_seconds: plan.ttl_seconds,
+      sandbox: normalize_sandbox(plan.sandbox || SandboxProfile.default()),
       volumes: Enum.map(plan.volumes, &normalize_volume/1)
     }
   end
@@ -62,5 +66,13 @@ defmodule Micelio.AgentInfra.ProvisioningRequest do
       target: mount.target,
       read_only: mount.access == "ro"
     }
+  end
+
+  defp normalize_sandbox(%SandboxProfile{} = profile) do
+    SandboxProfile.to_request(profile)
+  end
+
+  defp normalize_sandbox(nil) do
+    SandboxProfile.to_request(SandboxProfile.default())
   end
 end

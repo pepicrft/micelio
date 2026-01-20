@@ -10,6 +10,17 @@
       <% else %>
         {@account.handle}
       <% end %>
+      <:actions>
+        <%= if @organization && @organization_admin? do %>
+          <.link
+            navigate={~p"/organizations/#{@organization.account.handle}/settings"}
+            class="project-button project-button-secondary"
+            id="organization-settings-link"
+          >
+            Settings
+          </.link>
+        <% end %>
+      </:actions>
       <:subtitle>
         <% social_links = MicelioWeb.ProfileLinks.social_links(@user) %>
         <div class="account-subtitle">

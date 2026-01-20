@@ -20,7 +20,7 @@ defmodule Micelio.AgentInfra.ProvisioningPlanTest do
         %{
           name: "cache",
           source: "/var/lib/micelio/cache",
-          target: "/cache",
+          target: "/workspace/cache",
           type: "bind",
           access: "read-write"
         }
@@ -64,5 +64,77 @@ defmodule Micelio.AgentInfra.ProvisioningPlanTest do
     [volume_errors] = errors_on(changeset).volumes
     assert "must be an absolute path for bind mounts" in volume_errors.source
     assert "must be an absolute path" in volume_errors.target
+  end
+
+  test "build_plan/1 applies a default sandbox profile" do
+    attrs = %{
+      provider: "fly",
+      image: "micelio/agent-runner:latest",
+      cpu_cores: 2,
+      memory_mb: 2048,
+      disk_gb: 30
+    }
+
+    assert {:ok, plan} = AgentInfra.build_plan(attrs)
+
+    assert plan.sandbox == %Micelio.AgentInfra.SandboxProfile{
+             isolation: "microvm",
+             network_policy: "egress-only",
+             filesystem_policy: "workspace-rw",
+             run_as_user: "agent",
+             seccomp_profile: "default",
+             capabilities: [],
+             allowlist_hosts: [],
+             max_processes: 256,
+             max_open_files: 1024
+           }
+  end
+
+  test "build_plan/1 rejects rw volumes outside workspace with workspace-rw policy" do
+    attrs = %{
+      provider: "fly",
+      image: "micelio/agent-runner:latest",
+      cpu_cores: 2,
+      memory_mb: 2048,
+      disk_gb: 30,
+      volumes: [
+        %{
+          name: "cache",
+          source: "/var/lib/micelio/cache",
+          target: "/cache",
+          type: "bind",
+          access: "rw"
+        }
+      ]
+    }
+
+    assert {:error, changeset} = AgentInfra.build_plan(attrs)
+    errors = errors_on(changeset)
+
+    assert "read-write mounts must target /workspace when filesystem policy is workspace-rw" in errors.volumes
+  end
+
+  test "build_plan/1 rejects rw volumes with immutable filesystem policy" do
+    attrs = %{
+      provider: "fly",
+      image: "micelio/agent-runner:latest",
+      cpu_cores: 2,
+      memory_mb: 2048,
+      disk_gb: 30,
+      sandbox: %{
+        filesystem_policy: "immutable"
+      },
+      volumes: [
+        %{
+          name: "workspace",
+          source: "agent-workspace",
+          target: "/workspace",
+          access: "rw"
+        }
+      ]
+    }
+
+    assert {:error, changeset} = AgentInfra.build_plan(attrs)
+    assert "must be read-only when filesystem policy is immutable" in errors_on(changeset).volumes
   end
 end

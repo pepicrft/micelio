@@ -49,6 +49,13 @@ defmodule MicelioWeb.Browser.AccountController do
             %{}
           end
 
+        organization_admin? =
+          if organization && conn.assigns[:current_user] do
+            Accounts.user_role_in_organization?(conn.assigns.current_user, organization.id, "admin")
+          else
+            false
+          end
+
         {activity_items, activity_has_more, activity_next_before} =
           if user do
             activity_before = parse_activity_before(params)
@@ -96,6 +103,7 @@ defmodule MicelioWeb.Browser.AccountController do
           :empty_message,
           if(user, do: "No public projects yet.", else: "No projects yet.")
         )
+        |> assign(:organization_admin?, organization_admin?)
         |> assign(:activity_counts, activity_counts)
         |> assign(:activity_items, activity_items)
         |> assign(:activity_has_more, activity_has_more)

@@ -41,6 +41,7 @@ defmodule MicelioWeb.RepositorySettingsLiveTest do
           name: "Updated Repo",
           description: "Updated description",
           visibility: "public",
+          llm_model: "gpt-4.1",
           protect_main_branch: "true"
         }
       )
@@ -51,6 +52,7 @@ defmodule MicelioWeb.RepositorySettingsLiveTest do
     assert updated.name == "Updated Repo"
     assert updated.description == "Updated description"
     assert updated.visibility == "public"
+    assert updated.llm_model == "gpt-4.1"
     assert updated.protect_main_branch
 
     assert_redirect(view, ~p"/#{organization.account.handle}/#{repository.handle}")

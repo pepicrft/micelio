@@ -13,6 +13,7 @@ defmodule Micelio.Projects.Project do
     field :url, :string
     field :visibility, :string, default: "private"
     field :protect_main_branch, :boolean, default: false
+    field :llm_model, :string
     field :star_count, :integer, virtual: true
 
     belongs_to :forked_from, Micelio.Projects.Project
@@ -28,13 +29,23 @@ defmodule Micelio.Projects.Project do
   @doc """
   Changeset for creating or updating a project.
   """
-  def changeset(project, attrs) do
+  def changeset(project, attrs, opts \\ []) do
     project
-    |> cast(attrs, [:handle, :name, :description, :url, :visibility, :protect_main_branch])
+    |> cast(attrs, [
+      :handle,
+      :name,
+      :description,
+      :url,
+      :visibility,
+      :protect_main_branch,
+      :llm_model
+    ])
+    |> maybe_put_default_llm_model(opts)
     |> maybe_put_organization_id(attrs)
-    |> validate_required([:handle, :name, :organization_id, :visibility])
+    |> validate_required([:handle, :name, :organization_id, :visibility, :llm_model])
     |> validate_handle()
     |> validate_inclusion(:visibility, ["public", "private"])
+    |> validate_llm_model(opts)
     |> normalize_url_change()
     |> validate_url()
     |> unique_constraint(:handle,
@@ -47,11 +58,13 @@ defmodule Micelio.Projects.Project do
   @doc """
   Changeset for updating repository settings.
   """
-  def settings_changeset(project, attrs) do
+  def settings_changeset(project, attrs, opts \\ []) do
     project
-    |> cast(attrs, [:name, :description, :visibility, :protect_main_branch])
-    |> validate_required([:name, :visibility])
+    |> cast(attrs, [:name, :description, :visibility, :protect_main_branch, :llm_model])
+    |> maybe_put_default_llm_model(opts)
+    |> validate_required([:name, :visibility, :llm_model])
     |> validate_inclusion(:visibility, ["public", "private"])
+    |> validate_llm_model(opts)
   end
 
   defp validate_handle(changeset) do
@@ -87,6 +100,31 @@ defmodule Micelio.Projects.Project do
           url
       end
     end)
+  end
+
+  defp maybe_put_default_llm_model(changeset, opts) do
+    default = Keyword.get(opts, :llm_default, Micelio.LLM.project_default_model())
+
+    case get_field(changeset, :llm_model) do
+      nil ->
+        case default do
+          nil -> changeset
+          _ -> put_change(changeset, :llm_model, default)
+        end
+
+      _value ->
+        changeset
+    end
+  end
+
+  defp validate_llm_model(changeset, opts) do
+    models = Keyword.get(opts, :llm_models, Micelio.LLM.project_models())
+
+    if models == [] do
+      changeset
+    else
+      validate_inclusion(changeset, :llm_model, models)
+    end
   end
 
   defp validate_url(changeset) do

@@ -146,6 +146,13 @@ defmodule MicelioWeb.Router do
     get("/projects/:organization_handle/:project_handle", ProjectController, :show)
   end
 
+  scope "/api/remote-executions", MicelioWeb.Api do
+    pipe_through(:api)
+
+    post("/", RemoteExecutionController, :create)
+    get("/:id", RemoteExecutionController, :show)
+  end
+
   scope "/.well-known", MicelioWeb do
     pipe_through(:activity_pub)
 
@@ -198,6 +205,14 @@ defmodule MicelioWeb.Router do
 
     get("/new", OrganizationController, :new)
     post("/", OrganizationController, :create)
+  end
+
+  scope "/organizations", MicelioWeb do
+    pipe_through([:browser, :require_auth])
+
+    live_session :organization_settings, on_mount: {MicelioWeb.LiveAuth, :require_auth} do
+      live("/:organization_handle/settings", OrganizationLive.Settings, :edit)
+    end
   end
 
   # Admin routes (require admin access)

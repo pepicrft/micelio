@@ -2,6 +2,7 @@ defmodule MicelioWeb.RepositoryLive.Settings do
   use MicelioWeb, :live_view
 
   alias Micelio.Authorization
+  alias Micelio.LLM
   alias Micelio.Projects
   alias MicelioWeb.PageMeta
 
@@ -17,7 +18,7 @@ defmodule MicelioWeb.RepositoryLive.Settings do
              :ok do
           form =
             repository
-            |> Projects.change_project_settings()
+            |> Projects.change_project_settings(%{}, organization: organization)
             |> to_form(as: :repository)
 
           socket =
@@ -52,7 +53,7 @@ defmodule MicelioWeb.RepositoryLive.Settings do
   def handle_event("validate", %{"repository" => params}, socket) do
     changeset =
       socket.assigns.repository
-      |> Projects.change_project_settings(params)
+      |> Projects.change_project_settings(params, organization: socket.assigns.organization)
       |> Map.put(:action, :validate)
 
     {:noreply, assign(socket, form: to_form(changeset, as: :repository))}
@@ -67,7 +68,8 @@ defmodule MicelioWeb.RepositoryLive.Settings do
        ) ==
          :ok do
       case Projects.update_project_settings(socket.assigns.repository, params,
-             user: socket.assigns.current_user
+             user: socket.assigns.current_user,
+             organization: socket.assigns.organization
            ) do
         {:ok, repository} ->
           {:noreply,
@@ -158,6 +160,20 @@ defmodule MicelioWeb.RepositoryLive.Settings do
 
           <div class="project-form-group">
             <.input
+              field={@form[:llm_model]}
+              type="select"
+              label="Default LLM model"
+              options={llm_model_options(@organization)}
+              class="project-input"
+              error_class="project-input project-input-error"
+            />
+            <p class="project-form-hint">
+              Sets the default model for agent runs and automated workflows.
+            </p>
+          </div>
+
+          <div class="project-form-group">
+            <.input
               field={@form[:protect_main_branch]}
               type="checkbox"
               label="Protect main branch"
@@ -191,5 +207,9 @@ defmodule MicelioWeb.RepositoryLive.Settings do
       {"Private", "private"},
       {"Public", "public"}
     ]
+  end
+
+  defp llm_model_options(organization) do
+    LLM.project_model_options_for_organization(organization)
   end
 end

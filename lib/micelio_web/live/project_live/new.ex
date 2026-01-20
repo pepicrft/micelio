@@ -3,6 +3,7 @@ defmodule MicelioWeb.ProjectLive.New do
 
   alias Micelio.Accounts
   alias Micelio.Authorization
+  alias Micelio.LLM
   alias Micelio.Projects
   alias Micelio.Projects.Project
   alias MicelioWeb.PageMeta
@@ -12,12 +13,15 @@ defmodule MicelioWeb.ProjectLive.New do
     organizations =
       Accounts.list_organizations_for_user_with_role(socket.assigns.current_user, "admin")
 
-    default_org_id = organizations |> List.first() |> then(&(&1 && &1.id))
+    default_org = List.first(organizations)
+    default_org_id = default_org && default_org.id
 
     form =
       %Project{}
-      |> Projects.change_project(%{organization_id: default_org_id})
+      |> Projects.change_project(%{organization_id: default_org_id}, organization: default_org)
       |> to_form(as: :project)
+
+    llm_model_options = llm_model_options(default_org)
 
     socket =
       socket
@@ -28,6 +32,7 @@ defmodule MicelioWeb.ProjectLive.New do
       )
       |> assign(:organizations, organizations)
       |> assign(:organization_options, organization_options(organizations))
+      |> assign(:llm_model_options, llm_model_options)
       |> assign(:form, form)
 
     {:ok, socket}
@@ -35,12 +40,18 @@ defmodule MicelioWeb.ProjectLive.New do
 
   @impl true
   def handle_event("validate", %{"project" => params}, socket) do
+    organization = find_organization(socket.assigns.organizations, params["organization_id"])
+
     changeset =
       %Project{}
-      |> Projects.change_project(params)
+      |> Projects.change_project(params, organization: organization)
       |> Map.put(:action, :validate)
 
-    {:noreply, assign(socket, form: to_form(changeset, as: :project))}
+    {:noreply,
+     assign(socket,
+       form: to_form(changeset, as: :project),
+       llm_model_options: llm_model_options(organization)
+     )}
   end
 
   @impl true
@@ -60,7 +71,10 @@ defmodule MicelioWeb.ProjectLive.New do
              :ok do
           attrs = Map.put(params, "organization_id", organization.id)
 
-          case Projects.create_project(attrs, user: socket.assigns.current_user) do
+          case Projects.create_project(attrs,
+                 user: socket.assigns.current_user,
+                 organization: organization
+               ) do
             {:ok, project} ->
               {:noreply,
                socket
@@ -173,6 +187,20 @@ defmodule MicelioWeb.ProjectLive.New do
 
             <div class="project-form-group">
               <.input
+                field={@form[:llm_model]}
+                type="select"
+                label="Default LLM model"
+                options={@llm_model_options}
+                class="project-input"
+                error_class="project-input project-input-error"
+              />
+              <p class="project-form-hint">
+                Sets the default model for agent runs and automated workflows.
+              </p>
+            </div>
+
+            <div class="project-form-group">
+              <.input
                 field={@form[:url]}
                 type="url"
                 label="URL"
@@ -213,6 +241,14 @@ defmodule MicelioWeb.ProjectLive.New do
       {"Private", "private"},
       {"Public", "public"}
     ]
+  end
+
+  defp llm_model_options(%Accounts.Organization{} = organization) do
+    LLM.project_model_options_for_organization(organization)
+  end
+
+  defp llm_model_options(_organization) do
+    LLM.project_model_options()
   end
 
   defp find_organization(organizations, organization_id) do

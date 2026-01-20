@@ -27,3 +27,8 @@
 
 - Added provisioning request normalization for agent VM plans with volume mount mapping, plus types and tests.
 - Evaluated cloud platforms for agent VM provisioning with a curated comparison module, API accessors, and tests.
+- Completed the cloud-agnostic VM management abstraction by covering the provider module resolution in AgentInfra tests and marking the PRD item done.
+
+- Improved remote execution enqueue error handling to mark failed tasks when the supervisor is unavailable, added tests, and marked the PRD item complete.
+
+- Added LLM model selection to the new project form with organization-specific options and LiveView coverage.

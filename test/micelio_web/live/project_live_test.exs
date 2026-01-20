@@ -46,7 +46,9 @@ defmodule MicelioWeb.ProjectLiveTest do
     {:ok, organization} =
       Accounts.create_organization_for_user(user, %{
         handle: "create-org",
-        name: "Create Org"
+        name: "Create Org",
+        llm_models: ["gpt-4.1"],
+        llm_default_model: "gpt-4.1"
       })
 
     conn = login_user(conn, user)
@@ -59,7 +61,8 @@ defmodule MicelioWeb.ProjectLiveTest do
           name: "Live Created",
           handle: "live-created",
           description: "Created from LiveView",
-          visibility: "public"
+          visibility: "public",
+          llm_model: "gpt-4.1"
         }
       )
 
@@ -67,6 +70,7 @@ defmodule MicelioWeb.ProjectLiveTest do
 
     project = Projects.get_project_by_handle(organization.id, "live-created")
     assert project.visibility == "public"
+    assert project.llm_model == "gpt-4.1"
 
     assert_redirect(view, ~p"/projects/#{organization.account.handle}/live-created")
   end

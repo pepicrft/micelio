@@ -9,6 +9,7 @@ defmodule Micelio.Projects do
   alias Micelio.Accounts
   alias Micelio.Accounts.OrganizationMembership
   alias Micelio.Audit
+  alias Micelio.LLM
   alias Micelio.Mic.Seed
   alias Micelio.Projects.{AccessTokens, Project, ProjectAccessToken, ProjectStar}
   alias Micelio.Repo
@@ -275,8 +276,11 @@ defmodule Micelio.Projects do
     Repo.transaction(fn ->
       case enforce_project_limit(attrs) do
         :ok ->
+          organization = organization_from_attrs(attrs, opts)
+          llm_opts = llm_policy_opts(organization)
+
           case %Project{}
-               |> Project.changeset(attrs)
+               |> Project.changeset(attrs, llm_opts)
                |> Repo.insert() do
             {:ok, project} ->
               case Audit.log_project_action(project, "project.created",
@@ -312,7 +316,7 @@ defmodule Micelio.Projects do
     Repo.transaction(fn ->
       case enforce_project_limit(attrs) do
         :ok ->
-          case create_fork_project(source, attrs) do
+          case create_fork_project(source, attrs, organization) do
             {:ok, project} ->
               case copy_project_storage(source.id, project.id) do
                 :ok ->
@@ -347,7 +351,9 @@ defmodule Micelio.Projects do
   Updates a project.
   """
   def update_project(%Project{} = project, attrs, opts \\ []) do
-    changeset = Project.changeset(project, attrs)
+    organization = organization_from_project(project, opts)
+    llm_opts = llm_policy_opts(organization)
+    changeset = Project.changeset(project, attrs, llm_opts)
     update_project_with_audit(project, changeset, "project.updated", opts)
   end
 
@@ -355,7 +361,9 @@ defmodule Micelio.Projects do
   Updates repository settings (name, description, visibility).
   """
   def update_project_settings(%Project{} = project, attrs, opts \\ []) do
-    changeset = Project.settings_changeset(project, attrs)
+    organization = organization_from_project(project, opts)
+    llm_opts = llm_policy_opts(organization)
+    changeset = Project.settings_changeset(project, attrs, llm_opts)
     update_project_with_audit(project, changeset, "project.settings_updated", opts)
   end
 
@@ -384,15 +392,19 @@ defmodule Micelio.Projects do
   @doc """
   Returns an `%Ecto.Changeset{}` for tracking project changes.
   """
-  def change_project(%Project{} = project, attrs \\ %{}) do
-    Project.changeset(project, attrs)
+  def change_project(%Project{} = project, attrs \\ %{}, opts \\ []) do
+    organization = organization_from_attrs(attrs, opts) || organization_from_project(project, opts)
+    llm_opts = llm_policy_opts(organization)
+    Project.changeset(project, attrs, llm_opts)
   end
 
   @doc """
   Returns an `%Ecto.Changeset{}` for repository settings changes.
   """
-  def change_project_settings(%Project{} = project, attrs \\ %{}) do
-    Project.settings_changeset(project, attrs)
+  def change_project_settings(%Project{} = project, attrs \\ %{}, opts \\ []) do
+    organization = organization_from_project(project, opts)
+    llm_opts = llm_policy_opts(organization)
+    Project.settings_changeset(project, attrs, llm_opts)
   end
 
   @doc """
@@ -662,9 +674,39 @@ defmodule Micelio.Projects do
     attrs
   end
 
-  defp create_fork_project(%Project{} = source, attrs) do
+  defp organization_from_attrs(attrs, opts) do
+    case Keyword.get(opts, :organization) do
+      %Accounts.Organization{} = organization ->
+        organization
+
+      _ ->
+        organization_id = Map.get(attrs, :organization_id) || Map.get(attrs, "organization_id")
+        if is_binary(organization_id), do: Accounts.get_organization(organization_id)
+    end
+  end
+
+  defp organization_from_project(%Project{organization_id: organization_id}, opts) do
+    case Keyword.get(opts, :organization) do
+      %Accounts.Organization{} = organization ->
+        organization
+
+      _ ->
+        if is_binary(organization_id), do: Accounts.get_organization(organization_id)
+    end
+  end
+
+  defp llm_policy_opts(organization) do
+    [
+      llm_models: LLM.project_models_for_organization(organization),
+      llm_default: LLM.project_default_model_for_organization(organization)
+    ]
+  end
+
+  defp create_fork_project(%Project{} = source, attrs, organization) do
+    llm_opts = llm_policy_opts(organization)
+
     %Project{}
-    |> Project.changeset(attrs)
+    |> Project.changeset(attrs, llm_opts)
     |> Ecto.Changeset.put_change(:forked_from_id, source.id)
     |> Repo.insert()
   end
