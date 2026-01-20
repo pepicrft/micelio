@@ -389,7 +389,8 @@ defmodule Micelio.Storage.S3 do
     req_opts = [
       method: method,
       url: url,
-      headers: headers
+      headers: headers,
+      decode_body: false
     ]
 
     req_opts =
