@@ -627,6 +627,77 @@ defmodule MicelioWeb.CoreComponents do
   end
 
   @doc """
+  Renders a language selector dropdown for locale switching.
+
+  For marketing pages, it renders links to locale-prefixed URLs.
+  For dashboard pages, it can POST to update the user's locale preference.
+
+  ## Examples
+
+      <.language_selector current_locale={@locale} />
+      <.language_selector current_locale={@locale} current_path="/about" />
+  """
+  attr :current_locale, :string, required: true, doc: "the currently selected locale"
+  attr :current_path, :string, default: "/", doc: "the current path for building locale URLs"
+  attr :class, :string, default: nil, doc: "additional CSS classes"
+
+  @supported_locales [
+    {"en", "English"},
+    {"ko", "한국어"},
+    {"zh_CN", "简体中文"},
+    {"zh_TW", "繁體中文"},
+    {"ja", "日本語"}
+  ]
+
+  def language_selector(assigns) do
+    assigns = assign(assigns, :locales, @supported_locales)
+
+    ~H"""
+    <div class={["language-selector", @class]} role="navigation" aria-label={gettext("Language selection")}>
+      <label for="language-select" class="sr-only">{gettext("Select language")}</label>
+      <select
+        id="language-select"
+        name="locale"
+        class="language-selector-select"
+        aria-label={gettext("Select language")}
+        onchange="window.location.href = this.value"
+      >
+        <option
+          :for={{code, name} <- @locales}
+          value={locale_path(@current_path, code)}
+          selected={code == @current_locale}
+        >
+          {name}
+        </option>
+      </select>
+    </div>
+    """
+  end
+
+  @locale_codes ~w(ko zh_CN zh_TW ja)
+
+  defp locale_path(path, "en"), do: path
+  defp locale_path("/", locale), do: "/#{locale}"
+
+  defp locale_path(path, locale) do
+    # Remove any existing locale prefix and add the new one
+    path_without_locale =
+      case String.split(path, "/", parts: 3) do
+        ["", existing_locale | rest] when existing_locale in @locale_codes ->
+          "/" <> Enum.join(rest, "/")
+
+        _ ->
+          path
+      end
+
+    if locale == "en" do
+      path_without_locale
+    else
+      "/#{locale}#{path_without_locale}"
+    end
+  end
+
+  @doc """
   Renders a GitHub-style activity/contribution graph.
 
   Shows activity over the past N weeks as a grid of colored cells.

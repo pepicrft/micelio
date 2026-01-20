@@ -1,6 +1,6 @@
 defmodule Micelio.Notifications.ActivityEmail do
   @moduledoc """
-  Email templates for repository activity.
+  Email templates for project activity.
   """
 
   import Swoosh.Email
@@ -154,7 +154,7 @@ defmodule Micelio.Notifications.ActivityEmail do
         </p>
         <p>
           <a href="#{assigns.session_url}" class="link">View session</a> ·
-          <a href="#{assigns.repo_url}" class="link">Open repository</a>
+          <a href="#{assigns.repo_url}" class="link">Open project</a>
         </p>
         <p class="muted">You are receiving this email because you are a member of this organization.</p>
       </div>
@@ -171,7 +171,7 @@ defmodule Micelio.Notifications.ActivityEmail do
     Goal: #{assigns.session_goal}
 
     View session: #{assigns.session_url}
-    Open repository: #{assigns.repo_url}
+    Open project: #{assigns.repo_url}
 
     You are receiving this email because you are a member of this organization.
     """
@@ -235,7 +235,7 @@ defmodule Micelio.Notifications.ActivityEmail do
           #{assigns.actor_email} starred #{assigns.repo_name}.
         </p>
         <p>
-          <a href="#{assigns.repo_url}" class="link">Open repository</a>
+          <a href="#{assigns.repo_url}" class="link">Open project</a>
         </p>
         <p class="muted">You are receiving this email because you are a member of this organization.</p>
       </div>
@@ -250,7 +250,7 @@ defmodule Micelio.Notifications.ActivityEmail do
 
     #{assigns.actor_email} starred #{assigns.repo_name}.
 
-    Open repository: #{assigns.repo_url}
+    Open project: #{assigns.repo_url}
 
     You are receiving this email because you are a member of this organization.
     """

@@ -56,7 +56,7 @@ defmodule Micelio.Projects.Project do
   end
 
   @doc """
-  Changeset for updating repository settings.
+  Changeset for updating project settings.
   """
   def settings_changeset(project, attrs, opts \\ []) do
     project

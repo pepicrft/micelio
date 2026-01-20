@@ -3,16 +3,19 @@ defmodule Micelio.Accounts.OrganizationMembership do
 
   import Ecto.Changeset
 
-  @roles ["admin", "user"]
+  @roles [:admin, :member]
 
   schema "organization_memberships" do
-    field :role, :string, default: "user"
+    field :role, Ecto.Enum, values: @roles, default: :member
 
     belongs_to :user, Micelio.Accounts.User
     belongs_to :organization, Micelio.Accounts.Organization
 
     timestamps(type: :utc_datetime)
   end
+
+  @doc "Returns the list of valid membership roles."
+  def roles, do: @roles
 
   @doc """
   Changeset for creating or updating an organization membership.

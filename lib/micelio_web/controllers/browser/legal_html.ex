@@ -5,6 +5,7 @@ defmodule MicelioWeb.Browser.LegalHTML do
   See the `legal_html` directory for all templates available.
   """
   use MicelioWeb, :html
+  use Gettext, backend: MicelioWeb.Gettext
 
   embed_templates "legal_html/*"
 end

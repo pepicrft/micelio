@@ -133,7 +133,7 @@ defmodule MicelioWeb.ProjectLive.Edit do
               class="project-input"
               error_class="project-input project-input-error"
             />
-            <p class="project-form-hint">Handles appear in repository URLs.</p>
+            <p class="project-form-hint">Handles appear in project URLs.</p>
           </div>
 
           <div class="project-form-group">
@@ -168,7 +168,7 @@ defmodule MicelioWeb.ProjectLive.Edit do
               class="project-input"
               error_class="project-input project-input-error"
             />
-            <p class="project-form-hint">Optional homepage or repository URL.</p>
+            <p class="project-form-hint">Optional homepage or project URL.</p>
           </div>
 
           <div class="project-form-actions">

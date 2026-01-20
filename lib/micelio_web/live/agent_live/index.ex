@@ -7,11 +7,11 @@ defmodule MicelioWeb.AgentLive.Index do
   @refresh_ms 5_000
 
   @impl true
-  def mount(%{"account" => account_handle, "repository" => repository_handle}, _session, socket) do
+  def mount(%{"account" => account_handle, "project" => project_handle}, _session, socket) do
     case Projects.get_project_for_user_by_handle(
            socket.assigns.current_user,
            account_handle,
-           repository_handle
+           project_handle
          ) do
       {:ok, project, organization} ->
         if Authorization.authorize(:project_read, socket.assigns.current_user, project) == :ok do

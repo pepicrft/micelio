@@ -1,6 +1,6 @@
 defmodule MicelioWeb.Browser.SearchHTML do
   @moduledoc """
-  HTML templates for repository search.
+  HTML templates for project search.
   """
 
   use MicelioWeb, :html

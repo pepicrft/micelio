@@ -1,4 +1,4 @@
-defmodule MicelioWeb.RepositoryLive.Settings do
+defmodule MicelioWeb.ProjectLive.Settings do
   use MicelioWeb, :live_view
 
   alias Micelio.Authorization
@@ -7,29 +7,29 @@ defmodule MicelioWeb.RepositoryLive.Settings do
   alias MicelioWeb.PageMeta
 
   @impl true
-  def mount(%{"account" => account_handle, "repository" => repository_handle}, _session, socket) do
+  def mount(%{"account" => account_handle, "project" => project_handle}, _session, socket) do
     case Projects.get_project_for_user_by_handle(
            socket.assigns.current_user,
            account_handle,
-           repository_handle
+           project_handle
          ) do
-      {:ok, repository, organization} ->
-        if Authorization.authorize(:project_update, socket.assigns.current_user, repository) ==
+      {:ok, project, organization} ->
+        if Authorization.authorize(:project_update, socket.assigns.current_user, project) ==
              :ok do
           form =
-            repository
+            project
             |> Projects.change_project_settings(%{}, organization: organization)
-            |> to_form(as: :repository)
+            |> to_form(as: :project)
 
           socket =
             socket
-            |> assign(:page_title, "Repository settings")
+            |> assign(:page_title, "Project settings")
             |> PageMeta.assign(
-              description: "Edit repository settings.",
+              description: "Edit project settings.",
               canonical_url:
-                url(~p"/#{organization.account.handle}/#{repository.handle}/settings")
+                url(~p"/#{organization.account.handle}/#{project.handle}/settings")
             )
-            |> assign(:repository, repository)
+            |> assign(:project, project)
             |> assign(:organization, organization)
             |> assign(:form, form)
 
@@ -37,56 +37,56 @@ defmodule MicelioWeb.RepositoryLive.Settings do
         else
           {:ok,
            socket
-           |> put_flash(:error, "You do not have access to this repository.")
-           |> push_navigate(to: ~p"/#{account_handle}/#{repository_handle}")}
+           |> put_flash(:error, "You do not have access to this project.")
+           |> push_navigate(to: ~p"/#{account_handle}/#{project_handle}")}
         end
 
       {:error, _reason} ->
         {:ok,
          socket
-         |> put_flash(:error, "Repository not found.")
-         |> push_navigate(to: ~p"/#{account_handle}/#{repository_handle}")}
+         |> put_flash(:error, "Project not found.")
+         |> push_navigate(to: ~p"/#{account_handle}/#{project_handle}")}
     end
   end
 
   @impl true
-  def handle_event("validate", %{"repository" => params}, socket) do
+  def handle_event("validate", %{"project" => params}, socket) do
     changeset =
-      socket.assigns.repository
+      socket.assigns.project
       |> Projects.change_project_settings(params, organization: socket.assigns.organization)
       |> Map.put(:action, :validate)
 
-    {:noreply, assign(socket, form: to_form(changeset, as: :repository))}
+    {:noreply, assign(socket, form: to_form(changeset, as: :project))}
   end
 
   @impl true
-  def handle_event("save", %{"repository" => params}, socket) do
+  def handle_event("save", %{"project" => params}, socket) do
     if Authorization.authorize(
          :project_update,
          socket.assigns.current_user,
-         socket.assigns.repository
+         socket.assigns.project
        ) ==
          :ok do
-      case Projects.update_project_settings(socket.assigns.repository, params,
+      case Projects.update_project_settings(socket.assigns.project, params,
              user: socket.assigns.current_user,
              organization: socket.assigns.organization
            ) do
-        {:ok, repository} ->
+        {:ok, project} ->
           {:noreply,
            socket
-           |> put_flash(:info, "Repository updated successfully!")
+           |> put_flash(:info, "Project updated successfully!")
            |> push_navigate(
-             to: ~p"/#{socket.assigns.organization.account.handle}/#{repository.handle}"
+             to: ~p"/#{socket.assigns.organization.account.handle}/#{project.handle}"
            )}
 
         {:error, changeset} ->
           {:noreply,
            assign(socket,
-             form: to_form(Map.put(changeset, :action, :validate), as: :repository)
+             form: to_form(Map.put(changeset, :action, :validate), as: :project)
            )}
       end
     else
-      {:noreply, put_flash(socket, :error, "You do not have access to this repository.")}
+      {:noreply, put_flash(socket, :error, "You do not have access to this project.")}
     end
   end
 
@@ -100,24 +100,24 @@ defmodule MicelioWeb.RepositoryLive.Settings do
     >
       <div class="project-form-container">
         <.header>
-          Repository settings
+          Project settings
           <:subtitle>
             <p>
-              {@organization.account.handle}/{@repository.handle}
+              {@organization.account.handle}/{@project.handle}
             </p>
           </:subtitle>
           <:actions>
             <.link
-              navigate={~p"/#{@organization.account.handle}/#{@repository.handle}/settings/import"}
+              navigate={~p"/#{@organization.account.handle}/#{@project.handle}/settings/import"}
               class="project-button project-button-secondary"
-              id="repository-import-link"
+              id="project-import-link"
             >
               Import
             </.link>
             <.link
-              navigate={~p"/#{@organization.account.handle}/#{@repository.handle}/settings/webhooks"}
+              navigate={~p"/#{@organization.account.handle}/#{@project.handle}/settings/webhooks"}
               class="project-button project-button-secondary"
-              id="repository-webhooks-link"
+              id="project-webhooks-link"
             >
               Webhooks
             </.link>
@@ -126,7 +126,7 @@ defmodule MicelioWeb.RepositoryLive.Settings do
 
         <.form
           for={@form}
-          id="repository-settings-form"
+          id="project-settings-form"
           phx-change="validate"
           phx-submit="save"
           class="project-form"
@@ -162,7 +162,7 @@ defmodule MicelioWeb.RepositoryLive.Settings do
               class="project-input"
               error_class="project-input project-input-error"
             />
-            <p class="project-form-hint">Public repositories are visible to everyone.</p>
+            <p class="project-form-hint">Public projects are visible to everyone.</p>
           </div>
 
           <div class="project-form-group">
@@ -192,13 +192,13 @@ defmodule MicelioWeb.RepositoryLive.Settings do
           </div>
 
           <div class="project-form-actions">
-            <button type="submit" class="project-button" id="repository-settings-submit">
+            <button type="submit" class="project-button" id="project-settings-submit">
               Save changes
             </button>
             <.link
-              navigate={~p"/#{@organization.account.handle}/#{@repository.handle}"}
+              navigate={~p"/#{@organization.account.handle}/#{@project.handle}"}
               class="project-button project-button-secondary"
-              id="repository-settings-cancel"
+              id="project-settings-cancel"
             >
               Cancel
             </.link>

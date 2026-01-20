@@ -47,26 +47,19 @@ defmodule Micelio.Authorization do
 
     action :read do
       allow(:project_public)
-      allow(:organization_member)
+      allow(:project_member)
     end
 
     action :update do
-      allow(:organization_admin)
+      allow(:project_admin)
     end
 
     action :delete do
       allow(:organization_admin)
     end
-  end
-
-  object :repository do
-    action :read do
-      allow(:repository_public)
-      allow(:repository_member)
-    end
 
     action :write do
-      allow(:repository_admin)
+      allow(:project_admin)
     end
   end
 end

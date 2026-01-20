@@ -358,7 +358,7 @@ defmodule Micelio.Projects do
   end
 
   @doc """
-  Updates repository settings (name, description, visibility).
+  Updates project settings (name, description, visibility).
   """
   def update_project_settings(%Project{} = project, attrs, opts \\ []) do
     organization = organization_from_project(project, opts)
@@ -389,10 +389,10 @@ defmodule Micelio.Projects do
     |> normalize_transaction_result()
   end
 
-  ## Repository Imports
+  ## Project Imports
 
   @doc """
-  Creates a repository import record.
+  Creates a project import record.
   """
   def create_project_import(%Project{} = project, %Accounts.User{} = user, attrs \\ %{}) do
     attrs =
@@ -406,7 +406,7 @@ defmodule Micelio.Projects do
   end
 
   @doc """
-  Starts a repository import asynchronously.
+  Starts a project import asynchronously.
   """
   def start_project_import(%Project{} = project, %Accounts.User{} = user, attrs \\ %{}) do
     with {:ok, import} <- create_project_import(project, user, attrs),
@@ -416,26 +416,26 @@ defmodule Micelio.Projects do
   end
 
   @doc """
-  Runs a repository import synchronously.
+  Runs a project import synchronously.
   """
   def run_project_import(%ProjectImport{} = import) do
     Import.run(import)
   end
 
   @doc """
-  Rolls back a repository import.
+  Rolls back a project import.
   """
   def rollback_project_import(%ProjectImport{} = import) do
     Import.rollback(import)
   end
 
   @doc """
-  Gets a repository import by id.
+  Gets a project import by id.
   """
   def get_project_import(id), do: Repo.get(ProjectImport, id)
 
   @doc """
-  Lists repository imports for a project.
+  Lists project imports for a project.
   """
   def list_project_imports(%Project{} = project) do
     ProjectImport
@@ -456,7 +456,7 @@ defmodule Micelio.Projects do
   end
 
   @doc """
-  Returns a changeset for tracking repository import changes.
+  Returns a changeset for tracking project import changes.
   """
   def change_project_import(%ProjectImport{} = import, attrs \\ %{}) do
     ProjectImport.changeset(import, attrs)
@@ -472,7 +472,7 @@ defmodule Micelio.Projects do
   end
 
   @doc """
-  Returns an `%Ecto.Changeset{}` for repository settings changes.
+  Returns an `%Ecto.Changeset{}` for project settings changes.
   """
   def change_project_settings(%Project{} = project, attrs \\ %{}, opts \\ []) do
     organization = organization_from_project(project, opts)
@@ -649,7 +649,7 @@ defmodule Micelio.Projects do
         Accounts.create_organization_membership(%{
           user_id: user.id,
           organization_id: organization.id,
-          role: "admin"
+          role: :admin
         })
 
       %OrganizationMembership{} = membership ->

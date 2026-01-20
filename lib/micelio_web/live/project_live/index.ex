@@ -1,5 +1,6 @@
 defmodule MicelioWeb.ProjectLive.Index do
   use MicelioWeb, :live_view
+  use Gettext, backend: MicelioWeb.Gettext
 
   alias Micelio.Accounts
   alias Micelio.Authorization
@@ -15,9 +16,9 @@ defmodule MicelioWeb.ProjectLive.Index do
 
     socket =
       socket
-      |> assign(:page_title, "Projects")
+      |> assign(:page_title, gettext("Projects"))
       |> PageMeta.assign(
-        description: "Manage your projects.",
+        description: gettext("Manage your projects."),
         canonical_url: url(~p"/projects")
       )
       |> assign(:projects_count, length(projects))
@@ -33,7 +34,7 @@ defmodule MicelioWeb.ProjectLive.Index do
 
     case Projects.get_project_with_organization(id) do
       nil ->
-        {:noreply, put_flash(socket, :error, "Project not found.")}
+        {:noreply, put_flash(socket, :error, gettext("Project not found."))}
 
       project ->
         if Authorization.authorize(:project_delete, user, project) == :ok do
@@ -44,9 +45,9 @@ defmodule MicelioWeb.ProjectLive.Index do
            socket
            |> stream_delete(:projects, project)
            |> assign(:projects_count, projects_count)
-           |> put_flash(:info, "Project deleted successfully.")}
+           |> put_flash(:info, gettext("Project deleted successfully."))}
         else
-          {:noreply, put_flash(socket, :error, "You do not have access to this project.")}
+          {:noreply, put_flash(socket, :error, gettext("You do not have access to this project."))}
         end
     end
   end
@@ -61,18 +62,18 @@ defmodule MicelioWeb.ProjectLive.Index do
     >
       <div class="projects-container">
         <.header>
-          Projects
+          {gettext("Projects")}
           <:actions>
             <.link
               navigate={~p"/organizations/new"}
               class="project-button project-button-secondary"
               id="new-organization-link"
             >
-              New organization
+              {gettext("New organization")}
             </.link>
             <%= if @can_create_project do %>
               <.link navigate={~p"/projects/new"} class="project-button" id="new-project-link">
-                New project
+                {gettext("New project")}
               </.link>
             <% end %>
           </:actions>
@@ -80,11 +81,11 @@ defmodule MicelioWeb.ProjectLive.Index do
 
         <%= if @projects_count == 0 do %>
           <div class="projects-empty">
-            <h2>No projects yet</h2>
-            <p>Projects help you organize your code and collaborate with others.</p>
+            <h2>{gettext("No projects yet")}</h2>
+            <p>{gettext("Projects help you organize your code and collaborate with others.")}</p>
             <%= if @can_create_project do %>
               <.link navigate={~p"/projects/new"} class="project-button" id="projects-empty-create">
-                Create your first project
+                {gettext("Create your first project")}
               </.link>
             <% end %>
           </div>
@@ -111,7 +112,7 @@ defmodule MicelioWeb.ProjectLive.Index do
                   class="project-card-action"
                   id={"project-view-#{project.id}"}
                 >
-                  View
+                  {gettext("View")}
                 </.link>
                 <%= if Authorization.authorize(:project_update, @current_user, project) == :ok do %>
                   <.link
@@ -121,7 +122,7 @@ defmodule MicelioWeb.ProjectLive.Index do
                     class="project-card-action"
                     id={"project-edit-#{project.id}"}
                   >
-                    Edit
+                    {gettext("Edit")}
                   </.link>
                   <button
                     type="button"
@@ -129,9 +130,9 @@ defmodule MicelioWeb.ProjectLive.Index do
                     id={"project-delete-#{project.id}"}
                     phx-click="delete"
                     phx-value-id={project.id}
-                    phx-confirm="Delete this project?"
+                    phx-confirm={gettext("Delete this project?")}
                   >
-                    Delete
+                    {gettext("Delete")}
                   </button>
                 <% end %>
               </div>

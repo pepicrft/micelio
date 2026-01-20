@@ -3,8 +3,10 @@ defmodule Micelio.Accounts.User do
 
   import Ecto.Changeset
 
+  @supported_locales ~w(en ko zh_CN zh_TW ja)
   @profile_fields [
     :bio,
+    :locale,
     :website_url,
     :twitter_url,
     :github_url,
@@ -24,6 +26,7 @@ defmodule Micelio.Accounts.User do
   schema "users" do
     field(:email, :string)
     field(:bio, :string)
+    field(:locale, :string, default: "en")
     field(:website_url, :string)
     field(:twitter_url, :string)
     field(:github_url, :string)
@@ -69,9 +72,15 @@ defmodule Micelio.Accounts.User do
     |> cast(attrs, @profile_fields)
     |> update_change(:bio, &trim_optional/1)
     |> validate_length(:bio, max: 160)
+    |> validate_inclusion(:locale, @supported_locales)
     |> normalize_url_fields()
     |> validate_url_fields()
   end
+
+  @doc """
+  Returns the list of supported locales.
+  """
+  def supported_locales, do: @supported_locales
 
   defp validate_email(changeset) do
     changeset

@@ -146,6 +146,11 @@ config :mime, :types, %{
   "application/jrd+json" => ["jrd+json"]
 }
 
+# Gettext configuration
+config :micelio, MicelioWeb.Gettext,
+  default_locale: "en",
+  locales: ~w(en ko zh_CN zh_TW ja)
+
 # Use Jason for JSON parsing in Phoenix
 # of this file so it overrides the configuration defined above.
 config :phoenix, :json_library, JSON

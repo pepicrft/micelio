@@ -209,7 +209,7 @@ defmodule Micelio.Projects.Import do
 
     Sessions.create_session(%{
       session_id: session_id,
-      goal: "Import repository",
+      goal: "Import project",
       project_id: import.project_id,
       user_id: import.user_id,
       metadata: %{

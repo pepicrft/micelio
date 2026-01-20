@@ -1,4 +1,4 @@
-defmodule MicelioWeb.RepositoryLive.Import do
+defmodule MicelioWeb.ProjectLive.Import do
   use MicelioWeb, :live_view
 
   alias Micelio.Authorization
@@ -9,50 +9,50 @@ defmodule MicelioWeb.RepositoryLive.Import do
   @refresh_ms 2_000
 
   @impl true
-  def mount(%{"account" => account_handle, "repository" => repository_handle}, _session, socket) do
+  def mount(%{"account" => account_handle, "project" => project_handle}, _session, socket) do
     case Projects.get_project_for_user_by_handle(
            socket.assigns.current_user,
            account_handle,
-           repository_handle
+           project_handle
          ) do
-      {:ok, repository, organization} ->
-        if Authorization.authorize(:project_update, socket.assigns.current_user, repository) ==
+      {:ok, project, organization} ->
+        if Authorization.authorize(:project_update, socket.assigns.current_user, project) ==
              :ok do
-          import = Projects.get_latest_project_import(repository)
+          import = Projects.get_latest_project_import(project)
 
           socket =
             socket
-            |> assign(:page_title, "Repository import")
+            |> assign(:page_title, "Project import")
             |> PageMeta.assign(
-              description: "Import repository data from another git forge.",
+              description: "Import project data from another git forge.",
               canonical_url:
-                url(~p"/#{organization.account.handle}/#{repository.handle}/settings/import")
+                url(~p"/#{organization.account.handle}/#{project.handle}/settings/import")
             )
-            |> assign(:repository, repository)
+            |> assign(:project, project)
             |> assign(:organization, organization)
             |> assign(:import, import)
-            |> assign(:form, import_form(repository, socket.assigns.current_user))
+            |> assign(:form, import_form(project, socket.assigns.current_user))
             |> assign(:stages, ProjectImport.stages())
 
           {:ok, schedule_refresh(socket)}
         else
           {:ok,
            socket
-           |> put_flash(:error, "You do not have access to this repository.")
-           |> push_navigate(to: ~p"/#{account_handle}/#{repository_handle}")}
+           |> put_flash(:error, "You do not have access to this project.")
+           |> push_navigate(to: ~p"/#{account_handle}/#{project_handle}")}
         end
 
       {:error, _reason} ->
         {:ok,
          socket
-         |> put_flash(:error, "Repository not found.")
-         |> push_navigate(to: ~p"/#{account_handle}/#{repository_handle}")}
+         |> put_flash(:error, "Project not found.")
+         |> push_navigate(to: ~p"/#{account_handle}/#{project_handle}")}
     end
   end
 
   @impl true
   def handle_event("validate", %{"project_import" => params}, socket) do
-    params = enrich_params(params, socket.assigns.repository, socket.assigns.current_user)
+    params = enrich_params(params, socket.assigns.project, socket.assigns.current_user)
 
     changeset =
       %ProjectImport{}
@@ -64,20 +64,20 @@ defmodule MicelioWeb.RepositoryLive.Import do
 
   @impl true
   def handle_event("save", %{"project_import" => params}, socket) do
-    params = enrich_params(params, socket.assigns.repository, socket.assigns.current_user)
+    params = enrich_params(params, socket.assigns.project, socket.assigns.current_user)
 
     case Projects.start_project_import(
-           socket.assigns.repository,
+           socket.assigns.project,
            socket.assigns.current_user,
            params
          ) do
       {:ok, import} ->
         {:noreply,
          socket
-         |> put_flash(:info, "Repository import started.")
+         |> put_flash(:info, "Project import started.")
          |> assign(:import, import)
-          |> assign(:form, import_form(socket.assigns.repository, socket.assigns.current_user))
-          |> schedule_refresh()}
+         |> assign(:form, import_form(socket.assigns.project, socket.assigns.current_user))
+         |> schedule_refresh()}
 
       {:error, %Ecto.Changeset{} = changeset} ->
         {:noreply, assign(socket, form: to_form(Map.put(changeset, :action, :validate)))}
@@ -111,7 +111,7 @@ defmodule MicelioWeb.RepositoryLive.Import do
 
   @impl true
   def handle_info(:refresh_import, socket) do
-    import = Projects.get_latest_project_import(socket.assigns.repository)
+    import = Projects.get_latest_project_import(socket.assigns.project)
 
     socket =
       socket
@@ -131,24 +131,24 @@ defmodule MicelioWeb.RepositoryLive.Import do
     >
       <div class="project-form-container">
         <.header>
-          Repository import
+          Project import
           <:subtitle>
             <p>
-              {@organization.account.handle}/{@repository.handle}
+              {@organization.account.handle}/{@project.handle}
             </p>
           </:subtitle>
           <:actions>
             <.link
-              navigate={~p"/#{@organization.account.handle}/#{@repository.handle}/settings"}
+              navigate={~p"/#{@organization.account.handle}/#{@project.handle}/settings"}
               class="project-button project-button-secondary"
-              id="repository-settings-link"
+              id="project-settings-link"
             >
               Settings
             </.link>
             <.link
-              navigate={~p"/#{@organization.account.handle}/#{@repository.handle}/settings/webhooks"}
+              navigate={~p"/#{@organization.account.handle}/#{@project.handle}/settings/webhooks"}
               class="project-button project-button-secondary"
-              id="repository-import-webhooks-link"
+              id="project-import-webhooks-link"
             >
               Webhooks
             </.link>
@@ -157,7 +157,7 @@ defmodule MicelioWeb.RepositoryLive.Import do
 
         <.form
           for={@form}
-          id="repository-import-form"
+          id="project-import-form"
           phx-change="validate"
           phx-submit="save"
           class="project-form"
@@ -166,13 +166,13 @@ defmodule MicelioWeb.RepositoryLive.Import do
             <.input
               field={@form[:source_url]}
               type="text"
-              label="Repository URL"
+              label="Project URL"
               placeholder="https://github.com/org/repo"
               class="project-input"
               error_class="project-input project-input-error"
             />
             <p class="project-form-hint">
-              Imports the repository history and lands the latest state as a new session.
+              Imports the project history and lands the latest state as a new session.
             </p>
           </div>
 
@@ -180,7 +180,7 @@ defmodule MicelioWeb.RepositoryLive.Import do
             <button
               type="submit"
               class="project-button"
-              id="repository-import-submit"
+              id="project-import-submit"
               disabled={import_running?(@import)}
             >
               Start import
@@ -206,7 +206,7 @@ defmodule MicelioWeb.RepositoryLive.Import do
               <button
                 type="button"
                 class="project-button project-button-secondary"
-                id="repository-import-rollback"
+                id="project-import-rollback"
                 phx-click="rollback"
               >
                 Roll back import
@@ -219,17 +219,17 @@ defmodule MicelioWeb.RepositoryLive.Import do
     """
   end
 
-  defp import_form(repository, user, params \\ %{}) do
-    params = enrich_params(params, repository, user)
+  defp import_form(project, user, params \\ %{}) do
+    params = enrich_params(params, project, user)
 
     %ProjectImport{}
     |> Projects.change_project_import(params)
     |> to_form(as: :project_import)
   end
 
-  defp enrich_params(params, repository, user) do
+  defp enrich_params(params, project, user) do
     params
-    |> Map.put_new("project_id", repository.id)
+    |> Map.put_new("project_id", project.id)
     |> Map.put_new("user_id", user.id)
   end
 
@@ -268,9 +268,9 @@ defmodule MicelioWeb.RepositoryLive.Import do
     end
   end
 
-  defp stage_label("metadata"), do: "Repository metadata"
+  defp stage_label("metadata"), do: "Project metadata"
   defp stage_label("git_data_clone"), do: "Git data clone"
-  defp stage_label("validation"), do: "Repository validation"
+  defp stage_label("validation"), do: "Project validation"
   defp stage_label("issue_migration"), do: "Issue/PR migration"
   defp stage_label("finalization"), do: "Finalization"
   defp stage_label(stage), do: stage

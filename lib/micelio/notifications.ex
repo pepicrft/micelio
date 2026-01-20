@@ -1,6 +1,6 @@
 defmodule Micelio.Notifications do
   @moduledoc """
-  Email notifications for repository activity.
+  Email notifications for project activity.
   """
 
   alias Micelio.Accounts

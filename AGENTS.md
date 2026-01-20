@@ -2,6 +2,21 @@
 
 Micelio is a forge platform built with Elixir/Phoenix, Zig for CLI tools, and vanilla CSS for web UI.
 
+## IMPORTANT: Terminology
+
+**Always use "projects" instead of "repositories".** Micelio uses the term "projects" to refer to what Git calls repositories. This is intentional and must be followed consistently throughout the codebase, documentation, and UI.
+
+## IMPORTANT: Internationalization (i18n)
+
+**All user-facing strings must use gettext.** When adding or modifying UI text:
+
+1. Wrap strings with `gettext("...")` in templates and modules
+2. Run `mix gettext.extract` to extract new strings to POT files
+3. Run `mix gettext.merge priv/gettext` to update all locale PO files
+4. Ensure translations are provided for all supported locales: English (en), Korean (ko), Simplified Chinese (zh_CN), Traditional Chinese (zh_TW), Japanese (ja)
+
+Translation files are located in `priv/gettext/{locale}/LC_MESSAGES/`.
+
 - **Package Manager:** Elixir uses `mix`, Zig uses `zig`
 - **Build:** `mix compile`, `mix phx.server` for dev
 - **Test:** `mix test`

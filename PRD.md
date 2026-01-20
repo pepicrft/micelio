@@ -198,14 +198,14 @@ This section addresses critical challenges with AI-generated contributions ident
   - Measure and report execution time, resource usage, and test coverage delta
   - Auto-teardown environments after validation (no persistent cost for failed attempts)
 
-- [x] **Create AI Contribution Transparency System**
+- [ ] **Create AI Contribution Transparency System**
   - Add mandatory "AI-generated" / "AI-assisted" / "Human" badges on all contributions
   - Track and display which LLM model and version generated the code
   - Show token count consumed during generation for efficiency awareness
   - Implement cryptographic attestation for contribution origin claims
   - Display generation timestamp vs submission timestamp to detect stale AI outputs
 
-- [x] **Implement Agent Reputation & Trust Scoring**
+- [ ] **Implement Agent Reputation & Trust Scoring**
   - Calculate trust scores based on: landed contribution rate, review iteration count, test pass rate
   - Decay reputation over time (recent quality matters more than historical)
   - Separate reputation tracks for different contribution types (docs, tests, features, fixes)
@@ -296,12 +296,6 @@ Enable contributors to fund AI agent compute for projects. Instead of paying mai
 - Quality review: tokens for thorough reviews
 - Bug reports: tokens for verified bugs
 - Community help: tokens for answered questions
-- Mechanics (v1):
-  - Landed prompt request: round(tokens_used * 0.1), clamp 25..500
-  - Prompt review: length / 6, clamp 15..75 (min 120 chars)
-  - Planned: landed sessions base 40 + 3 per change (clamp 25..400)
-  - Planned: verified bug reports (low 15, medium 35, high 75, critical 120)
-  - Planned: community help base 10 + maintainer bonus 10
 
 **Anti-Gaming**
 - Require minimum account age to contribute
@@ -369,23 +363,23 @@ Interface (conceptual):
 
 ### Next Steps
 
-- [x] Design token pool schema and API
-- [x] Build contribution flow (deposit tokens to project)
-- [x] Create task budget allocation UI
-- [x] Integrate with agent runners (check budget before run)
-- [x] Build usage dashboard (tokens spent, value delivered)
-- [x] Design earn-by-contributing mechanics
+- [ ] Design token pool schema and API
+- [ ] Build contribution flow (deposit tokens to project)
+- [ ] Create task budget allocation UI
+- [ ] Integrate with agent runners (check budget before run)
+- [ ] Build usage dashboard (tokens spent, value delivered)
+- [ ] Design earn-by-contributing mechanics
 
 ### Prompt Request System
 
-- [x] Design Prompt Request Schema and UI
+- [ ] Design Prompt Request Schema and UI
   - Create data model for PromptRequest: prompt text + execution result + metadata
   - Store the original prompt alongside the diff (not just the diff)
   - Track execution environment, token cost, and execution time
   - Show "prompt lineage" to understand how prompts evolved
   - Design UI that shows prompt → result relationship clearly
 
-- [x] Implement Ephemeral Validation Environment
+- [ ] Implement Ephemeral Validation Environment
   - Build isolated sandbox where agent proposals run before becoming PRs
   - Execute tests, linting, type checking automatically
   - Generate quality scores based on: test pass rate, compilation success, style compliance
@@ -393,14 +387,14 @@ Interface (conceptual):
   - Reject automatically if quality thresholds not met (no human review burden)
   - Persist sandbox execution logs for debugging failed attempts
 
-- [x] Create Prompt-to-PR Flow
+- [ ] Create Prompt-to-PR Flow
   - Agent submits PromptRequest instead of direct PR
   - PromptRequest runs in ephemeral environment with full test suite
   - If quality passes: convert to PR with full context attached
   - If quality fails: return feedback to agent for revision (no human involved)
   - Maintain "generation depth" to prevent AI-to-AI cascades
 
-- [x] Build Quality Gate Pipeline
+- [ ] Build Quality Gate Pipeline
   - Automatic test execution (unit, integration, e2e)
   - Linting and style checking (Elixir formatter, Credo, Dialyzer)
   - Security scanning (semgrep, sobelow)
@@ -408,20 +402,20 @@ Interface (conceptual):
   - Output quality score 0-100 for each category
   - Require minimum aggregate score to land
 
-- [x] Design Prompt Registry and Provenance
+- [ ] Design Prompt Registry and Provenance
   - Store all prompts in searchable registry
   - Track which prompts lead to landed contributions vs rejected
   - Enable maintainers to "curate" high-quality prompts
   - Create "prompt templates" for common tasks (bug fix, feature add, refactor)
   - Allow agents to reference approved prompt templates
 
-- [x] Implement Human-in-the-Loop Feedback Loop
+- [ ] Implement Human-in-the-Loop Feedback Loop
   - When ephemeral validation fails, return structured feedback to agent
   - Feedback includes: specific failures, suggested fixes, quality score breakdown
   - Agents can iterate without human intervention until quality met
   - Track iteration count as quality signal (high iterations = lower quality)
 
-- [x] Build Contribution Confidence Scoring
+- [ ] Build Contribution Confidence Scoring
   - Calculate confidence score based on: ephemeral validation score, agent reputation, token efficiency
   - High confidence = fast-track review (trusted)
   - Low confidence = require human review
@@ -432,7 +426,7 @@ Interface (conceptual):
 
 Allow users to configure their own S3-compatible storage for artifacts (OG images, themes, agent outputs, etc.) instead of using the instance-level bucket. This enables data sovereignty, cost control, and compliance requirements.
 
-- [x] **Design S3Config Schema and Migration**
+- [ ] **Design S3Config Schema and Migration**
   - Create `s3_configs` table with fields:
     - `id` (UUID primary key)
     - `user_id` (foreign key to users, unique constraint for one config per user)
@@ -449,7 +443,7 @@ Allow users to configure their own S3-compatible storage for artifacts (OG image
   - Add database index on `user_id` for fast lookups
   - Create Ecto schema with Cloak.Ecto.Binary for encrypted fields
 
-- [x] **Implement Credential Encryption with Cloak**
+- [ ] **Implement Credential Encryption with Cloak**
   - Add `cloak` and `cloak_ecto` dependencies
   - Configure Cloak vault with AES-GCM-256 encryption
   - Store encryption key in environment variable (CLOAK_KEY)
@@ -458,7 +452,7 @@ Allow users to configure their own S3-compatible storage for artifacts (OG image
   - Ensure encrypted fields are never logged or exposed in error messages
   - Add `redact: true` to credential fields in Ecto schema
 
-- [x] **Build S3 Credential Validation Service**
+- [ ] **Build S3 Credential Validation Service**
   - Create `Micelio.Storage.S3Validator` module
   - Implement validation steps:
     1. Parse and validate endpoint URL format
@@ -475,7 +469,7 @@ Allow users to configure their own S3-compatible storage for artifacts (OG image
   - Implement timeout and retry logic for validation requests
   - Cache validation results to avoid repeated checks
 
-- [x] **Create Fallback Logic for Storage Operations**
+- [ ] **Create Fallback Logic for Storage Operations**
   - Create `Micelio.Storage` behaviour with `put/3`, `get/2`, `delete/2`, `url/2`
   - Implement `Micelio.Storage.UserS3` adapter that:
     1. Looks up user's S3Config (with caching via ETS or ConCache)
@@ -488,7 +482,7 @@ Allow users to configure their own S3-compatible storage for artifacts (OG image
   - Add telemetry events for storage operations (success, failure, fallback)
   - Create background job to periodically revalidate S3 configs
 
-- [x] **Build S3 Configuration UI**
+- [ ] **Build S3 Configuration UI**
   - Create LiveView at `/settings/storage` for S3 configuration
   - Form fields with provider-specific dynamic sections:
     - Provider dropdown (shows/hides relevant fields based on selection)
@@ -505,7 +499,7 @@ Allow users to configure their own S3-compatible storage for artifacts (OG image
   - Help text explaining each provider's setup requirements
   - Link to documentation for obtaining credentials from each provider
 
-- [x] **Document Security Considerations and IAM Policies**
+- [ ] **Document Security Considerations and IAM Policies**
   - Create documentation for recommended IAM policies per provider:
     - AWS: minimal IAM policy with only required S3 permissions
     - R2: API token with Object Read & Write permissions
@@ -525,7 +519,7 @@ Allow users to configure their own S3-compatible storage for artifacts (OG image
 
 Implement a self-hosted error tracking system that persists errors to the database with admin-only access. This avoids external service dependencies while providing visibility into application health.
 
-- [x] **Choose Error Tracking Approach: Custom + Sentry (Hybrid)**
+- [ ] **Choose Error Tracking Approach: Custom + Sentry (Hybrid)**
   - **Recommended approach**: Custom database persistence + optional Sentry integration
   - Rationale:
     - Custom DB storage ensures errors are queryable and never leave the instance
@@ -536,7 +530,7 @@ Implement a self-hosted error tracking system that persists errors to the databa
   - Alternative considered: Rollbax (Rollbar), AppSignal, Honeybadger
     - All require external services, not ideal for self-hosted forge
 
-- [x] **Design Error Schema and Database Storage**
+- [ ] **Design Error Schema and Database Storage**
   - Create `errors` table with fields:
     - `id` (UUID primary key)
     - `fingerprint` (string, hash of error for deduplication)
@@ -557,7 +551,7 @@ Implement a self-hosted error tracking system that persists errors to the databa
   - Implement retention policy: auto-delete errors older than N days (configurable)
   - Create `Micelio.Errors.Error` Ecto schema
 
-- [x] **Implement Error Capture Pipeline**
+- [ ] **Implement Error Capture Pipeline**
   - Create `Micelio.Errors.Capture` module with:
     - `capture_exception/2` - capture any exception with context
     - `capture_message/3` - capture string message with severity
@@ -573,7 +567,7 @@ Implement a self-hosted error tracking system that persists errors to the databa
   - Implement async capture via `Task.Supervisor` to avoid blocking requests
   - Add telemetry events for error capture metrics
 
-- [x] **Add LiveView Error Boundaries**
+- [ ] **Add LiveView Error Boundaries**
   - Implement `Micelio.ErrorBoundary` component wrapper
   - Catch `{:EXIT, ...}` and render fallback UI instead of crashing
   - Capture error to database with LiveView context:
@@ -585,7 +579,7 @@ Implement a self-hosted error tracking system that persists errors to the databa
   - Create error boundary for agent progress LiveView specifically
   - Document pattern for wrapping components in error boundaries
 
-- [x] **Capture Agent and Background Job Errors**
+- [ ] **Capture Agent and Background Job Errors**
   - Hook into Oban telemetry events:
     - `:oban, :job, :exception` - job crashed
     - `:oban, :job, :discard` - job discarded after max attempts
@@ -598,7 +592,7 @@ Implement a self-hosted error tracking system that persists errors to the databa
   - Implement `Micelio.Errors.AgentReporter` for agent-specific crashes
   - Add correlation ID to trace errors across job retries
 
-- [x] **Build Admin Error Dashboard**
+- [ ] **Build Admin Error Dashboard**
   - Create admin-only LiveView at `/admin/errors`
   - Dashboard views:
     - **Overview**: error count by severity (last 24h, 7d, 30d), trend charts
@@ -620,7 +614,7 @@ Implement a self-hosted error tracking system that persists errors to the databa
   - Show affected users count per error
   - Require admin role (`is_admin: true`) for all error routes
 
-- [x] **Implement Error Notifications**
+- [ ] **Implement Error Notifications**
   - Create `Micelio.Errors.Notifier` module
   - Notification triggers:
     - First occurrence of new error fingerprint (severity >= error)
@@ -641,7 +635,7 @@ Implement a self-hosted error tracking system that persists errors to the databa
   - Create admin settings page for notification preferences
   - Support quiet hours configuration (no notifications during certain times)
 
-- [x] **Add Rate Limiting and Retention Policies**
+- [ ] **Add Rate Limiting and Retention Policies**
   - Implement error capture rate limiting:
     - Max 100 errors per minute per error kind
     - Max 1000 total errors per minute instance-wide
@@ -719,28 +713,28 @@ Once structured data rendering is working, explore:
 
 #### Implementation Roadmap
 
-- [x] **Design Session Event Schema**
+- [ ] **Design Session Event Schema**
   - Define event types: `status`, `progress`, `output`, `error`, `artifact`
   - Include timestamps, source info, structured payload
   - Create JSON schema for validation
 
-- [x] **Build Event Capture Layer**
+- [ ] **Build Event Capture Layer**
   - Agent SDK integration for event output
   - Capture stdout/stderr as structured events (auto-convert for unformatted output)
   - Write events to session artifact storage
 
-- [x] **Create Event Streaming API**
+- [ ] **Create Event Streaming API**
   - Server-Sent Events (SSE) or WebSocket for real-time updates
   - Filter events by type and session
   - Handle reconnection and missed events
 
-- [x] **Build Event Viewer UI**
+- [ ] **Build Event Viewer UI**
   - Real-time event display component
   - Filter by event type
   - Visual indicators for different event types
   - Expandable details for structured payloads
 
-- [x] **Add Rich Rendering**
+- [ ] **Add Rich Rendering**
   - Support inline images from artifact events
   - Progress bars for long-running operations
   - Collapsible output sections
@@ -806,11 +800,11 @@ Sapling is a distributed version control system developed by Meta, designed for 
 
 #### Next Steps
 
-- [x] Install and benchmark Sapling vs Git for mic workflows
-- [x] Test stacking workflow with simulated agent sessions
-- [x] Evaluate Git interoperability for gradual migration
-- [x] Design integration layer between mic and Sapling
-- [x] Create proof-of-concept for agent commit workflow
+- [ ] Install and benchmark Sapling vs Git for mic workflows
+- [ ] Test stacking workflow with simulated agent sessions
+- [ ] Evaluate Git interoperability for gradual migration
+- [ ] Design integration layer between mic and Sapling
+- [ ] Create proof-of-concept for agent commit workflow
 
 ### Ephemeral Environments for Coding and CI
 
@@ -993,137 +987,83 @@ Inspired by Servo's CI system (https://www.azabani.com/2025/12/18/shoestring-web
 
 #### Next Steps
 
-- [x] Research Firecracker benchmarking vs containers
-- [x] Prototype Nomad + Firecracker setup on test hardware
-- [x] Build proof-of-concept image builder with Packer
-- [x] Design Session Manager API
-- [x] Implement fallback to Fly.io Machines
-- [x] Benchmark cost/performance vs GitHub Actions
-- [x] Create integration design for mic
+- [ ] Research Firecracker benchmarking vs containers
+- [ ] Prototype Nomad + Firecracker setup on test hardware
+- [ ] Build proof-of-concept image builder with Packer
+- [ ] Design Session Manager API
+- [ ] Implement fallback to Fly.io Machines
+- [ ] Benchmark cost/performance vs GitHub Actions
+- [ ] Create integration design for mic
 
-### Developer Experience Improvements (Inspired by Google Monorepo)
+### Webhooks System (GitHub-Inspired)
 
-Based on learnings from Google Piper/Citc workflow patterns.
+Extend the existing webhook support with a comprehensive, GitHub-inspired webhooks system for project events.
 
-#### Workspace Profiles
+#### Goals
+- Provide reliable, secure webhook delivery for project events
+- Enable third-party integrations (CI/CD, Slack, Discord, custom services)
+- Give users visibility into webhook delivery status and debugging tools
 
-Define which projects you're actively working on, similar to `citc sync`:
+#### Events to Support
+- **Session events**: session.started, session.landed, session.aborted
+- **Project events**: project.created, project.updated, project.deleted, project.starred
+- **Branch events**: branch.created, branch.deleted, branch.protected
+- **Collaboration events**: fork.created, member.added, member.removed
+- **Comment events**: comment.created (for future code review support)
 
-- [ ] **Design Workspace Profile Schema**
-  - Create `workspace_profiles` table:
-    - `id`, `user_id`, `name`, `project_handles` (array)
-    - `is_default` (boolean)
-    - `created_at`, `updated_at`
-  - API endpoints for CRUD operations on profiles
-  - UI for managing workspace profiles
+#### Webhook Payload Structure
+```json
+{
+  "id": "uuid",
+  "event": "session.landed",
+  "timestamp": "ISO8601",
+  "project": {
+    "id": "uuid",
+    "handle": "my-project",
+    "name": "My Project",
+    "visibility": "public"
+  },
+  "organization": {
+    "id": "uuid",
+    "handle": "my-org"
+  },
+  "sender": {
+    "id": "uuid",
+    "handle": "username"
+  },
+  "payload": {
+    // Event-specific data
+  }
+}
+```
 
-- [ ] **Implement Workspace Switching**
-  - Add `hif workspace use <profile-name>` command
-  - Mount only projects in active profile
-  - Reduce cognitive load by hiding inactive projects
+#### Security
+- **Secret-based HMAC signatures**: Sign payloads with X-Micelio-Signature-256 header
+- **IP allowlisting**: Optional webhook source IP filtering
+- **TLS verification**: Require HTTPS endpoints (configurable for dev)
+- **Rate limiting**: Limit webhook delivery rate per project
 
-- [ ] **Auto-Workspace Detection**
-  - Detect project context from current directory
-  - Automatically switch to matching workspace
-  - Persist workspace preference per project
+#### Delivery & Reliability
+- **Retry policy**: Retry failed deliveries with exponential backoff (1m, 5m, 30m, 2h, 24h)
+- **Delivery logs**: Store last 30 days of delivery attempts with response codes
+- **Recent deliveries UI**: Show delivery status, response time, and response body
+- **Manual redeliver**: Allow users to redeliver any past webhook event
+- **Timeout handling**: 30-second timeout for webhook responses
 
-#### LLM-Powered CodeSearch
+#### Management UI (per-project settings)
+- List all configured webhooks with active/inactive status
+- Create/edit webhook: URL, secret, event selection
+- View delivery history per webhook with filtering
+- Test webhook: Send a ping event to verify connectivity
+- Disable/enable webhooks without deleting configuration
 
-Global search with semantic understanding, inspired by Google's CodeSearch:
-
-- [ ] **Implement Semantic Search Index**
-  - Use embeddings model for code (e.g., CodeBERT, StarCoder)
-  - Index all public project files
-  - Store embeddings in vector database (pgvector or external)
-
-- [ ] **Natural Language Search UI**
-  - Search box accepting natural language queries
-  - "Find where authentication is handled"
-  - Return relevant code sections with explanations
-
-- [ ] **Semantic Code Navigation**
-  - "Find similar functions to this one"
-  - "Find all places that call this API"
-  - Cross-project reference finding
-
-- [ ] **Search Results Ranking**
-  - Rank by relevance, recency, popularity
-  - Highlight match context
-  - Show file path and project information
-
-#### Smart Prefetch
-
-Anticipate which files will be needed based on workflow patterns:
-
-- [ ] **Analyze User Workflow Patterns**
-  - Track which files are opened together
-  - Learn common navigation patterns
-  - Build prefetch model based on usage
-
-- [ ] **Predictive File Prefetching**
-  - Prefetch files likely to be opened next
-  - Background fetch during idle time
-  - Warm cache for common operations
-
-- [ ] **Project Structure Prefetch**
-  - Prefetch directory structure on mount
-  - Populate file tree without full download
-  - Lazy-load file contents on expand
-
-- [ ] **Build/Test Dependency Prefetch**
-  - Anticipate files needed for compilation
-  - Prefetch dependencies before build starts
-  - Parallel fetch during configuration
-
-#### Permission-Aware Views
-
-Users only see projects they have access to (inspired by Google's per-team access):
-
-- [ ] **Implement View Filters**
-  - Filter project lists by user permissions
-  - Hide inaccessible projects from search results
-  - Show "Access Denied" message for unauthorized access
-
-- [ ] **Access Request Workflow**
-  - UI to request access to restricted projects
-  - Notification to project maintainers
-  - Approval/rejection flow
-
-- [ ] **Organization-Based Permission Scoping**
-  - Permissions inherited from organization membership
-  - Team-based access control lists
-  - Role-based permissions (viewer, contributor, admin)
-
-- [ ] **Audit Logging for Access Attempts**
-  - Log unauthorized access attempts
-  - Track who tried to access what
-  - Security monitoring dashboard
-
-#### Integration with mic CLI
-
-Expose new features through mic CLI:
-
-- [ ] **Add Workspace Commands**
-  - `hif workspace list` - List all profiles
-  - `hif workspace create <name> <projects...>` - Create profile
-  - `hif workspace use <name>` - Switch active workspace
-
-- [ ] **Add Search Commands**
-  - `hif search "query"` - Global search across all accessible projects
-  - `hif search --semantic "find authentication logic"` - Semantic search
-
-- [ ] **Add Cache Management**
-  - `hif cache stats` - Show cache usage
-  - `hif cache clean` - Clear local cache
-  - `hif cache prefetch <path>` - Manually prefetch
-
-#### Performance Goals
-
-Inspired by Google's Citc performance targets:
-
-- **File open latency**: <100ms for cached files
-- **File open latency**: <500ms for remote files (first access)
-- **Search response**: <1s for semantic search
-- **Cache efficiency**: >80% cache hit rate
-- **Memory usage**: <10GB local cache for typical workflow
-
+#### Tasks
+- [ ] Extend webhook schema with delivery tracking fields
+- [ ] Implement HMAC signature generation for payloads
+- [ ] Create Oban job for reliable webhook delivery with retries
+- [ ] Add delivery logging (webhook_deliveries table)
+- [ ] Build webhook management UI with delivery history
+- [ ] Add ping/test endpoint functionality
+- [ ] Implement manual redeliver action
+- [ ] Add webhook delivery metrics to project insights
+- [ ] Create documentation for webhook payloads and integration

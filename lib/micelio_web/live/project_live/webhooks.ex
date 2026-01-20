@@ -1,4 +1,4 @@
-defmodule MicelioWeb.RepositoryLive.Webhooks do
+defmodule MicelioWeb.ProjectLive.Webhooks do
   use MicelioWeb, :live_view
 
   alias Micelio.Authorization
@@ -8,41 +8,41 @@ defmodule MicelioWeb.RepositoryLive.Webhooks do
   alias MicelioWeb.PageMeta
 
   @impl true
-  def mount(%{"account" => account_handle, "repository" => repository_handle}, _session, socket) do
+  def mount(%{"account" => account_handle, "project" => project_handle}, _session, socket) do
     case Projects.get_project_for_user_by_handle(
            socket.assigns.current_user,
            account_handle,
-           repository_handle
+           project_handle
          ) do
-      {:ok, repository, organization} ->
-        if Authorization.authorize(:project_update, socket.assigns.current_user, repository) ==
+      {:ok, project, organization} ->
+        if Authorization.authorize(:project_update, socket.assigns.current_user, project) ==
              :ok do
           socket =
             socket
-            |> assign(:page_title, "Repository webhooks")
+            |> assign(:page_title, "Project webhooks")
             |> PageMeta.assign(
-              description: "Manage repository webhooks.",
+              description: "Manage project webhooks.",
               canonical_url:
-                url(~p"/#{organization.account.handle}/#{repository.handle}/settings/webhooks")
+                url(~p"/#{organization.account.handle}/#{project.handle}/settings/webhooks")
             )
-            |> assign(:repository, repository)
+            |> assign(:project, project)
             |> assign(:organization, organization)
-            |> assign(:webhooks, Webhooks.list_webhooks_for_project(repository.id))
-            |> assign(:form, webhook_form(repository))
+            |> assign(:webhooks, Webhooks.list_webhooks_for_project(project.id))
+            |> assign(:form, webhook_form(project))
 
           {:ok, socket}
         else
           {:ok,
            socket
-           |> put_flash(:error, "You do not have access to this repository.")
-           |> push_navigate(to: ~p"/#{account_handle}/#{repository_handle}")}
+           |> put_flash(:error, "You do not have access to this project.")
+           |> push_navigate(to: ~p"/#{account_handle}/#{project_handle}")}
         end
 
       {:error, _reason} ->
         {:ok,
          socket
-         |> put_flash(:error, "Repository not found.")
-         |> push_navigate(to: ~p"/#{account_handle}/#{repository_handle}")}
+         |> put_flash(:error, "Project not found.")
+         |> push_navigate(to: ~p"/#{account_handle}/#{project_handle}")}
     end
   end
 
@@ -50,7 +50,7 @@ defmodule MicelioWeb.RepositoryLive.Webhooks do
   def handle_event("validate", %{"webhook" => params}, socket) do
     changeset =
       %Webhook{}
-      |> Webhooks.change_webhook(params_with_project(params, socket.assigns.repository.id))
+      |> Webhooks.change_webhook(params_with_project(params, socket.assigns.project.id))
       |> Map.put(:action, :validate)
 
     {:noreply, assign(socket, form: to_form(changeset, as: :webhook))}
@@ -61,25 +61,25 @@ defmodule MicelioWeb.RepositoryLive.Webhooks do
     if Authorization.authorize(
          :project_update,
          socket.assigns.current_user,
-         socket.assigns.repository
+         socket.assigns.project
        ) ==
          :ok do
-      attrs = params_with_project(params, socket.assigns.repository.id)
+      attrs = params_with_project(params, socket.assigns.project.id)
 
       case Webhooks.create_webhook(attrs, user: socket.assigns.current_user) do
         {:ok, _webhook} ->
           {:noreply,
            socket
            |> put_flash(:info, "Webhook created successfully.")
-           |> assign(:webhooks, Webhooks.list_webhooks_for_project(socket.assigns.repository.id))
-           |> assign(:form, webhook_form(socket.assigns.repository))}
+           |> assign(:webhooks, Webhooks.list_webhooks_for_project(socket.assigns.project.id))
+           |> assign(:form, webhook_form(socket.assigns.project))}
 
         {:error, changeset} ->
           {:noreply,
            assign(socket, form: to_form(Map.put(changeset, :action, :validate), as: :webhook))}
       end
     else
-      {:noreply, put_flash(socket, :error, "You do not have access to this repository.")}
+      {:noreply, put_flash(socket, :error, "You do not have access to this project.")}
     end
   end
 
@@ -88,10 +88,10 @@ defmodule MicelioWeb.RepositoryLive.Webhooks do
     if Authorization.authorize(
          :project_update,
          socket.assigns.current_user,
-         socket.assigns.repository
+         socket.assigns.project
        ) ==
          :ok do
-      case Webhooks.get_webhook_for_project(socket.assigns.repository.id, webhook_id) do
+      case Webhooks.get_webhook_for_project(socket.assigns.project.id, webhook_id) do
         %Webhook{} = webhook ->
           case Webhooks.update_webhook(webhook, %{active: !webhook.active},
                  user: socket.assigns.current_user
@@ -102,7 +102,7 @@ defmodule MicelioWeb.RepositoryLive.Webhooks do
                |> put_flash(:info, "Webhook updated successfully.")
                |> assign(
                  :webhooks,
-                 Webhooks.list_webhooks_for_project(socket.assigns.repository.id)
+                 Webhooks.list_webhooks_for_project(socket.assigns.project.id)
                )}
 
             {:error, _changeset} ->
@@ -113,7 +113,7 @@ defmodule MicelioWeb.RepositoryLive.Webhooks do
           {:noreply, put_flash(socket, :error, "Webhook not found.")}
       end
     else
-      {:noreply, put_flash(socket, :error, "You do not have access to this repository.")}
+      {:noreply, put_flash(socket, :error, "You do not have access to this project.")}
     end
   end
 
@@ -122,10 +122,10 @@ defmodule MicelioWeb.RepositoryLive.Webhooks do
     if Authorization.authorize(
          :project_update,
          socket.assigns.current_user,
-         socket.assigns.repository
+         socket.assigns.project
        ) ==
          :ok do
-      case Webhooks.get_webhook_for_project(socket.assigns.repository.id, webhook_id) do
+      case Webhooks.get_webhook_for_project(socket.assigns.project.id, webhook_id) do
         %Webhook{} = webhook ->
           case Webhooks.delete_webhook(webhook, user: socket.assigns.current_user) do
             {:ok, _webhook} ->
@@ -134,7 +134,7 @@ defmodule MicelioWeb.RepositoryLive.Webhooks do
                |> put_flash(:info, "Webhook deleted successfully.")
                |> assign(
                  :webhooks,
-                 Webhooks.list_webhooks_for_project(socket.assigns.repository.id)
+                 Webhooks.list_webhooks_for_project(socket.assigns.project.id)
                )}
 
             {:error, _reason} ->
@@ -145,7 +145,7 @@ defmodule MicelioWeb.RepositoryLive.Webhooks do
           {:noreply, put_flash(socket, :error, "Webhook not found.")}
       end
     else
-      {:noreply, put_flash(socket, :error, "You do not have access to this repository.")}
+      {:noreply, put_flash(socket, :error, "You do not have access to this project.")}
     end
   end
 
@@ -159,17 +159,17 @@ defmodule MicelioWeb.RepositoryLive.Webhooks do
     >
       <div class="webhooks-container">
         <.header>
-          Repository webhooks
+          Project webhooks
           <:subtitle>
             <p>
-              {@organization.account.handle}/{@repository.handle}
+              {@organization.account.handle}/{@project.handle}
             </p>
           </:subtitle>
           <:actions>
             <.link
-              navigate={~p"/#{@organization.account.handle}/#{@repository.handle}/settings"}
+              navigate={~p"/#{@organization.account.handle}/#{@project.handle}/settings"}
               class="project-button project-button-secondary"
-              id="repository-settings-link"
+              id="project-settings-link"
             >
               Settings
             </.link>
@@ -283,9 +283,9 @@ defmodule MicelioWeb.RepositoryLive.Webhooks do
     """
   end
 
-  defp webhook_form(repository) do
+  defp webhook_form(project) do
     %Webhook{events: ["push"]}
-    |> Webhooks.change_webhook(%{project_id: repository.id})
+    |> Webhooks.change_webhook(%{project_id: project.id})
     |> to_form(as: :webhook)
   end
 

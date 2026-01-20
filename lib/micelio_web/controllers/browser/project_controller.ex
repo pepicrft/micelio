@@ -13,10 +13,28 @@ defmodule MicelioWeb.Browser.ProjectController do
   alias Micelio.Sessions
   alias Micelio.Sessions.Blame
   alias Micelio.Storage
+  alias MicelioWeb.Badges.ProjectBadge
   alias MicelioWeb.CodeHighlighter
   alias MicelioWeb.Markdown
   alias MicelioWeb.PageMeta
   alias MicelioWeb.SchemaOrg
+
+  def badge(conn, _params) do
+    with account when not is_nil(account) <- conn.assigns.selected_account,
+         project when not is_nil(project) <- conn.assigns.selected_project,
+         :ok <- Authorization.authorize(:project_read, conn.assigns.current_user, project) do
+      stars = Projects.count_project_stars(project)
+      label = "#{account.handle}/#{project.handle}"
+      message = "#{stars} stars"
+
+      conn
+      |> put_resp_content_type("image/svg+xml")
+      |> put_resp_header("cache-control", "public, max-age=300")
+      |> send_resp(200, ProjectBadge.render(label, message))
+    else
+      _ -> send_resp(conn, 404, "Not found")
+    end
+  end
 
   def show(conn, %{"account" => account_handle, "project" => project_handle}) do
     render_tree(conn, account_handle, project_handle, "")
@@ -345,7 +363,7 @@ defmodule MicelioWeb.Browser.ProjectController do
 
     fork_organizations =
       if user do
-        Accounts.list_organizations_for_user_with_role(user, "admin")
+        Accounts.list_organizations_for_user_with_role(user, :admin)
       else
         []
       end
@@ -441,7 +459,7 @@ defmodule MicelioWeb.Browser.ProjectController do
     org_id = normalize_fork_org_id(get_in(params, ["fork", "organization_id"]))
 
     organizations =
-      Accounts.list_organizations_for_user_with_role(user, "admin")
+      Accounts.list_organizations_for_user_with_role(user, :admin)
 
     case Enum.find(organizations, fn organization -> organization.id == org_id end) do
       %Accounts.Organization{} = organization -> {:ok, organization}

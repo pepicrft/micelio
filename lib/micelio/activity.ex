@@ -36,7 +36,7 @@ defmodule Micelio.Activity do
       case organization_ids do
         nil ->
           user
-          |> Accounts.list_organizations_for_user_with_role("admin")
+          |> Accounts.list_organizations_for_user_with_role(:admin)
           |> Enum.map(& &1.id)
 
         ids ->

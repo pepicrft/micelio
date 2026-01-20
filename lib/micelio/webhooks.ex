@@ -1,6 +1,6 @@
 defmodule Micelio.Webhooks do
   @moduledoc """
-  Manage repository webhooks and deliver repository events.
+  Manage project webhooks and deliver project events.
   """
 
   import Ecto.Query

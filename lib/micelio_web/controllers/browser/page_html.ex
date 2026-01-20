@@ -5,6 +5,7 @@ defmodule MicelioWeb.Browser.PageHTML do
   See the `page_html` directory for all templates available.
   """
   use MicelioWeb, :html
+  use Gettext, backend: MicelioWeb.Gettext
 
   embed_templates "page_html/*"
 
@@ -16,13 +17,13 @@ defmodule MicelioWeb.Browser.PageHTML do
     ~H"""
     <section class="home-popular" id="popular-projects">
       <div class="home-popular-header">
-        <h2 class="home-popular-title">Popular projects</h2>
-        <p class="home-popular-subtitle">Explore what the community is building.</p>
+        <h2 class="home-popular-title">{gettext("Popular projects")}</h2>
+        <p class="home-popular-subtitle">{gettext("Explore what the community is building.")}</p>
       </div>
 
       <%= if Enum.empty?(@projects) do %>
         <p class="home-popular-empty" id="popular-projects-empty">
-          No public projects yet.
+          {gettext("No public projects yet.")}
         </p>
       <% else %>
         <div class="home-popular-grid" id="popular-projects-list">
@@ -44,26 +45,26 @@ defmodule MicelioWeb.Browser.PageHTML do
                 {project.organization.account.handle}/{project.handle}
               </p>
               <p class="home-popular-description">
-                {project.description || "No description yet."}
+                {project.description || gettext("No description yet.")}
               </p>
               <div class="home-popular-meta">
                 <span class="home-popular-owner">
-                  Owner: {project.organization.account.handle}
+                  {gettext("Owner:")} {project.organization.account.handle}
                 </span>
-                <span class="home-popular-stars">Stars: {project.star_count || 0}</span>
+                <span class="home-popular-stars">{gettext("Stars:")} {project.star_count || 0}</span>
               </div>
             </div>
           </article>
         </div>
 
-        <nav class="home-popular-pagination" aria-label="Popular projects pagination">
+        <nav class="home-popular-pagination" aria-label={gettext("Popular projects pagination")}>
           <%= if @page > 1 do %>
             <a
               class="home-popular-page-link"
               id="popular-projects-prev"
               href={~p"/?popular_page=#{@page - 1}"}
             >
-              Previous
+              {gettext("Previous")}
             </a>
           <% end %>
           <%= if @has_more do %>
@@ -72,7 +73,7 @@ defmodule MicelioWeb.Browser.PageHTML do
               id="popular-projects-next"
               href={~p"/?popular_page=#{@page + 1}"}
             >
-              Next
+              {gettext("Next")}
             </a>
           <% end %>
         </nav>

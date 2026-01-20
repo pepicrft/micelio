@@ -23,6 +23,7 @@ defmodule MicelioWeb.Router do
     plug(:protect_from_forgery)
     plug(:put_secure_browser_headers)
     plug(MicelioWeb.Plugs.OpenGraphCacheBuster)
+    plug(MicelioWeb.LocalePlug)
     plug(MicelioWeb.AuthenticationPlug)
     plug(MicelioWeb.Plugs.RateLimitPlug, limit: 200, window_ms: 60_000, bucket_prefix: "browser")
   end
@@ -78,7 +79,7 @@ defmodule MicelioWeb.Router do
 
   pipeline :load_resources do
     plug(MicelioWeb.ResourcePlug, :load_account)
-    plug(MicelioWeb.ResourcePlug, :load_repository)
+    plug(MicelioWeb.ResourcePlug, :load_project)
   end
 
   pipeline :og_image do
@@ -321,20 +322,20 @@ defmodule MicelioWeb.Router do
   scope "/", MicelioWeb do
     pipe_through([:browser, :require_auth, :load_resources])
 
-    live_session :repository_settings,
+    live_session :project_settings,
       on_mount: [{MicelioWeb.LiveAuth, :require_auth}, MicelioWeb.LiveOpenGraphCacheBuster] do
-      live("/:account/:repository/settings", RepositoryLive.Settings, :edit)
-      live("/:account/:repository/settings/import", RepositoryLive.Import, :edit)
-      live("/:account/:repository/settings/webhooks", RepositoryLive.Webhooks, :index)
+      live("/:account/:project/settings", ProjectLive.Settings, :edit)
+      live("/:account/:project/settings/import", ProjectLive.Import, :edit)
+      live("/:account/:project/settings/webhooks", ProjectLive.Webhooks, :index)
     end
   end
 
   scope "/", MicelioWeb.Browser do
     pipe_through([:browser, :require_auth, :load_resources])
 
-    post("/:account/:repository/star", RepositoryController, :toggle_star)
-    post("/:account/:repository/fork", RepositoryController, :fork)
-    post("/:account/:repository/token-contributions", RepositoryController, :contribute_tokens)
+    post("/:account/:project/star", ProjectController, :toggle_star)
+    post("/:account/:project/fork", ProjectController, :fork)
+    post("/:account/:project/token-contributions", ProjectController, :contribute_tokens)
   end
 
   scope "/og", MicelioWeb.Browser do
@@ -348,7 +349,20 @@ defmodule MicelioWeb.Router do
 
     live_session :public,
       on_mount: [{MicelioWeb.LiveAuth, :current_user}, MicelioWeb.LiveOpenGraphCacheBuster] do
-      live("/:account/:repository/agents", AgentLive.Index, :index)
+      live("/:account/:project/agents", AgentLive.Index, :index)
+    end
+  end
+
+  # Locale-prefixed marketing routes (for SEO and explicit locale selection)
+  for locale <- ~w(ko zh_CN zh_TW ja) do
+    scope "/#{locale}", MicelioWeb.Browser do
+      pipe_through([:browser])
+
+      get("/", PageController, :home)
+      get("/privacy", LegalController, :privacy)
+      get("/terms", LegalController, :terms)
+      get("/cookies", LegalController, :cookies)
+      get("/impressum", LegalController, :impressum)
     end
   end
 
@@ -364,10 +378,10 @@ defmodule MicelioWeb.Router do
     get("/search", SearchController, :index)
 
     get("/:account", AccountController, :show)
-    get("/:account/:repository/badge.svg", RepositoryController, :badge)
-    get("/:account/:repository/tree/*path", RepositoryController, :tree)
-    get("/:account/:repository/blob/*path", RepositoryController, :blob)
-    get("/:account/:repository/blame/*path", RepositoryController, :blame)
-    get("/:account/:repository", RepositoryController, :show)
+    get("/:account/:project/badge.svg", ProjectController, :badge)
+    get("/:account/:project/tree/*path", ProjectController, :tree)
+    get("/:account/:project/blob/*path", ProjectController, :blob)
+    get("/:account/:project/blame/*path", ProjectController, :blame)
+    get("/:account/:project", ProjectController, :show)
   end
 end

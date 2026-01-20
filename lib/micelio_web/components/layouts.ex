@@ -4,6 +4,7 @@ defmodule MicelioWeb.Layouts do
   used by your application.
   """
   use MicelioWeb, :html
+  use Gettext, backend: MicelioWeb.Gettext
 
   # Embed all files in layouts/* within this module.
   # The default root.html.heex file contains the HTML
@@ -51,9 +52,9 @@ defmodule MicelioWeb.Layouts do
             <a href="/">micelio</a>
           </span>
 
-          <a href={~p"/blog"}>blog</a>
-          <a href={~p"/changelog"}>changelog</a>
-          <a href={~p"/search"}>search</a>
+          <a href={~p"/blog"}>{gettext("blog")}</a>
+          <a href={~p"/changelog"}>{gettext("changelog")}</a>
+          <a href={~p"/search"}>{gettext("search")}</a>
         </div>
 
         <div class="navbar-right">
@@ -61,27 +62,27 @@ defmodule MicelioWeb.Layouts do
             id="theme-toggle"
             type="button"
             class="navbar-theme-toggle"
-            aria-label="Toggle theme"
+            aria-label={gettext("Toggle theme")}
           >
-            theme
+            {gettext("theme")}
           </button>
 
           <%= if assigns[:current_user] do %>
             <%= if Micelio.Admin.admin_user?(assigns.current_user) do %>
-              <a href={~p"/admin"}>admin</a>
+              <a href={~p"/admin"}>{gettext("admin")}</a>
             <% end %>
-            <a href={~p"/projects"}>projects</a>
+            <a href={~p"/projects"}>{gettext("projects")}</a>
             <form action={~p"/auth/logout"} method="post" class="navbar-logout-form">
               <input type="hidden" name="_csrf_token" value={Phoenix.Controller.get_csrf_token()} />
               <input type="hidden" name="_method" value="delete" />
-              <button type="submit" class="navbar-link-button">logout</button>
+              <button type="submit" class="navbar-link-button">{gettext("logout")}</button>
             </form>
 
             <a
               href={~p"/account"}
               class="navbar-user-avatar"
               id="navbar-user"
-              aria-label={"Account (@#{assigns.current_user.account.handle})"}
+              aria-label={gettext("Account (@%{handle})", handle: assigns.current_user.account.handle)}
               title={"@#{assigns.current_user.account.handle}"}
             >
               <img
@@ -96,7 +97,7 @@ defmodule MicelioWeb.Layouts do
             </a>
           <% else %>
             <a href={~p"/auth/login"} class="navbar-cta hidden-small">
-              Get started
+              {gettext("Get started")}
               <span class="icon">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 512">
                   <path d="M0 384.662V127.338c0-17.818 21.543-26.741 34.142-14.142l128.662 128.662c7.81 7.81 7.81 20.474 0 28.284L34.142 398.804C21.543 411.404 0 402.48 0 384.662z" />
@@ -116,16 +117,23 @@ defmodule MicelioWeb.Layouts do
     </main>
 
     <footer class="site-footer" id="site-footer">
-      <nav class="site-footer-nav" aria-label="Legal">
-        <a href={~p"/terms"}>terms</a>
-        <a href={~p"/privacy"}>privacy</a>
-        <a href={~p"/cookies"}>cookies</a>
-        <a href={~p"/impressum"}>impressum</a>
+      <nav class="site-footer-nav" aria-label={gettext("Legal")}>
+        <a href={~p"/terms"}>{gettext("terms")}</a>
+        <a href={~p"/privacy"}>{gettext("privacy")}</a>
+        <a href={~p"/cookies"}>{gettext("cookies")}</a>
+        <a href={~p"/impressum"}>{gettext("impressum")}</a>
       </nav>
+
+      <div class="site-footer-locale">
+        <.language_selector
+          current_locale={assigns[:locale] || "en"}
+          current_path={assigns[:current_path] || "/"}
+        />
+      </div>
 
       <%= if personality = Micelio.Theme.daily_personality() do %>
         <div class="site-footer-personality" id="daily-personality">
-          Daily personality: {personality.name}. {personality.description}
+          {gettext("Daily personality: %{name}. %{description}", name: personality.name, description: personality.description)}
         </div>
       <% end %>
 

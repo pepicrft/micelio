@@ -6,17 +6,17 @@
     current_user={assigns[:current_user]}
   >
     <div class="home-container">
-      <h1 class="home-title">Welcome back, {@current_user.email}</h1>
+      <h1 class="home-title">{gettext("Welcome back, %{email}", email: @current_user.email)}</h1>
       <p class="home-tagline">
-        Ready to work on your projects?
+        {gettext("Ready to work on your projects?")}
       </p>
 
       <div class="home-actions">
         <a href={~p"/projects"} class="home-btn home-btn--primary">
-          View Projects
+          {gettext("View Projects")}
         </a>
         <a href={~p"/projects/new"} class="home-btn home-btn--secondary">
-          New Project
+          {gettext("New Project")}
         </a>
       </div>
 
@@ -39,71 +39,65 @@
         <div class="home-main">
           <div class="home-overview">
             <p>
-              <strong>Welcome to Micelio!</strong>
-              Micelio is the open source, agent-first software versioning forge
-              the future has been waiting for.
+              <strong>{gettext("Welcome to Micelio!")}</strong>
+              {gettext("Micelio is the open source, agent-first software versioning forge the future has been waiting for.")}
             </p>
             <p>
-              Micelio is both a CLI (<code>mic</code>) and a forge, fully open source under
+              {gettext("Micelio is both a CLI")} (<code>mic</code>) {gettext("and a forge, fully open source under")}
               <a href="https://github.com/micelio/micelio/blob/main/LICENSE">MPL-2.0</a>.
-              Micelio is to <code>mic</code> what GitHub is to <code>git</code>.
+              {gettext("Micelio is to")} <code>mic</code> {gettext("what GitHub is to")} <code>git</code>.
             </p>
             <ul>
               <li>
-                Built for hundreds of AI agents working concurrently on massive codebases
+                {gettext("Built for hundreds of AI agents working concurrently on massive codebases")}
               </li>
-              <li>Sessions capture goal, reasoning, and changes together</li>
-              <li>Forge-first architecture with object storage at the core</li>
-              <li>Scales to billions of files and hundreds of thousands of landings per day</li>
+              <li>{gettext("Sessions capture goal, reasoning, and changes together")}</li>
+              <li>{gettext("Forge-first architecture with object storage at the core")}</li>
+              <li>{gettext("Scales to billions of files and hundreds of thousands of landings per day")}</li>
               <li>
-                Inspired by <a href="https://ai.google/research/pubs/pub45424">Google Piper</a>, <a href="https://engineering.fb.com/2019/05/06/developer-tools/making-monorepo-development-faster/">Meta Sapling</a>, <a href="https://www.turbopuffer.com/">Turbopuffer</a>, and
+                {gettext("Inspired by")}
+                <a href="https://ai.google/research/pubs/pub45424">Google Piper</a>,
+                <a href="https://engineering.fb.com/2019/05/06/developer-tools/making-monorepo-development-faster/">Meta Sapling</a>,
+                <a href="https://www.turbopuffer.com/">Turbopuffer</a>, {gettext("and")}
                 <a href="https://www.warpstream.com/">WarpStream</a>
               </li>
             </ul>
           </div>
 
           <div class="home-feature">
-            <h3 class="home-feature-title">Agent-Native by Design</h3>
+            <h3 class="home-feature-title">{gettext("Agent-Native by Design")}</h3>
             <p class="home-feature-description">
-              Sessions capture goal, reasoning, and changes together. Built for hundreds
-              of AI agents working concurrently, with stateless compute that auto-scales
-              based on demand.
+              {gettext("Sessions capture goal, reasoning, and changes together. Built for hundreds of AI agents working concurrently, with stateless compute that auto-scales based on demand.")}
             </p>
           </div>
 
           <div class="home-feature">
-            <h3 class="home-feature-title">Checks</h3>
+            <h3 class="home-feature-title">{gettext("Checks")}</h3>
             <p class="home-feature-description">
-              Nix-native checks run locally with the exact derivations that power remote execution.
-              Content-addressed caches keep results consistent and fast, so a green check locally is the
-              same check everywhere—no centralized queue required.
+              {gettext("Nix-native checks run locally with the exact derivations that power remote execution. Content-addressed caches keep results consistent and fast, so a green check locally is the same check everywhere - no centralized queue required.")}
             </p>
           </div>
 
           <div class="home-feature">
-            <h3 class="home-feature-title">Human + AI Collaboration</h3>
+            <h3 class="home-feature-title">{gettext("Human + AI Collaboration")}</h3>
             <p class="home-feature-description">
-              Designed for a future where humans review, not write most code.
-              Conversation, decisions, and changes are unified in one workflow.
+              {gettext("Designed for a future where humans review, not write most code. Conversation, decisions, and changes are unified in one workflow.")}
             </p>
           </div>
         </div>
 
         <div class="home-sidebar">
           <div class="home-feature">
-            <h3 class="home-feature-title">Massive Scale</h3>
+            <h3 class="home-feature-title">{gettext("Massive Scale")}</h3>
             <p class="home-feature-description">
-              Targets Google/Meta scale: 1B+ files, 500k+ landings per day,
-              100k+ concurrent sessions. Object storage-first architecture
-              with O(log n) operations.
+              {gettext("Targets Google/Meta scale: 1B+ files, 500k+ landings per day, 100k+ concurrent sessions. Object storage-first architecture with O(log n) operations.")}
             </p>
           </div>
 
           <div class="home-feature">
-            <h3 class="home-feature-title">Forge-First</h3>
+            <h3 class="home-feature-title">{gettext("Forge-First")}</h3>
             <p class="home-feature-description">
-              The forge is the source of truth, with optional local disk mirrors. Coordinator-free
-              landing with content-addressed conditional writes. No single bottleneck.
+              {gettext("The forge is the source of truth, with optional local disk mirrors. Coordinator-free landing with content-addressed conditional writes. No single bottleneck.")}
             </p>
           </div>
         </div>
