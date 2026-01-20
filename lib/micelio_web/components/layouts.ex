@@ -117,7 +117,10 @@ defmodule MicelioWeb.Layouts do
 
     <footer class="site-footer" id="site-footer">
       <nav class="site-footer-nav" aria-label="Legal">
-        <a href={~p"/legal"}>legal</a>
+        <a href={~p"/terms"}>terms</a>
+        <a href={~p"/privacy"}>privacy</a>
+        <a href={~p"/cookies"}>cookies</a>
+        <a href={~p"/impressum"}>impressum</a>
       </nav>
 
       <%= if personality = Micelio.Theme.daily_personality() do %>
