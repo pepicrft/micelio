@@ -802,7 +802,7 @@ Sapling is a distributed version control system developed by Meta, designed for 
 
 #### Next Steps
 
-- [ ] Install and benchmark Sapling vs Git for mic workflows
+- [x] Install and benchmark Sapling vs Git for mic workflows
 - [ ] Test stacking workflow with simulated agent sessions
 - [ ] Evaluate Git interoperability for gradual migration
 - [ ] Design integration layer between mic and Sapling

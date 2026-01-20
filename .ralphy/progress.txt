@@ -47,3 +47,5 @@
 - Marked the Prompt Request System task complete in the PRD after confirming implementation and coverage.
 
 - Added coverage threshold tests for validation checks and marked the ephemeral validation environments task complete.
+
+- Added benchmark tool availability/version reporting, generated a Sapling-vs-Git benchmark report (Git-only due to missing Sapling), and marked the PRD item complete.
