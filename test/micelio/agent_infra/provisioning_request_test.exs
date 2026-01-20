@@ -117,4 +117,25 @@ defmodule Micelio.AgentInfra.ProvisioningRequestTest do
              max_open_files: 1024
            }
   end
+
+  test "from_plan/1 drops network when sandbox policy is none" do
+    attrs = %{
+      provider: "firecracker",
+      image: "micelio/agent-runner:latest",
+      cpu_cores: 2,
+      memory_mb: 2048,
+      disk_gb: 20,
+      network: "isolated",
+      sandbox: %{
+        network_policy: "none"
+      }
+    }
+
+    assert {:ok, plan} = AgentInfra.build_plan(attrs)
+
+    request = ProvisioningRequest.from_plan(plan)
+
+    assert request.network == nil
+    assert request.sandbox.network_policy == "none"
+  end
 end

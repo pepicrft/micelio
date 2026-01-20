@@ -32,3 +32,4 @@
 - Improved remote execution enqueue error handling to mark failed tasks when the supervisor is unavailable, added tests, and marked the PRD item complete.
 
 - Added LLM model selection to the new project form with organization-specific options and LiveView coverage.
+- Enforced sandbox network isolation by stripping network config when policy is none, added test coverage, and marked the PRD item complete.

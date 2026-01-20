@@ -156,7 +156,7 @@ Micelio is a minimalist, open-source git forge built with Elixir/Phoenix, design
 - [x] Design abstraction protocol for cloud-agnostic VM management
 - [x] Implement remote execution service for running CLI tools (Claude, Codex, etc.)
 - [x] Add support for tenant-configurable LLM models per project
-- [ ] Design secure sandboxed environment for agent execution
+- [x] Design secure sandboxed environment for agent execution
 - [ ] Implement resource quota and billing for agentic workflows
 
 ### Open Graph & SEO
