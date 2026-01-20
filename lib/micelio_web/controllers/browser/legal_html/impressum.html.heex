@@ -7,7 +7,8 @@
     <.header>
       Impressum
       <:subtitle>
-        Provider information for Micelio (Germany). Not legal advice.
+        Draft provider identification for a service operated from Germany (not legal advice).
+        Typically required under § 5 DDG and, where applicable, § 18 MStV.
       </:subtitle>
     </.header>
 
@@ -16,23 +17,40 @@
         <strong>Last updated:</strong> {Date.utc_today() |> Date.to_iso8601()}
       </p>
 
-      <h2>Operator</h2>
+      <h2>Provider</h2>
       <p>
-        <strong>{MicelioWeb.LegalInfo.operator_name()}</strong>
-        <br />
-        {MicelioWeb.LegalInfo.address_one_line()}<br />
+        <strong>Name:</strong> <em>{MicelioWeb.LegalInfo.operator_name()}</em> <br />
+        <strong>Address:</strong> {MicelioWeb.LegalInfo.address_one_line()} <br />
+        <strong>Email:</strong>
         <a href={"mailto:#{MicelioWeb.LegalInfo.legal_email()}"}>
           {MicelioWeb.LegalInfo.legal_email()}
         </a>
       </p>
 
-      <h2>Tax ID</h2>
-      <p>{MicelioWeb.LegalInfo.tax_id()}</p>
-
-      <h2>Content responsibility</h2>
+      <h2>Register information</h2>
       <p>
-        Users are solely responsible for their content. By using this service, you agree that you
-        are solely responsible for the content you host.
+        <strong>Commercial register:</strong> none<br />
+        <strong>Tax ID (IdNr.):</strong> {MicelioWeb.LegalInfo.tax_id()}
+      </p>
+
+      <h2>Responsible for content</h2>
+      <p>
+        <em>
+          {MicelioWeb.LegalInfo.operator_name()}, {MicelioWeb.LegalInfo.address_one_line()}
+        </em>
+      </p>
+
+      <h2>Dispute resolution</h2>
+      <p>
+        The European Commission provides a platform for online dispute resolution (ODR): <a
+          href="https://ec.europa.eu/consumers/odr"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          https://ec.europa.eu/consumers/odr
+        </a>.
+        We are not willing or obliged to participate in dispute resolution proceedings before a consumer
+        arbitration board.
       </p>
     </div>
   </div>
