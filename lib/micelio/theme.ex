@@ -24,15 +24,20 @@ defmodule Micelio.Theme do
   }
 
   @token_map %{
+    "text" => "--theme-ui-colors-text",
+    "background" => "--theme-ui-colors-background",
     "primary" => "--theme-ui-colors-primary",
     "secondary" => "--theme-ui-colors-secondary",
     "muted" => "--theme-ui-colors-muted",
     "border" => "--theme-ui-colors-border",
+    "link" => "--theme-ui-colors-link",
     "activity0" => "--theme-ui-colors-activity-0",
     "activity1" => "--theme-ui-colors-activity-1",
     "activity2" => "--theme-ui-colors-activity-2",
     "activity3" => "--theme-ui-colors-activity-3",
-    "activity4" => "--theme-ui-colors-activity-4"
+    "activity4" => "--theme-ui-colors-activity-4",
+    "fontBody" => "--theme-ui-fonts-body",
+    "fontMono" => "--theme-ui-fonts-mono"
   }
 
   @token_reverse for {key, value} <- @token_map, into: %{}, do: {value, key}

@@ -136,42 +136,67 @@ defmodule Micelio.Theme.Generator.LLM do
   defp prompt(date) do
     """
     Create a daily design personality for #{Date.to_iso8601(date)}.
-    Respond only with JSON containing:
-    - name: short theme name
-    - description: one sentence, ASCII only
-    - light: object with keys primary, secondary, muted, border, activity0..activity4
-    - dark: object with keys primary, secondary, muted, border, activity0..activity4
-    Activity colors must fade from light gray (activity0) to green (activity4).
-    Colors must be valid CSS color values.
-    No emojis. No extra text.
+
+    CRITICAL REQUIREMENTS:
+    1. WCAG AA contrast: text must have 4.5:1 contrast ratio against background
+    2. Light mode: dark text on light background (text should be near-black like #1a1a1a)
+    3. Dark mode: light text on dark background (text should be near-white like #f0f0f0)
+    4. Link colors must be visually distinct and have good contrast
+    5. Activity colors: gradient from gray (activity0) to vibrant green (activity4)
+
+    Color roles:
+    - text: main body text color (must contrast strongly with background)
+    - background: page background color
+    - primary: headings and emphasis (similar contrast to text)
+    - secondary: subheadings and less prominent text
+    - muted: placeholder text, disabled states
+    - border: dividers and borders
+    - link: hyperlink color (must be distinct and accessible)
+    - activity0-4: contribution graph colors (gray to green gradient)
+
+    Font choices (use web-safe font stacks):
+    - fontBody: body text font stack (e.g., "Inter, system-ui, sans-serif")
+    - fontMono: code/monospace font stack (e.g., "ui-monospace, monospace")
+
+    Respond with JSON only. Name should be creative (2-3 words). Description one sentence, ASCII only. No emojis.
     """
   end
 
   defp color_schema do
     %{
+      text: %{type: "string"},
+      background: %{type: "string"},
       primary: %{type: "string"},
       secondary: %{type: "string"},
       muted: %{type: "string"},
       border: %{type: "string"},
+      link: %{type: "string"},
       activity0: %{type: "string"},
       activity1: %{type: "string"},
       activity2: %{type: "string"},
       activity3: %{type: "string"},
-      activity4: %{type: "string"}
+      activity4: %{type: "string"},
+      fontBody: %{type: "string"},
+      fontMono: %{type: "string"}
     }
   end
 
   defp required_color_keys do
     [
+      "text",
+      "background",
       "primary",
       "secondary",
       "muted",
       "border",
+      "link",
       "activity0",
       "activity1",
       "activity2",
       "activity3",
-      "activity4"
+      "activity4",
+      "fontBody",
+      "fontMono"
     ]
   end
 end
