@@ -24,6 +24,16 @@ defmodule Micelio.Accounts do
   def get_account(id), do: Repo.get(Account, id)
 
   @doc """
+  Gets an account by organization ID.
+  """
+  def get_account_by_organization_id(organization_id) do
+    case Repo.get_by(Account, organization_id: organization_id) do
+      nil -> {:error, :not_found}
+      account -> {:ok, account}
+    end
+  end
+
+  @doc """
   Gets an account by handle (case-insensitive).
   """
   def get_account_by_handle(handle) do
@@ -605,27 +615,23 @@ defmodule Micelio.Accounts do
   end
 
   @doc """
-  Returns a changeset for organization settings.
+  Returns a changeset for account settings (LLM models).
   """
-  def change_organization_settings(%Organization{} = organization, attrs \\ %{}) do
-    Organization.settings_changeset(organization, attrs)
+  def change_account_settings(%Account{} = account, attrs \\ %{}) do
+    Account.settings_changeset(account, attrs)
   end
 
   @doc """
-  Updates organization settings.
+  Updates account settings (LLM models).
   """
-  def update_organization_settings(%Organization{} = organization, attrs) do
-    organization
-    |> Organization.settings_changeset(attrs)
+  def update_account_settings(%Account{} = account, attrs) do
+    account
+    |> Account.settings_changeset(attrs)
     |> Repo.update()
   end
 
-  defp organization_attrs(name, attrs) do
-    %{
-      name: name,
-      llm_models: Map.get(attrs, :llm_models) || Map.get(attrs, "llm_models"),
-      llm_default_model: Map.get(attrs, :llm_default_model) || Map.get(attrs, "llm_default_model")
-    }
+  defp organization_attrs(name, _attrs) do
+    %{name: name}
   end
 
   defp do_create_organization(attrs) do

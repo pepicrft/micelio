@@ -3,8 +3,12 @@ defmodule Micelio.Accounts.Account do
 
   import Ecto.Changeset
 
+  alias Micelio.LLM
+
   schema "accounts" do
     field :handle, :string
+    field :llm_models, {:array, :string}
+    field :llm_default_model, :string
 
     belongs_to :user, Micelio.Accounts.User
     belongs_to :organization, Micelio.Accounts.Organization
@@ -80,6 +84,74 @@ defmodule Micelio.Accounts.Account do
         add_error(changeset, :base, "account must belong to either a user or an organization")
 
       true ->
+        changeset
+    end
+  end
+
+  @doc """
+  Changeset for updating account settings (LLM models).
+  """
+  def settings_changeset(account, attrs) do
+    account
+    |> cast(attrs, [:llm_models, :llm_default_model])
+    |> normalize_llm_models()
+    |> normalize_llm_default_model()
+    |> validate_llm_models()
+    |> validate_llm_default_model()
+  end
+
+  defp validate_llm_models(changeset) do
+    available = LLM.project_models()
+
+    case get_field(changeset, :llm_models) do
+      models when is_list(models) and models != [] and available != [] ->
+        invalid = models -- available
+
+        if invalid == [] do
+          changeset
+        else
+          add_error(
+            changeset,
+            :llm_models,
+            "contains unsupported models: #{Enum.join(invalid, ", ")}"
+          )
+        end
+
+      _ ->
+        changeset
+    end
+  end
+
+  defp normalize_llm_models(changeset) do
+    update_change(changeset, :llm_models, fn
+      models when is_list(models) -> Enum.reject(models, &(&1 in [nil, ""]))
+      models -> models
+    end)
+  end
+
+  defp normalize_llm_default_model(changeset) do
+    update_change(changeset, :llm_default_model, fn
+      "" -> nil
+      value -> value
+    end)
+  end
+
+  defp validate_llm_default_model(changeset) do
+    case get_field(changeset, :llm_default_model) do
+      default when is_binary(default) and default != "" ->
+        models =
+          case get_field(changeset, :llm_models) do
+            models when is_list(models) and models != [] -> models
+            _ -> LLM.project_models()
+          end
+
+        if models == [] or default in models do
+          changeset
+        else
+          add_error(changeset, :llm_default_model, "must be one of #{Enum.join(models, ", ")}")
+        end
+
+      _ ->
         changeset
     end
   end

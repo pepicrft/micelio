@@ -243,8 +243,8 @@ defmodule MicelioWeb.ProjectLive.New do
     ]
   end
 
-  defp llm_model_options(%Accounts.Organization{} = organization) do
-    LLM.project_model_options_for_organization(organization)
+  defp llm_model_options(%Accounts.Organization{account: account}) when not is_nil(account) do
+    LLM.project_model_options_for_account(account)
   end
 
   defp llm_model_options(_organization) do

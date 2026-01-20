@@ -12,16 +12,18 @@ defmodule MicelioWeb.OrganizationLive.Settings do
       {:ok, organization} ->
         if Authorization.authorize(:organization_update, socket.assigns.current_user, organization) ==
              :ok do
-          {form, llm_default_options} = build_form(organization, %{})
+          account = organization.account
+          {form, llm_default_options} = build_form(account, %{})
 
           socket =
             socket
             |> assign(:page_title, "Organization settings")
             |> PageMeta.assign(
               description: "Edit organization settings.",
-              canonical_url: url(~p"/organizations/#{organization.account.handle}/settings")
+              canonical_url: url(~p"/organizations/#{account.handle}/settings")
             )
             |> assign(:organization, organization)
+            |> assign(:account, account)
             |> assign(:form, form)
             |> assign(:llm_default_options, llm_default_options)
 
@@ -42,43 +44,43 @@ defmodule MicelioWeb.OrganizationLive.Settings do
   end
 
   @impl true
-  def handle_event("validate", %{"organization" => params}, socket) do
+  def handle_event("validate", %{"account" => params}, socket) do
     {changeset, llm_default_options} =
-      socket.assigns.organization
-      |> Accounts.change_organization_settings(params)
+      socket.assigns.account
+      |> Accounts.change_account_settings(params)
       |> Map.put(:action, :validate)
-      |> form_with_options(socket.assigns.organization)
+      |> form_with_options(socket.assigns.account)
 
     {:noreply,
      assign(socket,
-       form: to_form(changeset, as: :organization),
+       form: to_form(changeset, as: :account),
        llm_default_options: llm_default_options
      )}
   end
 
   @impl true
-  def handle_event("save", %{"organization" => params}, socket) do
+  def handle_event("save", %{"account" => params}, socket) do
     if Authorization.authorize(
          :organization_update,
          socket.assigns.current_user,
          socket.assigns.organization
        ) ==
          :ok do
-      case Accounts.update_organization_settings(socket.assigns.organization, params) do
-        {:ok, organization} ->
+      case Accounts.update_account_settings(socket.assigns.account, params) do
+        {:ok, account} ->
           {:noreply,
            socket
            |> put_flash(:info, "Organization updated successfully!")
-           |> push_navigate(to: ~p"/#{organization.account.handle}")}
+           |> push_navigate(to: ~p"/#{account.handle}")}
 
         {:error, changeset} ->
           {changeset, llm_default_options} =
             Map.put(changeset, :action, :validate)
-            |> form_with_options(socket.assigns.organization)
+            |> form_with_options(socket.assigns.account)
 
           {:noreply,
            assign(socket,
-             form: to_form(changeset, as: :organization),
+             form: to_form(changeset, as: :account),
              llm_default_options: llm_default_options
            )}
       end
@@ -100,7 +102,7 @@ defmodule MicelioWeb.OrganizationLive.Settings do
           Organization settings
           <:subtitle>
             <p>
-              {@organization.account.handle}
+              {@account.handle}
             </p>
           </:subtitle>
         </.header>
@@ -147,7 +149,7 @@ defmodule MicelioWeb.OrganizationLive.Settings do
               Save changes
             </button>
             <.link
-              navigate={~p"/#{@organization.account.handle}"}
+              navigate={~p"/#{@account.handle}"}
               class="project-button project-button-secondary"
               id="organization-settings-cancel"
             >
@@ -160,27 +162,27 @@ defmodule MicelioWeb.OrganizationLive.Settings do
     """
   end
 
-  defp build_form(organization, attrs) do
-    changeset = Accounts.change_organization_settings(organization, attrs)
-    {changeset, llm_default_options} = form_with_options(changeset, organization)
-    {to_form(changeset, as: :organization), llm_default_options}
+  defp build_form(account, attrs) do
+    changeset = Accounts.change_account_settings(account, attrs)
+    {changeset, llm_default_options} = form_with_options(changeset, account)
+    {to_form(changeset, as: :account), llm_default_options}
   end
 
-  defp form_with_options(changeset, organization) do
-    {changeset, llm_default_options(changeset, organization)}
+  defp form_with_options(changeset, account) do
+    {changeset, llm_default_options(changeset, account)}
   end
 
   defp llm_model_options do
     LLM.project_model_options()
   end
 
-  defp llm_default_options(changeset, organization) do
+  defp llm_default_options(changeset, account) do
     available = LLM.project_models()
 
     selected_models =
       case Ecto.Changeset.get_field(changeset, :llm_models) do
         models when is_list(models) and models != [] -> Enum.filter(models, &(&1 in available))
-        _ -> LLM.project_models_for_organization(organization)
+        _ -> LLM.project_models_for_account(account)
       end
 
     models = if selected_models == [], do: available, else: selected_models

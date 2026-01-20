@@ -216,7 +216,7 @@ defmodule MicelioWeb.RepositoryLive.Settings do
     ]
   end
 
-  defp llm_model_options(organization) do
-    LLM.project_model_options_for_organization(organization)
+  defp llm_model_options(%{account: account}) do
+    LLM.project_model_options_for_account(account)
   end
 end

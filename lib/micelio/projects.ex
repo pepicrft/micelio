@@ -768,11 +768,27 @@ defmodule Micelio.Projects do
     end
   end
 
-  defp llm_policy_opts(organization) do
+  defp llm_policy_opts(nil), do: []
+
+  defp llm_policy_opts(%Accounts.Organization{account: %Accounts.Account{} = account}) do
     [
-      llm_models: LLM.project_models_for_organization(organization),
-      llm_default: LLM.project_default_model_for_organization(organization)
+      llm_models: LLM.project_models_for_account(account),
+      llm_default: LLM.project_default_model_for_account(account)
     ]
+  end
+
+  defp llm_policy_opts(%Accounts.Organization{} = organization) do
+    # Account not preloaded, fetch it
+    case Accounts.get_account_by_organization_id(organization.id) do
+      {:ok, account} ->
+        [
+          llm_models: LLM.project_models_for_account(account),
+          llm_default: LLM.project_default_model_for_account(account)
+        ]
+
+      _ ->
+        []
+    end
   end
 
   defp create_fork_project(%Project{} = source, attrs, organization) do

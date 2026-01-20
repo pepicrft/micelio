@@ -6,8 +6,8 @@ defmodule Micelio.LLM do
     Application.get_env(:micelio, :project_llm_models, [])
   end
 
-  @doc "Returns configured LLM models for a specific organization."
-  def project_models_for_organization(%{llm_models: models}) when is_list(models) do
+  @doc "Returns configured LLM models for a specific account."
+  def project_models_for_account(%{llm_models: models}) when is_list(models) do
     available = project_models()
 
     models =
@@ -20,21 +20,21 @@ defmodule Micelio.LLM do
     if models == [], do: available, else: models
   end
 
-  def project_models_for_organization(_organization), do: project_models()
+  def project_models_for_account(_account), do: project_models()
 
   @doc "Returns the default LLM model for new projects."
   def project_default_model do
     Application.get_env(:micelio, :project_llm_default) || List.first(project_models())
   end
 
-  @doc "Returns the default LLM model for a specific organization."
-  def project_default_model_for_organization(%{llm_default_model: model} = organization)
+  @doc "Returns the default LLM model for a specific account."
+  def project_default_model_for_account(%{llm_default_model: model})
       when is_binary(model) and model != "" do
     model
   end
 
-  def project_default_model_for_organization(organization) do
-    project_models_for_organization(organization)
+  def project_default_model_for_account(account) do
+    project_models_for_account(account)
     |> List.first()
     |> case do
       nil -> project_default_model()
@@ -47,10 +47,10 @@ defmodule Micelio.LLM do
     Enum.map(project_models(), &{&1, &1})
   end
 
-  @doc "Returns select options for project LLM models by organization."
-  def project_model_options_for_organization(organization) do
-    organization
-    |> project_models_for_organization()
+  @doc "Returns select options for project LLM models by account."
+  def project_model_options_for_account(account) do
+    account
+    |> project_models_for_account()
     |> Enum.map(&{&1, &1})
   end
 end
