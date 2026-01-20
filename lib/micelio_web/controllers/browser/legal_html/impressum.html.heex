@@ -1,0 +1,39 @@
+<Layouts.app
+  flash={@flash}
+  current_scope={assigns[:current_scope]}
+  current_user={assigns[:current_user]}
+>
+  <div class="legal-container" id="impressum">
+    <.header>
+      Impressum
+      <:subtitle>
+        Provider information for Micelio (Germany). Not legal advice.
+      </:subtitle>
+    </.header>
+
+    <div class="legal-content">
+      <p class="legal-updated">
+        <strong>Last updated:</strong> {Date.utc_today() |> Date.to_iso8601()}
+      </p>
+
+      <h2>Operator</h2>
+      <p>
+        <strong>{MicelioWeb.LegalInfo.operator_name()}</strong>
+        <br />
+        {MicelioWeb.LegalInfo.address_one_line()}<br />
+        <a href={"mailto:#{MicelioWeb.LegalInfo.legal_email()}"}>
+          {MicelioWeb.LegalInfo.legal_email()}
+        </a>
+      </p>
+
+      <h2>Tax ID</h2>
+      <p>{MicelioWeb.LegalInfo.tax_id()}</p>
+
+      <h2>Content responsibility</h2>
+      <p>
+        Users are solely responsible for their content. By using this service, you agree that you
+        are solely responsible for the content you host.
+      </p>
+    </div>
+  </div>
+</Layouts.app>

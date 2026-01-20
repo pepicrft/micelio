@@ -1,0 +1,41 @@
+<Layouts.app
+  flash={@flash}
+  current_scope={assigns[:current_scope]}
+  current_user={assigns[:current_user]}
+>
+  <div class="legal-container" id="cookie-policy">
+    <.header>
+      Cookie Policy
+      <:subtitle>
+        Minimal notice about the cookies Micelio uses. Not legal advice.
+      </:subtitle>
+    </.header>
+
+    <div class="legal-content">
+      <p class="legal-updated">
+        <strong>Last updated:</strong> {Date.utc_today() |> Date.to_iso8601()}
+      </p>
+
+      <h2>Essential cookies only</h2>
+      <p>
+        We use essential cookies to keep you signed in, protect forms, and secure the service.
+        We do not use analytics or advertising cookies.
+      </p>
+      <ul>
+        <li>Session cookies for authentication.</li>
+        <li>Security cookies for CSRF protection.</li>
+      </ul>
+
+      <h2>Control</h2>
+      <p>
+        You can block cookies in your browser, but parts of the service may not work without them.
+      </p>
+
+      <h2>Your content and responsibility</h2>
+      <p>
+        Users are solely responsible for their content. By using this service, you agree that you
+        are solely responsible for the content you host.
+      </p>
+    </div>
+  </div>
+</Layouts.app>

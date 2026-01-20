@@ -357,7 +357,6 @@ defmodule MicelioWeb.Router do
 
     get("/", PageController, :home)
 
-    get("/legal", LegalController, :legal)
     get("/privacy", LegalController, :privacy)
     get("/terms", LegalController, :terms)
     get("/cookies", LegalController, :cookies)

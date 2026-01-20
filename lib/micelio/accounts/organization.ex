@@ -1,12 +1,9 @@
 defmodule Micelio.Accounts.Organization do
-  use Ecto.Schema
+  use Micelio.Schema
 
   import Ecto.Changeset
 
   alias Micelio.LLM
-
-  @primary_key {:id, :binary_id, autogenerate: true}
-  @foreign_key_type :binary_id
 
   schema "organizations" do
     field :name, :string

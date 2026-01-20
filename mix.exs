@@ -77,7 +77,8 @@ defmodule Micelio.MixProject do
       {:cloak_ecto, "~> 1.2"},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
-      {:sobelow, "~> 0.13", only: [:dev, :test], runtime: false}
+      {:sobelow, "~> 0.13", only: [:dev, :test], runtime: false},
+      {:uuid_v7, "~> 0.6"}
     ]
   end
 

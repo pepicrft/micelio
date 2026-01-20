@@ -1,10 +1,7 @@
 defmodule Micelio.AgentInfra.AgentUsageEvent do
-  use Ecto.Schema
+  use Micelio.Schema
 
   import Ecto.Changeset
-
-  @primary_key {:id, :binary_id, autogenerate: true}
-  @foreign_key_type :binary_id
 
   schema "agent_usage_events" do
     field :source, :string

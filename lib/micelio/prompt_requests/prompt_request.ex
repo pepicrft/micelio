@@ -1,5 +1,5 @@
 defmodule Micelio.PromptRequests.PromptRequest do
-  use Ecto.Schema
+  use Micelio.Schema
 
   import Ecto.Changeset
 
@@ -7,9 +7,6 @@ defmodule Micelio.PromptRequests.PromptRequest do
 
   @origin_values [:ai_generated, :ai_assisted, :human]
   @review_status_values [:pending, :accepted, :rejected]
-
-  @primary_key {:id, :binary_id, autogenerate: true}
-  @foreign_key_type :binary_id
 
   schema "prompt_requests" do
     field :title, :string

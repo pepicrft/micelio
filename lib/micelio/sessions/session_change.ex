@@ -12,12 +12,9 @@ defmodule Micelio.Sessions.SessionChange do
   This aligns with the mic philosophy: "Git tracks what. mic tracks why."
   The session provides the "why", and changes provide the "what".
   """
-  use Ecto.Schema
+  use Micelio.Schema
 
   import Ecto.Changeset
-
-  @primary_key {:id, :binary_id, autogenerate: true}
-  @foreign_key_type :binary_id
 
   @change_types ["added", "modified", "deleted"]
 

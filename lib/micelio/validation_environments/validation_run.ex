@@ -1,12 +1,9 @@
 defmodule Micelio.ValidationEnvironments.ValidationRun do
-  use Ecto.Schema
+  use Micelio.Schema
 
   import Ecto.Changeset
 
   @statuses [:pending, :running, :passed, :failed]
-
-  @primary_key {:id, :binary_id, autogenerate: true}
-  @foreign_key_type :binary_id
 
   schema "validation_runs" do
     field :status, Ecto.Enum, values: @statuses, default: :pending

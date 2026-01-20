@@ -1,12 +1,9 @@
 defmodule Micelio.OAuth.DeviceSession do
-  use Ecto.Schema
+  use Micelio.Schema
 
   import Ecto.Changeset
 
   alias Micelio.Accounts.User
-
-  @primary_key {:id, :binary_id, autogenerate: true}
-  @foreign_key_type :binary_id
 
   schema "device_sessions" do
     field :client_id, :string

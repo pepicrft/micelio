@@ -1,12 +1,9 @@
 defmodule Micelio.Accounts.Token do
-  use Ecto.Schema
+  use Micelio.Schema
 
   import Ecto.Changeset
 
   @token_validity_minutes 15
-
-  @primary_key {:id, :binary_id, autogenerate: true}
-  @foreign_key_type :binary_id
 
   schema "tokens" do
     field :token, :string

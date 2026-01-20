@@ -1,0 +1,40 @@
+<Layouts.app
+  flash={@flash}
+  current_scope={assigns[:current_scope]}
+  current_user={assigns[:current_user]}
+>
+  <div class="legal-container" id="terms-of-service">
+    <.header>
+      Terms of Service
+      <:subtitle>
+        Plain-language terms for using Micelio. Not legal advice.
+      </:subtitle>
+    </.header>
+
+    <div class="legal-content">
+      <p class="legal-updated">
+        <strong>Last updated:</strong> {Date.utc_today() |> Date.to_iso8601()}
+      </p>
+
+      <h2>Core terms</h2>
+      <ul>
+        <li>
+          Users are solely responsible for their content. By using this service, you agree that you
+          are solely responsible for the content you host.
+        </li>
+        <li>You must have the rights needed to upload or share content.</li>
+        <li>Do not misuse the service or attempt to break security.</li>
+        <li>We may suspend or remove content that violates these terms or the law.</li>
+        <li>The service is provided as-is, without warranties.</li>
+        <li>We may update these terms by posting a new version on this page.</li>
+      </ul>
+
+      <h2>Contact</h2>
+      <p>
+        For legal questions, email <a href={"mailto:#{MicelioWeb.LegalInfo.legal_email()}"}>
+          {MicelioWeb.LegalInfo.legal_email()}
+        </a>.
+      </p>
+    </div>
+  </div>
+</Layouts.app>

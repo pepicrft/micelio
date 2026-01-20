@@ -7,8 +7,9 @@ defmodule Micelio.OAuth.BorutaClient do
 
   import Ecto.Changeset
 
-  @primary_key {:id, :binary_id, autogenerate: false}
-  @foreign_key_type :binary_id
+  # Note: autogenerate: false because Boruta manages client IDs
+  @primary_key {:id, UUIDv7.Type, autogenerate: false}
+  @foreign_key_type UUIDv7.Type
 
   schema "clients" do
     field :secret, :string
