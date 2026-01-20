@@ -68,6 +68,8 @@ env:
     - S3_SECRET_ACCESS_KEY
     - TLS_CERT_PEM
     - TLS_KEY_PEM
+    - THEME_LLM_API_KEY
+    - THEME_LLM_MODEL
 
 accessories:
   registry:
