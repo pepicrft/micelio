@@ -347,6 +347,8 @@ pub fn land(allocator: std.mem.Allocator, server: []const u8) !void {
 
     switch (result) {
         .success => |data| {
+            defer allocator.free(data.session_id);
+
             std.debug.print("Session landed successfully!\n", .{});
             std.debug.print("Session ID: {s}\n", .{data.session_id});
             if (data.landing_position > 0) {
@@ -361,6 +363,11 @@ pub fn land(allocator: std.mem.Allocator, server: []const u8) !void {
             try clearOverlayDirectory(allocator);
         },
         .conflict => |data| {
+            defer {
+                for (data.paths) |p| allocator.free(p);
+                allocator.free(data.paths);
+            }
+
             std.debug.print("Error: Conflicts detected with upstream changes.\n", .{});
             std.debug.print("\nConflicting files:\n", .{});
             for (data.paths) |path| {
@@ -373,6 +380,8 @@ pub fn land(allocator: std.mem.Allocator, server: []const u8) !void {
             return error.ConflictsDetected;
         },
         .err => |message| {
+            defer allocator.free(message);
+
             std.debug.print("Error: {s}\n", .{message});
             return error.LandingFailed;
         },
