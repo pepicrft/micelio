@@ -3,14 +3,8 @@ const http = @import("http.zig");
 const config = @import("config.zig");
 
 const FirstParty = struct {
-    const client_id = "1d47586d-118b-4e13-9e75-a59ad588166a";
-    const client_secret = "onL33mlmq_cIt-TSsunTNu2zw3ucWgkq13C5gJwaudgdxq2yoBF8Hp9x_3iz3jC6";
+    const client_id = "hif";
     const domain = "micelio.dev";
-};
-
-pub const ClientCredentials = struct {
-    client_id: []const u8,
-    client_secret: []const u8,
 };
 
 pub const DeviceTokens = struct {
@@ -34,44 +28,8 @@ pub fn isFirstPartyWebUrl(web_url: []const u8) bool {
     return std.mem.endsWith(u8, host, "." ++ FirstParty.domain);
 }
 
-pub fn firstPartyCredentials() ClientCredentials {
-    return .{
-        .client_id = FirstParty.client_id,
-        .client_secret = FirstParty.client_secret,
-    };
-}
-
-pub fn registerDynamicClient(allocator: std.mem.Allocator, web_url: []const u8) !ClientCredentials {
-    var client = std.http.Client{ .allocator = allocator };
-    defer client.deinit();
-
-    const url = try std.fmt.allocPrint(allocator, "{s}/oauth/register", .{web_url});
-    defer allocator.free(url);
-
-    const payload = RegistrationRequest{
-        .client_name = "hif",
-        .redirect_uris = &[_][]const u8{},
-    };
-    const payload_bytes = try jsonEncode(allocator, payload);
-    defer allocator.free(payload_bytes);
-
-    const response = try http.postJson(allocator, &client, url, payload_bytes);
-    defer allocator.free(response.body);
-
-    if (response.status != .created) {
-        return error.AuthorizationFailed;
-    }
-
-    const parsed = try std.json.parseFromSlice(RegistrationResponse, allocator, response.body, .{
-        .ignore_unknown_fields = true,
-        .allocate = .alloc_always,
-    });
-    defer parsed.deinit();
-
-    return .{
-        .client_id = try allocator.dupe(u8, parsed.value.client_id),
-        .client_secret = try allocator.dupe(u8, parsed.value.client_secret),
-    };
+pub fn firstPartyClientId() []const u8 {
+    return FirstParty.client_id;
 }
 
 pub const AuthFlow = struct {
@@ -87,7 +45,7 @@ pub const AuthFlow = struct {
     pub fn start(
         allocator: std.mem.Allocator,
         web_url: []const u8,
-        credentials: ?ClientCredentials,
+        client_id: ?[]const u8,
     ) !AuthFlow {
         var client = std.http.Client{ .allocator = allocator };
         defer client.deinit();
@@ -100,8 +58,7 @@ pub const AuthFlow = struct {
 
         const payload = StartRequest{
             .device_name = name,
-            .client_id = if (credentials) |creds| creds.client_id else null,
-            .client_secret = if (credentials) |creds| creds.client_secret else null,
+            .client_id = client_id,
         };
         const payload_bytes = try jsonEncode(allocator, payload);
         defer allocator.free(payload_bytes);
@@ -220,13 +177,13 @@ pub fn login(
     allocator: std.mem.Allocator,
     web_url: []const u8,
     grpc_url: []const u8,
-    credentials: ?ClientCredentials,
+    client_id: ?[]const u8,
 ) !void {
     var arena = std.heap.ArenaAllocator.init(allocator);
     defer arena.deinit();
     const arena_alloc = arena.allocator();
 
-    var flow = try AuthFlow.start(arena_alloc, web_url, credentials);
+    var flow = try AuthFlow.start(arena_alloc, web_url, client_id);
     defer flow.deinit();
 
     std.debug.print(
@@ -431,7 +388,6 @@ fn sleepSeconds(seconds: i64) !void {
 const StartRequest = struct {
     device_name: []const u8,
     client_id: ?[]const u8 = null,
-    client_secret: ?[]const u8 = null,
 };
 
 const PollRequest = struct {
@@ -457,14 +413,4 @@ const TokenResponse = struct {
 const ErrorResponse = struct {
     code: []const u8,
     description: ?[]const u8 = null,
-};
-
-const RegistrationRequest = struct {
-    client_name: []const u8,
-    redirect_uris: []const []const u8,
-};
-
-const RegistrationResponse = struct {
-    client_id: []const u8,
-    client_secret: []const u8,
 };

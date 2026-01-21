@@ -229,35 +229,12 @@ pub fn main() !void {
                 return error.NoGrpcUrl;
             };
 
-            var owned_client_id: ?[]const u8 = null;
-            var owned_client_secret: ?[]const u8 = null;
-            defer {
-                if (owned_client_id) |id| allocator.free(@constCast(id));
-                if (owned_client_secret) |secret| allocator.free(@constCast(secret));
-            }
+            const client_id: ?[]const u8 = if (auth.isFirstPartyWebUrl(web_url))
+                auth.firstPartyClientId()
+            else
+                server.client_id;
 
-            var credentials: ?auth.ClientCredentials = null;
-            if (auth.isFirstPartyWebUrl(web_url)) {
-                credentials = auth.firstPartyCredentials();
-            } else if (server.client_id != null and server.client_secret != null) {
-                credentials = .{
-                    .client_id = server.client_id.?,
-                    .client_secret = server.client_secret.?,
-                };
-            } else {
-                const registered = try auth.registerDynamicClient(allocator, web_url);
-                owned_client_id = registered.client_id;
-                owned_client_secret = registered.client_secret;
-                credentials = registered;
-
-                var updated = server;
-                updated.client_id = registered.client_id;
-                updated.client_secret = registered.client_secret;
-                try cfg.setServer(default_name, updated);
-            }
-
-            try auth.login(allocator, web_url, grpc_url, credentials);
-            if (cfg.dirty) try cfg.save();
+            try auth.login(allocator, web_url, grpc_url, client_id);
             return;
         }
 
