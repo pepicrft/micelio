@@ -1,26 +1,35 @@
 :root {
-  /* Theme UI - Colors */
-  --theme-ui-colors-text: #000000;
-  --theme-ui-colors-background: #ffffff;
-  --theme-ui-colors-primary: #000000;
-  --theme-ui-colors-secondary: #666666;
-  --theme-ui-colors-muted: #999999;
-  --theme-ui-colors-border: #e0e0e0;
-  --theme-ui-colors-danger: #b00020;
-  --theme-ui-colors-dangerText: var(--theme-ui-colors-background);
-  --theme-ui-colors-activity-0: #ebedf0;
-  --theme-ui-colors-activity-1: #9be9a8;
-  --theme-ui-colors-activity-2: #40c463;
-  --theme-ui-colors-activity-3: #30a14e;
-  --theme-ui-colors-activity-4: #216e39;
+  /* Theme UI - Colors (warm, minimal palette inspired by ampcode.com/chronicle) */
+  --theme-ui-colors-text: #0b0d0b;
+  --theme-ui-colors-background: #dfdfc1;
+  --theme-ui-colors-primary: #0b0d0b;
+  --theme-ui-colors-secondary: #595959;
+  --theme-ui-colors-muted: #7c7c7c;
+  --theme-ui-colors-border: #c9c9a8;
+  --theme-ui-colors-accent: #1588b2;
+  --theme-ui-colors-surface: #1c2520;
+  --theme-ui-colors-surfaceText: #dfdfc1;
+  --theme-ui-colors-danger: #c20a1a;
+  --theme-ui-colors-dangerText: #ffffff;
+  --theme-ui-colors-activity-0: #ebdbb2;
+  --theme-ui-colors-activity-1: #b8bb26;
+  --theme-ui-colors-activity-2: #98971a;
+  --theme-ui-colors-activity-3: #79740e;
+  --theme-ui-colors-activity-4: #5a5a0a;
 
-  /* Theme UI - Typography (single size) */
-  --theme-ui-fonts-body: system-ui, -apple-system, sans-serif;
-  --theme-ui-fonts-mono: ui-monospace, monospace;
+  /* Theme UI - Typography */
+  --theme-ui-fonts-heading: "Playfair Display", Georgia, serif;
+  --theme-ui-fonts-body: "Inter", system-ui, sans-serif;
+  --theme-ui-fonts-mono: "JetBrains Mono", ui-monospace, monospace;
   --theme-ui-fontSizes-body: 1rem;
+  --theme-ui-fontSizes-small: 0.875rem;
+  --theme-ui-fontSizes-label: 0.75rem;
   --theme-ui-fontWeights-body: 400;
-  --theme-ui-fontWeights-bold: 600;
+  --theme-ui-fontWeights-medium: 500;
+  --theme-ui-fontWeights-bold: 700;
   --theme-ui-lineHeights-body: 1.5;
+  --theme-ui-lineHeights-tight: 1.25;
+  --theme-ui-letterSpacing-label: 0.025em;
 
   /* Theme UI - Space */
   --theme-ui-space-1: 0.5rem;
@@ -44,53 +53,62 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --theme-ui-colors-text: #f5f5f5;
-    --theme-ui-colors-background: #0b0d10;
-    --theme-ui-colors-primary: #f5f5f5;
-    --theme-ui-colors-secondary: #b0b0b0;
-    --theme-ui-colors-muted: #8a8a8a;
-    --theme-ui-colors-border: #232a33;
-    --theme-ui-colors-danger: #ff6b6b;
-    --theme-ui-colors-dangerText: var(--theme-ui-colors-background);
-    --theme-ui-colors-activity-0: #ebedf0;
-    --theme-ui-colors-activity-1: #9be9a8;
-    --theme-ui-colors-activity-2: #40c463;
-    --theme-ui-colors-activity-3: #30a14e;
-    --theme-ui-colors-activity-4: #216e39;
+    --theme-ui-colors-text: #dfdfc1;
+    --theme-ui-colors-background: #1c2520;
+    --theme-ui-colors-primary: #dfdfc1;
+    --theme-ui-colors-secondary: #a8a8a8;
+    --theme-ui-colors-muted: #7c7c7c;
+    --theme-ui-colors-border: #3c4a44;
+    --theme-ui-colors-accent: #22d3ee;
+    --theme-ui-colors-surface: #dfdfc1;
+    --theme-ui-colors-surfaceText: #1c2520;
+    --theme-ui-colors-danger: #fb4934;
+    --theme-ui-colors-dangerText: #1c2520;
+    --theme-ui-colors-activity-0: #3c3836;
+    --theme-ui-colors-activity-1: #98971a;
+    --theme-ui-colors-activity-2: #b8bb26;
+    --theme-ui-colors-activity-3: #d5c4a1;
+    --theme-ui-colors-activity-4: #fbf1c7;
   }
 }
 
 :root[data-theme="light"] {
-  --theme-ui-colors-text: #000000;
-  --theme-ui-colors-background: #ffffff;
-  --theme-ui-colors-primary: #000000;
-  --theme-ui-colors-secondary: #666666;
-  --theme-ui-colors-muted: #999999;
-  --theme-ui-colors-border: #e0e0e0;
-  --theme-ui-colors-danger: #b00020;
-  --theme-ui-colors-dangerText: var(--theme-ui-colors-background);
-  --theme-ui-colors-activity-0: #ebedf0;
-  --theme-ui-colors-activity-1: #9be9a8;
-  --theme-ui-colors-activity-2: #40c463;
-  --theme-ui-colors-activity-3: #30a14e;
-  --theme-ui-colors-activity-4: #216e39;
+  --theme-ui-colors-text: #0b0d0b;
+  --theme-ui-colors-background: #dfdfc1;
+  --theme-ui-colors-primary: #0b0d0b;
+  --theme-ui-colors-secondary: #595959;
+  --theme-ui-colors-muted: #7c7c7c;
+  --theme-ui-colors-border: #c9c9a8;
+  --theme-ui-colors-accent: #1588b2;
+  --theme-ui-colors-surface: #1c2520;
+  --theme-ui-colors-surfaceText: #dfdfc1;
+  --theme-ui-colors-danger: #c20a1a;
+  --theme-ui-colors-dangerText: #ffffff;
+  --theme-ui-colors-activity-0: #ebdbb2;
+  --theme-ui-colors-activity-1: #b8bb26;
+  --theme-ui-colors-activity-2: #98971a;
+  --theme-ui-colors-activity-3: #79740e;
+  --theme-ui-colors-activity-4: #5a5a0a;
   color-scheme: light;
 }
 
 :root[data-theme="dark"] {
-  --theme-ui-colors-text: #f5f5f5;
-  --theme-ui-colors-background: #0b0d10;
-  --theme-ui-colors-primary: #f5f5f5;
-  --theme-ui-colors-secondary: #b0b0b0;
-  --theme-ui-colors-muted: #8a8a8a;
-  --theme-ui-colors-border: #232a33;
-  --theme-ui-colors-danger: #ff6b6b;
-  --theme-ui-colors-dangerText: var(--theme-ui-colors-background);
-  --theme-ui-colors-activity-0: #ebedf0;
-  --theme-ui-colors-activity-1: #9be9a8;
-  --theme-ui-colors-activity-2: #40c463;
-  --theme-ui-colors-activity-3: #30a14e;
-  --theme-ui-colors-activity-4: #216e39;
+  --theme-ui-colors-text: #dfdfc1;
+  --theme-ui-colors-background: #1c2520;
+  --theme-ui-colors-primary: #dfdfc1;
+  --theme-ui-colors-secondary: #a8a8a8;
+  --theme-ui-colors-muted: #7c7c7c;
+  --theme-ui-colors-border: #3c4a44;
+  --theme-ui-colors-accent: #22d3ee;
+  --theme-ui-colors-surface: #dfdfc1;
+  --theme-ui-colors-surfaceText: #1c2520;
+  --theme-ui-colors-danger: #fb4934;
+  --theme-ui-colors-dangerText: #1c2520;
+  --theme-ui-colors-activity-0: #3c3836;
+  --theme-ui-colors-activity-1: #98971a;
+  --theme-ui-colors-activity-2: #b8bb26;
+  --theme-ui-colors-activity-3: #d5c4a1;
+  --theme-ui-colors-activity-4: #fbf1c7;
   color-scheme: dark;
 }
 
@@ -240,7 +258,7 @@ main ol:not(.list) {
 }
 
 .page-header-title {
-  font-weight: var(--theme-ui-fontWeights-bold);
+  font-weight: var(--theme-ui-fontWeights-medium);
   color: var(--theme-ui-colors-text);
   overflow-wrap: anywhere;
   word-break: break-all;
@@ -279,15 +297,42 @@ main ol:not(.list) {
   }
 }
 
-/* Single font size for all elements */
-h1, h2, h3, h4, h5, h6,
+/* Typography - clean hierarchy */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--theme-ui-fonts-heading);
+  font-weight: var(--theme-ui-fontWeights-medium);
+  line-height: var(--theme-ui-lineHeights-tight);
+}
+
+h1 {
+  font-size: 1.75rem;
+}
+
+h2 {
+  font-size: 1.375rem;
+}
+
+h3 {
+  font-size: 1.125rem;
+}
+
+h4, h5, h6 {
+  font-size: var(--theme-ui-fontSizes-body);
+}
+
+/* Section labels - monospace uppercase style */
+.section-label {
+  font-family: var(--theme-ui-fonts-mono);
+  font-size: var(--theme-ui-fontSizes-label);
+  font-weight: var(--theme-ui-fontWeights-bold);
+  letter-spacing: var(--theme-ui-letterSpacing-label);
+  text-transform: uppercase;
+  color: var(--theme-ui-colors-secondary);
+}
+
 p, li, a, button, input, textarea, select {
   font-size: var(--theme-ui-fontSizes-body);
   line-height: var(--theme-ui-lineHeights-body);
-}
-
-h1, h2, h3, h4, h5, h6 {
-  font-weight: var(--theme-ui-fontWeights-bold);
 }
 
 /* Links */

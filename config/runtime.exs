@@ -444,23 +444,6 @@ if og_cache_busters != %{} do
   config :micelio, :open_graph_cache_busters, og_cache_busters
 end
 
-if config_env() == :prod do
-  theme_llm_endpoint =
-    System.get_env("THEME_LLM_ENDPOINT") || "https://api.openai.com/v1/chat/completions"
-
-  theme_llm_api_key = System.get_env("THEME_LLM_API_KEY")
-  theme_llm_model = System.get_env("THEME_LLM_MODEL") || "gpt-4.1-mini"
-  theme_storage_prefix = System.get_env("THEME_STORAGE_PREFIX") || "themes/daily"
-
-  config :micelio, Micelio.Theme,
-    storage: Micelio.Theme.Storage.S3,
-    generator: Micelio.Theme.Generator.LLM,
-    prefix: theme_storage_prefix,
-    llm_endpoint: theme_llm_endpoint,
-    llm_api_key: theme_llm_api_key,
-    llm_model: theme_llm_model
-end
-
 if grpc_enabled do
   config :micelio, Micelio.GRPC,
     enabled: true,

@@ -29,12 +29,6 @@ config :micelio, Micelio.Storage,
   #
   local_path: Path.join(System.tmp_dir(), "micelio/storage")
 
-config :micelio, Micelio.Theme,
-  storage: Micelio.Theme.Storage.Local,
-  generator: Micelio.Theme.Generator.Static,
-  prefix: "themes/daily",
-  local_path: Path.join([System.tmp_dir!(), "micelio", "themes"])
-
 config :micelio, MicelioWeb.Endpoint,
   http: [ip: {127, 0, 0, 1}],
   check_origin: false,

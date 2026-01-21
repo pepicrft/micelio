@@ -6,6 +6,19 @@ defmodule MicelioWeb.Layouts do
   use MicelioWeb, :html
   use Gettext, backend: MicelioWeb.Gettext
 
+  @non_english_locales ~w(ko zh_CN zh_TW ja)
+
+  # Helper to build locale-aware paths for marketing pages
+  defp locale_path(assigns, path) do
+    locale = assigns[:locale] || "en"
+
+    if locale in @non_english_locales do
+      "/#{locale}#{path}"
+    else
+      path
+    end
+  end
+
   # Embed all files in layouts/* within this module.
   # The default root.html.heex file contains the HTML
   # skeleton of your application, namely HTML headers
@@ -35,6 +48,9 @@ defmodule MicelioWeb.Layouts do
   attr :current_user, :map,
     default: nil,
     doc: "the current authenticated user"
+
+  attr :locale, :string, default: "en", doc: "the current locale"
+  attr :current_path, :string, default: "/", doc: "the current path without locale prefix"
 
   slot :inner_block, required: true
 
@@ -82,7 +98,9 @@ defmodule MicelioWeb.Layouts do
               href={~p"/account"}
               class="navbar-user-avatar"
               id="navbar-user"
-              aria-label={gettext("Account (@%{handle})", handle: assigns.current_user.account.handle)}
+              aria-label={
+                gettext("Account (@%{handle})", handle: assigns.current_user.account.handle)
+              }
               title={"@#{assigns.current_user.account.handle}"}
             >
               <img
@@ -118,24 +136,18 @@ defmodule MicelioWeb.Layouts do
 
     <footer class="site-footer" id="site-footer">
       <nav class="site-footer-nav" aria-label={gettext("Legal")}>
-        <a href={~p"/terms"}>{gettext("terms")}</a>
-        <a href={~p"/privacy"}>{gettext("privacy")}</a>
-        <a href={~p"/cookies"}>{gettext("cookies")}</a>
-        <a href={~p"/impressum"}>{gettext("impressum")}</a>
+        <a href={locale_path(assigns, "/terms")}>{gettext("terms")}</a>
+        <a href={locale_path(assigns, "/privacy")}>{gettext("privacy")}</a>
+        <a href={locale_path(assigns, "/cookies")}>{gettext("cookies")}</a>
+        <a href={locale_path(assigns, "/impressum")}>{gettext("impressum")}</a>
       </nav>
 
       <div class="site-footer-locale">
         <.language_selector
-          current_locale={assigns[:locale] || "en"}
-          current_path={assigns[:current_path] || "/"}
+          current_locale={@locale}
+          current_path={@current_path}
         />
       </div>
-
-      <%= if personality = Micelio.Theme.daily_personality() do %>
-        <div class="site-footer-personality" id="daily-personality">
-          {gettext("Daily personality: %{name}. %{description}", name: personality.name, description: personality.description)}
-        </div>
-      <% end %>
 
       <div class="site-footer-meta">
         © {Date.utc_today().year} Micelio

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang={assigns[:locale] || "en"}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -44,12 +44,13 @@
     <% end %>
 
     <link rel="icon" type="image/x-icon" href={~p"/favicon.ico"} />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=JetBrains+Mono:wght@400;700&family=Playfair+Display:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
     <link phx-track-static rel="stylesheet" href={~p"/assets/js/app.css"} />
-    <%= if css = Micelio.Theme.css() do %>
-      <style id="daily-theme">
-        <%= raw(css) %>
-      </style>
-    <% end %>
     <script defer phx-track-static type="text/javascript" src={~p"/assets/js/app.js"}>
     </script>
   </head>

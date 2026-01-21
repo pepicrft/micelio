@@ -662,13 +662,17 @@ defmodule MicelioWeb.CoreComponents do
         aria-label={gettext("Select language")}
         onchange="window.location.href = this.value"
       >
-        <option
-          :for={{code, name} <- @locales}
-          value={locale_path(@current_path, code)}
-          selected={code == @current_locale}
-        >
-          {name}
-        </option>
+        <%= for {code, name} <- @locales do %>
+          <%= if code == @current_locale do %>
+            <option value={locale_path(@current_path, code)} selected>
+              {name}
+            </option>
+          <% else %>
+            <option value={locale_path(@current_path, code)}>
+              {name}
+            </option>
+          <% end %>
+        <% end %>
       </select>
     </div>
     """

@@ -33,12 +33,6 @@ config :micelio, Micelio.Repo,
   pool: Ecto.Adapters.SQL.Sandbox,
   pool_size: System.schedulers_online() * 2
 
-config :micelio, Micelio.Theme,
-  storage: Micelio.Theme.Storage.Local,
-  generator: Micelio.Theme.Generator.Static,
-  prefix: "themes/daily",
-  local_path: Path.join([System.tmp_dir!(), "micelio", "themes_test"])
-
 config :micelio, MicelioWeb.Endpoint,
   http: [ip: {127, 0, 0, 1}, port: 4002],
   secret_key_base: "7CasJHWDMv4jqFHNq+m+JV10UTi5t6g4FH0RJBPjOPwTEbBg2vI/VDZknktJ4B4/",

@@ -302,11 +302,11 @@
 #account-activity {
   display: grid;
   gap: 0;
-  --activity-graph-0: #ebedf0;
-  --activity-graph-1: #9be9a8;
-  --activity-graph-2: #40c463;
-  --activity-graph-3: #30a14e;
-  --activity-graph-4: #216e39;
+  --activity-graph-0: var(--theme-ui-colors-activity-0);
+  --activity-graph-1: var(--theme-ui-colors-activity-1);
+  --activity-graph-2: var(--theme-ui-colors-activity-2);
+  --activity-graph-3: var(--theme-ui-colors-activity-3);
+  --activity-graph-4: var(--theme-ui-colors-activity-4);
 }
 
 #account-activity .account-section-title {

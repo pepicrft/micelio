@@ -56,13 +56,6 @@ config :micelio, Micelio.GRPC,
 # at the `config/runtime.exs`.
 config :micelio, Micelio.Mailer, adapter: Swoosh.Adapters.Local
 
-config :micelio, Micelio.Theme,
-  storage: Micelio.Theme.Storage.S3,
-  generator: Micelio.Theme.Generator.LLM,
-  prefix: "themes/daily",
-  llm_endpoint: "https://api.openai.com/v1/responses",
-  llm_model: "gpt-4.1-mini"
-
 # Configure the endpoint
 config :micelio, MicelioWeb.Endpoint,
   url: [host: "localhost"],
