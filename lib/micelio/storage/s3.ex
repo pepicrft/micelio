@@ -579,11 +579,18 @@ defmodule Micelio.Storage.S3 do
   end
 
   defp header_value(headers, name) do
-    Enum.find_value(headers, fn {key, value} ->
-      if String.downcase(key) == name do
-        value
-      end
-    end)
+    value =
+      Enum.find_value(headers, fn {key, v} ->
+        if String.downcase(key) == name do
+          v
+        end
+      end)
+
+    # Req returns header values as lists, extract the first element
+    case value do
+      [single] -> single
+      other -> other
+    end
   end
 
   defp content_length(headers) do
