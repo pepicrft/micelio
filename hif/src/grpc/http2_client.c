@@ -247,10 +247,10 @@ static int connect_to_server(grpc_connection *conn, const char *host, int port) 
     struct addrinfo hints = {0}, *res, *rp;
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
-    
+
     char port_str[16];
     snprintf(port_str, sizeof(port_str), "%d", port);
-    
+
     int ret = getaddrinfo(host, port_str, &hints, &res);
     if (ret != 0) {
         set_error(conn, gai_strerror(ret));
@@ -260,15 +260,15 @@ static int connect_to_server(grpc_connection *conn, const char *host, int port) 
     for (rp = res; rp != NULL; rp = rp->ai_next) {
         conn->fd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
         if (conn->fd < 0) continue;
-        
+
         if (connect(conn->fd, rp->ai_addr, rp->ai_addrlen) == 0) break;
-        
+
         close(conn->fd);
         conn->fd = -1;
     }
-    
+
     freeaddrinfo(res);
-    
+
     if (conn->fd < 0) {
         set_error(conn, "Failed to connect to server");
         return -1;

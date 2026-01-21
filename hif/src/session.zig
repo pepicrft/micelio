@@ -379,7 +379,7 @@ pub fn land(allocator: std.mem.Allocator, server: []const u8) !void {
     }
 }
 
-pub fn landSession(allocator: std.mem.Allocator, server: []const u8) !LandResult {
+pub fn landSession(allocator: std.mem.Allocator, _: []const u8) !LandResult {
     var arena = std.heap.ArenaAllocator.init(allocator);
     defer arena.deinit();
     const arena_alloc = arena.allocator();
@@ -392,6 +392,9 @@ pub fn landSession(allocator: std.mem.Allocator, server: []const u8) !LandResult
             else => return err,
         };
     };
+
+    // Use the server from stored tokens, not the passed parameter
+    const server = tokens.server;
 
     const path = try sessionStatePath(arena_alloc);
     const data = try xdg.readFileAlloc(arena_alloc, path, 1024 * 1024);
