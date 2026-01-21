@@ -42,12 +42,12 @@ zig-out/
 /priv/lib/
 
 .env
-/hif/vendor/grpc/third_party/abseil-cpp/
-/hif/vendor/grpc/third_party/boringssl-with-bazel/
-/hif/vendor/grpc/third_party/cares/cares/
-/hif/vendor/grpc/third_party/protobuf/
-/hif/vendor/grpc/third_party/re2/
-/hif/vendor/grpc/third_party/zlib/
+/mic/vendor/grpc/third_party/abseil-cpp/
+/mic/vendor/grpc/third_party/boringssl-with-bazel/
+/mic/vendor/grpc/third_party/cares/cares/
+/mic/vendor/grpc/third_party/protobuf/
+/mic/vendor/grpc/third_party/re2/
+/mic/vendor/grpc/third_party/zlib/
 
 # Android client artifacts
 /mobile/android/.gradle/
