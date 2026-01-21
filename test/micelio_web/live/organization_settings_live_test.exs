@@ -6,15 +6,21 @@ defmodule MicelioWeb.OrganizationSettingsLiveTest do
   alias Micelio.Accounts
 
   defp login_user(conn, user) do
-    Plug.Test.init_test_session(conn, %{user_id: user.id})
+    Plug.Test.init_test_session(conn, %{"user_id" => user.id})
+  end
+
+  defp unique_handle(prefix) do
+    random = :crypto.strong_rand_bytes(4) |> Base.encode16(case: :lower)
+    "#{prefix}-#{random}"
   end
 
   test "updates organization LLM settings", %{conn: conn} do
-    {:ok, user} = Accounts.get_or_create_user_by_email("org-settings@example.com")
+    handle = unique_handle("org-settings")
+    {:ok, user} = Accounts.get_or_create_user_by_email("user-#{handle}@example.com")
 
     {:ok, organization} =
       Accounts.create_organization_for_user(user, %{
-        handle: "org-settings",
+        handle: handle,
         name: "Org Settings"
       })
 
@@ -27,7 +33,7 @@ defmodule MicelioWeb.OrganizationSettingsLiveTest do
 
     form =
       form(view, "#organization-settings-form",
-        organization: %{
+        account: %{
           llm_models: ["gpt-4.1"],
           llm_default_model: "gpt-4.1"
         }
@@ -36,18 +42,20 @@ defmodule MicelioWeb.OrganizationSettingsLiveTest do
     render_submit(form)
 
     updated = Accounts.get_organization(organization.id)
-    assert updated.llm_models == ["gpt-4.1"]
-    assert updated.llm_default_model == "gpt-4.1"
+    updated_account = Micelio.Repo.preload(updated, :account).account
+    assert updated_account.llm_models == ["gpt-4.1"]
+    assert updated_account.llm_default_model == "gpt-4.1"
 
     assert_redirect(view, ~p"/#{organization.account.handle}")
   end
 
   test "requires authentication", %{conn: conn} do
-    {:ok, user} = Accounts.get_or_create_user_by_email("org-settings-auth@example.com")
+    handle = unique_handle("org-auth")
+    {:ok, user} = Accounts.get_or_create_user_by_email("user-#{handle}@example.com")
 
     {:ok, organization} =
       Accounts.create_organization_for_user(user, %{
-        handle: "org-settings-auth",
+        handle: handle,
         name: "Org Settings Auth"
       })
 
@@ -56,12 +64,13 @@ defmodule MicelioWeb.OrganizationSettingsLiveTest do
   end
 
   test "requires admin access", %{conn: conn} do
-    {:ok, owner} = Accounts.get_or_create_user_by_email("org-settings-owner@example.com")
-    {:ok, member} = Accounts.get_or_create_user_by_email("org-settings-member@example.com")
+    handle = unique_handle("org-access")
+    {:ok, owner} = Accounts.get_or_create_user_by_email("owner-#{handle}@example.com")
+    {:ok, member} = Accounts.get_or_create_user_by_email("member-#{handle}@example.com")
 
     {:ok, organization} =
       Accounts.create_organization_for_user(owner, %{
-        handle: "org-settings-access",
+        handle: handle,
         name: "Org Settings Access"
       })
 
@@ -69,7 +78,7 @@ defmodule MicelioWeb.OrganizationSettingsLiveTest do
       Accounts.create_organization_membership(%{
         user_id: member.id,
         organization_id: organization.id,
-        role: "user"
+        role: "member"
       })
 
     conn = login_user(conn, member)

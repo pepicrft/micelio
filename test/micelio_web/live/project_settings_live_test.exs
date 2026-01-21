@@ -7,21 +7,33 @@ defmodule MicelioWeb.RepositorySettingsLiveTest do
   alias Micelio.Projects
 
   defp login_user(conn, user) do
-    Plug.Test.init_test_session(conn, %{user_id: user.id})
+    Plug.Test.init_test_session(conn, %{"user_id" => user.id})
+  end
+
+  defp unique_handle(prefix) do
+    random = :crypto.strong_rand_bytes(4) |> Base.encode16(case: :lower)
+    "#{prefix}-#{random}"
+  end
+
+  defp unique_email(prefix) do
+    random = :crypto.strong_rand_bytes(4) |> Base.encode16(case: :lower)
+    "#{prefix}-#{random}@example.com"
   end
 
   test "updates repository settings from the settings page", %{conn: conn} do
-    {:ok, user} = Accounts.get_or_create_user_by_email("repo-settings@example.com")
+    {:ok, user} = Accounts.get_or_create_user_by_email(unique_email("repo-settings"))
+    org_handle = unique_handle("settings-org")
+    repo_handle = unique_handle("settings-repo")
 
     {:ok, organization} =
       Accounts.create_organization_for_user(user, %{
-        handle: "settings-org",
+        handle: org_handle,
         name: "Settings Org"
       })
 
     {:ok, repository} =
       Projects.create_project(%{
-        handle: "settings-repo",
+        handle: repo_handle,
         name: "Settings Repo",
         description: "Original description",
         organization_id: organization.id,
@@ -33,11 +45,11 @@ defmodule MicelioWeb.RepositorySettingsLiveTest do
     {:ok, view, _html} =
       live(conn, ~p"/#{organization.account.handle}/#{repository.handle}/settings")
 
-    assert has_element?(view, "#repository-settings-form")
+    assert has_element?(view, "#project-settings-form")
 
     form =
-      form(view, "#repository-settings-form",
-        repository: %{
+      form(view, "#project-settings-form",
+        project: %{
           name: "Updated Repo",
           description: "Updated description",
           visibility: "public",
@@ -59,17 +71,19 @@ defmodule MicelioWeb.RepositorySettingsLiveTest do
   end
 
   test "ignores handle changes from the settings page", %{conn: conn} do
-    {:ok, user} = Accounts.get_or_create_user_by_email("repo-settings-handle@example.com")
+    {:ok, user} = Accounts.get_or_create_user_by_email(unique_email("repo-settings-handle"))
+    org_handle = unique_handle("handle-settings-org")
+    repo_handle = unique_handle("handle-settings-repo")
 
     {:ok, organization} =
       Accounts.create_organization_for_user(user, %{
-        handle: "handle-settings-org",
+        handle: org_handle,
         name: "Handle Settings Org"
       })
 
     {:ok, repository} =
       Projects.create_project(%{
-        handle: "handle-settings-repo",
+        handle: repo_handle,
         name: "Handle Settings Repo",
         organization_id: organization.id,
         visibility: "private"
@@ -81,8 +95,8 @@ defmodule MicelioWeb.RepositorySettingsLiveTest do
       live(conn, ~p"/#{organization.account.handle}/#{repository.handle}/settings")
 
     form =
-      form(view, "#repository-settings-form",
-        repository: %{
+      form(view, "#project-settings-form",
+        project: %{
           name: "Handle Settings Repo Updated",
           visibility: "public"
         }
@@ -91,22 +105,24 @@ defmodule MicelioWeb.RepositorySettingsLiveTest do
     render_submit(form)
 
     updated = Projects.get_project(repository.id)
-    assert updated.handle == "handle-settings-repo"
+    assert updated.handle == repo_handle
     assert updated.name == "Handle Settings Repo Updated"
   end
 
   test "requires authentication", %{conn: conn} do
-    {:ok, user} = Accounts.get_or_create_user_by_email("repo-settings-auth@example.com")
+    {:ok, user} = Accounts.get_or_create_user_by_email(unique_email("repo-settings-auth"))
+    org_handle = unique_handle("auth-settings-org")
+    repo_handle = unique_handle("auth-settings-repo")
 
     {:ok, organization} =
       Accounts.create_organization_for_user(user, %{
-        handle: "auth-settings-org",
+        handle: org_handle,
         name: "Auth Settings Org"
       })
 
     {:ok, repository} =
       Projects.create_project(%{
-        handle: "auth-settings-repo",
+        handle: repo_handle,
         name: "Auth Settings Repo",
         organization_id: organization.id
       })
@@ -116,18 +132,20 @@ defmodule MicelioWeb.RepositorySettingsLiveTest do
   end
 
   test "requires admin access", %{conn: conn} do
-    {:ok, owner} = Accounts.get_or_create_user_by_email("repo-settings-owner@example.com")
-    {:ok, member} = Accounts.get_or_create_user_by_email("repo-settings-member@example.com")
+    {:ok, owner} = Accounts.get_or_create_user_by_email(unique_email("repo-settings-owner"))
+    {:ok, member} = Accounts.get_or_create_user_by_email(unique_email("repo-settings-member"))
+    org_handle = unique_handle("settings-access-org")
+    repo_handle = unique_handle("settings-access-repo")
 
     {:ok, organization} =
       Accounts.create_organization_for_user(owner, %{
-        handle: "settings-access-org",
+        handle: org_handle,
         name: "Settings Access Org"
       })
 
     {:ok, repository} =
       Projects.create_project(%{
-        handle: "settings-access-repo",
+        handle: repo_handle,
         name: "Settings Access Repo",
         organization_id: organization.id,
         visibility: "private"
@@ -137,7 +155,7 @@ defmodule MicelioWeb.RepositorySettingsLiveTest do
       Accounts.create_organization_membership(%{
         user_id: member.id,
         organization_id: organization.id,
-        role: "user"
+        role: "member"
       })
 
     conn = login_user(conn, member)
@@ -146,7 +164,7 @@ defmodule MicelioWeb.RepositorySettingsLiveTest do
             {:live_redirect,
              %{
                to: redirect_to,
-               flash: %{"error" => "You do not have access to this repository."}
+               flash: %{"error" => "You do not have access to this project."}
              }}} =
              live(conn, ~p"/#{organization.account.handle}/#{repository.handle}/settings")
 
@@ -154,17 +172,19 @@ defmodule MicelioWeb.RepositorySettingsLiveTest do
   end
 
   test "shows validation errors when required fields are missing", %{conn: conn} do
-    {:ok, user} = Accounts.get_or_create_user_by_email("repo-settings-errors@example.com")
+    {:ok, user} = Accounts.get_or_create_user_by_email(unique_email("repo-settings-errors"))
+    org_handle = unique_handle("settings-errors-org")
+    repo_handle = unique_handle("settings-errors-repo")
 
     {:ok, organization} =
       Accounts.create_organization_for_user(user, %{
-        handle: "settings-errors-org",
+        handle: org_handle,
         name: "Settings Errors Org"
       })
 
     {:ok, repository} =
       Projects.create_project(%{
-        handle: "settings-errors-repo",
+        handle: repo_handle,
         name: "Settings Errors Repo",
         organization_id: organization.id
       })
@@ -174,32 +194,34 @@ defmodule MicelioWeb.RepositorySettingsLiveTest do
     {:ok, view, _html} =
       live(conn, ~p"/#{organization.account.handle}/#{repository.handle}/settings")
 
-    refute has_element?(view, "#repository-settings-form .form-error")
+    refute has_element?(view, "#project-settings-form .form-error")
 
     form =
-      form(view, "#repository-settings-form",
-        repository: %{
+      form(view, "#project-settings-form",
+        project: %{
           name: ""
         }
       )
 
     render_change(form)
 
-    assert has_element?(view, "#repository-settings-form .form-error")
+    assert has_element?(view, "#project-settings-form .form-error")
   end
 
   test "keeps repository param names after submit errors", %{conn: conn} do
-    {:ok, user} = Accounts.get_or_create_user_by_email("repo-settings-form-name@example.com")
+    {:ok, user} = Accounts.get_or_create_user_by_email(unique_email("repo-settings-form-name"))
+    org_handle = unique_handle("settings-form-name-org")
+    repo_handle = unique_handle("settings-form-name-repo")
 
     {:ok, organization} =
       Accounts.create_organization_for_user(user, %{
-        handle: "settings-form-name-org",
+        handle: org_handle,
         name: "Settings Form Name Org"
       })
 
     {:ok, repository} =
       Projects.create_project(%{
-        handle: "settings-form-name-repo",
+        handle: repo_handle,
         name: "Settings Form Name Repo",
         organization_id: organization.id
       })
@@ -210,15 +232,15 @@ defmodule MicelioWeb.RepositorySettingsLiveTest do
       live(conn, ~p"/#{organization.account.handle}/#{repository.handle}/settings")
 
     form =
-      form(view, "#repository-settings-form",
-        repository: %{
+      form(view, "#project-settings-form",
+        project: %{
           name: ""
         }
       )
 
     render_submit(form)
 
-    assert has_element?(view, "input[name='repository[name]']")
-    assert has_element?(view, "textarea[name='repository[description]']")
+    assert has_element?(view, "input[name='project[name]']")
+    assert has_element?(view, "textarea[name='project[description]']")
   end
 end

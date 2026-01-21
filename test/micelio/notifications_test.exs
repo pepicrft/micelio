@@ -8,31 +8,37 @@ defmodule Micelio.NotificationsTest do
   alias Micelio.Projects
   alias Micelio.Sessions
 
+  defp unique_handle(prefix) do
+    random = :crypto.strong_rand_bytes(4) |> Base.encode16(case: :lower)
+    "#{prefix}-#{random}"
+  end
+
   test "dispatch_session_landed/3 sends session landed emails to organization members" do
-    {:ok, owner} = Accounts.get_or_create_user_by_email("owner@example.com")
-    {:ok, member} = Accounts.get_or_create_user_by_email("member@example.com")
+    handle = unique_handle("notify")
+    {:ok, owner} = Accounts.get_or_create_user_by_email("owner-#{handle}@example.com")
+    {:ok, member} = Accounts.get_or_create_user_by_email("member-#{handle}@example.com")
 
     {:ok, organization} =
-      Accounts.create_organization_for_user(owner, %{handle: "acme", name: "Acme"})
+      Accounts.create_organization_for_user(owner, %{handle: "org-#{handle}", name: "Acme"})
 
     {:ok, _membership} =
       Accounts.create_organization_membership(%{
         user_id: member.id,
         organization_id: organization.id,
-        role: "user"
+        role: "member"
       })
 
     {:ok, project} =
       Projects.create_project(%{
         name: "Acme Docs",
-        handle: "docs",
+        handle: "docs-#{handle}",
         organization_id: organization.id,
         visibility: "private"
       })
 
     {:ok, session} =
       Sessions.create_session(%{
-        session_id: "session-1",
+        session_id: "session-#{handle}",
         goal: "Ship docs",
         project_id: project.id,
         user_id: owner.id
@@ -43,29 +49,30 @@ defmodule Micelio.NotificationsTest do
     :ok = Notifications.dispatch_session_landed(project, landed_session, async: false)
 
     assert_emails_sent([
-      %{to: "member@example.com", subject: ~r/\[acme\/docs\]/},
-      %{to: "owner@example.com", subject: ~r/\[acme\/docs\]/}
+      %{to: "member-#{handle}@example.com", subject: ~r/\[org-#{handle}\/docs-#{handle}\]/},
+      %{to: "owner-#{handle}@example.com", subject: ~r/\[org-#{handle}\/docs-#{handle}\]/}
     ])
   end
 
   test "dispatch_project_starred/3 sends star emails to organization members" do
-    {:ok, owner} = Accounts.get_or_create_user_by_email("owner-star@example.com")
-    {:ok, member} = Accounts.get_or_create_user_by_email("member-star@example.com")
+    handle = unique_handle("star")
+    {:ok, owner} = Accounts.get_or_create_user_by_email("owner-#{handle}@example.com")
+    {:ok, member} = Accounts.get_or_create_user_by_email("member-#{handle}@example.com")
 
     {:ok, organization} =
-      Accounts.create_organization_for_user(owner, %{handle: "acme-star", name: "Acme Star"})
+      Accounts.create_organization_for_user(owner, %{handle: "org-#{handle}", name: "Acme Star"})
 
     {:ok, _membership} =
       Accounts.create_organization_membership(%{
         user_id: member.id,
         organization_id: organization.id,
-        role: "user"
+        role: "member"
       })
 
     {:ok, project} =
       Projects.create_project(%{
         name: "Star Docs",
-        handle: "docs",
+        handle: "docs-#{handle}",
         organization_id: organization.id,
         visibility: "private"
       })
@@ -73,8 +80,14 @@ defmodule Micelio.NotificationsTest do
     :ok = Notifications.dispatch_project_starred(project, member, async: false)
 
     assert_emails_sent([
-      %{to: "member-star@example.com", subject: ~r/\[acme-star\/docs\].*starred/i},
-      %{to: "owner-star@example.com", subject: ~r/\[acme-star\/docs\].*starred/i}
+      %{
+        to: "member-#{handle}@example.com",
+        subject: ~r/\[org-#{handle}\/docs-#{handle}\].*starred/i
+      },
+      %{
+        to: "owner-#{handle}@example.com",
+        subject: ~r/\[org-#{handle}\/docs-#{handle}\].*starred/i
+      }
     ])
   end
 end

@@ -1,4 +1,5 @@
 defmodule Micelio.RemoteExecutionTest do
+  # async: false because tests spawn background tasks that need DB sandbox access
   use Micelio.DataCase, async: false
 
   alias Micelio.Accounts
@@ -53,7 +54,8 @@ defmodule Micelio.RemoteExecutionTest do
   end
 
   defp wait_for_completion(task_id) do
-    deadline = System.monotonic_time(:millisecond) + 1_000
+    # Increase timeout to 5 seconds to give background tasks more time
+    deadline = System.monotonic_time(:millisecond) + 5_000
     poll_until(task_id, deadline)
   end
 

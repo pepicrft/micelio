@@ -38,7 +38,7 @@ defmodule Micelio.Authorization.ProjectVisibilityTest do
       Accounts.create_organization_membership(%{
         user_id: member.id,
         organization_id: organization.id,
-        role: "user"
+        role: "member"
       })
 
     {:ok, outsider} =

@@ -35,6 +35,9 @@ defmodule MicelioWeb.Api.RemoteExecutionControllerTest do
     assert body["data"]["args"] == ["hello"]
     assert body["data"]["status"] in ["queued", "running", "succeeded", "failed"]
 
+    # Wait for the background task to complete to avoid sandbox cleanup race
+    wait_for_task_completion(task_id)
+
     conn =
       conn
       |> recycle()
@@ -69,5 +72,21 @@ defmodule MicelioWeb.Api.RemoteExecutionControllerTest do
 
     {:ok, token} = AccessTokens.create(params, refresh_token: true)
     Map.get(token, :value) || Map.get(token, :access_token)
+  end
+
+  defp wait_for_task_completion(task_id) do
+    alias Micelio.RemoteExecution.ExecutionTask
+    alias Micelio.Repo
+
+    deadline = System.monotonic_time(:millisecond) + 2_000
+
+    Stream.repeatedly(fn ->
+      Process.sleep(10)
+      Repo.get(ExecutionTask, task_id)
+    end)
+    |> Enum.find(fn task ->
+      System.monotonic_time(:millisecond) > deadline or
+        (task && task.status in [:succeeded, :failed])
+    end)
   end
 end

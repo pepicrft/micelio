@@ -635,7 +635,7 @@ defmodule MicelioWeb.Browser.RepositoryControllerTest do
       Accounts.create_organization_membership(%{
         user_id: user.id,
         organization_id: target_org.id,
-        role: "user"
+        role: "member"
       })
 
     conn = get(conn, ~p"/#{organization.account.handle}/#{project.handle}")
@@ -711,7 +711,7 @@ defmodule MicelioWeb.Browser.RepositoryControllerTest do
       Accounts.create_organization_membership(%{
         user_id: user.id,
         organization_id: target_org.id,
-        role: "user"
+        role: "member"
       })
 
     return_to = ~p"/#{organization.account.handle}/#{project.handle}"

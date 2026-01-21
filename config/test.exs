@@ -26,10 +26,10 @@ config :micelio, Micelio.Cloak,
   ]
 
 config :micelio, Micelio.Repo,
-  database: Path.join([System.tmp_dir!(), "micelio", "micelio_test#{test_partition}.sqlite3"]),
-  journal_mode: :wal,
-  synchronous: :normal,
-  busy_timeout: 60_000,
+  username: "postgres",
+  password: "postgres",
+  hostname: "localhost",
+  database: "micelio_test#{test_partition}",
   pool: Ecto.Adapters.SQL.Sandbox,
   pool_size: System.schedulers_online() * 2
 

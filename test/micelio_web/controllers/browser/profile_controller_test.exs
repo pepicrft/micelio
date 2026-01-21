@@ -106,7 +106,7 @@ defmodule MicelioWeb.Browser.ProfileControllerTest do
              Accounts.create_organization_membership(%{
                user_id: other_user.id,
                organization_id: organization.id,
-               role: "user"
+               role: "member"
              })
 
     conn = get(conn, ~p"/account")

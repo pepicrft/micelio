@@ -53,7 +53,7 @@ defmodule MicelioWeb.Plugs.OpenGraphCacheBuster do
     if is_binary(og_cache_buster) and og_cache_buster != "" do
 
       conn
-      |> put_session("og_cache_buster", og_cache_buster)
+      |> maybe_put_session("og_cache_buster", og_cache_buster)
       |> PageMeta.put(open_graph: %{cache_buster: og_cache_buster})
     else
       conn
@@ -136,6 +136,14 @@ defmodule MicelioWeb.Plugs.OpenGraphCacheBuster do
         end
 
       put_resp_header(conn, "vary", updated)
+    end
+  end
+
+  defp maybe_put_session(conn, key, value) do
+    if Map.has_key?(conn.private, :plug_session) do
+      put_session(conn, key, value)
+    else
+      conn
     end
   end
 end

@@ -2,46 +2,24 @@ defmodule Micelio.Repo.Migrations.AddProjectsSearchFts do
   use Ecto.Migration
 
   def up do
+    # Add a tsvector column for full-text search
     execute("""
-    CREATE VIRTUAL TABLE projects_fts USING fts5(
-      project_id UNINDEXED,
-      name,
-      description,
-      tokenize = 'porter'
-    );
+    ALTER TABLE projects
+    ADD COLUMN search_vector tsvector
+    GENERATED ALWAYS AS (
+      setweight(to_tsvector('english', coalesce(name, '')), 'A') ||
+      setweight(to_tsvector('english', coalesce(description, '')), 'B')
+    ) STORED;
     """)
 
+    # Create a GIN index for fast full-text search
     execute("""
-    INSERT INTO projects_fts(project_id, name, description)
-    SELECT id, name, coalesce(description, '') FROM projects;
-    """)
-
-    execute("""
-    CREATE TRIGGER projects_fts_insert AFTER INSERT ON projects BEGIN
-      INSERT INTO projects_fts(project_id, name, description)
-      VALUES (new.id, new.name, coalesce(new.description, ''));
-    END;
-    """)
-
-    execute("""
-    CREATE TRIGGER projects_fts_delete AFTER DELETE ON projects BEGIN
-      DELETE FROM projects_fts WHERE project_id = old.id;
-    END;
-    """)
-
-    execute("""
-    CREATE TRIGGER projects_fts_update AFTER UPDATE ON projects BEGIN
-      DELETE FROM projects_fts WHERE project_id = old.id;
-      INSERT INTO projects_fts(project_id, name, description)
-      VALUES (new.id, new.name, coalesce(new.description, ''));
-    END;
+    CREATE INDEX projects_search_idx ON projects USING GIN (search_vector);
     """)
   end
 
   def down do
-    execute("DROP TRIGGER IF EXISTS projects_fts_insert;")
-    execute("DROP TRIGGER IF EXISTS projects_fts_delete;")
-    execute("DROP TRIGGER IF EXISTS projects_fts_update;")
-    execute("DROP TABLE IF EXISTS projects_fts;")
+    execute("DROP INDEX IF EXISTS projects_search_idx;")
+    execute("ALTER TABLE projects DROP COLUMN IF EXISTS search_vector;")
   end
 end

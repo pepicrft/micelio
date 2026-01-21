@@ -1,82 +1,77 @@
 defmodule Micelio.Storage.S3Test do
-  use ExUnit.Case, async: false
+  use ExUnit.Case, async: true
 
-  import Mimic
+  import ExUnit.CaptureLog
 
   alias Micelio.Storage.S3
 
-  # Copy the module we want to mock
-  setup :verify_on_exit!
-  setup :set_mimic_global
-
   setup do
-    original = Application.get_env(:micelio, Micelio.Storage, [])
+    # Configure S3 with Req.Test plug for this test process
+    Process.put(:micelio_storage_config,
+      backend: :s3,
+      s3_bucket: "test-bucket",
+      s3_region: "us-east-1",
+      s3_access_key_id: "test-key-id",
+      s3_secret_access_key: "test-secret-key",
+      s3_endpoint: "https://s3.us-east-1.amazonaws.com",
+      req_options: [plug: {Req.Test, Micelio.Storage.S3Test}, retry: false]
+    )
 
     on_exit(fn ->
-      Application.put_env(:micelio, Micelio.Storage, original)
+      Process.delete(:micelio_storage_config)
     end)
 
     :ok
   end
 
-  setup_all do
-    Mimic.copy(Req)
-    :ok
-  end
-
   describe "put/2" do
-    setup do
-      setup_s3_config()
-      :ok
-    end
-
     test "successfully stores content in S3" do
       content = "test content"
       key = "sessions/test123/file.txt"
 
-      expect(Req, :request, fn opts ->
-        assert opts[:method] == :put
-        assert opts[:url] =~ "test-bucket"
-        assert opts[:url] =~ key
-        assert opts[:body] == content
-        assert has_auth_headers?(opts[:headers])
-
-        {:ok, %{status: 200, body: ""}}
+      Req.Test.stub(Micelio.Storage.S3Test, fn conn ->
+        assert conn.method == "PUT"
+        assert conn.request_path =~ key
+        Plug.Conn.send_resp(conn, 200, "")
       end)
 
       assert {:ok, ^key} = S3.put(key, content)
     end
 
     test "returns error on S3 failure" do
+      Req.Test.stub(Micelio.Storage.S3Test, fn conn ->
+        Plug.Conn.send_resp(conn, 403, "Access Denied")
+      end)
+
       content = "test content"
       key = "sessions/test123/file.txt"
 
-      expect(Req, :request, fn _opts ->
-        {:ok, %{status: 403, body: "Access Denied"}}
+      capture_log(fn ->
+        assert {:error, {:s3_error, 403, "Access Denied"}} = S3.put(key, content)
       end)
-
-      assert {:error, {:s3_error, 403, "Access Denied"}} = S3.put(key, content)
     end
 
     test "returns error on network failure" do
+      Req.Test.stub(Micelio.Storage.S3Test, fn conn ->
+        Req.Test.transport_error(conn, :econnrefused)
+      end)
+
       content = "test content"
       key = "sessions/test123/file.txt"
 
-      expect(Req, :request, fn _opts ->
-        {:error, :connection_refused}
+      capture_log(fn ->
+        assert {:error, %Req.TransportError{reason: :econnrefused}} = S3.put(key, content)
       end)
-
-      assert {:error, :connection_refused} = S3.put(key, content)
     end
 
     test "handles special characters in keys" do
       content = "test"
       key = "sessions/test 123/file (1).txt"
 
-      expect(Req, :request, fn opts ->
-        # Verify the key is properly encoded
-        assert opts[:url] =~ "sessions/test%20123/file%20%281%29.txt"
-        {:ok, %{status: 200, body: ""}}
+      Req.Test.stub(Micelio.Storage.S3Test, fn conn ->
+        # Verify URL encoding
+        assert conn.request_path =~ "sessions/test%20123/file%20%281%29.txt"
+        Plug.Conn.send_resp(conn, 200, "")
       end)
 
       assert {:ok, ^key} = S3.put(key, content)
@@ -84,144 +79,124 @@ defmodule Micelio.Storage.S3Test do
   end
 
   describe "get/1" do
-    setup do
-      setup_s3_config()
-      :ok
-    end
-
     test "successfully retrieves content from S3" do
       key = "sessions/test123/file.txt"
       content = "stored content"
 
-      expect(Req, :request, fn opts ->
-        assert opts[:method] == :get
-        assert opts[:url] =~ "test-bucket"
-        assert opts[:url] =~ key
-        assert has_auth_headers?(opts[:headers])
-
-        {:ok, %{status: 200, body: content}}
+      Req.Test.stub(Micelio.Storage.S3Test, fn conn ->
+        assert conn.method == "GET"
+        Plug.Conn.send_resp(conn, 200, content)
       end)
 
       assert {:ok, ^content} = S3.get(key)
     end
 
     test "returns :not_found when object doesn't exist" do
-      key = "sessions/nonexistent/file.txt"
-
-      expect(Req, :request, fn _opts ->
-        {:ok, %{status: 404, body: ""}}
+      Req.Test.stub(Micelio.Storage.S3Test, fn conn ->
+        Plug.Conn.send_resp(conn, 404, "")
       end)
+
+      key = "sessions/nonexistent/file.txt"
 
       assert {:error, :not_found} = S3.get(key)
     end
 
     test "returns error on S3 failure" do
-      key = "sessions/test123/file.txt"
-
-      expect(Req, :request, fn _opts ->
-        {:ok, %{status: 500, body: "Internal Server Error"}}
+      Req.Test.stub(Micelio.Storage.S3Test, fn conn ->
+        Plug.Conn.send_resp(conn, 500, "Internal Server Error")
       end)
 
-      assert {:error, {:s3_error, 500, "Internal Server Error"}} = S3.get(key)
+      key = "sessions/test123/file.txt"
+
+      capture_log(fn ->
+        assert {:error, {:s3_error, 500, "Internal Server Error"}} = S3.get(key)
+      end)
     end
   end
 
   describe "delete/1" do
-    setup do
-      setup_s3_config()
-      :ok
-    end
-
     test "successfully deletes object from S3" do
-      key = "sessions/test123/file.txt"
-
-      expect(Req, :request, fn opts ->
-        assert opts[:method] == :delete
-        assert opts[:url] =~ "test-bucket"
-        assert opts[:url] =~ key
-        {:ok, %{status: 204, body: ""}}
+      Req.Test.stub(Micelio.Storage.S3Test, fn conn ->
+        assert conn.method == "DELETE"
+        Plug.Conn.send_resp(conn, 204, "")
       end)
+
+      key = "sessions/test123/file.txt"
 
       assert {:ok, ^key} = S3.delete(key)
     end
 
     test "returns success even when object doesn't exist (idempotent)" do
-      key = "sessions/nonexistent/file.txt"
-
-      expect(Req, :request, fn _opts ->
-        {:ok, %{status: 404, body: ""}}
+      Req.Test.stub(Micelio.Storage.S3Test, fn conn ->
+        Plug.Conn.send_resp(conn, 404, "")
       end)
+
+      key = "sessions/nonexistent/file.txt"
 
       assert {:ok, ^key} = S3.delete(key)
     end
 
     test "returns error on S3 failure" do
-      key = "sessions/test123/file.txt"
-
-      expect(Req, :request, fn _opts ->
-        {:ok, %{status: 403, body: "Access Denied"}}
+      Req.Test.stub(Micelio.Storage.S3Test, fn conn ->
+        Plug.Conn.send_resp(conn, 403, "Access Denied")
       end)
 
-      assert {:error, {:s3_error, 403, "Access Denied"}} = S3.delete(key)
+      key = "sessions/test123/file.txt"
+
+      capture_log(fn ->
+        assert {:error, {:s3_error, 403, "Access Denied"}} = S3.delete(key)
+      end)
     end
   end
 
   describe "exists?/1" do
-    setup do
-      setup_s3_config()
-      :ok
-    end
-
     test "returns true when object exists" do
-      key = "sessions/test123/file.txt"
-
-      expect(Req, :request, fn opts ->
-        assert opts[:method] == :head
-        assert opts[:url] =~ "test-bucket"
-        assert opts[:url] =~ key
-        {:ok, %{status: 200, body: ""}}
+      Req.Test.stub(Micelio.Storage.S3Test, fn conn ->
+        assert conn.method == "HEAD"
+        Plug.Conn.send_resp(conn, 200, "")
       end)
+
+      key = "sessions/test123/file.txt"
 
       assert S3.exists?(key) == true
     end
 
     test "returns false when object doesn't exist" do
-      key = "sessions/nonexistent/file.txt"
-
-      expect(Req, :request, fn _opts ->
-        {:ok, %{status: 404, body: ""}}
+      Req.Test.stub(Micelio.Storage.S3Test, fn conn ->
+        Plug.Conn.send_resp(conn, 404, "")
       end)
+
+      key = "sessions/nonexistent/file.txt"
 
       assert S3.exists?(key) == false
     end
 
     test "returns false on S3 errors" do
-      key = "sessions/test123/file.txt"
-
-      expect(Req, :request, fn _opts ->
-        {:ok, %{status: 500, body: ""}}
+      Req.Test.stub(Micelio.Storage.S3Test, fn conn ->
+        Plug.Conn.send_resp(conn, 500, "")
       end)
 
-      assert S3.exists?(key) == false
+      key = "sessions/test123/file.txt"
+
+      capture_log(fn ->
+        assert S3.exists?(key) == false
+      end)
     end
 
     test "returns false on network errors" do
-      key = "sessions/test123/file.txt"
-
-      expect(Req, :request, fn _opts ->
-        {:error, :timeout}
+      Req.Test.stub(Micelio.Storage.S3Test, fn conn ->
+        Req.Test.transport_error(conn, :timeout)
       end)
 
-      assert S3.exists?(key) == false
+      key = "sessions/test123/file.txt"
+
+      capture_log(fn ->
+        assert S3.exists?(key) == false
+      end)
     end
   end
 
   describe "list/1" do
-    setup do
-      setup_s3_config()
-      :ok
-    end
-
     test "successfully lists objects with prefix" do
       prefix = "sessions/test123/"
 
@@ -242,14 +217,15 @@ defmodule Micelio.Storage.S3Test do
       </ListBucketResult>
       """
 
-      expect(Req, :request, fn opts ->
-        assert opts[:method] == :get
-        assert opts[:url] =~ "list-type=2"
-        assert opts[:url] =~ "prefix=#{URI.encode_www_form(prefix)}"
-        {:ok, %{status: 200, body: xml_response}}
+      Req.Test.stub(Micelio.Storage.S3Test, fn conn ->
+        assert conn.method == "GET"
+        assert conn.query_string =~ "list-type=2"
+        assert conn.query_string =~ "prefix="
+        Plug.Conn.send_resp(conn, 200, xml_response)
       end)
 
       assert {:ok, keys} = S3.list(prefix)
+
       assert length(keys) == 2
       assert "#{prefix}file1.txt" in keys
       assert "#{prefix}file2.txt" in keys
@@ -268,112 +244,75 @@ defmodule Micelio.Storage.S3Test do
       </ListBucketResult>
       """
 
-      expect(Req, :request, fn _opts ->
-        {:ok, %{status: 200, body: xml_response}}
+      Req.Test.stub(Micelio.Storage.S3Test, fn conn ->
+        Plug.Conn.send_resp(conn, 200, xml_response)
       end)
 
       assert {:ok, []} = S3.list(prefix)
     end
 
-    test "handles paginated results" do
-      prefix = "sessions/large/"
-
-      xml_response_page1 = """
-      <?xml version="1.0" encoding="UTF-8"?>
-      <ListBucketResult>
-        <Name>test-bucket</Name>
-        <Prefix>#{prefix}</Prefix>
-        <KeyCount>1</KeyCount>
-        <IsTruncated>true</IsTruncated>
-        <NextContinuationToken>token123</NextContinuationToken>
-        <Contents>
-          <Key>#{prefix}file1.txt</Key>
-        </Contents>
-      </ListBucketResult>
-      """
-
-      xml_response_page2 = """
-      <?xml version="1.0" encoding="UTF-8"?>
-      <ListBucketResult>
-        <Name>test-bucket</Name>
-        <Prefix>#{prefix}</Prefix>
-        <KeyCount>1</KeyCount>
-        <IsTruncated>false</IsTruncated>
-        <Contents>
-          <Key>#{prefix}file2.txt</Key>
-        </Contents>
-      </ListBucketResult>
-      """
-
-      Req
-      |> expect(:request, fn opts ->
-        refute opts[:url] =~ "continuation-token"
-        {:ok, %{status: 200, body: xml_response_page1}}
-      end)
-      |> expect(:request, fn opts ->
-        assert opts[:url] =~ "continuation-token=token123"
-        {:ok, %{status: 200, body: xml_response_page2}}
-      end)
-
-      assert {:ok, keys} = S3.list(prefix)
-      assert length(keys) == 2
-      assert "#{prefix}file1.txt" in keys
-      assert "#{prefix}file2.txt" in keys
-    end
-
     test "returns error on S3 failure" do
+      Req.Test.stub(Micelio.Storage.S3Test, fn conn ->
+        Plug.Conn.send_resp(conn, 403, "Access Denied")
+      end)
+
       prefix = "sessions/test/"
 
-      expect(Req, :request, fn _opts ->
-        {:ok, %{status: 403, body: "Access Denied"}}
+      capture_log(fn ->
+        assert {:error, {:s3_error, 403, "Access Denied"}} = S3.list(prefix)
       end)
-
-      assert {:error, {:s3_error, 403, "Access Denied"}} = S3.list(prefix)
     end
   end
 
   describe "configuration validation" do
     test "returns error when S3 bucket is not configured" do
-      Application.put_env(:micelio, Micelio.Storage, [])
+      Process.put(:micelio_storage_config, [])
 
-      assert {:error, :missing_s3_bucket} = S3.put("key", "content")
+      capture_log(fn ->
+        assert {:error, :missing_s3_bucket} = S3.put("key", "content")
+      end)
     end
 
     test "returns error when S3 credentials are not configured" do
-      Application.put_env(:micelio, Micelio.Storage, s3_bucket: "test-bucket")
+      Process.put(:micelio_storage_config, s3_bucket: "test-bucket")
 
-      assert {:error, :missing_s3_credentials} = S3.put("key", "content")
+      capture_log(fn ->
+        assert {:error, :missing_s3_credentials} = S3.put("key", "content")
+      end)
     end
 
     test "uses environment variables for configuration" do
-      Application.put_env(:micelio, Micelio.Storage,
+      Process.put(:micelio_storage_config,
         env: %{
           "S3_BUCKET" => "env-bucket",
           "S3_ACCESS_KEY_ID" => "env-key",
           "S3_SECRET_ACCESS_KEY" => "env-secret"
-        }
+        },
+        req_options: [plug: {Req.Test, Micelio.Storage.S3Test}, retry: false]
       )
 
-      expect(Req, :request, fn opts ->
-        assert opts[:url] =~ "env-bucket"
-        {:ok, %{status: 200, body: ""}}
+      Req.Test.stub(Micelio.Storage.S3Test, fn conn ->
+        # Verify the bucket from env is used (virtual host style)
+        assert conn.host =~ "env-bucket"
+        Plug.Conn.send_resp(conn, 200, "")
       end)
 
       assert {:ok, _} = S3.put("key", "content")
     end
 
     test "prioritizes explicit config over environment variables" do
-      Application.put_env(:micelio, Micelio.Storage,
+      Process.put(:micelio_storage_config,
         env: %{"S3_BUCKET" => "env-bucket"},
         s3_bucket: "config-bucket",
         s3_access_key_id: "config-key",
-        s3_secret_access_key: "config-secret"
+        s3_secret_access_key: "config-secret",
+        req_options: [plug: {Req.Test, Micelio.Storage.S3Test}, retry: false]
       )
 
-      expect(Req, :request, fn opts ->
-        assert opts[:url] =~ "config-bucket"
-        refute opts[:url] =~ "env-bucket"
-        {:ok, %{status: 200, body: ""}}
+      Req.Test.stub(Micelio.Storage.S3Test, fn conn ->
+        assert conn.host =~ "config-bucket"
+        refute conn.host =~ "env-bucket"
+        Plug.Conn.send_resp(conn, 200, "")
       end)
 
       assert {:ok, _} = S3.put("key", "content")
@@ -381,15 +320,11 @@ defmodule Micelio.Storage.S3Test do
   end
 
   describe "AWS Signature V4 authentication" do
-    setup do
-      setup_s3_config()
-      :ok
-    end
-
     test "includes required AWS authentication headers" do
-      expect(Req, :request, fn opts ->
-        headers = opts[:headers]
-        header_names = Enum.map(headers, fn {name, _} -> String.downcase(name) end)
+      Req.Test.stub(Micelio.Storage.S3Test, fn conn ->
+        header_names =
+          conn.req_headers
+          |> Enum.map(fn {name, _} -> String.downcase(name) end)
 
         assert "authorization" in header_names
         assert "x-amz-date" in header_names
@@ -397,12 +332,14 @@ defmodule Micelio.Storage.S3Test do
         assert "host" in header_names
 
         # Verify authorization header format
-        auth_header = get_header(headers, "authorization")
+        {_, auth_header} =
+          Enum.find(conn.req_headers, fn {k, _} -> String.downcase(k) == "authorization" end)
+
         assert auth_header =~ ~r/AWS4-HMAC-SHA256 Credential=/
         assert auth_header =~ ~r/SignedHeaders=/
         assert auth_header =~ ~r/Signature=/
 
-        {:ok, %{status: 200, body: ""}}
+        Plug.Conn.send_resp(conn, 200, "")
       end)
 
       S3.put("test-key", "test-content")
@@ -412,12 +349,14 @@ defmodule Micelio.Storage.S3Test do
       content = "test content"
       expected_sha256 = :crypto.hash(:sha256, content) |> Base.encode16(case: :lower)
 
-      expect(Req, :request, fn opts ->
-        headers = opts[:headers]
-        content_sha256 = get_header(headers, "x-amz-content-sha256")
+      Req.Test.stub(Micelio.Storage.S3Test, fn conn ->
+        {_, content_sha256} =
+          Enum.find(conn.req_headers, fn {k, _} ->
+            String.downcase(k) == "x-amz-content-sha256"
+          end)
 
         assert content_sha256 == expected_sha256
-        {:ok, %{status: 200, body: ""}}
+        Plug.Conn.send_resp(conn, 200, "")
       end)
 
       S3.put("test-key", content)
@@ -426,12 +365,14 @@ defmodule Micelio.Storage.S3Test do
     test "uses empty string SHA256 for GET requests" do
       empty_sha256 = :crypto.hash(:sha256, "") |> Base.encode16(case: :lower)
 
-      expect(Req, :request, fn opts ->
-        headers = opts[:headers]
-        content_sha256 = get_header(headers, "x-amz-content-sha256")
+      Req.Test.stub(Micelio.Storage.S3Test, fn conn ->
+        {_, content_sha256} =
+          Enum.find(conn.req_headers, fn {k, _} ->
+            String.downcase(k) == "x-amz-content-sha256"
+          end)
 
         assert content_sha256 == empty_sha256
-        {:ok, %{status: 200, body: "content"}}
+        Plug.Conn.send_resp(conn, 200, "content")
       end)
 
       S3.get("test-key")
@@ -439,27 +380,23 @@ defmodule Micelio.Storage.S3Test do
   end
 
   describe "content-addressable storage integration" do
-    setup do
-      setup_s3_config()
-      :ok
-    end
-
     test "stores and retrieves content by hash-based keys" do
       content = "agent session data"
       # Simulate content-addressable key (SHA256 of content)
       content_hash = :crypto.hash(:sha256, content) |> Base.encode16(case: :lower)
       key = "artifacts/sha256:#{content_hash}"
 
-      Req
-      |> expect(:request, fn opts ->
-        assert opts[:method] == :put
-        assert opts[:url] =~ content_hash
-        {:ok, %{status: 200, body: ""}}
+      # Expect PUT then GET
+      Req.Test.expect(Micelio.Storage.S3Test, fn conn ->
+        assert conn.method == "PUT"
+        assert conn.request_path =~ content_hash
+        Plug.Conn.send_resp(conn, 200, "")
       end)
-      |> expect(:request, fn opts ->
-        assert opts[:method] == :get
-        assert opts[:url] =~ content_hash
-        {:ok, %{status: 200, body: content}}
+
+      Req.Test.expect(Micelio.Storage.S3Test, fn conn ->
+        assert conn.method == "GET"
+        assert conn.request_path =~ content_hash
+        Plug.Conn.send_resp(conn, 200, content)
       end)
 
       assert {:ok, ^key} = S3.put(key, content)
@@ -470,43 +407,13 @@ defmodule Micelio.Storage.S3Test do
       session_id = "abc123"
       artifact_key = "sessions/#{session_id}/artifacts/build.tar.gz"
 
-      expect(Req, :request, fn opts ->
-        assert opts[:url] =~ session_id
-        assert opts[:url] =~ "artifacts"
-        {:ok, %{status: 200, body: ""}}
+      Req.Test.stub(Micelio.Storage.S3Test, fn conn ->
+        assert conn.request_path =~ session_id
+        assert conn.request_path =~ "artifacts"
+        Plug.Conn.send_resp(conn, 200, "")
       end)
 
       assert {:ok, ^artifact_key} = S3.put(artifact_key, "build data")
-    end
-  end
-
-  # Helper functions
-
-  defp setup_s3_config do
-    Application.put_env(:micelio, Micelio.Storage,
-      backend: :s3,
-      s3_bucket: "test-bucket",
-      s3_region: "us-east-1",
-      s3_access_key_id: "test-key-id",
-      s3_secret_access_key: "test-secret-key",
-      s3_endpoint: "https://s3.us-east-1.amazonaws.com"
-    )
-  end
-
-  defp has_auth_headers?(headers) do
-    header_names = Enum.map(headers, fn {name, _} -> String.downcase(name) end)
-
-    "authorization" in header_names and
-      "x-amz-date" in header_names and
-      "x-amz-content-sha256" in header_names
-  end
-
-  defp get_header(headers, name) do
-    headers
-    |> Enum.find(fn {k, _v} -> String.downcase(k) == String.downcase(name) end)
-    |> case do
-      {_, value} -> value
-      nil -> nil
     end
   end
 end

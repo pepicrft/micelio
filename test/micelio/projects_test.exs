@@ -9,10 +9,18 @@ defmodule Micelio.ProjectsTest do
   alias Micelio.Repo
   alias Micelio.Storage
 
+  defp unique_handle(prefix) do
+    random = :crypto.strong_rand_bytes(4) |> Base.encode16(case: :lower)
+    "#{prefix}-#{random}"
+  end
+
   describe "Project changeset" do
     setup do
       {:ok, organization} =
-        Accounts.create_organization(%{handle: "project-test", name: "Project Test"})
+        Accounts.create_organization(%{
+          handle: unique_handle("project-test"),
+          name: "Project Test"
+        })
 
       {:ok, organization: organization}
     end
@@ -145,13 +153,18 @@ defmodule Micelio.ProjectsTest do
     test "uses the organization default LLM model when creating projects" do
       {:ok, organization} =
         Accounts.create_organization(%{
-          handle: "llm-default-org",
+          handle: unique_handle("llm-default-org"),
           name: "LLM Default Org",
           llm_models: ["gpt-4.1"],
           llm_default_model: "gpt-4.1"
         })
 
-      attrs = %{handle: "llm-default", name: "LLM Default", organization_id: organization.id}
+      attrs = %{
+        handle: unique_handle("llm-default"),
+        name: "LLM Default",
+        organization_id: organization.id
+      }
+
       assert {:ok, %Project{} = project} = Projects.create_project(attrs)
       assert project.llm_model == "gpt-4.1"
     end
@@ -764,14 +777,14 @@ defmodule Micelio.ProjectsTest do
     setup do
       {:ok, organization} =
         Accounts.create_organization(%{
-          handle: "settings-llm-org",
+          handle: unique_handle("settings-llm-org"),
           name: "Settings LLM Org",
           llm_models: ["gpt-4.1-mini"]
         })
 
       {:ok, project} =
         Projects.create_project(%{
-          handle: "settings-llm-repo",
+          handle: unique_handle("settings-llm-repo"),
           name: "Settings LLM Repo",
           organization_id: organization.id
         })

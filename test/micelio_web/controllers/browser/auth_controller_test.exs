@@ -1,6 +1,8 @@
 defmodule MicelioWeb.Browser.AuthControllerTest do
   use MicelioWeb.ConnCase, async: true
 
+  import ExUnit.CaptureLog
+
   alias Micelio.Accounts.OAuthIdentity
   alias Micelio.Repo
 
@@ -55,42 +57,50 @@ defmodule MicelioWeb.Browser.AuthControllerTest do
   end
 
   test "github callback rejects mismatched state", %{conn: conn} do
-    conn =
-      conn
-      |> init_test_session(%{github_oauth_state: "state-token"})
-      |> get(~p"/auth/github/callback?code=valid-code&state=bad")
+    capture_log(fn ->
+      conn =
+        conn
+        |> init_test_session(%{github_oauth_state: "state-token"})
+        |> get(~p"/auth/github/callback?code=valid-code&state=bad")
 
-    assert get_session(conn, :user_id) == nil
-    assert redirected_to(conn) == ~p"/auth/login"
+      assert get_session(conn, :user_id) == nil
+      assert redirected_to(conn) == ~p"/auth/login"
+    end)
   end
 
   test "gitlab callback rejects mismatched state", %{conn: conn} do
-    conn =
-      conn
-      |> init_test_session(%{gitlab_oauth_state: "state-token"})
-      |> get(~p"/auth/gitlab/callback?code=valid-code&state=bad")
+    capture_log(fn ->
+      conn =
+        conn
+        |> init_test_session(%{gitlab_oauth_state: "state-token"})
+        |> get(~p"/auth/gitlab/callback?code=valid-code&state=bad")
 
-    assert get_session(conn, :user_id) == nil
-    assert redirected_to(conn) == ~p"/auth/login"
+      assert get_session(conn, :user_id) == nil
+      assert redirected_to(conn) == ~p"/auth/login"
+    end)
   end
 
   test "github callback handles oauth error responses", %{conn: conn} do
-    conn = get(conn, ~p"/auth/github/callback?error=access_denied")
+    capture_log(fn ->
+      conn = get(conn, ~p"/auth/github/callback?error=access_denied")
 
-    assert get_session(conn, :user_id) == nil
-    assert redirected_to(conn) == ~p"/auth/login"
+      assert get_session(conn, :user_id) == nil
+      assert redirected_to(conn) == ~p"/auth/login"
 
-    assert Phoenix.Flash.get(conn.assigns.flash, :error) ==
-             "GitHub login failed. Please try again."
+      assert Phoenix.Flash.get(conn.assigns.flash, :error) ==
+               "GitHub login failed. Please try again."
+    end)
   end
 
   test "gitlab callback handles oauth error responses", %{conn: conn} do
-    conn = get(conn, ~p"/auth/gitlab/callback?error=access_denied")
+    capture_log(fn ->
+      conn = get(conn, ~p"/auth/gitlab/callback?error=access_denied")
 
-    assert get_session(conn, :user_id) == nil
-    assert redirected_to(conn) == ~p"/auth/login"
+      assert get_session(conn, :user_id) == nil
+      assert redirected_to(conn) == ~p"/auth/login"
 
-    assert Phoenix.Flash.get(conn.assigns.flash, :error) ==
-             "GitLab login failed. Please try again."
+      assert Phoenix.Flash.get(conn.assigns.flash, :error) ==
+               "GitLab login failed. Please try again."
+    end)
   end
 end

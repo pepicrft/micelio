@@ -33,11 +33,20 @@ defmodule Micelio.RemoteExecution do
   end
 
   def create_task(%User{} = user, attrs) when is_map(attrs) do
-    attrs = Map.put(attrs, "user_id", user.id)
+    attrs = put_user_id(attrs, user.id)
 
     %ExecutionTask{}
     |> ExecutionTask.create_changeset(attrs)
     |> Repo.insert()
+  end
+
+  defp put_user_id(attrs, user_id) do
+    # Detect if attrs use string or atom keys and maintain consistency
+    cond do
+      Map.has_key?(attrs, "command") -> Map.put(attrs, "user_id", user_id)
+      Map.has_key?(attrs, :command) -> Map.put(attrs, :user_id, user_id)
+      true -> Map.put(attrs, :user_id, user_id)
+    end
   end
 
   def get_task_for_user(%User{} = user, task_id) do
@@ -92,7 +101,18 @@ defmodule Micelio.RemoteExecution do
   defp env_list(_), do: []
 
   defp start_task(supervisor, task_id) do
-    Task.Supervisor.start_child(supervisor, fn -> execute_task(task_id) end)
+    # Get the caller PID to allow sandbox access in tests
+    caller = self()
+
+    Task.Supervisor.start_child(supervisor, fn ->
+      # Allow this process to use the sandbox connection from the caller
+      # This is a no-op in production but enables async tests
+      if function_exported?(Ecto.Adapters.SQL.Sandbox, :allow, 3) do
+        Ecto.Adapters.SQL.Sandbox.allow(Micelio.Repo, caller, self())
+      end
+
+      execute_task(task_id)
+    end)
   catch
     :exit, reason -> {:error, {:exit, reason}}
   end

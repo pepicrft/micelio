@@ -8,21 +8,27 @@ defmodule MicelioWeb.RepositoryWebhooksLiveTest do
   alias Micelio.Webhooks
 
   defp login_user(conn, user) do
-    Plug.Test.init_test_session(conn, %{user_id: user.id})
+    Plug.Test.init_test_session(conn, %{"user_id" => user.id})
+  end
+
+  defp unique_handle(prefix) do
+    random = :crypto.strong_rand_bytes(4) |> Base.encode16(case: :lower)
+    "#{prefix}-#{random}"
   end
 
   test "creates a webhook from the webhooks page", %{conn: conn} do
-    {:ok, user} = Accounts.get_or_create_user_by_email("repo-webhooks@example.com")
+    handle = unique_handle("webhooks")
+    {:ok, user} = Accounts.get_or_create_user_by_email("user-#{handle}@example.com")
 
     {:ok, organization} =
       Accounts.create_organization_for_user(user, %{
-        handle: "webhooks-org",
+        handle: "org-#{handle}",
         name: "Webhooks Org"
       })
 
     {:ok, repository} =
       Projects.create_project(%{
-        handle: "webhooks-repo",
+        handle: "repo-#{handle}",
         name: "Webhooks Repo",
         organization_id: organization.id,
         visibility: "private"
@@ -52,17 +58,18 @@ defmodule MicelioWeb.RepositoryWebhooksLiveTest do
   end
 
   test "toggles and deletes a webhook", %{conn: conn} do
-    {:ok, user} = Accounts.get_or_create_user_by_email("repo-webhooks-toggle@example.com")
+    handle = unique_handle("toggle")
+    {:ok, user} = Accounts.get_or_create_user_by_email("user-#{handle}@example.com")
 
     {:ok, organization} =
       Accounts.create_organization_for_user(user, %{
-        handle: "webhooks-toggle-org",
+        handle: "org-#{handle}",
         name: "Webhooks Toggle Org"
       })
 
     {:ok, repository} =
       Projects.create_project(%{
-        handle: "webhooks-toggle-repo",
+        handle: "repo-#{handle}",
         name: "Webhooks Toggle Repo",
         organization_id: organization.id,
         visibility: "private"
@@ -96,17 +103,18 @@ defmodule MicelioWeb.RepositoryWebhooksLiveTest do
   end
 
   test "requires authentication", %{conn: conn} do
-    {:ok, user} = Accounts.get_or_create_user_by_email("repo-webhooks-auth@example.com")
+    handle = unique_handle("auth")
+    {:ok, user} = Accounts.get_or_create_user_by_email("user-#{handle}@example.com")
 
     {:ok, organization} =
       Accounts.create_organization_for_user(user, %{
-        handle: "webhooks-auth-org",
+        handle: "org-#{handle}",
         name: "Webhooks Auth Org"
       })
 
     {:ok, repository} =
       Projects.create_project(%{
-        handle: "webhooks-auth-repo",
+        handle: "repo-#{handle}",
         name: "Webhooks Auth Repo",
         organization_id: organization.id
       })
@@ -119,18 +127,19 @@ defmodule MicelioWeb.RepositoryWebhooksLiveTest do
   end
 
   test "requires admin access", %{conn: conn} do
-    {:ok, owner} = Accounts.get_or_create_user_by_email("repo-webhooks-owner@example.com")
-    {:ok, member} = Accounts.get_or_create_user_by_email("repo-webhooks-member@example.com")
+    handle = unique_handle("access")
+    {:ok, owner} = Accounts.get_or_create_user_by_email("owner-#{handle}@example.com")
+    {:ok, member} = Accounts.get_or_create_user_by_email("member-#{handle}@example.com")
 
     {:ok, organization} =
       Accounts.create_organization_for_user(owner, %{
-        handle: "webhooks-access-org",
+        handle: "org-#{handle}",
         name: "Webhooks Access Org"
       })
 
     {:ok, repository} =
       Projects.create_project(%{
-        handle: "webhooks-access-repo",
+        handle: "repo-#{handle}",
         name: "Webhooks Access Repo",
         organization_id: organization.id,
         visibility: "private"
@@ -140,7 +149,7 @@ defmodule MicelioWeb.RepositoryWebhooksLiveTest do
       Accounts.create_organization_membership(%{
         user_id: member.id,
         organization_id: organization.id,
-        role: "user"
+        role: "member"
       })
 
     conn = login_user(conn, member)
@@ -149,7 +158,7 @@ defmodule MicelioWeb.RepositoryWebhooksLiveTest do
             {:live_redirect,
              %{
                to: redirect_to,
-               flash: %{"error" => "You do not have access to this repository."}
+               flash: %{"error" => "You do not have access to this project."}
              }}} =
              live(
                conn,

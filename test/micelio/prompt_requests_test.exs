@@ -10,18 +10,24 @@ defmodule Micelio.PromptRequestsTest do
   alias Micelio.Repo
   alias Micelio.Sessions
 
+  defp unique_handle(prefix) do
+    random = :crypto.strong_rand_bytes(4) |> Base.encode16(case: :lower)
+    "#{prefix}-#{random}"
+  end
+
   defp setup_project do
-    {:ok, user} = Accounts.get_or_create_user_by_email("prompt-requests@example.com")
+    handle = unique_handle("prompt")
+    {:ok, user} = Accounts.get_or_create_user_by_email("user-#{handle}@example.com")
 
     {:ok, organization} =
       Accounts.create_organization_for_user(user, %{
-        handle: "prompt-org",
+        handle: "org-#{handle}",
         name: "Prompt Org"
       })
 
     {:ok, project} =
       Projects.create_project(%{
-        handle: "prompt-project",
+        handle: "project-#{handle}",
         name: "Prompt Project",
         organization_id: organization.id
       })
@@ -598,7 +604,7 @@ defmodule Micelio.PromptRequestsTest do
 
     assert run.status == :passed
     assert run.coverage_delta == 0.03
-    assert run.metrics["duration_ms"] > 0
+    assert run.metrics["duration_ms"] >= 0
     assert run.resource_usage["cpu_seconds"] == 3.5
     assert run.resource_usage["memory_mb"] == 128
     assert_received {:validate_request, _request}

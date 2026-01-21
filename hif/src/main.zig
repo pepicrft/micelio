@@ -3,6 +3,7 @@ const yazap = @import("yazap");
 const auth = @import("auth.zig");
 const config = @import("config.zig");
 const oauth = @import("oauth.zig");
+const organizations = @import("organizations.zig");
 const projects = @import("projects.zig");
 const session = @import("session.zig");
 const content = @import("content.zig");
@@ -35,6 +36,18 @@ pub fn main() !void {
     try auth_cmd.addSubcommand(auth_status_cmd);
     try auth_cmd.addSubcommand(auth_logout_cmd);
     try root.addSubcommand(auth_cmd);
+
+    // Organization: Manage organizations
+    var org_cmd = app.createCommand("org", "Manage organizations");
+
+    const org_list_cmd = app.createCommand("list", "List your organizations");
+    try org_cmd.addSubcommand(org_list_cmd);
+
+    var org_get_cmd = app.createCommand("get", "Get organization details");
+    try org_get_cmd.addArg(Arg.positional("HANDLE", "Organization handle", null));
+    try org_cmd.addSubcommand(org_get_cmd);
+
+    try root.addSubcommand(org_cmd);
 
     // Project: Manage projects
     var project_cmd = app.createCommand("project", "Manage projects");
@@ -259,6 +272,26 @@ pub fn main() !void {
         }
 
         std.debug.print("Usage: hif auth <login|status|logout>\n", .{});
+        return;
+    }
+
+    if (matches.subcommandMatches("org")) |org_matches| {
+        if (org_matches.subcommandMatches("list")) |_| {
+            try organizations.list(allocator, oauth.default_server);
+            return;
+        }
+
+        if (org_matches.subcommandMatches("get")) |get_matches| {
+            if (get_matches.getSingleValue("HANDLE")) |handle| {
+                try organizations.get(allocator, oauth.default_server, handle);
+            } else {
+                std.debug.print("Error: organization handle required\n", .{});
+                std.debug.print("Usage: hif org get <handle>\n", .{});
+            }
+            return;
+        }
+
+        std.debug.print("Usage: hif org <list|get>\n", .{});
         return;
     }
 

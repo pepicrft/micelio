@@ -1,5 +1,6 @@
 defmodule Micelio.GRPC.SessionsWorkflowTest do
-  use Micelio.DataCase, async: true
+  # async: false because global Mimic mocking requires exclusive ownership
+  use Micelio.DataCase, async: false
 
   import Mimic
 
@@ -25,13 +26,6 @@ defmodule Micelio.GRPC.SessionsWorkflowTest do
 
   setup :verify_on_exit!
   setup :set_mimic_global
-
-  setup_all do
-    Mimic.copy(Landing)
-    Mimic.copy(Notifications)
-    Mimic.copy(Webhooks)
-    :ok
-  end
 
   test "session gRPC workflow covers start, list, get, and land" do
     unique = System.unique_integer([:positive])

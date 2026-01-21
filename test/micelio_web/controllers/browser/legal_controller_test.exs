@@ -1,23 +1,27 @@
 defmodule MicelioWeb.Browser.LegalControllerTest do
   use MicelioWeb.ConnCase, async: true
 
-  @legacy_pages ["/privacy", "/terms", "/cookies", "/impressum"]
+  test "privacy page renders" do
+    conn = build_conn() |> get("/privacy")
 
-  test "legal page uses simplified responsibility disclaimer" do
-    conn = build_conn() |> get("/legal")
-
-    assert html_response(conn, 200) =~ "Legal"
-    assert html_response(conn, 200) =~ "solely responsible for the content you host"
-    assert html_response(conn, 200) =~ "essential cookies"
-    assert html_response(conn, 200) =~ MicelioWeb.LegalInfo.legal_email()
-    assert html_response(conn, 200) =~ MicelioWeb.LegalInfo.privacy_email()
+    assert html_response(conn, 200) =~ "Privacy"
   end
 
-  test "legacy legal routes redirect to the consolidated page" do
-    Enum.each(@legacy_pages, fn path ->
-      conn = build_conn() |> get(path)
+  test "terms page renders" do
+    conn = build_conn() |> get("/terms")
 
-      assert redirected_to(conn) == "/legal"
-    end)
+    assert html_response(conn, 200) =~ "Terms"
+  end
+
+  test "cookies page renders" do
+    conn = build_conn() |> get("/cookies")
+
+    assert html_response(conn, 200) =~ "Cookie"
+  end
+
+  test "impressum page renders" do
+    conn = build_conn() |> get("/impressum")
+
+    assert html_response(conn, 200) =~ "Impressum"
   end
 end

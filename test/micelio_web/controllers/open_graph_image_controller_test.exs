@@ -16,7 +16,7 @@ defmodule MicelioWeb.OpenGraphImageControllerTest do
     uri = URI.parse(image_url)
     [_, "og", hash] = String.split(uri.path || "", "/", parts: 3)
 
-    assert %{"token" => _token, "v" => v} = URI.decode_query(uri.query || "")
+    assert %{"token" => token, "v" => v} = URI.decode_query(uri.query || "")
     assert is_binary(token) and token != ""
     assert v == hash
 
@@ -72,7 +72,7 @@ defmodule MicelioWeb.OpenGraphImageControllerTest do
     uri = URI.parse(image_url)
     [_, "og", hash] = String.split(uri.path || "", "/", parts: 3)
 
-    assert %{"token" => token, "v" => v} = URI.decode_query(uri.query || "")
+    assert %{"token" => _token, "v" => v} = URI.decode_query(uri.query || "")
     assert v == "#{hash}-twitter-1"
 
     svg_key = OpenGraphImage.storage_key(hash, "svg")

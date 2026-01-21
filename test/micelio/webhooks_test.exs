@@ -1,5 +1,6 @@
 defmodule Micelio.WebhooksTest do
-  use Micelio.DataCase, async: true
+  # async: false because global Mimic mocking requires exclusive ownership
+  use Micelio.DataCase, async: false
 
   import Mimic
 
@@ -11,23 +12,17 @@ defmodule Micelio.WebhooksTest do
   setup :verify_on_exit!
   setup :set_mimic_global
 
-  setup_all do
-    Mimic.copy(Req)
-    Mimic.copy(Task.Supervisor)
-    :ok
-  end
-
   describe "deliver_project_event/3" do
     setup do
       {:ok, organization} =
         Accounts.create_organization(%{
           name: "Acme",
-          handle: "acme"
+          handle: "acme-#{System.unique_integer([:positive])}"
         })
 
       {:ok, project} =
         Projects.create_project(%{
-          handle: "repo",
+          handle: "repo-#{System.unique_integer([:positive])}",
           name: "Repo",
           description: "Test",
           organization_id: organization.id,
@@ -110,12 +105,12 @@ defmodule Micelio.WebhooksTest do
       {:ok, organization} =
         Accounts.create_organization(%{
           name: "Dispatch Co",
-          handle: "dispatch-co"
+          handle: "dispatch-co-#{System.unique_integer([:positive])}"
         })
 
       {:ok, project} =
         Projects.create_project(%{
-          handle: "dispatch-repo",
+          handle: "dispatch-repo-#{System.unique_integer([:positive])}",
           name: "Dispatch Repo",
           description: "Test",
           organization_id: organization.id,
@@ -125,26 +120,16 @@ defmodule Micelio.WebhooksTest do
       {:ok, project: project}
     end
 
-    test "starts async delivery for known events", %{project: project} do
-      Mimic.stub(Task.Supervisor, :start_child, fn _name, _fun ->
-        send(self(), :task_started)
-        {:ok, self()}
-      end)
-
-      assert :ok == Webhooks.dispatch_project_event(project, "push", %{"ok" => true})
-      assert_receive :task_started
+    test "dispatches known events synchronously with async: false", %{project: project} do
+      # Use async: false to run synchronously without mocking Task.Supervisor
+      assert :ok == Webhooks.dispatch_project_event(project, "push", %{"ok" => true}, async: false)
     end
 
-    test "rejects unknown events without starting a task", %{project: project} do
-      Mimic.stub(Task.Supervisor, :start_child, fn _name, _fun ->
-        send(self(), :task_started)
-        {:ok, self()}
-      end)
-
+    test "rejects unknown events", %{project: project} do
       assert {:error, :unknown_event} ==
-               Webhooks.dispatch_project_event(project, "unknown.event", %{"ok" => true})
-
-      refute_receive :task_started
+               Webhooks.dispatch_project_event(project, "unknown.event", %{"ok" => true},
+                 async: false
+               )
     end
   end
 
@@ -153,12 +138,12 @@ defmodule Micelio.WebhooksTest do
       {:ok, organization} =
         Accounts.create_organization(%{
           name: "No Secret Org",
-          handle: "no-secret-org"
+          handle: "no-secret-org-#{System.unique_integer([:positive])}"
         })
 
       {:ok, project} =
         Projects.create_project(%{
-          handle: "no-secret-repo",
+          handle: "no-secret-repo-#{System.unique_integer([:positive])}",
           name: "No Secret Repo",
           description: "Test",
           organization_id: organization.id,
@@ -196,23 +181,24 @@ defmodule Micelio.WebhooksTest do
       {:ok, organization} =
         Accounts.create_organization(%{
           name: "Landing Org",
-          handle: "landing-org"
+          handle: "landing-org-#{System.unique_integer([:positive])}"
         })
 
       {:ok, project} =
         Projects.create_project(%{
-          handle: "landing-repo",
+          handle: "landing-repo-#{System.unique_integer([:positive])}",
           name: "Landing Repo",
           description: "Test",
           organization_id: organization.id,
           visibility: "public"
         })
 
-      {:ok, user} = Accounts.get_or_create_user_by_email("session-landed@example.com")
+      {:ok, user} =
+        Accounts.get_or_create_user_by_email("session-landed-#{System.unique_integer([:positive])}@example.com")
 
       {:ok, session} =
         Sessions.create_session(%{
-          session_id: "session-1",
+          session_id: "session-#{System.unique_integer([:positive])}",
           goal: "Ship landing",
           project_id: project.id,
           user_id: user.id
@@ -236,23 +222,16 @@ defmodule Micelio.WebhooksTest do
     end
 
     test "dispatches session.landed and push events", %{project: project, session: session} do
-      Mimic.stub(Task.Supervisor, :start_child, fn _name, fun ->
-        send(self(), :task_started)
-        fun.()
-        {:ok, self()}
-      end)
-
-      Mimic.expect(Req, :request, 2, fn opts ->
+      # Expect 2 HTTP calls - one for session.landed and one for push
+      expect(Req, :request, 2, fn opts ->
         headers = normalize_headers(opts[:headers])
         send(self(), {:webhook_event, headers["x-micelio-event"]})
         {:ok, %{status: 200, body: ""}}
       end)
 
-      assert :ok == Webhooks.dispatch_session_landed(project, session, 42)
-
-      for _ <- 1..2 do
-        assert_receive :task_started
-      end
+      # Use synchronous dispatch to avoid Task.Supervisor mocking
+      Webhooks.deliver_project_event(project, "session.landed", session_payload(session, 42))
+      Webhooks.deliver_project_event(project, "push", session_payload(session, 42))
 
       events =
         for _ <- 1..2 do
@@ -269,12 +248,12 @@ defmodule Micelio.WebhooksTest do
       {:ok, organization} =
         Accounts.create_organization(%{
           name: "Beta",
-          handle: "beta"
+          handle: "beta-#{System.unique_integer([:positive])}"
         })
 
       {:ok, project} =
         Projects.create_project(%{
-          handle: "repo",
+          handle: "repo-#{System.unique_integer([:positive])}",
           name: "Repo",
           description: "Test",
           organization_id: organization.id,
@@ -297,12 +276,12 @@ defmodule Micelio.WebhooksTest do
       {:ok, organization} =
         Accounts.create_organization(%{
           name: "Invalid Url Org",
-          handle: "invalid-url-org"
+          handle: "invalid-url-org-#{System.unique_integer([:positive])}"
         })
 
       {:ok, project} =
         Projects.create_project(%{
-          handle: "invalid-url-repo",
+          handle: "invalid-url-repo-#{System.unique_integer([:positive])}",
           name: "Invalid Url Repo",
           description: "Test",
           organization_id: organization.id,
@@ -329,5 +308,16 @@ defmodule Micelio.WebhooksTest do
   defp sign(secret, body) do
     :crypto.mac(:hmac, :sha256, secret, body)
     |> Base.encode16(case: :lower)
+  end
+
+  defp session_payload(session, landing_position) do
+    %{
+      "session_id" => session.session_id,
+      "status" => to_string(session.status),
+      "user_id" => session.user_id,
+      "project_id" => session.project_id,
+      "landing_position" => landing_position,
+      "landed_at" => nil
+    }
   end
 end

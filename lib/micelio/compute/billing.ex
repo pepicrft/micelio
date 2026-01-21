@@ -132,7 +132,9 @@ defmodule Micelio.AgentInfra.Billing do
     end)
   end
 
-  def quota_status(%Account{} = account, opts \\ []) do
+  def quota_status(account_or_id, opts \\ [])
+
+  def quota_status(%Account{} = account, opts) do
     quota_status(account.id, opts)
   end
 
@@ -174,16 +176,28 @@ defmodule Micelio.AgentInfra.Billing do
   def check_quota(%AgentQuota{} = quota, %__MODULE__{} = usage) do
     exceeded =
       []
-      |> maybe_exceed(:cpu_core_seconds, quota.cpu_core_seconds_used, quota.cpu_core_seconds_limit,
+      |> maybe_exceed(
+        :cpu_core_seconds,
+        quota.cpu_core_seconds_used,
+        quota.cpu_core_seconds_limit,
         usage.cpu_core_seconds
       )
-      |> maybe_exceed(:memory_mb_seconds, quota.memory_mb_seconds_used, quota.memory_mb_seconds_limit,
+      |> maybe_exceed(
+        :memory_mb_seconds,
+        quota.memory_mb_seconds_used,
+        quota.memory_mb_seconds_limit,
         usage.memory_mb_seconds
       )
-      |> maybe_exceed(:disk_gb_seconds, quota.disk_gb_seconds_used, quota.disk_gb_seconds_limit,
+      |> maybe_exceed(
+        :disk_gb_seconds,
+        quota.disk_gb_seconds_used,
+        quota.disk_gb_seconds_limit,
         usage.disk_gb_seconds
       )
-      |> maybe_exceed(:billable_units, quota.billable_units_used, quota.billable_units_limit,
+      |> maybe_exceed(
+        :billable_units,
+        quota.billable_units_used,
+        quota.billable_units_limit,
         usage.billable_units
       )
 
@@ -227,8 +241,7 @@ defmodule Micelio.AgentInfra.Billing do
   defp get_or_create_quota(account_id, period_start, period_end, limits) do
     query =
       from quota in AgentQuota,
-        where: quota.account_id == ^account_id and quota.period_start == ^period_start,
-        lock: "FOR UPDATE"
+        where: quota.account_id == ^account_id and quota.period_start == ^period_start
 
     case Repo.one(query) do
       %AgentQuota{} = quota ->
@@ -293,35 +306,42 @@ defmodule Micelio.AgentInfra.Billing do
   end
 
   defp normalize_limits(limits) when is_list(limits) do
-    limits |> Enum.into(%{}) |> normalize_limits()
+    limits |> Map.new() |> normalize_limits()
   end
 
   defp normalize_limits(%{} = limits) do
-    limits
-    |> Map.take([:cpu_core_seconds, :memory_mb_seconds, :disk_gb_seconds, :billable_units])
-    |> Map.merge(%{
-      cpu_core_seconds: Map.get(limits, "cpu_core_seconds"),
-      memory_mb_seconds: Map.get(limits, "memory_mb_seconds"),
-      disk_gb_seconds: Map.get(limits, "disk_gb_seconds"),
-      billable_units: Map.get(limits, "billable_units")
-    })
-    |> Enum.reject(fn {_key, value} -> is_nil(value) end)
-    |> Enum.into(%{})
+    atom_values =
+      Map.take(limits, [:cpu_core_seconds, :memory_mb_seconds, :disk_gb_seconds, :billable_units])
+
+    string_values =
+      %{
+        cpu_core_seconds: Map.get(limits, "cpu_core_seconds"),
+        memory_mb_seconds: Map.get(limits, "memory_mb_seconds"),
+        disk_gb_seconds: Map.get(limits, "disk_gb_seconds"),
+        billable_units: Map.get(limits, "billable_units")
+      }
+      |> Enum.reject(fn {_key, value} -> is_nil(value) end)
+      |> Map.new()
+
+    Map.merge(atom_values, string_values)
   end
 
   defp normalize_weights(weights) when is_list(weights) do
-    weights |> Enum.into(%{}) |> normalize_weights()
+    weights |> Map.new() |> normalize_weights()
   end
 
   defp normalize_weights(%{} = weights) do
-    weights
-    |> Map.take([:cpu_core_second, :memory_mb_second, :disk_gb_second])
-    |> Map.merge(%{
-      cpu_core_second: Map.get(weights, "cpu_core_second"),
-      memory_mb_second: Map.get(weights, "memory_mb_second"),
-      disk_gb_second: Map.get(weights, "disk_gb_second")
-    })
-    |> Enum.reject(fn {_key, value} -> is_nil(value) end)
-    |> Enum.into(%{})
+    atom_values = Map.take(weights, [:cpu_core_second, :memory_mb_second, :disk_gb_second])
+
+    string_values =
+      %{
+        cpu_core_second: Map.get(weights, "cpu_core_second"),
+        memory_mb_second: Map.get(weights, "memory_mb_second"),
+        disk_gb_second: Map.get(weights, "disk_gb_second")
+      }
+      |> Enum.reject(fn {_key, value} -> is_nil(value) end)
+      |> Map.new()
+
+    Map.merge(atom_values, string_values)
   end
 end

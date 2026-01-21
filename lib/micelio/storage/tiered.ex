@@ -165,6 +165,11 @@ defmodule Micelio.Storage.Tiered do
       Application.get_env(:micelio, Micelio.Storage, [])
   end
 
+  # Get additional Req options (e.g., plug for testing)
+  defp req_options(config) do
+    Keyword.get(config, :req_options, [])
+  end
+
   defp cache_put(config, key, content, metadata \\ nil) do
     _ = disk_put(config, key, content, metadata)
     _ = memory_put(config, key, content, metadata)
@@ -607,10 +612,14 @@ defmodule Micelio.Storage.Tiered do
       base_url when is_binary(base_url) ->
         url = String.trim_trailing(base_url, "/") <> "/" <> key
 
-        case Req.get(url,
-               receive_timeout: Keyword.get(config, :cdn_timeout_ms, @default_cdn_timeout_ms),
-               decode_body: false
-             ) do
+        opts =
+          [
+            receive_timeout: Keyword.get(config, :cdn_timeout_ms, @default_cdn_timeout_ms),
+            decode_body: false
+          ]
+          |> Keyword.merge(req_options(config))
+
+        case Req.get(url, opts) do
           {:ok, %{status: 200, body: body, headers: headers}} ->
             case header_value(headers, "etag") do
               nil -> {:ok, body}
@@ -640,10 +649,14 @@ defmodule Micelio.Storage.Tiered do
       base_url when is_binary(base_url) ->
         url = String.trim_trailing(base_url, "/") <> "/" <> key
 
-        case Req.get(url,
-               receive_timeout: Keyword.get(config, :cdn_timeout_ms, @default_cdn_timeout_ms),
-               decode_body: false
-             ) do
+        opts =
+          [
+            receive_timeout: Keyword.get(config, :cdn_timeout_ms, @default_cdn_timeout_ms),
+            decode_body: false
+          ]
+          |> Keyword.merge(req_options(config))
+
+        case Req.get(url, opts) do
           {:ok, %{status: 200, body: body, headers: headers}} ->
             case header_value(headers, "etag") do
               nil -> :miss
@@ -670,9 +683,11 @@ defmodule Micelio.Storage.Tiered do
       base_url when is_binary(base_url) ->
         url = String.trim_trailing(base_url, "/") <> "/" <> key
 
-        case Req.head(url,
-               receive_timeout: Keyword.get(config, :cdn_timeout_ms, @default_cdn_timeout_ms)
-             ) do
+        opts =
+          [receive_timeout: Keyword.get(config, :cdn_timeout_ms, @default_cdn_timeout_ms)]
+          |> Keyword.merge(req_options(config))
+
+        case Req.head(url, opts) do
           {:ok, %{status: 200}} -> true
           {:ok, %{status: 404}} -> false
           {:ok, _} -> false
@@ -743,12 +758,17 @@ defmodule Micelio.Storage.Tiered do
 
     Enum.find_value(headers, fn
       {key, value} when is_binary(key) ->
-        if String.downcase(key) == target, do: value
+        if String.downcase(key) == target, do: normalize_header_value(value)
 
       _ ->
         nil
     end)
   end
+
+  # Handle header values that may come as lists (from Plug) or strings (from Req)
+  defp normalize_header_value([value | _]) when is_binary(value), do: value
+  defp normalize_header_value(value) when is_binary(value), do: value
+  defp normalize_header_value(_), do: nil
 
   defp create_table(name, type) do
     case :ets.whereis(name) do

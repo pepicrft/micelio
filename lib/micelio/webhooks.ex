@@ -126,20 +126,38 @@ defmodule Micelio.Webhooks do
   end
 
   @doc """
-  Dispatches a project event asynchronously.
+  Dispatches a project event.
+
+  Options:
+    * `:async` - whether to run asynchronously (default: true)
+    * `:timeout` - HTTP request timeout in milliseconds
   """
   def dispatch_project_event(%Project{} = project, event, payload, opts \\ [])
       when is_binary(event) and is_map(payload) do
     if event in Webhook.allowed_events() do
-      case Task.Supervisor.start_child(@supervisor, fn ->
-             deliver_project_event(project, event, payload, opts)
-           end) do
-        {:ok, _pid} ->
-          :ok
+      async = Keyword.get(opts, :async, true)
 
-        {:error, reason} ->
-          Logger.warning("webhook dispatch failed: #{inspect(reason)}")
-          :error
+      if async do
+        # Allow spawned task to access the sandbox in tests
+        caller = self()
+
+        case Task.Supervisor.start_child(@supervisor, fn ->
+               if function_exported?(Ecto.Adapters.SQL.Sandbox, :allow, 3) do
+                 Ecto.Adapters.SQL.Sandbox.allow(Micelio.Repo, caller, self())
+               end
+
+               deliver_project_event(project, event, payload, opts)
+             end) do
+          {:ok, _pid} ->
+            :ok
+
+          {:error, reason} ->
+            Logger.warning("webhook dispatch failed: #{inspect(reason)}")
+            :error
+        end
+      else
+        deliver_project_event(project, event, payload, opts)
+        :ok
       end
     else
       {:error, :unknown_event}

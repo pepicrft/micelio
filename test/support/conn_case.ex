@@ -19,6 +19,7 @@ defmodule MicelioWeb.ConnCase do
 
   using do
     quote do
+      use Mimic
       use MicelioWeb, :verified_routes
 
       import MicelioWeb.ConnCase
@@ -55,7 +56,7 @@ defmodule MicelioWeb.ConnCase do
   It returns an updated `conn`.
   """
   def log_in_user(conn, user) do
-    Plug.Test.init_test_session(conn, %{user_id: user.id})
+    Plug.Test.init_test_session(conn, %{"user_id" => user.id})
   end
 
   defp user_fixture(attrs \\ %{}) do

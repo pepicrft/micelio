@@ -268,12 +268,21 @@ defmodule Micelio.AccountsTest do
   end
 
   describe "organization settings" do
+    defp unique_org_handle(prefix) do
+      random = :crypto.strong_rand_bytes(4) |> Base.encode16(case: :lower)
+      "#{prefix}-#{random}"
+    end
+
     test "updates LLM settings for an organization" do
+      handle = unique_org_handle("llm-org")
+
       {:ok, organization} =
-        Accounts.create_organization(%{handle: "llm-org", name: "LLM Org"})
+        Accounts.create_organization(%{handle: handle, name: "LLM Org"})
+
+      organization = Repo.preload(organization, :account)
 
       assert {:ok, updated} =
-               Accounts.update_organization_settings(organization, %{
+               Accounts.update_account_settings(organization.account, %{
                  "llm_models" => ["gpt-4.1"],
                  "llm_default_model" => "gpt-4.1"
                })
@@ -283,11 +292,15 @@ defmodule Micelio.AccountsTest do
     end
 
     test "rejects default LLM models outside the allowed list" do
+      handle = unique_org_handle("llm-org-invalid")
+
       {:ok, organization} =
-        Accounts.create_organization(%{handle: "llm-org-invalid", name: "LLM Org Invalid"})
+        Accounts.create_organization(%{handle: handle, name: "LLM Org Invalid"})
+
+      organization = Repo.preload(organization, :account)
 
       assert {:error, changeset} =
-               Accounts.update_organization_settings(organization, %{
+               Accounts.update_account_settings(organization.account, %{
                  "llm_models" => ["gpt-4.1"],
                  "llm_default_model" => "gpt-4.1-mini"
                })

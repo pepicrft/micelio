@@ -9,8 +9,13 @@ defmodule Micelio.AgentInfra.BillingTest do
   alias Micelio.AgentInfra.ProvisioningRequest
   alias Micelio.Repo
 
+  defp unique_email(prefix) do
+    random = :crypto.strong_rand_bytes(4) |> Base.encode16(case: :lower)
+    "#{prefix}-#{random}@example.com"
+  end
+
   test "reserve_for_plan/3 records usage and updates quota" do
-    {:ok, user} = Accounts.get_or_create_user_by_email("agent-billing@example.com")
+    {:ok, user} = Accounts.get_or_create_user_by_email(unique_email("billing"))
     account = user.account
 
     attrs = %{
@@ -52,7 +57,7 @@ defmodule Micelio.AgentInfra.BillingTest do
   end
 
   test "reserve_for_plan/3 enforces quota limits" do
-    {:ok, user} = Accounts.get_or_create_user_by_email("agent-billing-limit@example.com")
+    {:ok, user} = Accounts.get_or_create_user_by_email(unique_email("billing-limit"))
     account = user.account
 
     attrs = %{
@@ -80,7 +85,7 @@ defmodule Micelio.AgentInfra.BillingTest do
   end
 
   test "quota_status/2 creates a quota record and reports remaining limits" do
-    {:ok, user} = Accounts.get_or_create_user_by_email("agent-billing-status@example.com")
+    {:ok, user} = Accounts.get_or_create_user_by_email(unique_email("billing-status"))
     account = user.account
 
     limits = %{
@@ -111,7 +116,7 @@ defmodule Micelio.AgentInfra.BillingTest do
   end
 
   test "quota_status/2 reflects reserved usage" do
-    {:ok, user} = Accounts.get_or_create_user_by_email("agent-billing-status-usage@example.com")
+    {:ok, user} = Accounts.get_or_create_user_by_email(unique_email("billing-usage"))
     account = user.account
 
     attrs = %{
@@ -151,7 +156,7 @@ defmodule Micelio.AgentInfra.BillingTest do
   end
 
   test "build_request_with_quota/3 reserves usage before building request" do
-    {:ok, user} = Accounts.get_or_create_user_by_email("agent-billing-request@example.com")
+    {:ok, user} = Accounts.get_or_create_user_by_email(unique_email("billing-request"))
     account = user.account
 
     attrs = %{

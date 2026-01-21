@@ -1,20 +1,16 @@
-# SQLite allows a single writer per database file. Keep max_cases at 1 by
-# default and use MIX_TEST_PARTITION (mix test --partitions N) to parallelize
-# across multiple database files.
-max_cases =
-  System.get_env("SQLITE_TEST_MAX_CASES")
-  |> case do
-    nil ->
-      1
+ExUnit.start()
 
-    value ->
-      case Integer.parse(value) do
-        {count, _} when count > 0 -> count
-        _ -> 1
-      end
-  end
-
-ExUnit.start(max_cases: max_cases)
-
+# Mimic copies must be done globally for async tests to work properly.
+# When tests run in parallel, only the global owner process can call
+# expect/stub on mocked modules.
+#
+# Note: Do NOT mock OTP primitives like Task.Supervisor - use dependency
+# injection or async: false options instead.
 Mimic.copy(Micelio.Accounts)
+Mimic.copy(Micelio.Projects)
+Mimic.copy(Micelio.Mic.Landing)
+Mimic.copy(Micelio.Notifications)
+Mimic.copy(Micelio.Webhooks)
+Mimic.copy(Req)
+
 Ecto.Adapters.SQL.Sandbox.mode(Micelio.Repo, :manual)

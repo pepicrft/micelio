@@ -37,7 +37,7 @@ defmodule Micelio.AgentInfra.ProtocolTest do
   end
 
   test "normalize_status normalizes tuple ip addresses and list hostnames" do
-    payload = %{state: :running, hostname: 'vm.local', ip_address: {10, 0, 0, 5}}
+    payload = %{state: :running, hostname: ~c"vm.local", ip_address: {10, 0, 0, 5}}
 
     assert {:ok,
             %{

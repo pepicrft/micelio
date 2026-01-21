@@ -9,11 +9,6 @@ defmodule Micelio.Sessions.OGSummaryTest do
   setup :verify_on_exit!
   setup :set_mimic_global
 
-  setup_all do
-    Mimic.copy(Req)
-    :ok
-  end
-
   setup do
     Application.put_env(:micelio, Micelio.Sessions.OGSummary,
       llm_endpoint: "https://example.com/v1/responses",

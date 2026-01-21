@@ -1,8 +1,8 @@
 defmodule MicelioWeb.Plugs.OpenGraphCacheBusterTest do
   use ExUnit.Case, async: false
 
+  import Plug.Conn
   import Plug.Test
-  import Plug.Conn, only: [get_session: 2]
 
   alias MicelioWeb.PageMeta
   alias MicelioWeb.Plugs.OpenGraphCacheBuster
@@ -77,6 +77,7 @@ defmodule MicelioWeb.Plugs.OpenGraphCacheBusterTest do
   test "sets no-cache headers for crawler responses when missing" do
     conn =
       conn(:get, "/")
+      |> delete_resp_header("cache-control")
       |> put_req_header("user-agent", "Twitterbot/1.0")
       |> OpenGraphCacheBuster.call([])
 

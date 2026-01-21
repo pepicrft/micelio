@@ -309,6 +309,9 @@ defmodule Micelio.Storage.S3 do
         _ -> :virtual
       end
 
+    # Extract Req options for testing (e.g., plug: {Req.Test, :s3})
+    req_options = Keyword.get(config, :req_options, [])
+
     cond do
       is_nil(bucket) ->
         {:error, :missing_s3_bucket}
@@ -326,7 +329,8 @@ defmodule Micelio.Storage.S3 do
            access_key: access_key,
            secret_key: secret_key,
            endpoint: endpoint,
-           url_style: url_style
+           url_style: url_style,
+           req_options: req_options
          }}
     end
   end
@@ -399,6 +403,9 @@ defmodule Micelio.Storage.S3 do
       else
         req_opts
       end
+
+    # Merge any additional Req options (e.g., plug for testing)
+    req_opts = Keyword.merge(req_opts, config.req_options)
 
     {:ok, req_opts}
   end

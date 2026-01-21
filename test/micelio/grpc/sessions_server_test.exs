@@ -1,5 +1,6 @@
 defmodule Micelio.GRPC.SessionsServerTest do
-  use Micelio.DataCase, async: true
+  # async: false because global Mimic mocking requires exclusive ownership
+  use Micelio.DataCase, async: false
 
   import Mimic
 
@@ -20,12 +21,6 @@ defmodule Micelio.GRPC.SessionsServerTest do
   setup :verify_on_exit!
   setup :set_mimic_global
   setup :setup_storage
-
-  setup_all do
-    Mimic.copy(Landing)
-    Mimic.copy(Webhooks)
-    :ok
-  end
 
   test "land_session dispatches webhooks for landing and push events" do
     {:ok, user} = Accounts.get_or_create_user_by_email("grpc-session-land@example.com")

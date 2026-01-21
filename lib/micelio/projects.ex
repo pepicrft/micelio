@@ -226,15 +226,16 @@ defmodule Micelio.Projects do
     else
       user = Keyword.get(opts, :user)
       limit = Keyword.get(opts, :limit, 50)
+      # Convert the query to a tsquery format for PostgreSQL full-text search
+      tsquery = query |> String.split() |> Enum.join(" & ")
 
       Project
-      |> join(:inner, [p], f in "projects_fts", on: field(f, :project_id) == p.id)
-      |> where([_p, _f], fragment("projects_fts MATCH ?", ^query))
+      |> where([p], fragment("search_vector @@ to_tsquery('english', ?)", ^tsquery))
       |> search_visibility_filter(user)
-      |> join(:left, [p, _f], o in assoc(p, :organization))
-      |> join(:left, [p, _f, o], a in assoc(o, :account))
-      |> preload([_p, _f, o, a], organization: {o, account: a})
-      |> order_by([_p, _f], fragment("bm25(projects_fts)"))
+      |> join(:left, [p], o in assoc(p, :organization))
+      |> join(:left, [p, o], a in assoc(o, :account))
+      |> preload([_p, o, a], organization: {o, account: a})
+      |> order_by([p], fragment("ts_rank(search_vector, to_tsquery('english', ?)) DESC", ^tsquery))
       |> limit(^limit)
       |> Repo.all()
     end

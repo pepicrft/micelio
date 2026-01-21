@@ -1,16 +1,14 @@
 defmodule Micelio.StorageTest do
   use ExUnit.Case, async: true
 
-  import Mimic
-
   alias Micelio.Storage
   alias Micelio.StorageHelper
 
-  setup :verify_on_exit!
-  setup :set_mimic_private
-
   setup do
-    Mimic.copy(Req)
+    on_exit(fn ->
+      Process.delete(:micelio_storage_config)
+    end)
+
     :ok
   end
 
@@ -21,7 +19,6 @@ defmodule Micelio.StorageTest do
       Process.put(:micelio_storage_config, storage.config)
 
       on_exit(fn ->
-        Process.delete(:micelio_storage_config)
         StorageHelper.cleanup(storage)
       end)
 
@@ -36,34 +33,30 @@ defmodule Micelio.StorageTest do
     end
 
     test "uses S3 backend when configured" do
-      # Configure S3 backend via process dictionary
+      key = "test/s3.txt"
+      content = "s3 content"
+
+      # Configure S3 backend via process dictionary with Req.Test plug
       config = [
         backend: :s3,
         s3_bucket: "test-bucket",
         s3_region: "us-east-1",
         s3_access_key_id: "test-key",
-        s3_secret_access_key: "test-secret"
+        s3_secret_access_key: "test-secret",
+        req_options: [plug: {Req.Test, Micelio.StorageTest}, retry: false]
       ]
 
       Process.put(:micelio_storage_config, config)
 
-      on_exit(fn ->
-        Process.delete(:micelio_storage_config)
+      # Expect PUT then GET requests
+      Req.Test.expect(Micelio.StorageTest, fn conn ->
+        assert conn.method == "PUT"
+        Plug.Conn.send_resp(conn, 200, "")
       end)
 
-      key = "test/s3.txt"
-      content = "s3 content"
-
-      # Mock S3 PUT
-      expect(Req, :request, fn opts ->
-        assert opts[:method] == :put
-        {:ok, %{status: 200, body: ""}}
-      end)
-
-      # Mock S3 GET
-      expect(Req, :request, fn opts ->
-        assert opts[:method] == :get
-        {:ok, %{status: 200, body: content}}
+      Req.Test.expect(Micelio.StorageTest, fn conn ->
+        assert conn.method == "GET"
+        Plug.Conn.send_resp(conn, 200, content)
       end)
 
       {:ok, ^key} = Storage.put(key, content)
@@ -99,7 +92,6 @@ defmodule Micelio.StorageTest do
       cache_dir = Path.join(System.tmp_dir!(), "micelio-test-cache-#{unique}")
 
       on_exit(fn ->
-        Process.delete(:micelio_storage_config)
         File.rm_rf(origin_dir)
         File.rm_rf(cache_dir)
       end)
@@ -131,10 +123,6 @@ defmodule Micelio.StorageTest do
       config = [cdn_base_url: "https://cdn.example.test/micelio"]
       Process.put(:micelio_storage_config, config)
 
-      on_exit(fn ->
-        Process.delete(:micelio_storage_config)
-      end)
-
       key = "projects/123/blobs/aa/file name.txt"
 
       assert Storage.cdn_url(key) ==
@@ -144,10 +132,6 @@ defmodule Micelio.StorageTest do
     test "returns nil when CDN is not configured" do
       # Configure empty storage config via process dictionary
       Process.put(:micelio_storage_config, [])
-
-      on_exit(fn ->
-        Process.delete(:micelio_storage_config)
-      end)
 
       assert Storage.cdn_url("projects/123/blobs/aa/file.txt") == nil
     end

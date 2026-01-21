@@ -1,17 +1,12 @@
 defmodule Micelio.ThemeGeneratorLLMTest do
+  # async: false because global Mimic mocking requires exclusive ownership
   use ExUnit.Case, async: false
-
-  import Mimic
+  use Mimic
 
   alias Micelio.Theme.Generator.LLM
 
   setup :verify_on_exit!
   setup :set_mimic_global
-
-  setup_all do
-    Mimic.copy(Req)
-    :ok
-  end
 
   test "posts to the LLM endpoint and returns the theme payload" do
     date = ~D[2025-02-01]
@@ -52,7 +47,10 @@ defmodule Micelio.ThemeGeneratorLLMTest do
     expect(Req, :post, fn endpoint, opts ->
       assert endpoint == "https://example.com/v1/responses"
       assert opts[:json][:model] == "gpt-4.1-mini"
-      assert String.contains?(opts[:json][:input], "2025-02-01")
+      messages = opts[:json][:messages]
+      assert is_list(messages)
+      user_message = Enum.find(messages, &(&1[:role] == "user"))
+      assert String.contains?(user_message[:content], "2025-02-01")
 
       assert Enum.any?(opts[:headers], fn {key, value} ->
                key == "authorization" and value == "Bearer secret-key"

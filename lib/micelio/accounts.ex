@@ -233,6 +233,10 @@ defmodule Micelio.Accounts do
   end
 
   def user_role_in_organization?(user_id, organization_id, role) when is_binary(role) do
+    user_role_in_organization?(user_id, organization_id, String.to_existing_atom(role))
+  end
+
+  def user_role_in_organization?(user_id, organization_id, role) when is_atom(role) do
     case get_organization_membership(user_id, organization_id) do
       %OrganizationMembership{role: ^role} -> true
       _ -> false
@@ -244,6 +248,10 @@ defmodule Micelio.Accounts do
   """
   def list_organizations_for_user_with_role(%User{} = user, role),
     do: list_organizations_for_user_with_role(user.id, role)
+
+  def list_organizations_for_user_with_role(user_id, role) when is_atom(role) do
+    list_organizations_for_user_with_role(user_id, Atom.to_string(role))
+  end
 
   def list_organizations_for_user_with_role(user_id, role) when is_binary(role) do
     Organization
@@ -566,10 +574,19 @@ defmodule Micelio.Accounts do
     allow_reserved = Keyword.get(opts, :allow_reserved, false)
     org_attrs = organization_attrs(name, attrs)
 
+    llm_models = Map.get(attrs, :llm_models) || Map.get(attrs, "llm_models")
+    llm_default_model = Map.get(attrs, :llm_default_model) || Map.get(attrs, "llm_default_model")
+
+    account_attrs =
+      %{handle: handle}
+      |> maybe_put(:llm_models, llm_models)
+      |> maybe_put(:llm_default_model, llm_default_model)
+
     Repo.transaction(fn ->
       with {:ok, org} <- do_create_organization(org_attrs),
+           account_attrs = Map.put(account_attrs, :organization_id, org.id),
            {:ok, account} <-
-             create_organization_account(%{handle: handle, organization_id: org.id},
+             create_organization_account(account_attrs,
                allow_reserved: allow_reserved
              ) do
         %{org | account: account}
@@ -578,6 +595,9 @@ defmodule Micelio.Accounts do
       end
     end)
   end
+
+  defp maybe_put(map, _key, nil), do: map
+  defp maybe_put(map, key, value), do: Map.put(map, key, value)
 
   @doc """
   Creates a new organization and assigns the user as an owner.
@@ -588,10 +608,19 @@ defmodule Micelio.Accounts do
     allow_reserved = Keyword.get(opts, :allow_reserved, false)
     org_attrs = organization_attrs(name, attrs)
 
+    llm_models = Map.get(attrs, :llm_models) || Map.get(attrs, "llm_models")
+    llm_default_model = Map.get(attrs, :llm_default_model) || Map.get(attrs, "llm_default_model")
+
+    account_attrs =
+      %{handle: handle}
+      |> maybe_put(:llm_models, llm_models)
+      |> maybe_put(:llm_default_model, llm_default_model)
+
     Repo.transaction(fn ->
       with {:ok, org} <- do_create_organization(org_attrs),
+           account_attrs = Map.put(account_attrs, :organization_id, org.id),
            {:ok, account} <-
-             create_organization_account(%{handle: handle, organization_id: org.id},
+             create_organization_account(account_attrs,
                allow_reserved: allow_reserved
              ),
            {:ok, _membership} <-

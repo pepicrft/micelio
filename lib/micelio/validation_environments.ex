@@ -21,9 +21,10 @@ defmodule Micelio.ValidationEnvironments do
   end
 
   def create_run(%PromptRequest{} = prompt_request, attrs \\ %{}) do
+    attrs = Map.put(attrs, :prompt_request_id, prompt_request.id)
+
     %ValidationRun{}
     |> ValidationRun.changeset(attrs)
-    |> Ecto.Changeset.put_change(:prompt_request_id, prompt_request.id)
     |> Repo.insert()
   end
 
@@ -279,6 +280,8 @@ defmodule Micelio.ValidationEnvironments do
   defp fallback_reason?(_reason), do: false
 
   defp validate_request(provider_module, request) do
+    Code.ensure_loaded(provider_module)
+
     if function_exported?(provider_module, :validate_request, 1) do
       provider_module.validate_request(request)
     else

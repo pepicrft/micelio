@@ -473,12 +473,19 @@ config :micelio, MicelioWeb.Endpoint,
   http: [port: String.to_integer(System.get_env("PORT", "4000"))]
 
 if config_env() == :prod do
-  database_path =
-    System.get_env("DATABASE_PATH") ||
-      "/var/micelio/micelio.sqlite3"
+  database_url =
+    System.get_env("DATABASE_URL") ||
+      raise """
+      environment variable DATABASE_URL is missing.
+      For example: ecto://USER:PASS@HOST/DATABASE
+      """
 
-  database_dir = Path.dirname(database_path)
-  File.mkdir_p!(database_dir)
+  maybe_ipv6 = if System.get_env("ECTO_IPV6") in ~w(true 1), do: [:inet6], else: []
+
+  config :micelio, Micelio.Repo,
+    url: database_url,
+    pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
+    socket_options: maybe_ipv6
 
   # The secret key base is used to sign/encrypt cookies and other secrets.
   # A default value is used in config/dev.exs and config/test.exs but you
@@ -511,13 +518,6 @@ if config_env() == :prod do
     |> Enum.map(fn {name, _} -> name end)
 
   config :micelio, Micelio.GRPC, require_auth_token: true
-
-  config :micelio, Micelio.Repo,
-    database: database_path,
-    journal_mode: :wal,
-    synchronous: :normal,
-    busy_timeout: 5_000,
-    pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10")
 
   config :micelio, MicelioWeb.Endpoint,
     url: [host: host, port: 443, scheme: "https"],

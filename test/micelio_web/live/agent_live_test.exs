@@ -1,5 +1,6 @@
 defmodule MicelioWeb.AgentLiveTest do
-  use MicelioWeb.ConnCase, async: true
+  # async: false because global Mimic mocking requires exclusive ownership
+  use MicelioWeb.ConnCase, async: false
 
   import Mimic
   import Phoenix.LiveViewTest
@@ -10,11 +11,6 @@ defmodule MicelioWeb.AgentLiveTest do
 
   setup :verify_on_exit!
   setup :set_mimic_global
-
-  setup_all do
-    Mimic.copy(Req)
-    :ok
-  end
 
   test "renders active agent sessions for public projects", %{conn: conn} do
     %{user: user, organization: organization, project: project} = create_public_project()

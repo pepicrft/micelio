@@ -50,8 +50,13 @@ defmodule Micelio.StorageHelper do
   Cleans up an isolated storage created by `create_isolated_storage/1`.
   """
   def cleanup(%{base_dir: base_dir}) do
-    File.rm_rf!(base_dir)
-    :ok
+    # Use rm_rf (without !) to gracefully handle cases where background
+    # processes may still be writing to the directory
+    case File.rm_rf(base_dir) do
+      {:ok, _} -> :ok
+      # File.rm_rf returns {:error, reason, file} on failure
+      {:error, _reason, _file} -> :ok
+    end
   end
 
   def cleanup(_), do: :ok

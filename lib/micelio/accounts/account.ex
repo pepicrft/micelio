@@ -38,12 +38,16 @@ defmodule Micelio.Accounts.Account do
     allow_reserved = Keyword.get(opts, :allow_reserved, false)
 
     account
-    |> cast(attrs, [:handle, :organization_id])
+    |> cast(attrs, [:handle, :organization_id, :llm_models, :llm_default_model])
     |> validate_required([:handle, :organization_id])
     |> validate_handle(allow_reserved)
     |> unique_constraint(:handle, name: :accounts_handle_index)
     |> assoc_constraint(:organization)
     |> validate_owner_exclusive()
+    |> normalize_llm_models()
+    |> normalize_llm_default_model()
+    |> validate_llm_models()
+    |> validate_llm_default_model()
   end
 
   @doc """

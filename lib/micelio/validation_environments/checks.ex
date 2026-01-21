@@ -161,12 +161,23 @@ defmodule Micelio.ValidationEnvironments.Checks do
   end
 
   defp merge_resource_usage(left, right) when is_map(left) and is_map(right) do
-    Map.merge(left, right, fn _key, left_value, right_value ->
+    # Normalize keys to strings
+    left_normalized = normalize_keys(left)
+    right_normalized = normalize_keys(right)
+
+    Map.merge(left_normalized, right_normalized, fn _key, left_value, right_value ->
       if is_number(left_value) and is_number(right_value) do
         left_value + right_value
       else
         right_value
       end
+    end)
+  end
+
+  defp normalize_keys(map) when is_map(map) do
+    Map.new(map, fn
+      {k, v} when is_atom(k) -> {Atom.to_string(k), v}
+      {k, v} -> {k, v}
     end)
   end
 end

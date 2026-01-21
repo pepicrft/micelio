@@ -1,19 +1,9 @@
 defmodule Micelio.Storage.TieredTest do
   use ExUnit.Case, async: true
 
-  import Mimic
-
   alias Micelio.Storage.FakeOrigin
   alias Micelio.Storage.Local
   alias Micelio.Storage.Tiered
-
-  setup :verify_on_exit!
-  setup :set_mimic_global
-
-  setup_all do
-    Mimic.copy(Req)
-    :ok
-  end
 
   setup do
     unique = Integer.to_string(:erlang.unique_integer([:positive]))
@@ -168,16 +158,17 @@ defmodule Micelio.Storage.TieredTest do
     key = "sessions/abc/files/cdn.ex"
     content = "cdn content"
 
-    expect(Req, :get, fn url, opts ->
-      assert url == "https://cdn.example/#{key}"
-      assert opts[:decode_body] == false
-      {:ok, %{status: 200, body: content}}
+    Req.Test.stub(Micelio.Storage.TieredTest, fn conn ->
+      assert conn.method == "GET"
+      assert conn.request_path == "/#{key}"
+      Plug.Conn.send_resp(conn, 200, content)
     end)
 
     config =
       config
       |> Keyword.put(:cdn_base_url, "https://cdn.example")
       |> Keyword.put(:cache_memory_max_bytes, 1_000_000)
+      |> Keyword.put(:req_options, [plug: {Req.Test, Micelio.Storage.TieredTest}, retry: false])
 
     assert {:ok, ^content} = Tiered.get(key, config)
     assert File.exists?(Path.join(cache_dir, key))
@@ -192,13 +183,16 @@ defmodule Micelio.Storage.TieredTest do
     etag = "cdn-cached-etag"
     size = byte_size(content)
 
-    expect(Req, :get, fn url, opts ->
-      assert url == "https://cdn.example/#{key}"
-      assert opts[:decode_body] == false
-      {:ok, %{status: 200, body: content, headers: [{"etag", etag}]}}
+    Req.Test.stub(Micelio.Storage.TieredTest, fn conn ->
+      conn
+      |> Plug.Conn.put_resp_header("etag", etag)
+      |> Plug.Conn.send_resp(200, content)
     end)
 
-    config = Keyword.put(config, :cdn_base_url, "https://cdn.example")
+    config =
+      config
+      |> Keyword.put(:cdn_base_url, "https://cdn.example")
+      |> Keyword.put(:req_options, [plug: {Req.Test, Micelio.Storage.TieredTest}, retry: false])
 
     assert {:ok, ^content} = Tiered.get(key, config)
     assert {:ok, %{etag: ^etag, size: ^size}} = Tiered.head(key, config)
@@ -214,13 +208,14 @@ defmodule Micelio.Storage.TieredTest do
 
     {:ok, ^key} = Local.put(key, content, base_path: origin_dir)
 
-    expect(Req, :get, fn url, opts ->
-      assert url == "https://cdn.example/#{key}"
-      assert opts[:decode_body] == false
-      {:ok, %{status: 404}}
+    Req.Test.stub(Micelio.Storage.TieredTest, fn conn ->
+      Plug.Conn.send_resp(conn, 404, "")
     end)
 
-    config = Keyword.put(config, :cdn_base_url, "https://cdn.example")
+    config =
+      config
+      |> Keyword.put(:cdn_base_url, "https://cdn.example")
+      |> Keyword.put(:req_options, [plug: {Req.Test, Micelio.Storage.TieredTest}, retry: false])
 
     assert {:ok, ^content} = Tiered.get(key, config)
     assert File.exists?(Path.join(cache_dir, key))
@@ -229,13 +224,15 @@ defmodule Micelio.Storage.TieredTest do
   test "exists? checks CDN when caches and origin miss", %{config: config} do
     key = "sessions/abc/files/cdn-exists.ex"
 
-    expect(Req, :head, fn url, opts ->
-      assert url == "https://cdn.example/#{key}"
-      assert opts[:receive_timeout] == 2_000
-      {:ok, %{status: 200}}
+    Req.Test.stub(Micelio.Storage.TieredTest, fn conn ->
+      assert conn.method == "HEAD"
+      Plug.Conn.send_resp(conn, 200, "")
     end)
 
-    config = Keyword.put(config, :cdn_base_url, "https://cdn.example")
+    config =
+      config
+      |> Keyword.put(:cdn_base_url, "https://cdn.example")
+      |> Keyword.put(:req_options, [plug: {Req.Test, Micelio.Storage.TieredTest}, retry: false])
 
     assert Tiered.exists?(key, config)
   end
@@ -248,13 +245,16 @@ defmodule Micelio.Storage.TieredTest do
     content = "cdn metadata content"
     etag = "cdn-etag"
 
-    expect(Req, :get, fn url, opts ->
-      assert url == "https://cdn.example/#{key}"
-      assert opts[:decode_body] == false
-      {:ok, %{status: 200, body: content, headers: [{"etag", etag}]}}
+    Req.Test.stub(Micelio.Storage.TieredTest, fn conn ->
+      conn
+      |> Plug.Conn.put_resp_header("etag", etag)
+      |> Plug.Conn.send_resp(200, content)
     end)
 
-    config = Keyword.put(config, :cdn_base_url, "https://cdn.example")
+    config =
+      config
+      |> Keyword.put(:cdn_base_url, "https://cdn.example")
+      |> Keyword.put(:req_options, [plug: {Req.Test, Micelio.Storage.TieredTest}, retry: false])
 
     assert {:ok, %{content: ^content, etag: ^etag}} = Tiered.get_with_metadata(key, config)
     assert File.exists?(Path.join(cache_dir, key))
@@ -320,13 +320,16 @@ defmodule Micelio.Storage.TieredTest do
     size = byte_size(content)
     etag = "cdn-head-etag"
 
-    expect(Req, :get, fn url, opts ->
-      assert url == "https://cdn.example/#{key}"
-      assert opts[:decode_body] == false
-      {:ok, %{status: 200, body: content, headers: [{"etag", etag}]}}
+    Req.Test.stub(Micelio.Storage.TieredTest, fn conn ->
+      conn
+      |> Plug.Conn.put_resp_header("etag", etag)
+      |> Plug.Conn.send_resp(200, content)
     end)
 
-    config = Keyword.put(config, :cdn_base_url, "https://cdn.example")
+    config =
+      config
+      |> Keyword.put(:cdn_base_url, "https://cdn.example")
+      |> Keyword.put(:req_options, [plug: {Req.Test, Micelio.Storage.TieredTest}, retry: false])
 
     assert {:ok, %{etag: ^etag, size: ^size}} = Tiered.head(key, config)
     assert File.exists?(Path.join(cache_dir, key))
@@ -347,14 +350,13 @@ defmodule Micelio.Storage.TieredTest do
       |> Keyword.put(:cache_disk_path, nil)
       |> Keyword.put(:cache_memory_max_bytes, 0)
       |> Keyword.put(:cache_namespace, "#{config[:cache_namespace]}-head-origin")
+      |> Keyword.put(:req_options, [plug: {Req.Test, Micelio.Storage.TieredTest}, retry: false])
 
     {:ok, ^key} = Local.put(key, content, base_path: origin_dir)
     {:ok, %{etag: etag}} = Local.get_with_metadata(key, base_path: origin_dir)
 
-    expect(Req, :get, fn url, opts ->
-      assert url == "https://cdn.example/#{key}"
-      assert opts[:decode_body] == false
-      {:ok, %{status: 404}}
+    Req.Test.stub(Micelio.Storage.TieredTest, fn conn ->
+      Plug.Conn.send_resp(conn, 404, "")
     end)
 
     assert {:ok, %{etag: ^etag, size: ^size}} = Tiered.head(key, head_config)

@@ -5,7 +5,7 @@ defmodule MicelioWeb.LiveOpenGraphCacheBusterTest do
   alias MicelioWeb.PageMeta
 
   test "assigns cache buster from session into page meta" do
-    socket = %Phoenix.LiveView.Socket{assigns: %{}}
+    socket = %Phoenix.LiveView.Socket{assigns: %{__changed__: %{}}}
 
     {:cont, socket} =
       LiveOpenGraphCacheBuster.on_mount(
@@ -21,7 +21,7 @@ defmodule MicelioWeb.LiveOpenGraphCacheBusterTest do
   end
 
   test "no-ops when session has no cache buster" do
-    socket = %Phoenix.LiveView.Socket{assigns: %{}}
+    socket = %Phoenix.LiveView.Socket{assigns: %{__changed__: %{}}}
 
     {:cont, socket} = LiveOpenGraphCacheBuster.on_mount(:default, %{}, %{}, socket)
 

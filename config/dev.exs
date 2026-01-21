@@ -12,12 +12,10 @@ config :micelio, Micelio.GRPC,
   tls_mode: :disabled
 
 config :micelio, Micelio.Repo,
-  database: Path.join([System.tmp_dir!(), "micelio", "micelio_dev.sqlite3"]),
-  # Static assets, except user uploads
-  # In order to use HTTPS in development, a self-signed
-  journal_mode: :wal,
-  synchronous: :normal,
-  busy_timeout: 5_000,
+  username: "postgres",
+  password: "postgres",
+  hostname: "localhost",
+  database: "micelio_dev",
   stacktrace: true,
   show_sensitive_data_on_connection_error: true,
   pool_size: 10

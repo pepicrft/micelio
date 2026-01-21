@@ -10,7 +10,7 @@ defmodule Micelio.IntegrationTest do
   7. Views session details
   """
 
-  use Micelio.DataCase
+  use Micelio.DataCase, async: false
 
   alias Micelio.{Accounts, Projects, Sessions}
 
