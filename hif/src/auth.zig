@@ -3,7 +3,7 @@ const http = @import("http.zig");
 const config = @import("config.zig");
 
 const FirstParty = struct {
-    const client_id = "hif";
+    const client_id = "ad79f0f6-8dbd-4ced-b629-567e764d2379";
     const domain = "micelio.dev";
 };
 
@@ -112,6 +112,7 @@ pub const AuthFlow = struct {
         defer self.allocator.free(response.body);
 
         if (response.status == .ok) {
+            std.debug.print("Token response: {s}\n", .{response.body});
             const parsed = try std.json.parseFromSlice(TokenResponse, self.allocator, response.body, .{
                 .ignore_unknown_fields = true,
                 .allocate = .alloc_always,
@@ -123,6 +124,8 @@ pub const AuthFlow = struct {
         if (response.status == .accepted) {
             return null;
         }
+
+        std.debug.print("Poll response: status={s}, body={s}\n", .{ @tagName(response.status), response.body });
 
         const parsed_error = std.json.parseFromSlice(ErrorResponse, self.allocator, response.body, .{
             .ignore_unknown_fields = true,
@@ -412,5 +415,5 @@ const TokenResponse = struct {
 
 const ErrorResponse = struct {
     code: []const u8,
-    description: ?[]const u8 = null,
+    message: ?[]const u8 = null,
 };
