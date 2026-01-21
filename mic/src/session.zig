@@ -5,6 +5,7 @@ const grpc_client = @import("grpc/client.zig");
 const grpc_endpoint = @import("grpc/endpoint.zig");
 const sessions_proto = @import("grpc/sessions_proto.zig");
 const bloom_mod = @import("core/bloom.zig");
+const serialize = @import("core/serialize.zig");
 
 const SessionState = struct {
     id: []const u8,
@@ -39,8 +40,231 @@ const FileChange = struct {
     change_type: []const u8,
 };
 
-const session_filename = "session.json";
+const session_filename = "session.bin";
 const overlay_root = ".mic/overlay";
+
+// ============================================================================
+// Binary Session Serialization
+// ============================================================================
+//
+// Session Binary Format:
+// [4 bytes: magic "MIC\x01"]
+// [1 byte:  type = 0x04 for session]
+// [varint:  id length] [bytes: id]
+// [varint:  goal length] [bytes: goal]
+// [varint:  project_org length] [bytes: project_org]
+// [varint:  project_handle length] [bytes: project_handle]
+// [8 bytes: started_at timestamp (u64 little-endian)]
+// [varint:  conversation count]
+// [conversations...]
+//   [1 byte: role (0=human, 1=agent)]
+//   [varint: message length] [bytes: message]
+//   [8 bytes: timestamp (u64)]
+// [varint:  decisions count]
+// [decisions...]
+//   [varint: description length] [bytes: description]
+//   [varint: reasoning length] [bytes: reasoning]
+//   [8 bytes: timestamp (u64)]
+// [varint:  files count]
+// [files...]
+//   [varint: path length] [bytes: path]
+//   [varint: content length] [bytes: content]
+//   [1 byte: change_type (0=added, 1=modified, 2=deleted)]
+// [4 bytes: bloom_hashes (u32 little-endian)]
+// [varint:  bloom_data length] [bytes: bloom_data] (or 0 if null)
+
+fn serializeSession(allocator: std.mem.Allocator, session: SessionState) ![]u8 {
+    var buf: std.ArrayList(u8) = .empty;
+    errdefer buf.deinit(allocator);
+
+    // Magic + type
+    try buf.appendSlice(allocator, &serialize.MAGIC);
+    try buf.append(allocator, @intFromEnum(serialize.Type.session));
+
+    // String fields
+    try writeString(allocator, &buf, session.id);
+    try writeString(allocator, &buf, session.goal);
+    try writeString(allocator, &buf, session.project_org);
+    try writeString(allocator, &buf, session.project_handle);
+
+    // started_at as u64 timestamp
+    const started_at_ts = std.fmt.parseInt(u64, session.started_at, 10) catch 0;
+    try buf.appendSlice(allocator, &std.mem.toBytes(started_at_ts));
+
+    // Conversations
+    try writeVarint(allocator, &buf, session.conversation.len);
+    for (session.conversation) |conv| {
+        const role_byte: u8 = if (std.mem.eql(u8, conv.role, "human")) 0 else 1;
+        try buf.append(allocator, role_byte);
+        try writeString(allocator, &buf, conv.message);
+        const conv_ts = std.fmt.parseInt(u64, conv.timestamp, 10) catch 0;
+        try buf.appendSlice(allocator, &std.mem.toBytes(conv_ts));
+    }
+
+    // Decisions
+    try writeVarint(allocator, &buf, session.decisions.len);
+    for (session.decisions) |dec| {
+        try writeString(allocator, &buf, dec.description);
+        try writeString(allocator, &buf, dec.reasoning);
+        const dec_ts = std.fmt.parseInt(u64, dec.timestamp, 10) catch 0;
+        try buf.appendSlice(allocator, &std.mem.toBytes(dec_ts));
+    }
+
+    // Files
+    try writeVarint(allocator, &buf, session.files.len);
+    for (session.files) |file| {
+        try writeString(allocator, &buf, file.path);
+        try writeString(allocator, &buf, file.content);
+        const change_type_byte: u8 = if (std.mem.eql(u8, file.change_type, "added")) 0 else if (std.mem.eql(u8, file.change_type, "modified")) 1 else 2;
+        try buf.append(allocator, change_type_byte);
+    }
+
+    // Bloom filter
+    try buf.appendSlice(allocator, &std.mem.toBytes(session.bloom_hashes));
+    if (session.bloom_data) |bloom| {
+        try writeString(allocator, &buf, bloom);
+    } else {
+        try writeVarint(allocator, &buf, 0);
+    }
+
+    return buf.toOwnedSlice(allocator);
+}
+
+fn deserializeSession(allocator: std.mem.Allocator, data: []const u8) !SessionState {
+    var pos: usize = 0;
+
+    // Check magic
+    if (data.len < serialize.MAGIC.len + 1) return error.UnexpectedEndOfData;
+    if (!std.mem.eql(u8, data[0..serialize.MAGIC.len], &serialize.MAGIC)) return error.InvalidMagic;
+    pos += serialize.MAGIC.len;
+
+    // Check type
+    if (data[pos] != @intFromEnum(serialize.Type.session)) return error.InvalidType;
+    pos += 1;
+
+    // String fields
+    const id = try readString(allocator, data, &pos);
+    errdefer allocator.free(id);
+    const goal = try readString(allocator, data, &pos);
+    errdefer allocator.free(goal);
+    const project_org = try readString(allocator, data, &pos);
+    errdefer allocator.free(project_org);
+    const project_handle = try readString(allocator, data, &pos);
+    errdefer allocator.free(project_handle);
+
+    // started_at
+    if (pos + 8 > data.len) return error.UnexpectedEndOfData;
+    const started_at_ts = std.mem.readInt(u64, data[pos..][0..8], .little);
+    pos += 8;
+    const started_at = try std.fmt.allocPrint(allocator, "{}", .{started_at_ts});
+    errdefer allocator.free(started_at);
+
+    // Conversations
+    const conv_count = try readVarint(data, &pos);
+    var conversations = try allocator.alloc(Conversation, conv_count);
+    errdefer allocator.free(conversations);
+    for (0..conv_count) |i| {
+        if (pos >= data.len) return error.UnexpectedEndOfData;
+        const role_byte = data[pos];
+        pos += 1;
+        const role = if (role_byte == 0) "human" else "agent";
+        const message = try readString(allocator, data, &pos);
+        if (pos + 8 > data.len) return error.UnexpectedEndOfData;
+        const conv_ts = std.mem.readInt(u64, data[pos..][0..8], .little);
+        pos += 8;
+        const timestamp = try std.fmt.allocPrint(allocator, "{}", .{conv_ts});
+        conversations[i] = .{ .role = role, .message = message, .timestamp = timestamp };
+    }
+
+    // Decisions
+    const dec_count = try readVarint(data, &pos);
+    var decisions = try allocator.alloc(Decision, dec_count);
+    errdefer allocator.free(decisions);
+    for (0..dec_count) |i| {
+        const description = try readString(allocator, data, &pos);
+        const reasoning = try readString(allocator, data, &pos);
+        if (pos + 8 > data.len) return error.UnexpectedEndOfData;
+        const dec_ts = std.mem.readInt(u64, data[pos..][0..8], .little);
+        pos += 8;
+        const timestamp = try std.fmt.allocPrint(allocator, "{}", .{dec_ts});
+        decisions[i] = .{ .description = description, .reasoning = reasoning, .timestamp = timestamp };
+    }
+
+    // Files
+    const files_count = try readVarint(data, &pos);
+    var files = try allocator.alloc(FileChange, files_count);
+    errdefer allocator.free(files);
+    for (0..files_count) |i| {
+        const path = try readString(allocator, data, &pos);
+        const content = try readString(allocator, data, &pos);
+        if (pos >= data.len) return error.UnexpectedEndOfData;
+        const change_type_byte = data[pos];
+        pos += 1;
+        const change_type = if (change_type_byte == 0) "added" else if (change_type_byte == 1) "modified" else "deleted";
+        files[i] = .{ .path = path, .content = content, .change_type = change_type };
+    }
+
+    // Bloom filter
+    if (pos + 4 > data.len) return error.UnexpectedEndOfData;
+    const bloom_hashes = std.mem.readInt(u32, data[pos..][0..4], .little);
+    pos += 4;
+
+    const bloom_len = try readVarint(data, &pos);
+    const bloom_data: ?[]const u8 = if (bloom_len > 0) try readStringWithLen(allocator, data, &pos, bloom_len) else null;
+
+    return SessionState{
+        .id = id,
+        .goal = goal,
+        .project_org = project_org,
+        .project_handle = project_handle,
+        .started_at = started_at,
+        .conversation = conversations,
+        .decisions = decisions,
+        .files = files,
+        .bloom_data = bloom_data,
+        .bloom_hashes = bloom_hashes,
+    };
+}
+
+fn writeVarint(allocator: std.mem.Allocator, buf: *std.ArrayList(u8), value: usize) !void {
+    var v = value;
+    while (v >= 0x80) {
+        try buf.append(allocator, @as(u8, @intCast(v & 0x7f)) | 0x80);
+        v >>= 7;
+    }
+    try buf.append(allocator, @intCast(v));
+}
+
+fn readVarint(data: []const u8, pos: *usize) !usize {
+    var value: usize = 0;
+    var shift: u6 = 0;
+    while (pos.* < data.len) {
+        const byte = data[pos.*];
+        pos.* += 1;
+        value |= @as(usize, byte & 0x7f) << shift;
+        if ((byte & 0x80) == 0) return value;
+        shift += 7;
+        if (shift >= 64) return error.InvalidData;
+    }
+    return error.UnexpectedEndOfData;
+}
+
+fn writeString(allocator: std.mem.Allocator, buf: *std.ArrayList(u8), s: []const u8) !void {
+    try writeVarint(allocator, buf, s.len);
+    try buf.appendSlice(allocator, s);
+}
+
+fn readString(allocator: std.mem.Allocator, data: []const u8, pos: *usize) ![]u8 {
+    const len = try readVarint(data, pos);
+    return readStringWithLen(allocator, data, pos, len);
+}
+
+fn readStringWithLen(allocator: std.mem.Allocator, data: []const u8, pos: *usize, len: usize) ![]u8 {
+    if (pos.* + len > data.len) return error.UnexpectedEndOfData;
+    const result = try allocator.dupe(u8, data[pos.*..][0..len]);
+    pos.* += len;
+    return result;
+}
 
 fn sessionStatePath(allocator: std.mem.Allocator) ![]u8 {
     const cwd = try std.process.getCwdAlloc(allocator);
@@ -156,12 +380,9 @@ pub fn start(allocator: std.mem.Allocator, organization: []const u8, project: []
         .bloom_hashes = bloom.num_hashes,
     };
 
-    // Write session state
-    var payload_buf = std.Io.Writer.Allocating.init(arena_alloc);
-    defer payload_buf.deinit();
-    const formatter = std.json.fmt(session, .{});
-    try formatter.format(&payload_buf.writer);
-    const payload = try payload_buf.toOwnedSlice();
+    // Write session state (binary format)
+    const payload = try serializeSession(arena_alloc, session);
+    defer arena_alloc.free(payload);
 
     try ensureMicDirectory();
     const path_persist = try sessionStatePath(allocator);
@@ -191,7 +412,7 @@ pub fn status(allocator: std.mem.Allocator) !void {
         return;
     }
 
-    const session = try std.json.parseFromSliceLeaky(SessionState, arena_alloc, data.?, .{ .ignore_unknown_fields = true });
+    const session = try deserializeSession(arena_alloc, data.?);
 
     std.debug.print("Active session: {s}\n", .{session.id});
     std.debug.print("Goal: {s}\n", .{session.goal});
@@ -234,8 +455,7 @@ pub fn addNote(allocator: std.mem.Allocator, role: []const u8, message: []const 
         return error.NoActiveSession;
     }
 
-    var session = try std.json.parseFromSlice(SessionState, arena_alloc, data.?, .{ .allocate = .alloc_always });
-    defer session.deinit();
+    var session = try deserializeSession(arena_alloc, data.?);
 
     const now = try currentTimestamp(arena_alloc);
     const new_message = Conversation{
@@ -245,17 +465,14 @@ pub fn addNote(allocator: std.mem.Allocator, role: []const u8, message: []const 
     };
 
     // Append to conversation
-    var new_conversation = try arena_alloc.alloc(Conversation, session.value.conversation.len + 1);
-    @memcpy(new_conversation[0..session.value.conversation.len], session.value.conversation);
-    new_conversation[session.value.conversation.len] = new_message;
-    session.value.conversation = new_conversation;
+    var new_conversation = try arena_alloc.alloc(Conversation, session.conversation.len + 1);
+    @memcpy(new_conversation[0..session.conversation.len], session.conversation);
+    new_conversation[session.conversation.len] = new_message;
+    session.conversation = new_conversation;
 
-    // Write back
-    var payload_buf = std.Io.Writer.Allocating.init(arena_alloc);
-    defer payload_buf.deinit();
-    const formatter = std.json.fmt(session.value, .{});
-    try formatter.format(&payload_buf.writer);
-    const payload = try payload_buf.toOwnedSlice();
+    // Write back (binary format)
+    const payload = try serializeSession(arena_alloc, session);
+    defer arena_alloc.free(payload);
 
     const file = try std.fs.cwd().createFile(path, .{});
     defer file.close();
@@ -282,8 +499,7 @@ pub fn write(allocator: std.mem.Allocator, path: []const u8) !void {
         return error.NoActiveSession;
     }
 
-    var session = try std.json.parseFromSlice(SessionState, arena_alloc, data.?, .{ .allocate = .alloc_always });
-    defer session.deinit();
+    var session = try deserializeSession(arena_alloc, data.?);
 
     const content = try std.fs.File.stdin().readToEndAlloc(arena_alloc, 10 * 1024 * 1024);
 
@@ -300,10 +516,10 @@ pub fn write(allocator: std.mem.Allocator, path: []const u8) !void {
         .change_type = "modified",
     };
 
-    session.value.files = try upsertChange(arena_alloc, session.value.files, change);
+    session.files = try upsertChange(arena_alloc, session.files, change);
 
     // Update bloom filter with the path
-    if (session.value.bloom_data) |bloom_b64| {
+    if (session.bloom_data) |bloom_b64| {
         const bloom_bytes = try decodeBase64(arena_alloc, bloom_b64);
         defer arena_alloc.free(bloom_bytes);
         var bloom = try bloom_mod.Bloom.deserialize(arena_alloc, bloom_bytes);
@@ -315,14 +531,12 @@ pub fn write(allocator: std.mem.Allocator, path: []const u8) !void {
         // Re-serialize the updated bloom filter
         const updated_bloom = try bloom.serialize(arena_alloc);
         defer arena_alloc.free(updated_bloom);
-        session.value.bloom_data = try encodeBase64(arena_alloc, updated_bloom);
+        session.bloom_data = try encodeBase64(arena_alloc, updated_bloom);
     }
 
-    var payload_buf = std.Io.Writer.Allocating.init(arena_alloc);
-    defer payload_buf.deinit();
-    const formatter = std.json.fmt(session.value, .{});
-    try formatter.format(&payload_buf.writer);
-    const payload = try payload_buf.toOwnedSlice();
+    // Write back (binary format)
+    const payload = try serializeSession(arena_alloc, session);
+    defer arena_alloc.free(payload);
 
     const file_state = try std.fs.cwd().createFile(session_path, .{ .truncate = true });
     defer file_state.close();
@@ -412,7 +626,7 @@ pub fn landSession(allocator: std.mem.Allocator, _: []const u8) !LandResult {
         return .{ .err = "No active session to land." };
     }
 
-    const session = try std.json.parseFromSliceLeaky(SessionState, arena_alloc, data.?, .{ .ignore_unknown_fields = true });
+    const session = try deserializeSession(arena_alloc, data.?);
 
     const endpoint = try grpc_endpoint.parseServer(arena_alloc, server);
     const changes = try mapChangesFromOverlay(arena_alloc, session.files);
@@ -653,7 +867,7 @@ pub fn loadSessionBloom(allocator: std.mem.Allocator) !?bloom_mod.Bloom {
         return null;
     }
 
-    const session = try std.json.parseFromSliceLeaky(SessionState, arena_alloc, data.?, .{ .ignore_unknown_fields = true });
+    const session = try deserializeSession(arena_alloc, data.?);
 
     if (session.bloom_data) |bloom_b64| {
         const bloom_bytes = try decodeBase64(allocator, bloom_b64);
@@ -677,7 +891,7 @@ pub fn getSessionPaths(allocator: std.mem.Allocator) ![]const []const u8 {
         return &[_][]const u8{};
     }
 
-    const session = try std.json.parseFromSliceLeaky(SessionState, arena_alloc, data.?, .{ .ignore_unknown_fields = true });
+    const session = try deserializeSession(arena_alloc, data.?);
 
     var paths: std.ArrayList([]const u8) = .empty;
     for (session.files) |file| {

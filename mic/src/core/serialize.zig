@@ -62,6 +62,7 @@ pub const Type = enum(u8) {
     tree = 0x01,
     bloom = 0x02,
     hlc = 0x03,
+    session = 0x04,
 };
 
 /// Serialization errors.
