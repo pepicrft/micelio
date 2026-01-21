@@ -1,28 +1,24 @@
 defmodule MicelioWeb.ThemeTokensTest do
   use ExUnit.Case, async: true
 
-  test "Chronicle theme colors and fonts are defined in tokens.css" do
+  test "GitHub-style theme colors are defined in tokens.css" do
     tokens = File.read!("assets/css/theme/tokens.css")
 
-    # Chronicle light mode colors
-    assert tokens =~ "--theme-ui-colors-background: #dfdfc1;"
-    assert tokens =~ "--theme-ui-colors-text: #0b0d0b;"
-    assert tokens =~ "--theme-ui-colors-primary: #0b0d0b;"
-
-    # Typography
-    assert tokens =~ ~s(--theme-ui-fonts-heading: "Playfair Display", Georgia, serif;)
-    assert tokens =~ ~s(--theme-ui-fonts-body: "Inter", system-ui, sans-serif;)
-    assert tokens =~ ~s(--theme-ui-fonts-mono: "JetBrains Mono", ui-monospace, monospace;)
+    # Light mode colors
+    assert tokens =~ "--theme-ui-colors-background: #ffffff;"
+    assert tokens =~ "--theme-ui-colors-text: #1f2328;"
+    assert tokens =~ "--theme-ui-colors-accent: #0969da;"
+    assert tokens =~ "--theme-ui-colors-border: #d1d9e0;"
   end
 
-  test "activity graph colors use Gruvbox-inspired scale" do
+  test "GitHub activity graph colors" do
     tokens = File.read!("assets/css/theme/tokens.css")
 
-    assert tokens =~ "--theme-ui-colors-activity-0: #ebdbb2;"
-    assert tokens =~ "--theme-ui-colors-activity-1: #b8bb26;"
-    assert tokens =~ "--theme-ui-colors-activity-2: #98971a;"
-    assert tokens =~ "--theme-ui-colors-activity-3: #79740e;"
-    assert tokens =~ "--theme-ui-colors-activity-4: #5a5a0a;"
+    assert tokens =~ "--theme-ui-colors-activity-0: #ebedf0;"
+    assert tokens =~ "--theme-ui-colors-activity-1: #9be9a8;"
+    assert tokens =~ "--theme-ui-colors-activity-2: #40c463;"
+    assert tokens =~ "--theme-ui-colors-activity-3: #30a14e;"
+    assert tokens =~ "--theme-ui-colors-activity-4: #216e39;"
   end
 
   test "profile activity graph styles use theme tokens" do

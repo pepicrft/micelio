@@ -69,10 +69,7 @@ fn ensureOverlayDirectory() !void {
 fn clearOverlayDirectory(allocator: std.mem.Allocator) !void {
     const path = try overlayRootPath(allocator);
     defer allocator.free(path);
-    std.fs.cwd().deleteTree(path) catch |err| switch (err) {
-        error.FileNotFound => return,
-        else => return err,
-    };
+    std.fs.cwd().deleteTree(path) catch {};
 }
 
 fn overlayRootPath(allocator: std.mem.Allocator) ![]u8 {
@@ -160,7 +157,7 @@ pub fn start(allocator: std.mem.Allocator, organization: []const u8, project: []
     };
 
     // Write session state
-    var payload_buf = std.io.Writer.Allocating.init(arena_alloc);
+    var payload_buf = std.Io.Writer.Allocating.init(arena_alloc);
     defer payload_buf.deinit();
     const formatter = std.json.fmt(session, .{});
     try formatter.format(&payload_buf.writer);
@@ -254,7 +251,7 @@ pub fn addNote(allocator: std.mem.Allocator, role: []const u8, message: []const 
     session.value.conversation = new_conversation;
 
     // Write back
-    var payload_buf = std.io.Writer.Allocating.init(arena_alloc);
+    var payload_buf = std.Io.Writer.Allocating.init(arena_alloc);
     defer payload_buf.deinit();
     const formatter = std.json.fmt(session.value, .{});
     try formatter.format(&payload_buf.writer);
@@ -321,7 +318,7 @@ pub fn write(allocator: std.mem.Allocator, path: []const u8) !void {
         session.value.bloom_data = try encodeBase64(arena_alloc, updated_bloom);
     }
 
-    var payload_buf = std.io.Writer.Allocating.init(arena_alloc);
+    var payload_buf = std.Io.Writer.Allocating.init(arena_alloc);
     defer payload_buf.deinit();
     const formatter = std.json.fmt(session.value, .{});
     try formatter.format(&payload_buf.writer);

@@ -184,7 +184,7 @@ pub const Overlay = struct {
         session.files = file_list;
         self.session = session;
 
-        var buf = std.ArrayList(u8).init(self.allocator, null);
+        var buf = std.ArrayList(u8).init(self.allocator);
         defer buf.deinit();
 
         const formatter = std.json.fmt(session, .{});
@@ -210,7 +210,7 @@ pub const Overlay = struct {
     }
 
     fn buildFileList(self: *Overlay) ![]FileChange {
-        var files = std.ArrayList(FileChange).init(self.allocator, null);
+        var files = std.ArrayList(FileChange).init(self.allocator);
         errdefer files.deinit();
 
         var iter = self.entries.iterator();

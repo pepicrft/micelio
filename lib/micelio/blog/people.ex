@@ -4,9 +4,11 @@ defmodule Micelio.Blog.People do
   """
 
   @ruby %{id: :ruby, name: "Ruby"}
+  @pedro %{id: :pedro, name: "Pedro Piñera Buendía"}
 
   @people %{
-    ruby: @ruby
+    ruby: @ruby,
+    pedro: @pedro
   }
 
   def all, do: Map.values(@people)

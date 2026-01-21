@@ -216,8 +216,7 @@ pub fn prepareBlobFetchOptions(
     const server_config = cfg.findServerByGrpcUrl(server) orelse return options;
     if (server_config.cdn_url) |cdn_url| {
         options.cdn_base_url = try allocator.dupe(u8, cdn_url);
-        options.project_id = fetchProjectId(allocator, server, account, project, access_token) catch |err| {
-            _ = err;
+        options.project_id = fetchProjectId(allocator, server, account, project, access_token) catch {
             allocator.free(options.cdn_base_url.?);
             options.cdn_base_url = null;
             return options;
@@ -306,7 +305,8 @@ fn fetchBlobFromCdn(
     defer allocator.free(response.body);
 
     if (response.status != .ok) return null;
-    return allocator.dupe(u8, response.body);
+    const duped = try allocator.dupe(u8, response.body);
+    return duped;
 }
 
 fn fetchProjectId(
@@ -410,8 +410,8 @@ fn collectLsEntries(
     var index_by_name = std.StringHashMap(usize).init(allocator);
     defer index_by_name.deinit();
 
-    var results = std.ArrayList(LsEntry).init(allocator);
-    errdefer results.deinit(allocator);
+    var results = std.array_list.Managed(LsEntry).init(allocator);
+    errdefer results.deinit();
 
     for (entries) |entry| {
         if (prefix.len == 0) {
@@ -435,12 +435,12 @@ fn collectLsEntries(
         }
     }
 
-    std.sort.sort(LsEntry, results.items, {}, lsEntryLessThan);
-    return results.toOwnedSlice(allocator);
+    std.mem.sort(LsEntry, results.items, {}, lsEntryLessThan);
+    return results.toOwnedSlice();
 }
 
 fn addLsEntry(
-    results: *std.ArrayList(LsEntry),
+    results: *std.array_list.Managed(LsEntry),
     index_by_name: *std.StringHashMap(usize),
     name: []const u8,
     is_dir: bool,

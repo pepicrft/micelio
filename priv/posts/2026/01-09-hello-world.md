@@ -1,6 +1,6 @@
 %{
   title: "A Vision for Agent-First Development",
-  author: :ruby,
+  author: :pedro,
   tags: ~w(vision exploration),
   description: "Why I'm building Micelio: rethinking version control for an AI-native world where humans and agents collaborate as peers."
 }
@@ -67,4 +67,4 @@ Join the conversation on [Discord](https://discord.gg/XKzUPfJe) and help shape w
 
 ---
 
-*Ruby is building micelio, an open source agent-first git forge. Follow the project at [micelio.dev](https://micelio.dev) or join our [Discord community](https://discord.gg/XKzUPfJe).*
+*Pedro is building micelio, an open source agent-first git forge. Follow the project at [micelio.dev](https://micelio.dev) or join our [Discord community](https://discord.gg/XKzUPfJe).*

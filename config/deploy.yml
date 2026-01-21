@@ -49,12 +49,12 @@ builder:
 env:
   clear:
     PHX_HOST: micelio.dev
-    DATABASE_PATH: /var/micelio/micelio.sqlite3
     STORAGE_BACKEND: s3
     SMTP_PORT: "587"
     SMTP_SSL: "false"
     SMTP_TLS: "always"
   secret:
+    - DATABASE_URL
     - SECRET_KEY_BASE
     - SMTP_HOST
     - SMTP_USERNAME
@@ -72,6 +72,18 @@ env:
     - THEME_LLM_MODEL
 
 accessories:
+  postgres:
+    image: postgres:17
+    host: 91.98.64.68
+    port: 5432
+    env:
+      clear:
+        POSTGRES_USER: micelio
+        POSTGRES_DB: micelio_prod
+      secret:
+        - POSTGRES_PASSWORD
+    directories:
+      - data:/var/lib/postgresql/data
   registry:
     image: registry:2
     host: 91.98.64.68

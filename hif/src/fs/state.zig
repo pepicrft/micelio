@@ -157,7 +157,7 @@ pub const RepoState = struct {
     }
 
     pub fn listDir(self: *RepoState, dir_path: []const u8) ![]DirEntry {
-        var entries = std.ArrayList(DirEntry).init(self.allocator, null);
+        var entries = std.ArrayList(DirEntry).init(self.allocator);
         errdefer entries.deinit();
 
         var seen = std.StringHashMap(EntryKind).init(self.allocator);

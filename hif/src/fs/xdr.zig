@@ -47,7 +47,7 @@ pub const Writer = struct {
     list: std.ArrayList(u8),
 
     pub fn init(allocator: std.mem.Allocator) Writer {
-        return .{ .list = std.ArrayList(u8).init(allocator, null) };
+        return .{ .list = std.ArrayList(u8).init(allocator) };
     }
 
     pub fn deinit(self: *Writer) void {

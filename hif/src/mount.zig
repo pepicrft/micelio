@@ -146,18 +146,19 @@ pub fn mount(
     defer store.deinit();
 
     if (try store.read(resolved_mount)) |existing| {
-        defer existing.deinit(allocator);
-        if (try isProcessAlive(existing.pid)) {
+        var mutable_existing = existing;
+        defer mutable_existing.deinit(allocator);
+        if (try isProcessAlive(mutable_existing.pid)) {
             std.debug.print(
                 "Error: mount already active for {s} (pid {d})\n",
-                .{ resolved_mount, existing.pid },
+                .{ resolved_mount, mutable_existing.pid },
             );
             return error.MountAlreadyActive;
         }
         try store.remove(resolved_mount);
     }
 
-    try store.write(resolved_mount, @intCast(std.posix.getpid()), port);
+    try store.write(resolved_mount, @intCast(std.c.getpid()), port);
     defer store.remove(resolved_mount) catch {};
 
     const tokens = try auth.requireTokensWithMessage(arena_alloc);
@@ -391,11 +392,9 @@ fn addParentDirs(fs: *nfs.VirtualFs, path: []const u8) !void {
 }
 
 fn serveNfs(allocator: std.mem.Allocator, fs: *nfs.VirtualFs, port: u16) !void {
-    var server = std.net.StreamServer.init(.{});
+    const address = std.net.Address.initIp4(.{ 127, 0, 0, 1 }, port);
+    var server = try address.listen(.{});
     defer server.deinit();
-
-    const address = try std.net.Address.parseIp4("127.0.0.1", port);
-    try server.listen(address);
 
     var nfs_server = nfs.NfsServer.init(allocator, fs);
 
@@ -431,15 +430,13 @@ fn handleConnection(
     nfs_server: *nfs.NfsServer,
     stream: std.net.Stream,
 ) !void {
-    var reader = stream.reader();
-    var writer = stream.writer();
-
     while (true) {
         var header: [4]u8 = undefined;
-        reader.readNoEof(&header) catch |err| switch (err) {
-            error.EndOfStream => return,
+        const header_read = stream.read(&header) catch |err| switch (err) {
+            error.ConnectionResetByPeer => return,
             else => return err,
         };
+        if (header_read == 0) return; // EOF
 
         const marker = std.mem.readInt(u32, &header, .big);
         const length = marker & 0x7fff_ffff;
@@ -448,11 +445,17 @@ fn handleConnection(
         var record = try allocator.alloc(u8, 4 + length);
         defer allocator.free(record);
         @memcpy(record[0..4], &header);
-        try reader.readNoEof(record[4..]);
+
+        var total_read: usize = 0;
+        while (total_read < length) {
+            const n = try stream.read(record[4 + total_read ..]);
+            if (n == 0) return error.UnexpectedEof;
+            total_read += n;
+        }
 
         const response = try nfs_server.handleRecord(record);
         defer allocator.free(response);
-        try writer.writeAll(response);
+        _ = try stream.write(response);
     }
 }
 

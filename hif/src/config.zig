@@ -248,7 +248,7 @@ pub const Config = struct {
     fn setDefaultServers(self: *Config) !void {
         // Production server
         try self.setServer("micelio.dev", .{
-            .grpc_url = "https://grpc.micelio.dev:443",
+            .grpc_url = "https://api.micelio.dev:443",
             .web_url = "https://micelio.dev",
         });
 
@@ -258,8 +258,8 @@ pub const Config = struct {
             .web_url = "http://localhost:4000",
         });
 
-        // Set default to localhost for now (production not ready)
-        try self.setDefaultServer("localhost");
+        // Set default to production
+        try self.setDefaultServer("micelio.dev");
     }
 
     fn parseJson(self: *Config, data: []const u8) !void {

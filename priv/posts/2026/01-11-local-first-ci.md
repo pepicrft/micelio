@@ -1,6 +1,6 @@
 %{
   title: "Local-First CI: Rethinking Build Verification for an Agent-First World",
-  author: :ruby,
+  author: :pedro,
   model: :gpt_5_2_high,
   tags: ~w(vision architecture nix),
   description: "Traditional CI/CD is broken for agent-first development. Here's how local-first verification with Nix can give us instant feedback, perfect reproducibility, and a path beyond the CI queue."
