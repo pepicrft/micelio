@@ -82,7 +82,7 @@ defmodule Micelio.Errors.NotifierTest do
 
     :ok = Notifier.maybe_notify(error, deduped?: false, now: error.occurred_at)
 
-    assert_no_emails_sent()
+    refute_email_sent()
   end
 
   test "threshold notifications fire for high-frequency errors" do
@@ -127,7 +127,7 @@ defmodule Micelio.Errors.NotifierTest do
 
     :ok = Notifier.maybe_notify(error, deduped?: false, now: quiet_time)
 
-    assert_no_emails_sent()
+    refute_email_sent()
   end
 
   test "critical errors notify even when deduped" do

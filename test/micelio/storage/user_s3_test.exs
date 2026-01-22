@@ -90,6 +90,7 @@ defmodule Micelio.Storage.UserS3Test do
 
   test "emits telemetry for user backend success" do
     user = user_fixture()
+    user_id = user.id
     _config = s3_config_fixture(user, %{validated_at: DateTime.utc_now()})
     key = "projects/4/file.txt"
     content = "telemetry"
@@ -109,12 +110,13 @@ defmodule Micelio.Storage.UserS3Test do
                       fallback: false,
                       operation: :put,
                       status: :ok,
-                      user_id: ^user.id
+                      user_id: ^user_id
                     }}
   end
 
   test "emits telemetry for fallback to instance storage" do
     user = user_fixture()
+    user_id = user.id
     _config = s3_config_fixture(user, %{validated_at: DateTime.utc_now()})
     {:ok, storage} = StorageHelper.create_isolated_storage()
 
@@ -143,7 +145,7 @@ defmodule Micelio.Storage.UserS3Test do
                       fallback: false,
                       operation: :put,
                       status: :error,
-                      user_id: ^user.id
+                      user_id: ^user_id
                     }}
 
     assert_receive {:telemetry,
@@ -152,7 +154,7 @@ defmodule Micelio.Storage.UserS3Test do
                       fallback: true,
                       operation: :put,
                       status: :ok,
-                      user_id: ^user.id
+                      user_id: ^user_id
                     }}
   end
 

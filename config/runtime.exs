@@ -380,21 +380,21 @@ config :micelio, :errors,
   sampling_rate: sampling_rate
 
 if config_env() != :test do
-  cloak_key =
-    System.get_env("CLOAK_KEY") ||
+  encryption_key =
+    System.get_env("ENCRYPTION_KEY") ||
       raise """
-      environment variable CLOAK_KEY is missing.
+      environment variable ENCRYPTION_KEY is missing.
       Generate a 32-byte key and set it as base64, for example:
       `openssl rand -base64 32`
       """
 
   previous_keys =
-    System.get_env("CLOAK_PREVIOUS_KEYS", "")
+    System.get_env("ENCRYPTION_PREVIOUS_KEYS", "")
     |> String.split(",", trim: true)
     |> Enum.map(fn entry ->
       case String.split(entry, ":", parts: 2) do
         [tag, key] -> {String.trim(tag), String.trim(key)}
-        _ -> raise "CLOAK_PREVIOUS_KEYS must be \"tag:base64\" comma-separated entries"
+        _ -> raise "ENCRYPTION_PREVIOUS_KEYS must be \"tag:base64\" comma-separated entries"
       end
     end)
 
@@ -412,7 +412,7 @@ if config_env() != :test do
     [
       default: {
         Cloak.Ciphers.AES.GCM,
-        [tag: "AES.GCM.V1", key: Base.decode64!(cloak_key)]
+        [tag: "AES.GCM.V1", key: Base.decode64!(encryption_key)]
       }
     ] ++ previous_ciphers
 

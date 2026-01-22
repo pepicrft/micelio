@@ -245,11 +245,6 @@ defmodule Micelio.Storage.S3Validator do
           result
           |> mark_step(:public_access, :warning)
           |> add_warning(message)
-
-        {:error, message} ->
-          result
-          |> mark_step(:public_access, {:error, message})
-          |> add_warning(message)
       end
     else
       result

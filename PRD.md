@@ -446,7 +446,7 @@ Allow users to configure their own S3-compatible storage for artifacts (OG image
 - [ ] **Implement Credential Encryption with Cloak**
   - Add `cloak` and `cloak_ecto` dependencies
   - Configure Cloak vault with AES-GCM-256 encryption
-  - Store encryption key in environment variable (CLOAK_KEY)
+  - Store encryption key in environment variable (ENCRYPTION_KEY)
   - Create custom Ecto type `EncryptedBinary` for S3 credentials
   - Implement key rotation strategy for Cloak vault
   - Ensure encrypted fields are never logged or exposed in error messages
