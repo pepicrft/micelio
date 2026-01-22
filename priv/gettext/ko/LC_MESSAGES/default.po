@@ -21,7 +21,7 @@ msgstr "계정 (@%{handle})"
 msgid "Actions"
 msgstr "작업"
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:82
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:84
 #, elixir-autogen, elixir-format
 msgid "Agent-Native by Design"
 msgstr "에이전트 네이티브 설계"
@@ -32,12 +32,12 @@ msgstr "에이전트 네이티브 설계"
 msgid "Attempting to reconnect"
 msgstr "재연결 시도 중"
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:60
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:62
 #, elixir-autogen, elixir-format
 msgid "Built for hundreds of AI agents working concurrently on massive codebases"
 msgstr "대규모 코드베이스에서 수백 개의 AI 에이전트가 동시에 작업하도록 구축"
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:91
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:93
 #, elixir-autogen, elixir-format
 msgid "Checks"
 msgstr "검사"
@@ -57,7 +57,7 @@ msgstr "삭제"
 msgid "Delete this project?"
 msgstr "이 프로젝트를 삭제하시겠습니까?"
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:102
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:104
 #, elixir-autogen, elixir-format
 msgid "Designed for a future where humans review, not write most code. Conversation, decisions, and changes are unified in one workflow."
 msgstr "인간이 대부분의 코드를 작성하는 것이 아니라 검토하는 미래를 위해 설계되었습니다. 대화, 결정, 변경 사항이 하나의 워크플로우로 통합됩니다."
@@ -67,17 +67,17 @@ msgstr "인간이 대부분의 코드를 작성하는 것이 아니라 검토하
 msgid "Edit"
 msgstr "편집"
 
-#: lib/micelio_web/controllers/browser/page_html.ex:21
+#: lib/micelio_web/controllers/browser/page_html.ex:33
 #, elixir-autogen, elixir-format
 msgid "Explore what the community is building."
 msgstr "커뮤니티가 구축하고 있는 것을 탐색하세요."
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:120
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:122
 #, elixir-autogen, elixir-format
 msgid "Forge-First"
 msgstr "포지 우선"
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:65
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:67
 #, elixir-autogen, elixir-format
 msgid "Forge-first architecture with object storage at the core"
 msgstr "객체 스토리지를 핵심으로 하는 포지 우선 아키텍처"
@@ -87,7 +87,7 @@ msgstr "객체 스토리지를 핵심으로 하는 포지 우선 아키텍처"
 msgid "Get started"
 msgstr "시작하기"
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:100
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:102
 #, elixir-autogen, elixir-format
 msgid "Human + AI Collaboration"
 msgstr "인간과 AI의 협업"
@@ -102,12 +102,12 @@ msgstr "법적 정보"
 msgid "Manage your projects."
 msgstr "프로젝트를 관리하세요."
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:111
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:113
 #, elixir-autogen, elixir-format
 msgid "Massive Scale"
 msgstr "대규모 확장"
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:46
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:48
 #, elixir-autogen, elixir-format
 msgid "Micelio is the open source, agent-first software versioning forge the future has been waiting for."
 msgstr "Micelio는 미래가 기다려온 오픈소스, 에이전트 우선 소프트웨어 버전 관리 포지입니다."
@@ -127,17 +127,17 @@ msgstr "새 조직"
 msgid "New project"
 msgstr "새 프로젝트"
 
-#: lib/micelio_web/controllers/browser/page_html.ex:90
+#: lib/micelio_web/controllers/browser/page_html.ex:181
 #, elixir-autogen, elixir-format
 msgid "Next"
 msgstr "다음"
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:93
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:95
 #, elixir-autogen, elixir-format
 msgid "Nix-native checks run locally with the exact derivations that power remote execution. Content-addressed caches keep results consistent and fast, so a green check locally is the same check everywhere - no centralized queue required."
 msgstr "Nix 네이티브 검사는 원격 실행을 지원하는 동일한 파생으로 로컬에서 실행됩니다. 콘텐츠 주소 지정 캐시가 결과를 일관되고 빠르게 유지하므로 로컬에서의 녹색 검사는 어디서나 동일한 검사입니다. 중앙 집중식 큐가 필요 없습니다."
 
-#: lib/micelio_web/controllers/browser/page_html.ex:48
+#: lib/micelio_web/controllers/browser/page_html.ex:77
 #, elixir-autogen, elixir-format
 msgid "No description yet."
 msgstr "아직 설명이 없습니다."
@@ -147,22 +147,22 @@ msgstr "아직 설명이 없습니다."
 msgid "No projects yet"
 msgstr "아직 프로젝트가 없습니다"
 
-#: lib/micelio_web/controllers/browser/page_html.ex:26
+#: lib/micelio_web/controllers/browser/page_html.ex:42
 #, elixir-autogen, elixir-format
 msgid "No public projects yet."
 msgstr "아직 공개 프로젝트가 없습니다."
 
-#: lib/micelio_web/controllers/browser/page_html.ex:20
+#: lib/micelio_web/controllers/browser/page_html.ex:24
 #, elixir-autogen, elixir-format
 msgid "Popular projects"
 msgstr "인기 프로젝트"
 
-#: lib/micelio_web/controllers/browser/page_html.ex:74
+#: lib/micelio_web/controllers/browser/page_html.ex:165
 #, elixir-autogen, elixir-format
 msgid "Popular projects pagination"
 msgstr "인기 프로젝트 페이지네이션"
 
-#: lib/micelio_web/controllers/browser/page_html.ex:81
+#: lib/micelio_web/controllers/browser/page_html.ex:172
 #, elixir-autogen, elixir-format
 msgid "Previous"
 msgstr "이전"
@@ -193,7 +193,7 @@ msgstr "프로젝트는 코드를 정리하고 다른 사람들과 협업하는 
 msgid "Ready to work on your projects?"
 msgstr "프로젝트 작업을 시작할 준비가 되셨나요?"
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:67
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:69
 #, elixir-autogen, elixir-format
 msgid "Scales to billions of files and hundreds of thousands of landings per day"
 msgstr "수십억 개의 파일과 하루 수십만 건의 랜딩으로 확장"
@@ -204,12 +204,12 @@ msgstr "수십억 개의 파일과 하루 수십만 건의 랜딩으로 확장"
 msgid "Select language"
 msgstr "언어 선택"
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:64
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:66
 #, elixir-autogen, elixir-format
 msgid "Sessions capture goal, reasoning, and changes together"
 msgstr "세션은 목표, 추론, 변경 사항을 함께 캡처합니다"
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:84
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:86
 #, elixir-autogen, elixir-format
 msgid "Sessions capture goal, reasoning, and changes together. Built for hundreds of AI agents working concurrently, with stateless compute that auto-scales based on demand."
 msgstr "세션은 목표, 추론, 변경 사항을 함께 캡처합니다. 수백 개의 AI 에이전트가 동시에 작업하도록 구축되었으며, 수요에 따라 자동 확장되는 상태 비저장 컴퓨팅을 제공합니다."
@@ -219,7 +219,7 @@ msgstr "세션은 목표, 추론, 변경 사항을 함께 캡처합니다. 수�
 msgid "Something went wrong!"
 msgstr "문제가 발생했습니다!"
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:113
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:115
 #, elixir-autogen, elixir-format
 msgid "Targets Google/Meta scale: 1B+ files, 500k+ landings per day, 100k+ concurrent sessions. Object storage-first architecture with O(log n) operations."
 msgstr "Google/Meta 규모 목표: 10억+ 파일, 하루 50만+ 랜딩, 10만+ 동시 세션. O(log n) 연산의 객체 스토리지 우선 아키텍처."
@@ -320,32 +320,32 @@ msgstr "이용약관"
 msgid "theme"
 msgstr "테마"
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:72
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:74
 #, elixir-autogen, elixir-format
 msgid "Inspired by"
 msgstr "영감을 받음"
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:51
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:53
 #, elixir-autogen, elixir-format
 msgid "Micelio is both a CLI"
 msgstr "Micelio는 CLI이자"
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:54
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:56
 #, elixir-autogen, elixir-format
 msgid "Micelio is to"
 msgstr "Micelio는"
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:73
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:75
 #, elixir-autogen, elixir-format
 msgid "and"
 msgstr "그리고"
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:51
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:53
 #, elixir-autogen, elixir-format
 msgid "and a forge, fully open source under"
 msgstr "포지이며, 완전히 오픈소스로"
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:56
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:58
 #, elixir-autogen, elixir-format
 msgid "what GitHub is to"
 msgstr "GitHub가"
@@ -355,15 +355,10 @@ msgstr "GitHub가"
 msgid "Language selection"
 msgstr "언어 선택"
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:122
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:124
 #, elixir-autogen, elixir-format
 msgid "The forge is the source of truth. Coordinator-free landing with content-addressed conditional writes. No single bottleneck."
 msgstr "포지는 진실의 원천입니다. 콘텐츠 주소 지정 조건부 쓰기를 통한 코디네이터 없는 랜딩. 단일 병목이 없습니다."
-
-#: lib/micelio_web/controllers/browser/page_html.ex:66
-#, elixir-autogen, elixir-format
-msgid "Signals"
-msgstr "시그널"
 
 #: lib/micelio_web/controllers/browser/auth_html/new.html.heex:52
 #, elixir-autogen, elixir-format
@@ -480,3 +475,44 @@ msgstr "토큰 교환에 실패했습니다"
 #, elixir-autogen, elixir-format
 msgid "user fetch failed"
 msgstr "사용자 가져오기에 실패했습니다"
+
+#: lib/micelio_web/controllers/browser/page_html.ex:97
+#: lib/micelio_web/controllers/browser/page_html.ex:98
+#: lib/micelio_web/controllers/browser/page_html.ex:104
+#: lib/micelio_web/controllers/browser/project_html/show.html.heex:50
+#: lib/micelio_web/controllers/browser/project_html/show.html.heex:51
+#: lib/micelio_web/controllers/browser/project_html/show.html.heex:57
+#, elixir-autogen, elixir-format
+msgid "Pulse"
+msgstr "펄스"
+
+#: lib/micelio_web/controllers/browser/page_html.ex:154
+#: lib/micelio_web/controllers/browser/project_html/show.html.heex:93
+#, elixir-autogen, elixir-format
+msgid "Pulses"
+msgstr "펄스 수"
+
+#: lib/micelio_web/controllers/browser/page_html.ex:97
+#: lib/micelio_web/controllers/browser/page_html.ex:98
+#: lib/micelio_web/controllers/browser/page_html.ex:102
+#: lib/micelio_web/controllers/browser/project_html/show.html.heex:50
+#: lib/micelio_web/controllers/browser/project_html/show.html.heex:51
+#: lib/micelio_web/controllers/browser/project_html/show.html.heex:55
+#, elixir-autogen, elixir-format
+msgid "Unpulse"
+msgstr "펄스 해제"
+
+#: lib/micelio_web/controllers/browser/page_html.ex:41
+#, elixir-autogen, elixir-format
+msgid "No recent projects yet."
+msgstr "최근 프로젝트가 아직 없습니다."
+
+#: lib/micelio_web/controllers/browser/page_html.ex:32
+#, elixir-autogen, elixir-format
+msgid "Projects you've worked on recently."
+msgstr "최근 작업한 프로젝트입니다."
+
+#: lib/micelio_web/controllers/browser/page_html.ex:23
+#, elixir-autogen, elixir-format
+msgid "Recent projects"
+msgstr "최근 프로젝트"

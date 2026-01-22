@@ -37,6 +37,11 @@
       <meta name={name} content={content} />
     <% end %>
 
+    <%!-- Fediverse/Mastodon author attribution --%>
+    <%= if fediverse_creator = MicelioWeb.PageMeta.fediverse_creator(meta) do %>
+      <meta name="fediverse:creator" content={fediverse_creator} />
+    <% end %>
+
     <%= if schema_json_ld = assigns[:schema_json_ld] do %>
       <script type="application/ld+json">
         <%= raw(schema_json_ld) %>

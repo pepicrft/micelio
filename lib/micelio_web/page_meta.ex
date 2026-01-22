@@ -16,7 +16,8 @@ defmodule MicelioWeb.PageMeta do
             description: nil,
             canonical_url: nil,
             type: nil,
-            open_graph: %{}
+            open_graph: %{},
+            author: nil
 
   def site_name, do: @site_name
 
@@ -63,7 +64,8 @@ defmodule MicelioWeb.PageMeta do
           description: String.t() | nil,
           canonical_url: String.t() | nil,
           type: String.t() | nil,
-          open_graph: map()
+          open_graph: map(),
+          author: map() | nil
         }
 
   @doc """
@@ -176,7 +178,7 @@ defmodule MicelioWeb.PageMeta do
   end
 
   @doc """
-  Returns Twitter-specific extra tags (image, etc.).
+  Returns Twitter-specific extra tags (image, creator, etc.).
   """
   @spec twitter_extra_tags(t()) :: [{String.t(), String.t()}]
   def twitter_extra_tags(%__MODULE__{} = meta) do
@@ -196,8 +198,29 @@ defmodule MicelioWeb.PageMeta do
         alt -> [{"twitter:image:alt", to_string(alt)} | tags]
       end
 
+    # Add twitter:creator if author has X handle
+    tags =
+      case meta.author do
+        %{x_handle: handle} when is_binary(handle) and handle != "" ->
+          [{"twitter:creator", "@" <> handle} | tags]
+
+        _ ->
+          tags
+      end
+
     Enum.reverse(tags)
   end
+
+  @doc """
+  Returns Fediverse/Mastodon author tag if author has a Mastodon handle.
+  """
+  @spec fediverse_creator(t()) :: String.t() | nil
+  def fediverse_creator(%__MODULE__{author: %{mastodon_handle: handle}})
+      when is_binary(handle) and handle != "" do
+    handle
+  end
+
+  def fediverse_creator(_meta), do: nil
 
   @spec merge(t(), keyword() | map()) :: t()
   def merge(%__MODULE__{} = meta, opts) when is_list(opts) or is_map(opts) do
@@ -208,6 +231,7 @@ defmodule MicelioWeb.PageMeta do
     |> maybe_put(:description, opts, & &1)
     |> maybe_put(:canonical_url, opts, & &1)
     |> maybe_put(:type, opts, & &1)
+    |> maybe_put(:author, opts, & &1)
     |> maybe_merge_open_graph(opts)
   end
 

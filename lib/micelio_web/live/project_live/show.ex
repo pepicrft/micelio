@@ -42,6 +42,8 @@ defmodule MicelioWeb.ProjectLive.Show do
             |> assign(:prompt_request_count, prompt_request_count)
             |> assign_star_data()
 
+          _ = Projects.record_project_interaction(socket.assigns.current_user, project, "view")
+
           {:ok, socket}
         else
           {:ok,
@@ -92,6 +94,8 @@ defmodule MicelioWeb.ProjectLive.Show do
           :error
       end
     end
+
+    _ = Projects.record_project_interaction(user, project, "pulse")
 
     {:noreply, assign_star_data(socket)}
   end

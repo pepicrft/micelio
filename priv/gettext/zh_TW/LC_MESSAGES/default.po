@@ -21,7 +21,7 @@ msgstr "帳戶 (@%{handle})"
 msgid "Actions"
 msgstr "操作"
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:82
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:84
 #, elixir-autogen, elixir-format
 msgid "Agent-Native by Design"
 msgstr "原生代理設計"
@@ -32,12 +32,12 @@ msgstr "原生代理設計"
 msgid "Attempting to reconnect"
 msgstr "正在嘗試重新連線"
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:60
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:62
 #, elixir-autogen, elixir-format
 msgid "Built for hundreds of AI agents working concurrently on massive codebases"
 msgstr "專為數百個AI代理在大規模程式碼庫上並行工作而建構"
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:91
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:93
 #, elixir-autogen, elixir-format
 msgid "Checks"
 msgstr "檢查"
@@ -57,7 +57,7 @@ msgstr "刪除"
 msgid "Delete this project?"
 msgstr "刪除此專案？"
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:102
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:104
 #, elixir-autogen, elixir-format
 msgid "Designed for a future where humans review, not write most code. Conversation, decisions, and changes are unified in one workflow."
 msgstr "為人類審查而非編寫大部分程式碼的未來而設計。對話、決策和變更統一在一個工作流程中。"
@@ -67,17 +67,17 @@ msgstr "為人類審查而非編寫大部分程式碼的未來而設計。對話
 msgid "Edit"
 msgstr "編輯"
 
-#: lib/micelio_web/controllers/browser/page_html.ex:21
+#: lib/micelio_web/controllers/browser/page_html.ex:33
 #, elixir-autogen, elixir-format
 msgid "Explore what the community is building."
 msgstr "探索社群正在建構的內容。"
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:120
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:122
 #, elixir-autogen, elixir-format
 msgid "Forge-First"
 msgstr "鍛造優先"
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:65
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:67
 #, elixir-autogen, elixir-format
 msgid "Forge-first architecture with object storage at the core"
 msgstr "以物件儲存為核心的鍛造優先架構"
@@ -87,7 +87,7 @@ msgstr "以物件儲存為核心的鍛造優先架構"
 msgid "Get started"
 msgstr "開始使用"
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:100
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:102
 #, elixir-autogen, elixir-format
 msgid "Human + AI Collaboration"
 msgstr "人機協作"
@@ -102,12 +102,12 @@ msgstr "法律資訊"
 msgid "Manage your projects."
 msgstr "管理您的專案。"
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:111
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:113
 #, elixir-autogen, elixir-format
 msgid "Massive Scale"
 msgstr "大規模擴展"
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:46
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:48
 #, elixir-autogen, elixir-format
 msgid "Micelio is the open source, agent-first software versioning forge the future has been waiting for."
 msgstr "Micelio是未來一直期待的開源、代理優先的軟體版本控制鍛造平台。"
@@ -127,17 +127,17 @@ msgstr "新建組織"
 msgid "New project"
 msgstr "新建專案"
 
-#: lib/micelio_web/controllers/browser/page_html.ex:90
+#: lib/micelio_web/controllers/browser/page_html.ex:181
 #, elixir-autogen, elixir-format
 msgid "Next"
 msgstr "下一頁"
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:93
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:95
 #, elixir-autogen, elixir-format
 msgid "Nix-native checks run locally with the exact derivations that power remote execution. Content-addressed caches keep results consistent and fast, so a green check locally is the same check everywhere - no centralized queue required."
 msgstr "Nix原生檢查使用與遠端執行相同的衍生在本地執行。內容定址快取保持結果一致且快速，因此本地的綠色檢查與任何地方的檢查相同，無需集中式佇列。"
 
-#: lib/micelio_web/controllers/browser/page_html.ex:48
+#: lib/micelio_web/controllers/browser/page_html.ex:77
 #, elixir-autogen, elixir-format
 msgid "No description yet."
 msgstr "暫無描述。"
@@ -147,22 +147,22 @@ msgstr "暫無描述。"
 msgid "No projects yet"
 msgstr "暫無專案"
 
-#: lib/micelio_web/controllers/browser/page_html.ex:26
+#: lib/micelio_web/controllers/browser/page_html.ex:42
 #, elixir-autogen, elixir-format
 msgid "No public projects yet."
 msgstr "暫無公開專案。"
 
-#: lib/micelio_web/controllers/browser/page_html.ex:20
+#: lib/micelio_web/controllers/browser/page_html.ex:24
 #, elixir-autogen, elixir-format
 msgid "Popular projects"
 msgstr "熱門專案"
 
-#: lib/micelio_web/controllers/browser/page_html.ex:74
+#: lib/micelio_web/controllers/browser/page_html.ex:165
 #, elixir-autogen, elixir-format
 msgid "Popular projects pagination"
 msgstr "熱門專案分頁"
 
-#: lib/micelio_web/controllers/browser/page_html.ex:81
+#: lib/micelio_web/controllers/browser/page_html.ex:172
 #, elixir-autogen, elixir-format
 msgid "Previous"
 msgstr "上一頁"
@@ -193,7 +193,7 @@ msgstr "專案幫助您整理程式碼並與他人協作。"
 msgid "Ready to work on your projects?"
 msgstr "準備好開始您的專案了嗎？"
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:67
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:69
 #, elixir-autogen, elixir-format
 msgid "Scales to billions of files and hundreds of thousands of landings per day"
 msgstr "可擴展到數十億檔案和每天數十萬次著陸"
@@ -204,12 +204,12 @@ msgstr "可擴展到數十億檔案和每天數十萬次著陸"
 msgid "Select language"
 msgstr "選擇語言"
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:64
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:66
 #, elixir-autogen, elixir-format
 msgid "Sessions capture goal, reasoning, and changes together"
 msgstr "會話同時捕獲目標、推理和變更"
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:84
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:86
 #, elixir-autogen, elixir-format
 msgid "Sessions capture goal, reasoning, and changes together. Built for hundreds of AI agents working concurrently, with stateless compute that auto-scales based on demand."
 msgstr "會話同時捕獲目標、推理和變更。專為數百個AI代理並行工作而建構，具有根據需求自動擴展的無狀態運算。"
@@ -219,7 +219,7 @@ msgstr "會話同時捕獲目標、推理和變更。專為數百個AI代理並�
 msgid "Something went wrong!"
 msgstr "出錯了！"
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:113
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:115
 #, elixir-autogen, elixir-format
 msgid "Targets Google/Meta scale: 1B+ files, 500k+ landings per day, 100k+ concurrent sessions. Object storage-first architecture with O(log n) operations."
 msgstr "目標達到Google/Meta規模: 10億+檔案，每天50萬+著陸，10萬+並行會話。O(log n)操作的物件儲存優先架構。"
@@ -320,32 +320,32 @@ msgstr "條款"
 msgid "theme"
 msgstr "主題"
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:72
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:74
 #, elixir-autogen, elixir-format
 msgid "Inspired by"
 msgstr "靈感來源"
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:51
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:53
 #, elixir-autogen, elixir-format
 msgid "Micelio is both a CLI"
 msgstr "Micelio既是CLI"
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:54
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:56
 #, elixir-autogen, elixir-format
 msgid "Micelio is to"
 msgstr "Micelio之於"
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:73
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:75
 #, elixir-autogen, elixir-format
 msgid "and"
 msgstr "和"
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:51
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:53
 #, elixir-autogen, elixir-format
 msgid "and a forge, fully open source under"
 msgstr "也是鍛造平台，完全開源於"
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:56
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:58
 #, elixir-autogen, elixir-format
 msgid "what GitHub is to"
 msgstr "正如GitHub之於"
@@ -355,15 +355,10 @@ msgstr "正如GitHub之於"
 msgid "Language selection"
 msgstr "語言選擇"
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:122
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:124
 #, elixir-autogen, elixir-format
 msgid "The forge is the source of truth. Coordinator-free landing with content-addressed conditional writes. No single bottleneck."
 msgstr "鍛造平台是真相的來源。透過內容定址條件寫入實現無協調器著陸。沒有單一瓶頸。"
-
-#: lib/micelio_web/controllers/browser/page_html.ex:66
-#, elixir-autogen, elixir-format
-msgid "Signals"
-msgstr "訊號"
 
 #: lib/micelio_web/controllers/browser/auth_html/new.html.heex:52
 #, elixir-autogen, elixir-format
@@ -480,3 +475,44 @@ msgstr "權杖交換失敗"
 #, elixir-autogen, elixir-format
 msgid "user fetch failed"
 msgstr "取得使用者失敗"
+
+#: lib/micelio_web/controllers/browser/page_html.ex:97
+#: lib/micelio_web/controllers/browser/page_html.ex:98
+#: lib/micelio_web/controllers/browser/page_html.ex:104
+#: lib/micelio_web/controllers/browser/project_html/show.html.heex:50
+#: lib/micelio_web/controllers/browser/project_html/show.html.heex:51
+#: lib/micelio_web/controllers/browser/project_html/show.html.heex:57
+#, elixir-autogen, elixir-format
+msgid "Pulse"
+msgstr "脈衝"
+
+#: lib/micelio_web/controllers/browser/page_html.ex:154
+#: lib/micelio_web/controllers/browser/project_html/show.html.heex:93
+#, elixir-autogen, elixir-format
+msgid "Pulses"
+msgstr "脈衝數"
+
+#: lib/micelio_web/controllers/browser/page_html.ex:97
+#: lib/micelio_web/controllers/browser/page_html.ex:98
+#: lib/micelio_web/controllers/browser/page_html.ex:102
+#: lib/micelio_web/controllers/browser/project_html/show.html.heex:50
+#: lib/micelio_web/controllers/browser/project_html/show.html.heex:51
+#: lib/micelio_web/controllers/browser/project_html/show.html.heex:55
+#, elixir-autogen, elixir-format
+msgid "Unpulse"
+msgstr "取消脈衝"
+
+#: lib/micelio_web/controllers/browser/page_html.ex:41
+#, elixir-autogen, elixir-format
+msgid "No recent projects yet."
+msgstr "暫無最近專案。"
+
+#: lib/micelio_web/controllers/browser/page_html.ex:32
+#, elixir-autogen, elixir-format
+msgid "Projects you've worked on recently."
+msgstr "你最近參與的專案。"
+
+#: lib/micelio_web/controllers/browser/page_html.ex:23
+#, elixir-autogen, elixir-format
+msgid "Recent projects"
+msgstr "最近專案"

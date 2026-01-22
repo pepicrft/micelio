@@ -250,16 +250,36 @@
   font-size: 0.9rem;
 }
 
-.home-popular-stars {
+.home-popular-pulse-form,
+.home-popular-pulse-static {
   display: inline-flex;
   align-items: center;
   gap: var(--theme-ui-space-1);
 }
 
-.home-popular-icon {
-  width: 0.95rem;
-  height: 0.95rem;
-  flex: 0 0 auto;
+.home-popular-pulse-toggle {
+  flex-shrink: 0;
+}
+
+.home-popular-pulse-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: var(--theme-ui-borders-thin);
+  border-radius: 999px;
+  color: var(--theme-ui-colors-text);
+}
+
+.home-popular-pulse-icon .project-pulse-toggle-icon {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.home-popular-pulse-count {
+  color: var(--theme-ui-colors-secondary);
+  font-size: 0.9rem;
 }
 
 .home-popular-pagination {

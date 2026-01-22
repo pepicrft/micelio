@@ -44,6 +44,26 @@
 
 .blog-post-author {
   font-style: normal;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--theme-ui-space-1);
+}
+
+.blog-post-author-links {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--theme-ui-space-1);
+}
+
+.blog-post-author-links a {
+  color: var(--theme-ui-colors-secondary);
+  display: inline-flex;
+  align-items: center;
+  transition: color 0.2s ease;
+}
+
+.blog-post-author-links a:hover {
+  color: var(--theme-ui-colors-primary);
 }
 
 .blog-post-tags {

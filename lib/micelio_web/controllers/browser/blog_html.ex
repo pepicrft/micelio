@@ -5,7 +5,6 @@ defmodule MicelioWeb.Browser.BlogHTML do
 
   use MicelioWeb, :html
 
-  alias Micelio.Blog.Models
   alias Micelio.Blog.People
 
   embed_templates "blog_html/*"
@@ -17,5 +16,5 @@ defmodule MicelioWeb.Browser.BlogHTML do
   def author_name(author_id) when is_atom(author_id), do: People.name!(author_id)
   def author_name(author_name) when is_binary(author_name), do: author_name
 
-  def model_name(model_id) when is_atom(model_id), do: Models.name!(model_id)
+  def author_info(author_id) when is_atom(author_id), do: People.get!(author_id)
 end

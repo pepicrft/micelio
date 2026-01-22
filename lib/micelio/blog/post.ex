@@ -1,18 +1,29 @@
 defmodule Micelio.Blog.Post do
   @moduledoc """
   A blog post struct for NimblePublisher.
+
+  Posts are organized by locale in the filesystem:
+  - priv/posts/en/2026/01-14-post-id.md
+  - priv/posts/ja/2026/01-14-post-id.md
+
+  The locale is extracted from the directory structure.
   """
 
-  alias Micelio.Blog.Models
   alias Micelio.Blog.People
 
-  @enforce_keys [:id, :author, :title, :body, :description, :tags, :date]
-  defstruct [:id, :author, :model, :title, :body, :description, :tags, :date]
+  @enforce_keys [:id, :author, :title, :body, :description, :tags, :date, :locale]
+  defstruct [:id, :author, :title, :body, :description, :tags, :date, :locale]
+
+  @supported_locales ~w(en ko zh_CN zh_TW ja)
 
   def build(filename, attrs, body) do
-    [year, month_day_id] = filename |> Path.rootname() |> Path.split() |> Enum.take(-2)
-    [month, day, id] = String.split(month_day_id, "-", parts: 3)
+    parts = filename |> Path.rootname() |> Path.split()
 
+    # Extract locale from path - look for a supported locale in the path
+    # Path structure: .../priv/posts/en/2026/01-14-post-id.md or .../priv/posts/2026/01-14-post-id.md
+    {locale, year, month_day_id} = extract_locale_and_date_parts(parts)
+
+    [month, day, id] = String.split(month_day_id, "-", parts: 3)
     date = Date.from_iso8601!("#{year}-#{month}-#{day}")
 
     attrs = normalize_attrs!(attrs)
@@ -22,29 +33,35 @@ defmodule Micelio.Blog.Post do
       [
         id: id,
         date: date,
-        body: body
+        body: body,
+        locale: locale
       ] ++ Map.to_list(attrs)
     )
   end
 
+  # Extract locale from path parts
+  # Supports: priv/posts/en/2026/01-14-id.md (with locale) or priv/posts/2026/01-14-id.md (without)
+  defp extract_locale_and_date_parts(parts) do
+    # Take last 3 parts which could be [locale, year, filename] or [posts, year, filename]
+    case Enum.take(parts, -3) do
+      [locale, year, filename] when locale in @supported_locales ->
+        {locale, year, filename}
+
+      _ ->
+        # Fallback: no locale prefix, default to "en"
+        [year, filename] = Enum.take(parts, -2)
+        {"en", year, filename}
+    end
+  end
+
   defp normalize_attrs!(%{author: author_id} = attrs) when is_atom(author_id) do
     _ = People.get!(author_id)
-
-    case Map.fetch(attrs, :model) do
-      :error -> attrs
-      {:ok, nil} -> Map.delete(attrs, :model)
-      {:ok, model_id} when is_atom(model_id) -> Map.put(attrs, :model, Models.get!(model_id).id)
-      {:ok, model_name} when is_binary(model_name) -> invalid_model!(model_name)
-    end
+    # Remove model field if present (no longer used)
+    Map.delete(attrs, :model)
   end
 
   defp normalize_attrs!(%{author: author_name} = _attrs) when is_binary(author_name) do
     raise ArgumentError,
           "blog post author must be one of #{People.all() |> Enum.map(& &1.id) |> inspect()}, got: #{inspect(author_name)}"
-  end
-
-  defp invalid_model!(model_name) do
-    raise ArgumentError,
-          "blog post model must be one of #{Models.all() |> Enum.map(& &1.id) |> inspect()}, got: #{inspect(model_name)}"
   end
 end

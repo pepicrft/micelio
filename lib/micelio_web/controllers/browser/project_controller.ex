@@ -72,6 +72,8 @@ defmodule MicelioWeb.Browser.ProjectController do
         end
       end
 
+      _ = Projects.record_project_interaction(user, project, "pulse")
+
       redirect(conn,
         to: safe_return_path(return_to, account_handle, project_handle)
       )
@@ -227,6 +229,7 @@ defmodule MicelioWeb.Browser.ProjectController do
     |> assign_token_pool_data(project)
     |> assign_badge_data(account, project)
     |> maybe_assign_schema_json_ld(dir_path, account, project)
+    |> track_project_interaction(project, "view")
     |> render(:show)
   end
 
@@ -263,6 +266,7 @@ defmodule MicelioWeb.Browser.ProjectController do
           |> assign(:file_content, format_blob_content(file_path, content))
           |> assign_star_data(project)
           |> assign_fork_data(project)
+          |> track_project_interaction(project, "view")
           |> render(:blob)
         else
           _ -> send_resp(conn, 404, "Not found")
@@ -318,6 +322,7 @@ defmodule MicelioWeb.Browser.ProjectController do
           |> assign(:blame_lines, blame_lines)
           |> assign_star_data(project)
           |> assign_fork_data(project)
+          |> track_project_interaction(project, "view")
           |> render(:blame)
         else
           _ -> send_resp(conn, 404, "Not found")
@@ -356,6 +361,17 @@ defmodule MicelioWeb.Browser.ProjectController do
     |> assign(:star_form, Phoenix.Component.to_form(%{"return_to" => return_to}, as: :star))
     |> assign(:starred?, Projects.project_starred?(conn.assigns.current_user, project))
     |> assign(:stars_count, Projects.count_project_stars(project))
+  end
+
+  defp track_project_interaction(conn, project, type) do
+    case conn.assigns.current_user do
+      %{} = user ->
+        _ = Projects.record_project_interaction(user, project, type)
+        conn
+
+      _ ->
+        conn
+    end
   end
 
   defp assign_fork_data(conn, project) do

@@ -12,6 +12,7 @@ defmodule Micelio.Projects.Project do
     field :protect_main_branch, :boolean, default: false
     field :llm_model, :string
     field :star_count, :integer, virtual: true
+    field :starred, :boolean, virtual: true
 
     belongs_to :forked_from, Micelio.Projects.Project
     belongs_to :organization, Micelio.Accounts.Organization

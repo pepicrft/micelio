@@ -446,6 +446,13 @@ gitlab_oauth =
            System.get_env("GITLAB_OAUTH_REDIRECT_URI")
        else
          System.get_env("GITLAB_OAUTH_REDIRECT_URI")
+       end),
+    scope:
+      (if config_env() == :dev do
+         System.get_env("GITLAB_OAUTH_SCOPE_DEV") ||
+           System.get_env("GITLAB_OAUTH_SCOPE")
+       else
+         System.get_env("GITLAB_OAUTH_SCOPE")
        end)
   ]
   |> Enum.reject(fn {_key, value} -> is_nil(value) or value == "" end)

@@ -1,7 +1,6 @@
 %{
   title: "Building Micelio by Letting Go of Old Mental Models",
   author: :pedro,
-  model: :gpt_5_2_high,
   tags: ~w(vision workflow agents),
   description: "Micelio is an experiment in agent-first development: short feedback loops, explicit reasoning, and tools chosen for runtime clarity rather than tradition."
 }

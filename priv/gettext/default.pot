@@ -21,7 +21,7 @@ msgstr ""
 msgid "Actions"
 msgstr ""
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:82
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:84
 #, elixir-autogen, elixir-format
 msgid "Agent-Native by Design"
 msgstr ""
@@ -32,12 +32,12 @@ msgstr ""
 msgid "Attempting to reconnect"
 msgstr ""
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:60
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:62
 #, elixir-autogen, elixir-format
 msgid "Built for hundreds of AI agents working concurrently on massive codebases"
 msgstr ""
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:91
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:93
 #, elixir-autogen, elixir-format
 msgid "Checks"
 msgstr ""
@@ -57,7 +57,7 @@ msgstr ""
 msgid "Delete this project?"
 msgstr ""
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:102
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:104
 #, elixir-autogen, elixir-format
 msgid "Designed for a future where humans review, not write most code. Conversation, decisions, and changes are unified in one workflow."
 msgstr ""
@@ -67,17 +67,17 @@ msgstr ""
 msgid "Edit"
 msgstr ""
 
-#: lib/micelio_web/controllers/browser/page_html.ex:21
+#: lib/micelio_web/controllers/browser/page_html.ex:33
 #, elixir-autogen, elixir-format
 msgid "Explore what the community is building."
 msgstr ""
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:120
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:122
 #, elixir-autogen, elixir-format
 msgid "Forge-First"
 msgstr ""
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:65
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:67
 #, elixir-autogen, elixir-format
 msgid "Forge-first architecture with object storage at the core"
 msgstr ""
@@ -87,7 +87,7 @@ msgstr ""
 msgid "Get started"
 msgstr ""
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:100
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:102
 #, elixir-autogen, elixir-format
 msgid "Human + AI Collaboration"
 msgstr ""
@@ -102,12 +102,12 @@ msgstr ""
 msgid "Manage your projects."
 msgstr ""
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:111
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:113
 #, elixir-autogen, elixir-format
 msgid "Massive Scale"
 msgstr ""
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:46
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:48
 #, elixir-autogen, elixir-format
 msgid "Micelio is the open source, agent-first software versioning forge the future has been waiting for."
 msgstr ""
@@ -127,17 +127,17 @@ msgstr ""
 msgid "New project"
 msgstr ""
 
-#: lib/micelio_web/controllers/browser/page_html.ex:90
+#: lib/micelio_web/controllers/browser/page_html.ex:181
 #, elixir-autogen, elixir-format
 msgid "Next"
 msgstr ""
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:93
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:95
 #, elixir-autogen, elixir-format
 msgid "Nix-native checks run locally with the exact derivations that power remote execution. Content-addressed caches keep results consistent and fast, so a green check locally is the same check everywhere - no centralized queue required."
 msgstr ""
 
-#: lib/micelio_web/controllers/browser/page_html.ex:48
+#: lib/micelio_web/controllers/browser/page_html.ex:77
 #, elixir-autogen, elixir-format
 msgid "No description yet."
 msgstr ""
@@ -147,22 +147,22 @@ msgstr ""
 msgid "No projects yet"
 msgstr ""
 
-#: lib/micelio_web/controllers/browser/page_html.ex:26
+#: lib/micelio_web/controllers/browser/page_html.ex:42
 #, elixir-autogen, elixir-format
 msgid "No public projects yet."
 msgstr ""
 
-#: lib/micelio_web/controllers/browser/page_html.ex:20
+#: lib/micelio_web/controllers/browser/page_html.ex:24
 #, elixir-autogen, elixir-format
 msgid "Popular projects"
 msgstr ""
 
-#: lib/micelio_web/controllers/browser/page_html.ex:74
+#: lib/micelio_web/controllers/browser/page_html.ex:165
 #, elixir-autogen, elixir-format
 msgid "Popular projects pagination"
 msgstr ""
 
-#: lib/micelio_web/controllers/browser/page_html.ex:81
+#: lib/micelio_web/controllers/browser/page_html.ex:172
 #, elixir-autogen, elixir-format
 msgid "Previous"
 msgstr ""
@@ -193,7 +193,7 @@ msgstr ""
 msgid "Ready to work on your projects?"
 msgstr ""
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:67
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:69
 #, elixir-autogen, elixir-format
 msgid "Scales to billions of files and hundreds of thousands of landings per day"
 msgstr ""
@@ -204,12 +204,12 @@ msgstr ""
 msgid "Select language"
 msgstr ""
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:64
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:66
 #, elixir-autogen, elixir-format
 msgid "Sessions capture goal, reasoning, and changes together"
 msgstr ""
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:84
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:86
 #, elixir-autogen, elixir-format
 msgid "Sessions capture goal, reasoning, and changes together. Built for hundreds of AI agents working concurrently, with stateless compute that auto-scales based on demand."
 msgstr ""
@@ -219,7 +219,7 @@ msgstr ""
 msgid "Something went wrong!"
 msgstr ""
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:113
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:115
 #, elixir-autogen, elixir-format
 msgid "Targets Google/Meta scale: 1B+ files, 500k+ landings per day, 100k+ concurrent sessions. Object storage-first architecture with O(log n) operations."
 msgstr ""
@@ -321,32 +321,32 @@ msgstr ""
 msgid "theme"
 msgstr ""
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:72
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:74
 #, elixir-autogen, elixir-format
 msgid "Inspired by"
 msgstr ""
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:51
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:53
 #, elixir-autogen, elixir-format
 msgid "Micelio is both a CLI"
 msgstr ""
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:54
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:56
 #, elixir-autogen, elixir-format
 msgid "Micelio is to"
 msgstr ""
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:73
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:75
 #, elixir-autogen, elixir-format
 msgid "and"
 msgstr ""
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:51
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:53
 #, elixir-autogen, elixir-format
 msgid "and a forge, fully open source under"
 msgstr ""
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:56
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:58
 #, elixir-autogen, elixir-format
 msgid "what GitHub is to"
 msgstr ""
@@ -356,14 +356,9 @@ msgstr ""
 msgid "Language selection"
 msgstr ""
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:122
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:124
 #, elixir-autogen, elixir-format
 msgid "The forge is the source of truth. Coordinator-free landing with content-addressed conditional writes. No single bottleneck."
-msgstr ""
-
-#: lib/micelio_web/controllers/browser/page_html.ex:66
-#, elixir-autogen, elixir-format
-msgid "Signals"
 msgstr ""
 
 #: lib/micelio_web/controllers/browser/auth_html/new.html.heex:52
@@ -480,4 +475,45 @@ msgstr ""
 #: lib/micelio_web/controllers/browser/auth_controller.ex:291
 #, elixir-autogen, elixir-format
 msgid "user fetch failed"
+msgstr ""
+
+#: lib/micelio_web/controllers/browser/page_html.ex:97
+#: lib/micelio_web/controllers/browser/page_html.ex:98
+#: lib/micelio_web/controllers/browser/page_html.ex:104
+#: lib/micelio_web/controllers/browser/project_html/show.html.heex:50
+#: lib/micelio_web/controllers/browser/project_html/show.html.heex:51
+#: lib/micelio_web/controllers/browser/project_html/show.html.heex:57
+#, elixir-autogen, elixir-format
+msgid "Pulse"
+msgstr ""
+
+#: lib/micelio_web/controllers/browser/page_html.ex:154
+#: lib/micelio_web/controllers/browser/project_html/show.html.heex:93
+#, elixir-autogen, elixir-format
+msgid "Pulses"
+msgstr ""
+
+#: lib/micelio_web/controllers/browser/page_html.ex:97
+#: lib/micelio_web/controllers/browser/page_html.ex:98
+#: lib/micelio_web/controllers/browser/page_html.ex:102
+#: lib/micelio_web/controllers/browser/project_html/show.html.heex:50
+#: lib/micelio_web/controllers/browser/project_html/show.html.heex:51
+#: lib/micelio_web/controllers/browser/project_html/show.html.heex:55
+#, elixir-autogen, elixir-format
+msgid "Unpulse"
+msgstr ""
+
+#: lib/micelio_web/controllers/browser/page_html.ex:41
+#, elixir-autogen, elixir-format
+msgid "No recent projects yet."
+msgstr ""
+
+#: lib/micelio_web/controllers/browser/page_html.ex:32
+#, elixir-autogen, elixir-format
+msgid "Projects you've worked on recently."
+msgstr ""
+
+#: lib/micelio_web/controllers/browser/page_html.ex:23
+#, elixir-autogen, elixir-format
+msgid "Recent projects"
 msgstr ""

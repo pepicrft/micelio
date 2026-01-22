@@ -21,6 +21,10 @@ Translation files are located in `priv/gettext/{locale}/LC_MESSAGES/`.
 
 Use open source icons from https://icones.js.org/ and embed them as inline SVG in templates. Prefer a single icon set (e.g., Tabler) for consistency.
 
+## IMPORTANT: Project interactions
+
+When adding new user interactions that should influence "recent projects", add them to the project interaction tracking in the Projects context and update the relevant controllers/live views to record them.
+
 ### Blog Post Translations
 
 Blog posts are organized by locale in the filesystem:

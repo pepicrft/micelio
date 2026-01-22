@@ -63,8 +63,6 @@ The future of software development is collaborative intelligence: humans and AI 
 
 **Micelio + mic is my bet on that future.**
 
-Join the conversation on [Discord](https://discord.gg/XKzUPfJe) and help shape where this goes.
-
 ---
 
-*Pedro is building micelio, an open source agent-first git forge. Follow the project at [micelio.dev](https://micelio.dev) or join our [Discord community](https://discord.gg/XKzUPfJe).*
+*Pedro is building micelio, an open source agent-first git forge. Follow the project at [micelio.dev](https://micelio.dev).*

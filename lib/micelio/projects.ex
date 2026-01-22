@@ -11,7 +11,17 @@ defmodule Micelio.Projects do
   alias Micelio.Audit
   alias Micelio.LLM
   alias Micelio.Mic.Seed
-  alias Micelio.Projects.{AccessTokens, Import, Project, ProjectAccessToken, ProjectImport, ProjectStar}
+
+  alias Micelio.Projects.{
+    AccessTokens,
+    Import,
+    Project,
+    ProjectAccessToken,
+    ProjectImport,
+    ProjectInteraction,
+    ProjectStar
+  }
+
   alias Micelio.Repo
   alias Micelio.Storage
 
@@ -94,15 +104,31 @@ defmodule Micelio.Projects do
   def list_popular_projects(opts \\ []) do
     limit = Keyword.get(opts, :limit, 6)
     offset = Keyword.get(opts, :offset, 0)
+    user = Keyword.get(opts, :user)
 
-    Project
-    |> where([p], p.visibility == "public")
-    |> join(:left, [p], ps in ProjectStar, on: ps.project_id == p.id)
-    |> join(:left, [p, _ps], o in assoc(p, :organization))
-    |> join(:left, [p, _ps, o], a in assoc(o, :account))
-    |> preload([_p, _ps, o, a], organization: {o, account: a})
-    |> group_by([p, _ps, o, a], [p.id, o.id, a.id])
-    |> select_merge([p, ps, _o, _a], %{star_count: count(ps.id)})
+    base_query =
+      Project
+      |> where([p], p.visibility == "public")
+      |> join(:left, [p], ps in ProjectStar, on: ps.project_id == p.id)
+      |> join(:left, [p, _ps], o in assoc(p, :organization))
+      |> join(:left, [p, _ps, o], a in assoc(o, :account))
+      |> preload([_p, _ps, o, a], organization: {o, account: a})
+      |> group_by([p, _ps, o, a], [p.id, o.id, a.id])
+      |> select_merge([p, ps, _o, _a], %{star_count: count(ps.id)})
+
+    base_query =
+      if user do
+        base_query
+        |> join(:left, [p, _ps, _o, _a], psu in ProjectStar,
+          on: psu.project_id == p.id and psu.user_id == ^user.id
+        )
+        |> group_by([_p, _ps, _o, _a, psu], psu.id)
+        |> select_merge([_p, _ps, _o, _a, psu], %{starred: not is_nil(psu.id)})
+      else
+        base_query
+      end
+
+    base_query
     |> order_by([p, ps, _o, a],
       desc: count(ps.id),
       desc: p.inserted_at,
@@ -113,6 +139,64 @@ defmodule Micelio.Projects do
     |> offset(^offset)
     |> Repo.all()
   end
+
+  @doc """
+  Lists projects a user has recently interacted with, ordered by latest interaction.
+  """
+  def list_recent_projects_for_user(%Accounts.User{} = user, opts \\ []) do
+    limit = Keyword.get(opts, :limit, 6)
+    offset = Keyword.get(opts, :offset, 0)
+
+    Project
+    |> join(:inner, [p], pi in ProjectInteraction,
+      on: pi.project_id == p.id and pi.user_id == ^user.id
+    )
+    |> join(:left, [p, _pi], ps in ProjectStar, on: ps.project_id == p.id)
+    |> join(:left, [p, _pi, _ps], o in assoc(p, :organization))
+    |> join(:left, [p, _pi, _ps, o], a in assoc(o, :account))
+    |> preload([_p, _pi, _ps, o, a], organization: {o, account: a})
+    |> join(:left, [p, _pi, _ps, _o, _a], psu in ProjectStar,
+      on: psu.project_id == p.id and psu.user_id == ^user.id
+    )
+    |> group_by([p, _pi, _ps, o, a, psu], [p.id, o.id, a.id, psu.id])
+    |> select_merge([_p, _pi, ps, _o, _a, psu], %{
+      star_count: count(ps.id),
+      starred: not is_nil(psu.id)
+    })
+    |> order_by([_p, pi, _ps, _o, _a, _psu], desc: max(pi.last_interacted_at))
+    |> limit(^limit)
+    |> offset(^offset)
+    |> Repo.all()
+  end
+
+  @doc """
+  Records a project interaction for a user.
+  """
+  def record_project_interaction(%Accounts.User{} = user, %Project{} = project, type)
+      when is_binary(type) do
+    now = DateTime.utc_now() |> DateTime.truncate(:second)
+
+    Repo.insert(
+      %ProjectInteraction{
+        user_id: user.id,
+        project_id: project.id,
+        last_interacted_at: now,
+        interaction_count: 1,
+        last_interaction_type: type
+      },
+      on_conflict: [
+        set: [
+          last_interacted_at: now,
+          last_interaction_type: type,
+          updated_at: now
+        ],
+        inc: [interaction_count: 1]
+      ],
+      conflict_target: [:user_id, :project_id]
+    )
+  end
+
+  def record_project_interaction(_, _, _), do: {:error, :invalid_interaction}
 
   @doc """
   Lists projects for mobile clients with pagination and optional sync filtering.
@@ -467,7 +551,9 @@ defmodule Micelio.Projects do
   Returns an `%Ecto.Changeset{}` for tracking project changes.
   """
   def change_project(%Project{} = project, attrs \\ %{}, opts \\ []) do
-    organization = organization_from_attrs(attrs, opts) || organization_from_project(project, opts)
+    organization =
+      organization_from_attrs(attrs, opts) || organization_from_project(project, opts)
+
     llm_opts = llm_policy_opts(organization)
     Project.changeset(project, attrs, llm_opts)
   end

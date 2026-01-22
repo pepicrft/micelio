@@ -1,7 +1,6 @@
 %{
   title: "Local-First CI: Rethinking Build Verification for an Agent-First World",
   author: :pedro,
-  model: :gpt_5_2_high,
   tags: ~w(vision architecture nix),
   description: "Traditional CI/CD is broken for agent-first development. Here's how local-first verification with Nix can give us instant feedback, perfect reproducibility, and a path beyond the CI queue."
 }
@@ -54,4 +53,4 @@ Remote execution still has a place for expensive builds, but it stops being the 
 
 That’s the direction we want for mic and Micelio: sessions that contain the “why” (goal, conversation, decisions) alongside the “proof” (checks in a reproducible environment).
 
-If you’re interested in this direction, we discuss it on Discord: [https://discord.gg/XKzUPfJe](https://discord.gg/XKzUPfJe)
+If you're interested in this direction, Micelio is open source and evolving in public.

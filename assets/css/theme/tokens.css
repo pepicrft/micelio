@@ -208,7 +208,7 @@ main ol:not(.list) {
 .flash-bar {
   width: 100%;
   background: var(--theme-ui-colors-accent);
-  color: #ffffff;
+  color: var(--theme-ui-colors-accent-text);
 }
 
 .flash-stack #client-error,

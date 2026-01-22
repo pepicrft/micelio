@@ -10,7 +10,21 @@ defmodule MicelioWeb.Browser.PageController do
     popular_offset = (popular_page - 1) * popular_limit
 
     popular_projects =
-      Projects.list_popular_projects(limit: popular_limit + 1, offset: popular_offset)
+      case conn.assigns.current_user do
+        %{} = user ->
+          Projects.list_recent_projects_for_user(
+            user,
+            limit: popular_limit + 1,
+            offset: popular_offset
+          )
+
+        _ ->
+          Projects.list_popular_projects(
+            limit: popular_limit + 1,
+            offset: popular_offset,
+            user: conn.assigns.current_user
+          )
+      end
 
     {popular_projects, popular_has_more} = split_popular_projects(popular_projects, popular_limit)
 

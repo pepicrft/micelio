@@ -8,16 +8,18 @@ defmodule Micelio.Auth.GitLab do
   @default_user_url "https://gitlab.com/api/v4/user"
   @default_emails_url "https://gitlab.com/api/v4/user/emails"
 
-  @scope "read_user email"
+  @default_scope "read_user email"
 
   def authorize_url(state) when is_binary(state) do
     with {:ok, config} <- oauth_config() do
+      scope = Map.get(config, :scope, @default_scope)
+
       query =
         URI.encode_query(%{
           "client_id" => config.client_id,
           "redirect_uri" => config.redirect_uri,
           "response_type" => "code",
-          "scope" => @scope,
+          "scope" => scope,
           "state" => state
         })
 
@@ -54,6 +56,7 @@ defmodule Micelio.Auth.GitLab do
          client_id: client_id,
          client_secret: client_secret,
          redirect_uri: redirect_uri,
+         scope: Keyword.get(config, :scope),
          authorize_url: Keyword.get(config, :authorize_url, @default_authorize_url),
          token_url: Keyword.get(config, :token_url, @default_token_url),
          user_url: Keyword.get(config, :user_url, @default_user_url),

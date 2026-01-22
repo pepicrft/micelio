@@ -24,6 +24,8 @@
 
       <.popular_projects_section
         projects={@popular_projects}
+        current_user={assigns[:current_user]}
+        current_path={assigns[:current_path] || "/"}
         page={@popular_page}
         has_more={@popular_has_more}
       />
@@ -129,6 +131,8 @@
 
       <.popular_projects_section
         projects={@popular_projects}
+        current_user={assigns[:current_user]}
+        current_path={assigns[:current_path] || "/"}
         page={@popular_page}
         has_more={@popular_has_more}
       />

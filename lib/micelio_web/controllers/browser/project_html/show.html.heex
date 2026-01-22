@@ -44,21 +44,57 @@
               <.input field={@star_form[:return_to]} type="hidden" />
               <button
                 type="submit"
-                class="project-star-toggle"
+                class={["project-star-toggle", @starred? && "is-starred"]}
                 id="project-star-toggle"
+                aria-pressed={@starred?}
+                aria-label={if @starred?, do: gettext("Unpulse"), else: gettext("Pulse")}
+                title={if @starred?, do: gettext("Unpulse"), else: gettext("Pulse")}
               >
+                <span class="sr-only">
+                  <%= if @starred? do %>
+                    <%= gettext("Unpulse") %>
+                  <% else %>
+                    <%= gettext("Pulse") %>
+                  <% end %>
+                </span>
                 <%= if @starred? do %>
-                  Unstar
+                  <svg
+                    class="project-pulse-toggle-icon"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M3 12h4l3 8l4-16l3 8h4" />
+                  </svg>
                 <% else %>
-                  Star
+                  <svg
+                    class="project-pulse-toggle-icon"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M3 12h4l3 8l4-16l3 8h4" />
+                  </svg>
                 <% end %>
-              </button>
-            </.form>
-          <% end %>
+                <span class="project-star-count">{@stars_count}</span>
+            </button>
+          </.form>
+        <% end %>
+        <%= if is_nil(@current_user) do %>
           <span class="project-stars-count" id="project-stars-count">
-            Stars: {@stars_count}
+            <span class="sr-only">{gettext("Pulses")}</span>
+            {@stars_count}
           </span>
-        </div>
+        <% end %>
+      </div>
         <%= if @current_user && @fork_organizations != [] do %>
           <.form
             for={@fork_form}
@@ -102,101 +138,6 @@
         <% end %>
       </:actions>
     </.header>
-
-    <%= if @badge_visible? do %>
-      <section class="project-badge" id="project-badge">
-        <h2 class="project-badge-title">Badge</h2>
-        <p class="project-badge-description">
-          Embed this badge in your README to show project stars.
-        </p>
-        <div class="project-badge-preview">
-          <img src={@badge_url} alt={"#{@account.handle}/#{@project.handle} badge"} />
-        </div>
-        <div class="project-badge-snippets">
-          <div class="project-badge-snippet">
-            <h3>Markdown</h3>
-            <pre
-              class="project-badge-code"
-              id="project-badge-markdown"
-              style="white-space: normal; word-break: break-all; overflow-wrap: anywhere;"
-            >
-              <code>{@badge_markdown}</code>
-            </pre>
-          </div>
-          <div class="project-badge-snippet">
-            <h3>HTML</h3>
-            <pre
-              class="project-badge-code"
-              id="project-badge-html"
-              style="white-space: normal; word-break: break-all; overflow-wrap: anywhere;"
-            >
-              <code>{@badge_html}</code>
-            </pre>
-          </div>
-        </div>
-      </section>
-    <% end %>
-
-    <section class="project-token-pool" id="project-token-pool">
-      <h2 class="project-token-title">AI token pool</h2>
-      <p class="project-token-balance">
-        Balance: {@token_pool.balance} tokens
-      </p>
-      <p class="project-token-available">
-        Available: {@token_pool_available} tokens
-      </p>
-      <%= if @current_user do %>
-        <.form
-          for={@token_contribution_form}
-          id="project-token-form"
-          class="project-token-form"
-          action={~p"/#{@account.handle}/#{@project.handle}/token-contributions"}
-          method="post"
-        >
-          <input
-            type="hidden"
-            name="token_contribution[return_to]"
-            value={@token_return_to}
-          />
-          <div class="project-token-fields">
-            <.input
-              field={@token_contribution_form[:amount]}
-              type="number"
-              min="1"
-              step="1"
-              label="Tokens"
-            />
-          </div>
-          <button type="submit" class="project-token-submit" id="project-token-submit">
-            Contribute
-          </button>
-        </.form>
-      <% else %>
-        <p class="project-token-login">
-          <a href={~p"/auth/login"}>Sign in</a> to contribute tokens.
-        </p>
-      <% end %>
-    </section>
-
-    <section class="project-token-usage" id="project-token-usage">
-      <h2 class="project-token-title">AI token usage</h2>
-      <div class="project-token-usage-grid">
-        <div class="project-token-usage-card">
-          <span class="project-token-usage-label">Tokens spent</span>
-          <span class="project-token-usage-value">{@token_usage.tokens_spent}</span>
-          <span class="project-token-usage-meta">Total tokens across prompt requests</span>
-        </div>
-        <div class="project-token-usage-card">
-          <span class="project-token-usage-label">Value delivered</span>
-          <span class="project-token-usage-value">
-            {@token_usage.accepted_prompt_requests}
-          </span>
-          <span class="project-token-usage-meta">
-            Accepted prompts ({@token_usage_acceptance_rate})
-          </span>
-        </div>
-      </div>
-    </section>
 
     <div class="project-browser">
       <% segments = if @dir_path == "", do: [], else: String.split(@dir_path, "/") %>

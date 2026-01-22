@@ -3,8 +3,21 @@ defmodule Micelio.Blog.People do
   Compile-time registry of allowed blog authors.
   """
 
-  @ruby %{id: :ruby, name: "Ruby"}
-  @pedro %{id: :pedro, name: "Pedro Piñera Buendía"}
+  @ruby %{
+    id: :ruby,
+    name: "Ruby",
+    x_handle: nil,
+    mastodon_handle: nil,
+    mastodon_url: nil
+  }
+
+  @pedro %{
+    id: :pedro,
+    name: "Pedro Piñera Buendía",
+    x_handle: "pepicrft",
+    mastodon_handle: "@pedro@mastodon.pepicrft.me",
+    mastodon_url: "https://mastodon.pepicrft.me/@pedro"
+  }
 
   @people %{
     ruby: @ruby,

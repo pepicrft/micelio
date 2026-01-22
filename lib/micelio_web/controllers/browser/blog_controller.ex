@@ -2,9 +2,12 @@ defmodule MicelioWeb.Browser.BlogController do
   use MicelioWeb, :controller
 
   alias Micelio.Blog
+  alias Micelio.Blog.People
   alias MicelioWeb.PageMeta
 
   def index(conn, _params) do
+    locale = conn.assigns[:locale] || "en"
+
     conn
     |> PageMeta.put(
       title_parts: ["Blog"],
@@ -12,11 +15,13 @@ defmodule MicelioWeb.Browser.BlogController do
         "Updates and insights from the Micelio team about building the future of agent-first software development.",
       canonical_url: url(~p"/blog")
     )
-    |> render(:index, posts: Blog.all_posts())
+    |> render(:index, posts: Blog.all_posts(locale))
   end
 
   def show(conn, %{"id" => id}) do
-    post = Blog.get_post_by_id!(id)
+    locale = conn.assigns[:locale] || "en"
+    post = Blog.get_post_by_id!(id, locale)
+    author = People.get!(post.author)
 
     conn
     |> PageMeta.put(
@@ -24,13 +29,18 @@ defmodule MicelioWeb.Browser.BlogController do
       description: post.description,
       canonical_url: url(~p"/blog/#{post.id}"),
       type: "article",
-      open_graph: %{"article:published_time" => Date.to_iso8601(post.date)}
+      author: author,
+      open_graph: %{
+        "article:published_time" => Date.to_iso8601(post.date),
+        "article:author" => author.name
+      }
     )
     |> render(:show, post: post)
   end
 
   def rss(conn, _params) do
-    posts = Blog.recent_posts(10)
+    # RSS feeds are always in English (default)
+    posts = Blog.recent_posts(10, "en")
 
     conn
     |> put_resp_content_type("application/rss+xml")
@@ -38,7 +48,8 @@ defmodule MicelioWeb.Browser.BlogController do
   end
 
   def atom(conn, _params) do
-    posts = Blog.recent_posts(10)
+    # Atom feeds are always in English (default)
+    posts = Blog.recent_posts(10, "en")
 
     conn
     |> put_resp_content_type("application/atom+xml")
