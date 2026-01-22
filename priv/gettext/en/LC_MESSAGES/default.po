@@ -411,72 +411,73 @@ msgstr "or"
 msgid "you@example.com"
 msgstr "you@example.com"
 
-#: lib/micelio_web/controllers/browser/auth_controller.ex:271
+#: lib/micelio_web/controllers/browser/auth_controller.ex:273
 #, elixir-autogen, elixir-format
 msgid "%{error}: %{description}"
 msgstr "%{error}: %{description}"
 
-#: lib/micelio_web/controllers/browser/auth_controller.ex:253
+#: lib/micelio_web/controllers/browser/auth_controller.ex:255
 #, elixir-autogen, elixir-format
 msgid "%{provider} login failed. Please try again."
 msgstr "%{provider} login failed. Please try again."
 
-#: lib/micelio_web/controllers/browser/auth_controller.ex:256
+#: lib/micelio_web/controllers/browser/auth_controller.ex:258
 #, elixir-autogen, elixir-format
 msgid "%{provider} login failed. Reason: %{reason}"
 msgstr "%{provider} login failed. Reason: %{reason}"
 
-#: lib/micelio_web/controllers/browser/auth_controller.ex:295
+#: lib/micelio_web/controllers/browser/auth_controller.ex:297
 #, elixir-autogen, elixir-format
 msgid "%{type} (%{details})"
 msgstr "%{type} (%{details})"
 
-#: lib/micelio_web/controllers/browser/auth_controller.ex:290
+#: lib/micelio_web/controllers/browser/auth_controller.ex:292
 #, elixir-autogen, elixir-format
 msgid "email fetch failed"
 msgstr "email fetch failed"
 
-#: lib/micelio_web/controllers/browser/auth_controller.ex:300
+#: lib/micelio_web/controllers/browser/auth_controller.ex:302
+#: lib/micelio_web/controllers/browser/auth_controller.ex:305
 #, elixir-autogen, elixir-format
 msgid "email not available from provider"
 msgstr "email not available from provider"
 
-#: lib/micelio_web/controllers/browser/auth_controller.ex:306
+#: lib/micelio_web/controllers/browser/auth_controller.ex:311
 #, elixir-autogen, elixir-format
 msgid "invalid OAuth state"
 msgstr "invalid OAuth state"
 
-#: lib/micelio_web/controllers/browser/auth_controller.ex:309
+#: lib/micelio_web/controllers/browser/auth_controller.ex:316
 #, elixir-autogen, elixir-format
 msgid "network error: %{reason}"
 msgstr "network error: %{reason}"
 
-#: lib/micelio_web/controllers/browser/auth_controller.ex:274
+#: lib/micelio_web/controllers/browser/auth_controller.ex:276
 #, elixir-autogen, elixir-format
 msgid "oauth error: %{error}"
 msgstr "oauth error: %{error}"
 
-#: lib/micelio_web/controllers/browser/auth_controller.ex:303
+#: lib/micelio_web/controllers/browser/auth_controller.ex:308
 #, elixir-autogen, elixir-format
 msgid "provider user id missing"
 msgstr "provider user id missing"
 
-#: lib/micelio_web/controllers/browser/auth_controller.ex:321
+#: lib/micelio_web/controllers/browser/auth_controller.ex:328
 #, elixir-autogen, elixir-format
 msgid "status %{status}"
 msgstr "status %{status}"
 
-#: lib/micelio_web/controllers/browser/auth_controller.ex:319
+#: lib/micelio_web/controllers/browser/auth_controller.ex:326
 #, elixir-autogen, elixir-format
 msgid "status %{status}: %{message}"
 msgstr "status %{status}: %{message}"
 
-#: lib/micelio_web/controllers/browser/auth_controller.ex:288
+#: lib/micelio_web/controllers/browser/auth_controller.ex:290
 #, elixir-autogen, elixir-format
 msgid "token exchange failed"
 msgstr "token exchange failed"
 
-#: lib/micelio_web/controllers/browser/auth_controller.ex:289
+#: lib/micelio_web/controllers/browser/auth_controller.ex:291
 #, elixir-autogen, elixir-format
 msgid "user fetch failed"
 msgstr "user fetch failed"

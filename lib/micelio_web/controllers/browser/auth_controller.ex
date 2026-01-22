@@ -301,11 +301,16 @@ defmodule MicelioWeb.Browser.AuthController do
   defp oauth_failure_details(:email_not_available),
     do: gettext("email not available from provider")
 
+  defp oauth_failure_details(:missing_email),
+    do: gettext("email not available from provider")
+
   defp oauth_failure_details(:missing_provider_user_id),
     do: gettext("provider user id missing")
 
   defp oauth_failure_details(:invalid_oauth_state),
     do: gettext("invalid OAuth state")
+
+  defp oauth_failure_details(%Ecto.Changeset{}), do: nil
 
   defp oauth_failure_details(%Req.TransportError{reason: reason}),
     do: gettext("network error: %{reason}", reason: inspect(reason))

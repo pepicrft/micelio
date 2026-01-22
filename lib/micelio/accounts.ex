@@ -411,7 +411,13 @@ defmodule Micelio.Accounts do
           {:ok, identity.user}
 
         nil ->
-          create_user_for_oauth(provider, provider_user_id, email)
+          case get_user_by_email(email) do
+            %User{} = user ->
+              attach_oauth_identity_to_user(user, provider, provider_user_id)
+
+            nil ->
+              create_user_for_oauth(provider, provider_user_id, email)
+          end
       end
     else
       {:error, :missing_email}
@@ -491,6 +497,31 @@ defmodule Micelio.Accounts do
 
       {:error, _step, %Ecto.Changeset{} = changeset, _changes} ->
         {:error, changeset}
+    end
+  end
+
+  defp attach_oauth_identity_to_user(%User{} = user, provider, provider_user_id) do
+    user = Repo.preload(user, :account)
+
+    %OAuthIdentity{}
+    |> OAuthIdentity.changeset(%{
+      provider: provider,
+      provider_user_id: provider_user_id,
+      user_id: user.id
+    })
+    |> Repo.insert()
+    |> case do
+      {:ok, _identity} ->
+        {:ok, user}
+
+      {:error, %Ecto.Changeset{} = changeset} ->
+        case get_oauth_identity(provider, provider_user_id) do
+          %OAuthIdentity{} = identity ->
+            {:ok, Repo.preload(identity.user, :account)}
+
+          nil ->
+            {:error, changeset}
+        end
     end
   end
 
