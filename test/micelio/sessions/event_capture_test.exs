@@ -1,0 +1,147 @@
+defmodule Micelio.Sessions.EventCaptureTest do
+  use Micelio.DataCase
+
+  alias Micelio.{Accounts, Projects, Sessions}
+  alias Micelio.Sessions.EventCapture
+  alias Micelio.Storage
+  alias Micelio.StorageHelper
+
+  setup :setup_storage
+
+  setup do
+    {:ok, user} = Accounts.get_or_create_user_by_email("agent@example.com")
+
+    {:ok, organization} =
+      Accounts.create_organization_for_user(user, %{
+        handle: "agent-org",
+        name: "Agent Org"
+      })
+
+    {:ok, project} =
+      Projects.create_project(%{
+        handle: "agent-project",
+        name: "Agent Project",
+        organization_id: organization.id
+      })
+
+    {:ok, session} =
+      Sessions.create_session(%{
+        session_id: "session-capture-1",
+        goal: "Capture events",
+        project_id: project.id,
+        user_id: user.id
+      })
+
+    %{session: session}
+  end
+
+  test "capture_event stores normalized event", %{session: session} do
+    event = %{
+      type: "status",
+      timestamp: ~U[2024-01-01 00:00:00Z],
+      source: %{kind: "agent"},
+      payload: %{state: "running", message: "Booting"}
+    }
+
+    assert {:ok, %{event: stored_event, storage_key: key}} =
+             EventCapture.capture_event(session, event)
+
+    assert String.starts_with?(key, "sessions/#{session.session_id}/events/")
+    assert stored_event.type == "status"
+    assert stored_event.payload.state == "running"
+
+    {:ok, json} = Storage.get(key)
+    decoded = Jason.decode!(json)
+
+    assert decoded["type"] == "status"
+    assert decoded["payload"]["state"] == "running"
+    assert decoded["source"]["kind"] == "agent"
+    assert is_binary(decoded["id"])
+  end
+
+  test "capture_output wraps ansi output with stderr stream", %{session: session} do
+    output = "\e[31mboom\e[0m"
+
+    assert {:ok, %{event: stored_event, storage_key: key}} =
+             EventCapture.capture_output(session, output, stream: "stderr")
+
+    assert stored_event.payload.stream == "stderr"
+    assert stored_event.payload.format == "ansi"
+
+    {:ok, json} = Storage.get(key)
+    decoded = Jason.decode!(json)
+
+    assert decoded["payload"]["stream"] == "stderr"
+    assert decoded["payload"]["format"] == "ansi"
+  end
+
+  test "capture_event returns error for invalid payload", %{session: session} do
+    assert {:error, :invalid_event_type} = EventCapture.capture_event(session, %{})
+  end
+
+  test "capture_payload stores json event payloads", %{session: session} do
+    event = %{
+      type: "status",
+      timestamp: ~U[2024-02-01 12:00:00Z],
+      source: %{kind: "agent"},
+      payload: %{state: "running", message: "Preparing"}
+    }
+
+    payload = Jason.encode!(event)
+
+    assert {:ok, %{event: stored_event, storage_key: key}} =
+             EventCapture.capture_payload(session, payload)
+
+    assert stored_event.type == "status"
+
+    {:ok, json} = Storage.get(key)
+    decoded = Jason.decode!(json)
+
+    assert decoded["payload"]["message"] == "Preparing"
+  end
+
+  test "capture_payload wraps plain output", %{session: session} do
+    assert {:ok, %{event: stored_event}} =
+             EventCapture.capture_payload(session, "hello world", stream: "stdout")
+
+    assert stored_event.type == "output"
+    assert stored_event.payload.text == "hello world"
+  end
+
+  test "capture_payload falls back to output for invalid json events", %{session: session} do
+    payload = Jason.encode!(%{type: "unknown", payload: %{text: "hi"}})
+
+    assert {:ok, %{event: stored_event}} =
+             EventCapture.capture_payload(session, payload, stream: "stderr")
+
+    assert stored_event.type == "output"
+    assert stored_event.payload.text == payload
+    assert stored_event.payload.stream == "stderr"
+  end
+
+  test "sessions wrapper captures plain output payload", %{session: session} do
+    assert {:ok, %{event: stored_event}} =
+             Sessions.capture_session_payload(session, "wrapper output", stream: "stderr")
+
+    assert stored_event.type == "output"
+    assert stored_event.payload.stream == "stderr"
+  end
+
+  test "sessions wrapper captures event using session id", %{session: session} do
+    event = %{
+      type: "status",
+      timestamp: ~U[2024-03-01 00:00:00Z],
+      source: %{kind: "agent"},
+      payload: %{state: "running", message: "Wrapper"}
+    }
+
+    assert {:ok, %{event: stored_event}} =
+             Sessions.capture_session_event(session.session_id, event)
+
+    assert stored_event.type == "status"
+  end
+
+  defp setup_storage(context) do
+    StorageHelper.setup_isolated_storage(context)
+  end
+end

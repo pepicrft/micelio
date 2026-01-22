@@ -6,6 +6,7 @@ defmodule MicelioWeb.Browser.ProfileController do
   alias Micelio.Accounts
   alias Micelio.Projects
   alias Micelio.Sessions
+  alias Micelio.Storage
   alias MicelioWeb.PageMeta
 
   def show(conn, _params) do
@@ -16,11 +17,16 @@ defmodule MicelioWeb.Browser.ProfileController do
       |> Accounts.change_user_profile()
       |> to_form(as: :user)
 
+    s3_config = Storage.get_user_s3_config(user)
+
     conn
     |> put_profile_meta(user)
     |> render(
       :show,
-      Map.merge(profile_assigns(conn, user), %{user: user, profile_form: profile_form})
+      Map.merge(profile_assigns(conn, user, s3_config: s3_config), %{
+        user: user,
+        profile_form: profile_form
+      })
     )
   end
 
@@ -45,12 +51,34 @@ defmodule MicelioWeb.Browser.ProfileController do
     end
   end
 
-  defp profile_assigns(conn, user) do
+  def update_s3(conn, %{"s3_config" => params}) do
+    user = conn.assigns.current_user
+
+    case Storage.upsert_user_s3_config(user, params) do
+      {:ok, _config, {:ok, _result}} ->
+        conn
+        |> put_flash(:info, "S3 configuration saved and validated.")
+        |> redirect(to: ~p"/settings/storage")
+
+      {:ok, _config, {:error, _result}} ->
+        conn
+        |> put_flash(:error, "S3 configuration saved, but validation failed.")
+        |> redirect(to: ~p"/settings/storage")
+
+      {:error, _changeset} ->
+        conn
+        |> put_flash(:error, "S3 configuration could not be saved.")
+        |> redirect(to: ~p"/settings/storage")
+    end
+  end
+
+  defp profile_assigns(conn, user, opts \\ []) do
     activity_counts = Sessions.activity_counts_for_user(user)
     starred_projects = Projects.list_starred_projects_for_user(user)
     passkeys = Accounts.list_passkeys_for_user(user)
     organizations = Accounts.list_organizations_for_user_with_member_counts(user)
     totp_setup = totp_setup_from_session(conn, user)
+    s3_config = Keyword.get(opts, :s3_config, Storage.get_user_s3_config(user))
 
     owned_projects =
       user
@@ -64,6 +92,7 @@ defmodule MicelioWeb.Browser.ProfileController do
       starred_projects: starred_projects,
       owned_projects: owned_projects,
       organizations: organizations,
+      s3_config: s3_config,
       totp_enabled: Accounts.totp_enabled?(user),
       totp_setup: totp_setup
     }

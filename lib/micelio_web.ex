@@ -82,6 +82,7 @@ defmodule MicelioWeb do
       # Translation
       use Gettext, backend: MicelioWeb.Gettext
 
+      import Micelio.ErrorBoundary
       import MicelioWeb.CoreComponents
 
       # HTML escaping functionality

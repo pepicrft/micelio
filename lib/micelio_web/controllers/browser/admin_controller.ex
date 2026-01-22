@@ -27,4 +27,20 @@ defmodule MicelioWeb.Browser.AdminController do
       recent_sessions: recent_sessions
     )
   end
+
+  def usage(conn, _params) do
+    usage_stats = Admin.usage_dashboard_stats()
+    usage_projects = Admin.list_project_usage()
+
+    conn
+    |> PageMeta.put(
+      title_parts: ["Usage dashboard"],
+      description: "Token usage and value delivered across prompt requests.",
+      canonical_url: url(~p"/admin/usage")
+    )
+    |> render(:usage,
+      usage_stats: usage_stats,
+      usage_projects: usage_projects
+    )
+  end
 end

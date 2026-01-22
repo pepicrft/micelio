@@ -25,6 +25,26 @@
         <% social_links = MicelioWeb.ProfileLinks.social_links(@user) %>
         <div class="account-subtitle">
           <span class="account-handle">@{@account.handle}</span>
+          <%= if @reputation do %>
+            <div class="account-reputation" id="account-reputation">
+              <div class="account-reputation-score">
+                <span class="account-reputation-label">Trust</span>
+                <span class="account-reputation-value">{@reputation.overall}</span>
+              </div>
+              <div class="account-reputation-tracks">
+                <%= for type <- Micelio.Reputation.types() do %>
+                  <div class="account-reputation-track">
+                    <span class="account-reputation-track-label">
+                      {String.capitalize(Atom.to_string(type))}
+                    </span>
+                    <span class="account-reputation-track-value">
+                      {Map.get(@reputation.by_type, type, 0)}
+                    </span>
+                  </div>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
           <%= if @user && @user.bio && @user.bio != "" do %>
             <p class="account-bio">{@user.bio}</p>
           <% end %>
@@ -66,6 +86,13 @@
                   <span class="account-activity-action">
                     {activity_action_label(activity.type)}
                   </span>
+                  <%= if activity.type == :prompt_request_submitted do %>
+                    <span class={
+                      "badge badge--caps prompt-request-origin prompt-request-origin-#{prompt_request_origin_value(activity.origin)}"
+                    }>
+                      {prompt_request_origin_label(activity.origin)}
+                    </span>
+                  <% end %>
                   <a
                     class="account-activity-project"
                     href={

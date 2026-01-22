@@ -20,6 +20,176 @@ if System.get_env("PHX_SERVER") == "true" do
   config :micelio, MicelioWeb.Endpoint, server: true
 end
 
+external_sentry_enabled = System.get_env("ENABLE_EXTERNAL_SENTRY", "false") == "true"
+
+retention_days =
+  case System.get_env("ERROR_RETENTION_DAYS") do
+    nil ->
+      Application.get_env(:micelio, :errors, [])
+      |> Keyword.get(:retention_days, 90)
+
+    value ->
+      case Integer.parse(value) do
+        {days, _} -> days
+        :error -> 90
+      end
+  end
+
+resolved_retention_days =
+  case System.get_env("ERROR_RESOLVED_RETENTION_DAYS") do
+    nil ->
+      Application.get_env(:micelio, :errors, [])
+      |> Keyword.get(:resolved_retention_days, 30)
+
+    value ->
+      case Integer.parse(value) do
+        {days, _} -> days
+        :error -> 30
+      end
+  end
+
+unresolved_retention_days =
+  case System.get_env("ERROR_UNRESOLVED_RETENTION_DAYS") do
+    nil ->
+      Application.get_env(:micelio, :errors, [])
+      |> Keyword.get(:unresolved_retention_days, 90)
+
+    value ->
+      case Integer.parse(value) do
+        {days, _} -> days
+        :error -> 90
+      end
+  end
+
+capture_enabled =
+  case System.get_env("ERROR_CAPTURE_ENABLED") do
+    nil ->
+      Application.get_env(:micelio, :errors, [])
+      |> Keyword.get(:capture_enabled, true)
+
+    value ->
+      value == "true"
+  end
+
+retention_archive_enabled =
+  case System.get_env("ERROR_RETENTION_ARCHIVE_ENABLED") do
+    nil ->
+      Application.get_env(:micelio, :errors, [])
+      |> Keyword.get(:retention_archive_enabled, false)
+
+    value ->
+      value == "true"
+  end
+
+retention_archive_prefix =
+  System.get_env("ERROR_RETENTION_ARCHIVE_PREFIX") ||
+    (Application.get_env(:micelio, :errors, [])
+     |> Keyword.get(:retention_archive_prefix, "errors/archives"))
+
+retention_vacuum_enabled =
+  case System.get_env("ERROR_RETENTION_VACUUM_ENABLED") do
+    nil ->
+      Application.get_env(:micelio, :errors, [])
+      |> Keyword.get(:retention_vacuum_enabled, true)
+
+    value ->
+      value == "true"
+  end
+
+retention_table_warn_threshold =
+  case System.get_env("ERROR_RETENTION_TABLE_WARN_THRESHOLD") do
+    nil ->
+      Application.get_env(:micelio, :errors, [])
+      |> Keyword.get(:retention_table_warn_threshold, 100_000)
+
+    value ->
+      case Integer.parse(value) do
+        {count, _} -> count
+        :error -> 100_000
+      end
+  end
+
+dedupe_window_seconds =
+  case System.get_env("ERROR_DEDUPE_WINDOW_SECONDS") do
+    nil ->
+      Application.get_env(:micelio, :errors, [])
+      |> Keyword.get(:dedupe_window_seconds, 300)
+
+    value ->
+      case Integer.parse(value) do
+        {seconds, _} -> seconds
+        :error -> 300
+      end
+  end
+
+rate_limit_per_kind =
+  case System.get_env("ERROR_RATE_LIMIT_PER_KIND_PER_MINUTE") do
+    nil ->
+      Application.get_env(:micelio, :errors, [])
+      |> Keyword.get(:capture_rate_limit_per_kind_per_minute, 100)
+
+    value ->
+      case Integer.parse(value) do
+        {count, _} -> count
+        :error -> 100
+      end
+  end
+
+rate_limit_total =
+  case System.get_env("ERROR_RATE_LIMIT_TOTAL_PER_MINUTE") do
+    nil ->
+      Application.get_env(:micelio, :errors, [])
+      |> Keyword.get(:capture_rate_limit_total_per_minute, 1000)
+
+    value ->
+      case Integer.parse(value) do
+        {count, _} -> count
+        :error -> 1000
+      end
+  end
+
+sampling_after_occurrences =
+  case System.get_env("ERROR_SAMPLING_AFTER_OCCURRENCES") do
+    nil ->
+      Application.get_env(:micelio, :errors, [])
+      |> Keyword.get(:sampling_after_occurrences, 100)
+
+    value ->
+      case Integer.parse(value) do
+        {count, _} -> count
+        :error -> 100
+      end
+  end
+
+sampling_rate =
+  case System.get_env("ERROR_SAMPLING_RATE") do
+    nil ->
+      Application.get_env(:micelio, :errors, [])
+      |> Keyword.get(:sampling_rate, 0.1)
+
+    value ->
+      case Float.parse(value) do
+        {rate, _} -> rate
+        :error -> 0.1
+      end
+  end
+
+config :micelio, :errors,
+  external_sentry_enabled: external_sentry_enabled,
+  retention_days: retention_days,
+  resolved_retention_days: resolved_retention_days,
+  unresolved_retention_days: unresolved_retention_days,
+  retention_archive_enabled: retention_archive_enabled,
+  retention_archive_prefix: retention_archive_prefix,
+  retention_vacuum_enabled: retention_vacuum_enabled,
+  retention_table_warn_threshold: retention_table_warn_threshold,
+  capture_enabled: capture_enabled,
+  dedupe_window_seconds: dedupe_window_seconds,
+  capture_rate_limit_per_kind_per_minute: rate_limit_per_kind,
+  capture_rate_limit_total_per_minute: rate_limit_total,
+  sampling_after_occurrences: sampling_after_occurrences,
+  sampling_rate: sampling_rate
+
 # Storage configuration (local by default, S3 opt-in)
 storage_backend =
   case System.get_env("STORAGE_BACKEND") do
@@ -190,6 +360,44 @@ github_oauth =
     redirect_uri: System.get_env("GITHUB_OAUTH_REDIRECT_URI")
   ]
   |> Enum.reject(fn {_key, value} -> is_nil(value) or value == "" end)
+
+if config_env() != :test do
+  cloak_key =
+    System.get_env("CLOAK_KEY") ||
+      raise """
+      environment variable CLOAK_KEY is missing.
+      Generate a 32-byte key and set it as base64, for example:
+      `openssl rand -base64 32`
+      """
+
+  previous_keys =
+    System.get_env("CLOAK_PREVIOUS_KEYS", "")
+    |> String.split(",", trim: true)
+    |> Enum.map(fn entry ->
+      case String.split(entry, ":", parts: 2) do
+        [tag, key] -> {String.trim(tag), String.trim(key)}
+        _ -> raise "CLOAK_PREVIOUS_KEYS must be \"tag:base64\" comma-separated entries"
+      end
+    end)
+
+  ciphers =
+    [
+      default: {
+        Cloak.Ciphers.AES.GCM,
+        tag: "AES.GCM.V1",
+        key: Base.decode64!(cloak_key)
+      }
+    ] ++
+      Enum.with_index(previous_keys, 1)
+      |> Enum.map(fn {{tag, key}, index} ->
+        {
+          String.to_atom("previous_#{index}"),
+          {Cloak.Ciphers.AES.GCM, tag: tag, key: Base.decode64!(key)}
+        }
+      end)
+
+  config :micelio, Micelio.Cloak, json_library: Jason, ciphers: ciphers
+end
 
 config :micelio, Micelio.Storage, storage_config
 config :micelio, :micelio_workspace_path, micelio_workspace_path

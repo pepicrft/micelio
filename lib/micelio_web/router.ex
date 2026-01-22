@@ -43,6 +43,22 @@ defmodule MicelioWeb.Router do
     )
   end
 
+  pipeline :api_stream do
+    plug(:accepts, ["json", "event-stream"])
+    plug(MicelioWeb.Plugs.ApiAuthenticationPlug)
+
+    plug(MicelioWeb.Plugs.RateLimitPlug,
+      limit: @api_rate_limit_limit,
+      window_ms: @api_rate_limit_window_ms,
+      bucket_prefix: "api",
+      authenticated_limit: @api_rate_limit_authenticated_limit,
+      authenticated_window_ms: @api_rate_limit_authenticated_window_ms,
+      abuse_threshold: @api_rate_limit_abuse_threshold,
+      abuse_window_ms: @api_rate_limit_abuse_window_ms,
+      abuse_block_ms: @api_rate_limit_abuse_block_ms
+    )
+  end
+
   pipeline :api_docs do
     plug(:accepts, ["json"])
     plug(OpenApiSpex.Plug.PutApiSpec, module: MicelioWeb.ApiSpec)
@@ -154,6 +170,29 @@ defmodule MicelioWeb.Router do
     get("/:id", RemoteExecutionController, :show)
   end
 
+  scope "/api/projects", MicelioWeb.Api do
+    pipe_through(:api)
+
+    get("/:organization_handle/:project_handle/token-pool", TokenPoolController, :show)
+    patch("/:organization_handle/:project_handle/token-pool", TokenPoolController, :update)
+    post(
+      "/:organization_handle/:project_handle/token-contributions",
+      TokenContributionController,
+      :create
+    )
+    post(
+      "/:organization_handle/:project_handle/prompt-requests",
+      PromptRequestController,
+      :create
+    )
+  end
+
+  scope "/api/sessions", MicelioWeb.Api do
+    pipe_through(:api_stream)
+
+    get("/:id/events/stream", SessionEventController, :stream)
+  end
+
   scope "/.well-known", MicelioWeb do
     pipe_through(:activity_pub)
 
@@ -237,6 +276,29 @@ defmodule MicelioWeb.Router do
     pipe_through([:browser, :require_auth, :require_admin])
 
     get("/", AdminController, :index)
+    get("/usage", AdminController, :usage)
+  end
+
+  scope "/admin", MicelioWeb do
+    pipe_through([:browser, :require_auth, :require_admin])
+
+    live_session :admin,
+      on_mount: [{MicelioWeb.LiveAuth, :require_auth}, MicelioWeb.LiveOpenGraphCacheBuster] do
+      live("/prompts", AdminPromptRegistryLive.Index, :index)
+      live("/prompt-templates", AdminPromptTemplatesLive.Index, :index)
+      live("/errors", AdminErrorsLive.Index, :index)
+      live("/errors/settings", AdminErrorNotificationsLive.Index, :index)
+      live("/errors/:id", AdminErrorsLive.Show, :show)
+    end
+  end
+
+  scope "/settings", MicelioWeb do
+    pipe_through([:browser, :require_auth])
+
+    live_session :account_settings,
+      on_mount: [{MicelioWeb.LiveAuth, :require_auth}, MicelioWeb.LiveOpenGraphCacheBuster] do
+      live("/storage", StorageSettingsLive, :edit)
+    end
   end
 
   scope "/account", MicelioWeb.Browser do
@@ -244,6 +306,7 @@ defmodule MicelioWeb.Router do
 
     get("/", ProfileController, :show)
     patch("/profile", ProfileController, :update)
+    patch("/storage/s3", ProfileController, :update_s3)
     post("/passkeys/options", PasskeyController, :registration_options)
     post("/passkeys", PasskeyController, :register)
     delete("/passkeys/:id", PasskeyController, :delete)
@@ -271,6 +334,7 @@ defmodule MicelioWeb.Router do
 
     post("/:account/:repository/star", RepositoryController, :toggle_star)
     post("/:account/:repository/fork", RepositoryController, :fork)
+    post("/:account/:repository/token-contributions", RepositoryController, :contribute_tokens)
   end
 
   scope "/og", MicelioWeb.Browser do

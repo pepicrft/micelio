@@ -78,6 +78,23 @@ defmodule Micelio.GRPC.Sessions.V1.ListSessionsRequest do
   field :path, 5, type: :string
 end
 
+defmodule Micelio.GRPC.Sessions.V1.CaptureSessionEventRequest do
+  use Protobuf, syntax: :proto3
+
+  field :user_id, 1, type: :string, json_name: "userId"
+  field :session_id, 2, type: :string, json_name: "sessionId"
+  field :payload, 3, type: :string
+  field :stream, 4, type: :string
+  field :format, 5, type: :string
+end
+
+defmodule Micelio.GRPC.Sessions.V1.CaptureSessionEventResponse do
+  use Protobuf, syntax: :proto3
+
+  field :storage_key, 1, type: :string, json_name: "storageKey"
+  field :event_json, 2, type: :string, json_name: "eventJson"
+end
+
 defmodule Micelio.GRPC.Sessions.V1.SessionResponse do
   use Protobuf, syntax: :proto3
 
@@ -115,5 +132,11 @@ defmodule Micelio.GRPC.Sessions.V1.SessionService.Service do
     :ListSessions,
     Micelio.GRPC.Sessions.V1.ListSessionsRequest,
     Micelio.GRPC.Sessions.V1.ListSessionsResponse
+  )
+
+  rpc(
+    :CaptureSessionEvent,
+    Micelio.GRPC.Sessions.V1.CaptureSessionEventRequest,
+    Micelio.GRPC.Sessions.V1.CaptureSessionEventResponse
   )
 end

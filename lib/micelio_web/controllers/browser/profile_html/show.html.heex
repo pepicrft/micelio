@@ -130,6 +130,45 @@
       </.form>
     </section>
 
+    <section class="account-profile-section" id="account-storage">
+      <div class="account-profile-section-header">
+        <h2 class="account-profile-section-title">Storage</h2>
+        <span class="account-profile-section-meta">
+          Store session artifacts in your own bucket.
+        </span>
+      </div>
+      <%= if @s3_config do %>
+        <p class="account-profile-form-hint account-profile-status" id="account-s3-status">
+          <%= cond do %>
+            <% @s3_config.validated_at -> %>
+              Validated on <%= format_date(@s3_config.validated_at) %>.
+            <% @s3_config.last_error -> %>
+              Validation failed.
+            <% true -> %>
+              Validation pending.
+          <% end %>
+        </p>
+        <%= if @s3_config.last_error do %>
+          <p class="account-profile-form-hint account-profile-status account-profile-status-error">
+            <%= @s3_config.last_error %>
+          </p>
+        <% end %>
+      <% else %>
+        <p class="account-profile-form-hint account-profile-status" id="account-s3-status">
+          Add credentials to route storage to your S3-compatible provider.
+        </p>
+      <% end %>
+      <div class="account-profile-form-actions">
+        <.link
+          navigate={~p"/settings/storage"}
+          class="account-profile-button"
+          id="account-storage-settings"
+        >
+          Manage storage settings
+        </.link>
+      </div>
+    </section>
+
     <section class="account-profile-section" id="account-passkeys">
       <div class="account-profile-section-header">
         <h2 class="account-profile-section-title">Passkeys</h2>

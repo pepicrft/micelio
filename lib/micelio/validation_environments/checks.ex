@@ -37,6 +37,54 @@ defmodule Micelio.ValidationEnvironments.Checks do
         command: "mix",
         args: ["test"],
         env: %{}
+      },
+      %{
+        id: "e2e",
+        label: "E2E",
+        kind: :e2e,
+        command: "npm",
+        args: ["run", "test:playwright"],
+        env: %{}
+      },
+      %{
+        id: "credo",
+        label: "Credo",
+        kind: :lint,
+        command: "mix",
+        args: ["credo", "--strict"],
+        env: %{}
+      },
+      %{
+        id: "dialyzer",
+        label: "Dialyzer",
+        kind: :lint,
+        command: "mix",
+        args: ["dialyzer", "--format", "short"],
+        env: %{}
+      },
+      %{
+        id: "semgrep",
+        label: "Semgrep",
+        kind: :security,
+        command: "semgrep",
+        args: ["--config", "p/ci", "--error"],
+        env: %{}
+      },
+      %{
+        id: "sobelow",
+        label: "Sobelow",
+        kind: :security,
+        command: "mix",
+        args: ["sobelow", "--format", "txt"],
+        env: %{}
+      },
+      %{
+        id: "performance_baseline",
+        label: "Performance Baseline",
+        kind: :performance,
+        command: "mix",
+        args: ["micelio.performance.baseline", "--mode", "validate"],
+        env: %{}
       }
     ]
   end
@@ -44,42 +92,50 @@ defmodule Micelio.ValidationEnvironments.Checks do
   def run(checks, executor, instance_ref, opts \\ []) do
     min_coverage_delta = Keyword.get(opts, :min_coverage_delta)
 
-    Enum.reduce_while(checks, %{checks: [], coverage_delta: nil, resource_usage: %{}}, fn check,
-                                                                                         acc ->
-      started_at = System.monotonic_time(:millisecond)
+    {results, failed?} =
+      Enum.reduce(checks, {%{checks: [], coverage_delta: nil, resource_usage: %{}}, false}, fn check,
+                                                                                               {acc, failed?} ->
+        started_at = System.monotonic_time(:millisecond)
 
-      {:ok, result} = executor.run(instance_ref, check.command, check.args, check.env)
+        {:ok, result} = executor.run(instance_ref, check.command, check.args, check.env)
 
-      duration_ms = System.monotonic_time(:millisecond) - started_at
+        duration_ms = System.monotonic_time(:millisecond) - started_at
 
-      coverage_delta = Map.get(result, :coverage_delta) || acc.coverage_delta
+        coverage_delta = Map.get(result, :coverage_delta) || acc.coverage_delta
 
-      resource_usage =
-        acc.resource_usage
-        |> merge_resource_usage(Map.get(result, :resource_usage, %{}))
+        resource_usage =
+          acc.resource_usage
+          |> merge_resource_usage(Map.get(result, :resource_usage, %{}))
 
-      entry = %{
-        "id" => check.id,
-        "label" => check.label,
-        "kind" => Atom.to_string(check.kind),
-        "command" => check.command,
-        "args" => check.args,
-        "env" => check.env,
-        "exit_code" => result.exit_code,
-        "stdout" => Map.get(result, :stdout, ""),
-        "duration_ms" => duration_ms,
-        "resource_usage" => Map.get(result, :resource_usage, %{})
-      }
+        entry = %{
+          "id" => check.id,
+          "label" => check.label,
+          "kind" => Atom.to_string(check.kind),
+          "command" => check.command,
+          "args" => check.args,
+          "env" => check.env,
+          "exit_code" => result.exit_code,
+          "stdout" => Map.get(result, :stdout, ""),
+          "duration_ms" => duration_ms,
+          "resource_usage" => Map.get(result, :resource_usage, %{})
+        }
 
-      updated_checks = acc.checks ++ [entry]
+        updated_checks = acc.checks ++ [entry]
 
-      if result.exit_code == 0 do
-        {:cont, %{checks: updated_checks, coverage_delta: coverage_delta, resource_usage: resource_usage}}
+        {
+          %{checks: updated_checks, coverage_delta: coverage_delta, resource_usage: resource_usage},
+          failed? or result.exit_code != 0
+        }
+      end)
+
+    outcome =
+      if failed? do
+        {:error, results}
       else
-        {:halt, {:error, %{checks: updated_checks, coverage_delta: coverage_delta, resource_usage: resource_usage}}}
+        {:ok, results}
       end
-    end)
-    |> finalize_coverage(min_coverage_delta)
+
+    finalize_coverage(outcome, min_coverage_delta)
   end
 
   defp finalize_coverage({:error, results}, min_coverage_delta) do

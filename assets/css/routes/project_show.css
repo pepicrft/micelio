@@ -130,6 +130,99 @@
   overflow-wrap: anywhere !important;
 }
 
+.project-token-pool {
+  margin-top: var(--theme-ui-space-2);
+  border: var(--theme-ui-borders-thin);
+  padding: var(--theme-ui-space-2);
+  background-color: var(--theme-ui-colors-background);
+}
+
+.project-token-title {
+  font-weight: var(--theme-ui-fontWeights-bold);
+  margin-bottom: var(--theme-ui-space-1);
+}
+
+.project-token-balance,
+.project-token-available {
+  color: var(--theme-ui-colors-secondary);
+  margin-bottom: var(--theme-ui-space-1);
+}
+
+.project-token-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--theme-ui-space-1);
+  margin-top: var(--theme-ui-space-1);
+}
+
+.project-token-fields {
+  min-width: 160px;
+}
+
+.project-token-submit {
+  padding: var(--theme-ui-space-1) var(--theme-ui-space-2);
+  color: var(--theme-ui-colors-text);
+  background-color: transparent;
+  border: var(--theme-ui-borders-thin);
+  cursor: pointer;
+}
+
+.project-token-submit:hover {
+  background-color: var(--theme-ui-colors-border);
+}
+
+.project-token-login a {
+  color: var(--theme-ui-colors-primary);
+  text-decoration: none;
+}
+
+.project-token-login a:hover {
+  text-decoration: underline;
+}
+
+.project-token-usage {
+  margin-top: var(--theme-ui-space-2);
+  border: var(--theme-ui-borders-thin);
+  padding: var(--theme-ui-space-2);
+  background-color: var(--theme-ui-colors-background);
+}
+
+.project-token-usage-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--theme-ui-space-2);
+}
+
+.project-token-usage-card {
+  border: var(--theme-ui-borders-thin);
+  padding: var(--theme-ui-space-2);
+  background-color: var(--theme-ui-colors-background);
+}
+
+.project-token-usage-label {
+  display: block;
+  color: var(--theme-ui-colors-muted);
+  font-size: var(--theme-ui-fontSizes-1);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: var(--theme-ui-space-1);
+}
+
+.project-token-usage-value {
+  display: block;
+  font-size: var(--theme-ui-fontSizes-4);
+  font-weight: var(--theme-ui-fontWeights-bold);
+  color: var(--theme-ui-colors-text);
+}
+
+.project-token-usage-meta {
+  display: block;
+  margin-top: var(--theme-ui-space-1);
+  color: var(--theme-ui-colors-secondary);
+  font-size: var(--theme-ui-fontSizes-1);
+}
+
 .project-description {
   color: var(--theme-ui-colors-secondary);
 }

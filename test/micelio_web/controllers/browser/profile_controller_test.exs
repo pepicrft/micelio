@@ -4,8 +4,29 @@ defmodule MicelioWeb.Browser.ProfileControllerTest do
   alias Micelio.Accounts
   alias Micelio.Projects
   alias Micelio.Sessions
+  alias Micelio.Storage
+
+  defmodule SuccessValidator do
+    def validate(_config), do: {:ok, %{ok?: true, errors: []}}
+  end
 
   setup :register_and_log_in_user
+  setup :use_success_validator
+
+  defp use_success_validator(_) do
+    previous = Application.get_env(:micelio, Storage)
+
+    Application.put_env(:micelio, Storage, s3_validator: SuccessValidator)
+
+    on_exit(fn ->
+      case previous do
+        nil -> Application.delete_env(:micelio, Storage)
+        _ -> Application.put_env(:micelio, Storage, previous)
+      end
+    end)
+
+    :ok
+  end
 
   test "shows profile page with devices link", %{conn: conn, user: user} do
     conn = get(conn, ~p"/account")
@@ -132,5 +153,35 @@ defmodule MicelioWeb.Browser.ProfileControllerTest do
     assert html =~ "activity-graph"
     assert html =~ "aria-label=\"1 contributions\""
     assert html =~ "activity-graph-legend"
+  end
+
+  test "shows storage section with S3 form", %{conn: conn} do
+    conn = get(conn, ~p"/account")
+    html = html_response(conn, 200)
+
+    assert html =~ "id=\"account-storage\""
+    assert html =~ "id=\"account-storage-settings\""
+  end
+
+  test "saves S3 configuration", %{conn: conn, user: user} do
+    params = %{
+      "provider" => "aws_s3",
+      "bucket_name" => "user-bucket",
+      "region" => "us-east-1",
+      "endpoint_url" => "",
+      "access_key_id" => "access-key",
+      "secret_access_key" => "secret-key",
+      "path_prefix" => "sessions/"
+    }
+
+    conn = patch(conn, ~p"/account/storage/s3", %{"s3_config" => params})
+
+    assert redirected_to(conn) == ~p"/settings/storage"
+    assert get_flash(conn, :info) =~ "S3 configuration saved"
+
+    config = Storage.get_user_s3_config(user)
+    assert config.bucket_name == "user-bucket"
+    assert config.provider == :aws_s3
+    assert config.validated_at
   end
 end

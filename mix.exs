@@ -72,7 +72,12 @@ defmodule Micelio.MixProject do
       {:makeup_erlang, "~> 1.0"},
       {:let_me, "~> 1.2"},
       {:boruta, git: "https://github.com/malach-it/boruta_auth", branch: "master"},
-      {:hammer, "~> 6.2"}
+      {:hammer, "~> 6.2"},
+      {:cloak, "~> 1.1"},
+      {:cloak_ecto, "~> 1.2"},
+      {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
+      {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
+      {:sobelow, "~> 0.13", only: [:dev, :test], runtime: false}
     ]
   end
 

@@ -28,21 +28,23 @@ defmodule Micelio.Projects.Import do
       |> Repo.get!(import.id)
       |> Repo.preload([:project, :user])
 
-    with {:ok, import} <- mark_running(import),
-         {:ok, import, temp_dir} <- capture_metadata(import),
-         {:ok, repo_dir, import} <- clone_repo(import, temp_dir),
-         {:ok, import} <- validate_repo(import, repo_dir),
-         {:ok, import} <- store_bundle(import, temp_dir, repo_dir),
-         {:ok, import} <- mark_issue_migration(import),
-         {:ok, import} <- finalize_import(import, temp_dir, repo_dir) do
-      {:ok, mark_completed(import)}
-    else
-      {:error, reason, import} ->
-        {:ok, mark_failed(import, reason)}
+    try do
+      with {:ok, import} <- mark_running(import),
+           {:ok, import, temp_dir} <- capture_metadata(import),
+           {:ok, repo_dir, import} <- clone_repo(import, temp_dir),
+           {:ok, import} <- validate_repo(import, repo_dir),
+           {:ok, import} <- store_bundle(import, temp_dir, repo_dir),
+           {:ok, import} <- mark_issue_migration(import),
+           {:ok, import} <- finalize_import(import, temp_dir, repo_dir) do
+        {:ok, mark_completed(import)}
+      else
+        {:error, reason, import} ->
+          {:ok, mark_failed(import, reason)}
 
-      {:error, reason} ->
-        Logger.error("Import failed: #{inspect(reason)}")
-        {:error, reason}
+        {:error, reason} ->
+          Logger.error("Import failed: #{inspect(reason)}")
+          {:error, reason}
+      end
     after
       cleanup_temp_dir(import)
     end

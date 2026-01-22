@@ -13,6 +13,61 @@
   gap: var(--theme-ui-space-1);
 }
 
+.account-reputation {
+  display: flex;
+  flex-direction: column;
+  gap: var(--theme-ui-space-1);
+  padding: var(--theme-ui-space-1) var(--theme-ui-space-2);
+  border: var(--theme-ui-borders-thin);
+  background-color: var(--theme-ui-colors-background);
+  max-width: 420px;
+}
+
+.account-reputation-score {
+  display: flex;
+  align-items: baseline;
+  gap: var(--theme-ui-space-1);
+}
+
+.account-reputation-label {
+  font-size: var(--theme-ui-fontSizes-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--theme-ui-colors-muted);
+}
+
+.account-reputation-value {
+  font-size: var(--theme-ui-fontSizes-xl);
+  font-weight: var(--theme-ui-fontWeights-bold);
+  color: var(--theme-ui-colors-text);
+}
+
+.account-reputation-tracks {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: var(--theme-ui-space-1);
+}
+
+.account-reputation-track {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: var(--theme-ui-space-1);
+  border-radius: var(--theme-ui-radii-small);
+  background-color: var(--theme-ui-colors-border);
+}
+
+.account-reputation-track-label {
+  font-size: var(--theme-ui-fontSizes-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--theme-ui-colors-muted);
+}
+
+.account-reputation-track-value {
+  font-weight: var(--theme-ui-fontWeights-semibold);
+}
+
 .account-bio {
   margin: 0;
   color: var(--theme-ui-colors-secondary);

@@ -196,6 +196,14 @@
   font-size: var(--theme-ui-fontSizes-small);
 }
 
+.account-profile-status {
+  margin-top: var(--theme-ui-space-1);
+}
+
+.account-profile-status-error {
+  color: var(--theme-ui-colors-danger);
+}
+
 .account-profile-form-actions {
   display: flex;
 }

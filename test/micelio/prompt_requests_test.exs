@@ -2,8 +2,13 @@ defmodule Micelio.PromptRequestsTest do
   use Micelio.DataCase, async: true
 
   alias Micelio.Accounts
+  alias Micelio.AITokens
+  alias Micelio.AITokens.TokenEarning
   alias Micelio.PromptRequests
+  alias Micelio.PromptRequests.PromptRequest
   alias Micelio.Projects
+  alias Micelio.Repo
+  alias Micelio.Sessions
 
   defp setup_project do
     {:ok, user} = Accounts.get_or_create_user_by_email("prompt-requests@example.com")
@@ -56,6 +61,314 @@ defmodule Micelio.PromptRequestsTest do
     assert listed.id == prompt_request.id
   end
 
+  test "captures execution metadata and lineage" do
+    {user, project} = setup_project()
+
+    {:ok, parent} =
+      PromptRequests.create_prompt_request(
+        %{
+          title: "Parent prompt",
+          prompt: "Initial prompt",
+          result: "Initial result",
+          model: "gpt-4.1",
+          model_version: "2025-02-01",
+          origin: :ai_generated,
+          token_count: 800,
+          generated_at: DateTime.utc_now() |> DateTime.truncate(:second),
+          system_prompt: "System",
+          conversation: %{"messages" => [%{"role" => "user", "content" => "Prompt"}]}
+        },
+        project: project,
+        user: user
+      )
+
+    execution_environment = ~s({"runtime":"phoenix","os":"linux"})
+
+    {:ok, child} =
+      PromptRequests.create_prompt_request(
+        %{
+          title: "Child prompt",
+          prompt: "Follow-up prompt",
+          result: "Follow-up result",
+          model: "gpt-4.1",
+          model_version: "2025-02-01",
+          origin: :ai_generated,
+          token_count: 900,
+          generated_at: DateTime.utc_now() |> DateTime.truncate(:second),
+          system_prompt: "System",
+          conversation: %{"messages" => [%{"role" => "user", "content" => "Prompt"}]},
+          parent_prompt_request_id: parent.id,
+          execution_environment: execution_environment,
+          execution_duration_ms: 12_500
+        },
+        project: project,
+        user: user
+      )
+
+    assert child.parent_prompt_request_id == parent.id
+    assert child.execution_environment["runtime"] == "phoenix"
+    assert child.execution_duration_ms == 12_500
+  end
+
+  test "rejects prompt request when generation depth exceeds limit" do
+    {user, project} = setup_project()
+
+    {:ok, root} =
+      PromptRequests.create_prompt_request(
+        %{
+          title: "Root prompt",
+          prompt: "Root prompt",
+          result: "Root result",
+          model: "gpt-4.1",
+          model_version: "2025-02-01",
+          origin: :ai_generated,
+          token_count: 500,
+          generated_at: DateTime.utc_now() |> DateTime.truncate(:second),
+          system_prompt: "System",
+          conversation: %{"messages" => [%{"role" => "user", "content" => "Prompt"}]}
+        },
+        project: project,
+        user: user
+      )
+
+    {:ok, child} =
+      PromptRequests.create_prompt_request(
+        %{
+          title: "Child prompt",
+          prompt: "Child prompt",
+          result: "Child result",
+          model: "gpt-4.1",
+          model_version: "2025-02-01",
+          origin: :ai_generated,
+          token_count: 600,
+          generated_at: DateTime.utc_now() |> DateTime.truncate(:second),
+          system_prompt: "System",
+          conversation: %{"messages" => [%{"role" => "user", "content" => "Prompt"}]},
+          parent_prompt_request_id: root.id
+        },
+        project: project,
+        user: user
+      )
+
+    assert {:error, changeset} =
+             PromptRequests.create_prompt_request(
+               %{
+                 title: "Third prompt",
+                 prompt: "Third prompt",
+                 result: "Third result",
+                 model: "gpt-4.1",
+                 model_version: "2025-02-01",
+                 origin: :ai_generated,
+                 token_count: 700,
+                 generated_at: DateTime.utc_now() |> DateTime.truncate(:second),
+                 system_prompt: "System",
+                 conversation: %{"messages" => [%{"role" => "user", "content" => "Prompt"}]},
+                 parent_prompt_request_id: child.id
+               },
+               project: project,
+               user: user,
+               max_generation_depth: 2
+             )
+
+    assert "exceeds max generation depth" in errors_on(changeset).parent_prompt_request_id
+  end
+
+  test "submit_prompt_request validates and accepts prompt requests" do
+    Process.put(:validation_test_pid, self())
+    {user, project} = setup_project()
+
+    attrs = %{
+      title: "Validate submission",
+      prompt: "Do the thing",
+      result: "Output",
+      model: "gpt-4.1",
+      model_version: "2025-02-01",
+      origin: :ai_generated,
+      token_count: 2100,
+      generated_at: DateTime.utc_now() |> DateTime.truncate(:second),
+      system_prompt: "System",
+      conversation: %{"messages" => [%{"role" => "user", "content" => "Do it"}]},
+      execution_environment: %{"runtime" => "mix", "os" => "linux"},
+      execution_duration_ms: 4500
+    }
+
+    {:ok, _pool} = AITokens.create_token_pool(project, %{balance: 5000, reserved: 0})
+
+    {:ok, prompt_request} =
+      PromptRequests.submit_prompt_request(attrs,
+        project: project,
+        user: user,
+        validation_enabled: true,
+        validation_async: false,
+        task_budget_amount: "3000",
+        validation_opts: [
+          provider_module: Micelio.TestValidationProvider,
+          executor: Micelio.TestValidationExecutor,
+          plan_attrs: %{
+            provider: "aws",
+            image: "micelio/validation-runner:latest",
+            cpu_cores: 2,
+            memory_mb: 1024,
+            disk_gb: 10,
+            ttl_seconds: 1200,
+            network: "egress"
+          }
+        ]
+      )
+
+    updated = Repo.get!(PromptRequest, prompt_request.id)
+    assert updated.review_status == :accepted
+    assert updated.validation_feedback == nil
+    assert updated.validation_iterations == 1
+    assert is_binary(updated.session_id)
+
+    session = Sessions.get_session(updated.session_id)
+    assert session.session_id == "prompt-request-#{prompt_request.id}"
+    assert session.metadata["prompt_request"]["prompt"] == attrs.prompt
+    assert session.metadata["prompt_request"]["execution_environment"] == attrs.execution_environment
+    assert session.metadata["prompt_request"]["execution_duration_ms"] == attrs.execution_duration_ms
+    assert is_binary(session.metadata["prompt_request"]["attestation"]["signature"])
+    [run | _] = PromptRequests.list_validation_runs(updated)
+    assert run.status == :passed
+  end
+
+  test "keeps prompt request pending when confidence is low after validation" do
+    Process.put(:validation_test_pid, self())
+    {user, project} = setup_project()
+
+    attrs = %{
+      title: "Low confidence submission",
+      prompt: "Do the thing",
+      result: "Output",
+      model: "gpt-4.1",
+      model_version: "2025-02-01",
+      origin: :ai_generated,
+      token_count: 150_000,
+      generated_at: DateTime.utc_now() |> DateTime.truncate(:second),
+      system_prompt: "System",
+      conversation: %{"messages" => [%{"role" => "user", "content" => "Do it"}]}
+    }
+
+    {:ok, _pool} = AITokens.create_token_pool(project, %{balance: 200_000, reserved: 0})
+
+    {:ok, prompt_request} =
+      PromptRequests.submit_prompt_request(attrs,
+        project: project,
+        user: user,
+        validation_enabled: true,
+        validation_async: false,
+        task_budget_amount: "200000",
+        validation_opts: [
+          provider_module: Micelio.TestValidationProvider,
+          executor: Micelio.TestValidationExecutor,
+          plan_attrs: %{
+            provider: "aws",
+            image: "micelio/validation-runner:latest",
+            cpu_cores: 2,
+            memory_mb: 1024,
+            disk_gb: 10,
+            ttl_seconds: 1200,
+            network: "egress"
+          }
+        ]
+      )
+
+    updated = Repo.get!(PromptRequest, prompt_request.id)
+    assert updated.review_status == :pending
+    assert updated.validation_feedback == nil
+    assert updated.validation_iterations == 1
+    assert updated.session_id == nil
+
+    [run | _] = PromptRequests.list_validation_runs(updated)
+    assert run.status == :passed
+  end
+
+  test "submit_prompt_request stores feedback when validation fails" do
+    Process.put(:validation_test_pid, self())
+    {user, project} = setup_project()
+
+    attrs = %{
+      title: "Failing submission",
+      prompt: "Do the thing",
+      result: "Output",
+      model: "gpt-4.1",
+      model_version: "2025-02-01",
+      origin: :ai_generated,
+      token_count: 2100,
+      generated_at: DateTime.utc_now() |> DateTime.truncate(:second),
+      system_prompt: "System",
+      conversation: %{"messages" => [%{"role" => "user", "content" => "Do it"}]}
+    }
+
+    {:ok, _pool} = AITokens.create_token_pool(project, %{balance: 5000, reserved: 0})
+
+    assert {:error, {:validation_failed, feedback, failed_prompt_request}} =
+             PromptRequests.submit_prompt_request(attrs,
+               project: project,
+               user: user,
+               validation_enabled: true,
+               validation_async: false,
+               task_budget_amount: "3000",
+               validation_opts: [
+                 provider_module: Micelio.TestValidationProvider,
+                 executor: Micelio.TestFailingValidationExecutor,
+                 plan_attrs: %{
+                   provider: "aws",
+                   image: "micelio/validation-runner:latest",
+                   cpu_cores: 2,
+                   memory_mb: 1024,
+                   disk_gb: 10,
+                   ttl_seconds: 1200,
+                   network: "egress"
+                 }
+               ]
+             )
+
+    assert is_map(feedback)
+    assert feedback["summary"] =~ "Validation failed"
+    assert Enum.any?(feedback["failures"], &(&1["check_id"] == "test"))
+
+    assert failed_prompt_request.project_id == project.id
+
+    [prompt_request | _] = PromptRequests.list_prompt_requests_for_project(project)
+    updated = Repo.get!(PromptRequest, prompt_request.id)
+    assert updated.review_status == :rejected
+    assert updated.validation_iterations == 1
+    assert is_binary(updated.validation_feedback)
+    assert updated.session_id == nil
+    [run | _] = PromptRequests.list_validation_runs(updated)
+    assert run.status == :failed
+  end
+
+  test "reviewing prompt requests as accepted creates a session" do
+    {user, project} = setup_project()
+
+    {:ok, prompt_request} =
+      PromptRequests.create_prompt_request(
+        %{
+          title: "Create session",
+          prompt: "Do the work",
+          result: "Output",
+          model: "gpt-4.1",
+          model_version: "2025-02-01",
+          origin: :ai_generated,
+          token_count: 900,
+          generated_at: DateTime.utc_now() |> DateTime.truncate(:second),
+          system_prompt: "System",
+          conversation: %{"messages" => [%{"role" => "user", "content" => "Do it"}]}
+        },
+        project: project,
+        user: user
+      )
+
+    assert {:ok, updated} = PromptRequests.review_prompt_request(prompt_request, user, :accepted)
+    assert is_binary(updated.session_id)
+
+    session = Sessions.get_session(updated.session_id)
+    assert session.goal == "Create session"
+    assert session.metadata["prompt_request"]["result"] == "Output"
+  end
+
   test "creates prompt improvement suggestions" do
     {user, project} = setup_project()
 
@@ -88,6 +401,161 @@ defmodule Micelio.PromptRequestsTest do
     assert suggestion.suggestion =~ "edge cases"
   end
 
+  test "awards token earnings for thorough prompt suggestions" do
+    {user, project} = setup_project()
+
+    {:ok, prompt_request} =
+      PromptRequests.create_prompt_request(
+        %{
+          title: "Suggestion rewards",
+          prompt: "Improve prompt quality",
+          result: "Output",
+          model: "gpt-4.1",
+          model_version: "2025-02-01",
+          origin: :ai_assisted,
+          token_count: 620,
+          generated_at: DateTime.utc_now() |> DateTime.truncate(:second),
+          system_prompt: "System",
+          conversation: %{"messages" => [%{"role" => "user", "content" => "Do it"}]}
+        },
+        project: project,
+        user: user
+      )
+
+    suggestion_text =
+      String.duplicate(
+        "Add explicit acceptance criteria and mention edge cases to reduce ambiguity. ",
+        3
+      )
+
+    assert Repo.aggregate(TokenEarning, :count, :id) == 0
+
+    assert {:ok, suggestion} =
+             PromptRequests.create_prompt_suggestion(
+               prompt_request,
+               %{suggestion: suggestion_text},
+               user: user
+             )
+
+    assert Repo.aggregate(TokenEarning, :count, :id) == 1
+
+    earning =
+      Repo.get_by!(TokenEarning,
+        prompt_suggestion_id: suggestion.id,
+        reason: :prompt_suggestion_submitted
+      )
+
+    assert earning.amount == AITokens.prompt_suggestion_reward(suggestion)
+    assert earning.user_id == user.id
+    assert earning.project_id == project.id
+  end
+
+  test "does not award suggestion earnings for short feedback" do
+    {user, project} = setup_project()
+
+    {:ok, prompt_request} =
+      PromptRequests.create_prompt_request(
+        %{
+          title: "Short suggestion",
+          prompt: "Improve prompt quality",
+          result: "Output",
+          model: "gpt-4.1",
+          model_version: "2025-02-01",
+          origin: :ai_assisted,
+          token_count: 620,
+          generated_at: DateTime.utc_now() |> DateTime.truncate(:second),
+          system_prompt: "System",
+          conversation: %{"messages" => [%{"role" => "user", "content" => "Do it"}]}
+        },
+        project: project,
+        user: user
+      )
+
+    assert {:ok, _suggestion} =
+             PromptRequests.create_prompt_suggestion(
+               prompt_request,
+               %{suggestion: "Consider edge cases."},
+               user: user
+             )
+
+    assert Repo.aggregate(TokenEarning, :count, :id) == 0
+  end
+
+  test "awards only one suggestion earning per user and prompt request" do
+    {user, project} = setup_project()
+
+    {:ok, prompt_request} =
+      PromptRequests.create_prompt_request(
+        %{
+          title: "Multiple suggestions",
+          prompt: "Improve prompt quality",
+          result: "Output",
+          model: "gpt-4.1",
+          model_version: "2025-02-01",
+          origin: :ai_assisted,
+          token_count: 620,
+          generated_at: DateTime.utc_now() |> DateTime.truncate(:second),
+          system_prompt: "System",
+          conversation: %{"messages" => [%{"role" => "user", "content" => "Do it"}]}
+        },
+        project: project,
+        user: user
+      )
+
+    suggestion_text =
+      String.duplicate(
+        "Provide concrete examples and specify success criteria for the task. ",
+        3
+      )
+
+    assert {:ok, _suggestion} =
+             PromptRequests.create_prompt_suggestion(
+               prompt_request,
+               %{suggestion: suggestion_text},
+               user: user
+             )
+
+    assert Repo.aggregate(TokenEarning, :count, :id) == 1
+
+    assert {:ok, _suggestion} =
+             PromptRequests.create_prompt_suggestion(
+               prompt_request,
+               %{suggestion: suggestion_text},
+               user: user
+             )
+
+    assert Repo.aggregate(TokenEarning, :count, :id) == 1
+  end
+
+  test "allows human-origin prompt requests without model metadata" do
+    {user, project} = setup_project()
+
+    assert {:ok, prompt_request} =
+             PromptRequests.create_prompt_request(
+               %{
+                 title: "Human authored fix",
+                 prompt: "Summarize the change",
+                 result: "Manual diff summary",
+                 origin: :human,
+                 system_prompt: "System",
+                 conversation: %{
+                   "messages" => [
+                     %{"role" => "user", "content" => "Manual change"}
+                   ]
+                 }
+               },
+               project: project,
+               user: user
+             )
+
+    assert prompt_request.model == nil
+    assert prompt_request.model_version == nil
+    assert prompt_request.token_count == nil
+    assert prompt_request.generated_at == nil
+    assert PromptRequests.attestation_status(prompt_request) == :verified
+    assert prompt_request.attestation["payload"]["origin"] == "human"
+  end
+
   test "runs validation for a prompt request and records runs" do
     Process.put(:validation_test_pid, self())
     {user, project} = setup_project()
@@ -109,6 +577,9 @@ defmodule Micelio.PromptRequestsTest do
         project: project,
         user: user
       )
+
+    {:ok, _pool} = AITokens.create_token_pool(project, %{balance: 5000, reserved: 0})
+    assert {:ok, _budget, _pool} = AITokens.upsert_task_budget(prompt_request, %{"amount" => "3000"})
 
     assert {:ok, run} =
              PromptRequests.run_validation(prompt_request,
@@ -136,5 +607,328 @@ defmodule Micelio.PromptRequestsTest do
 
     [listed | _] = PromptRequests.list_validation_runs(prompt_request)
     assert listed.id == run.id
+  end
+
+  test "run_validation_async promotes prompt request to a session when validation passes" do
+    Process.put(:validation_test_pid, self())
+    {user, project} = setup_project()
+
+    {:ok, prompt_request} =
+      PromptRequests.create_prompt_request(
+        %{
+          title: "Async validation promotion",
+          prompt: "Do the thing",
+          result: "Output",
+          model: "gpt-4.1",
+          model_version: "2025-02-01",
+          origin: :ai_generated,
+          token_count: 2100,
+          generated_at: DateTime.utc_now() |> DateTime.truncate(:second),
+          system_prompt: "System",
+          conversation: %{"messages" => [%{"role" => "user", "content" => "Do it"}]}
+        },
+        project: project,
+        user: user
+      )
+
+    {:ok, _pool} = AITokens.create_token_pool(project, %{balance: 5000, reserved: 0})
+    assert {:ok, _budget, _pool} = AITokens.upsert_task_budget(prompt_request, %{"amount" => "3000"})
+
+    assert {:ok, _pid} =
+             PromptRequests.run_validation_async(prompt_request, self(),
+               provider_module: Micelio.TestValidationProvider,
+               executor: Micelio.TestValidationExecutor,
+               plan_attrs: %{
+                 provider: "aws",
+                 image: "micelio/validation-runner:latest",
+                 cpu_cores: 2,
+                 memory_mb: 1024,
+                 disk_gb: 10,
+                 ttl_seconds: 1200,
+                 network: "egress"
+               }
+             )
+
+    assert_receive {:validation_finished, ^prompt_request.id, {:ok, _run}}, 5_000
+
+    updated = Repo.get!(PromptRequest, prompt_request.id)
+    assert updated.review_status == :accepted
+    assert updated.validation_feedback == nil
+    assert updated.validation_iterations == 1
+    assert is_binary(updated.session_id)
+
+    session = Sessions.get_session(updated.session_id)
+    assert session.session_id == "prompt-request-#{prompt_request.id}"
+  end
+
+  test "run_validation requires a task budget for ai prompt requests" do
+    Process.put(:validation_test_pid, self())
+    {user, project} = setup_project()
+
+    {:ok, prompt_request} =
+      PromptRequests.create_prompt_request(
+        %{
+          title: "Validate contribution without budget",
+          prompt: "Do the thing",
+          result: "Output",
+          model: "gpt-4.1",
+          model_version: "2025-02-01",
+          origin: :ai_generated,
+          token_count: 1800,
+          generated_at: DateTime.utc_now() |> DateTime.truncate(:second),
+          system_prompt: "System",
+          conversation: %{"messages" => [%{"role" => "user", "content" => "Do it"}]}
+        },
+        project: project,
+        user: user
+      )
+
+    assert {:error, :missing_budget} =
+             PromptRequests.run_validation(prompt_request,
+               provider_module: Micelio.TestValidationProvider,
+               executor: Micelio.TestValidationExecutor,
+               plan_attrs: %{
+                 provider: "aws",
+                 image: "micelio/validation-runner:latest",
+                 cpu_cores: 2,
+                 memory_mb: 1024,
+                 disk_gb: 10,
+                 ttl_seconds: 1200,
+                 network: "egress"
+               }
+             )
+
+    assert [] == PromptRequests.list_validation_runs(prompt_request)
+  end
+
+  test "marks attestation invalid when prompt request data is tampered" do
+    {user, project} = setup_project()
+
+    {:ok, prompt_request} =
+      PromptRequests.create_prompt_request(
+        %{
+          title: "Audit attestation",
+          prompt: "Prompt",
+          result: "Result",
+          model: "gpt-4.1",
+          model_version: "2025-02-01",
+          origin: :ai_generated,
+          token_count: 1500,
+          generated_at: DateTime.utc_now() |> DateTime.truncate(:second),
+          system_prompt: "System",
+          conversation: %{"messages" => [%{"role" => "user", "content" => "Prompt"}]}
+        },
+        project: project,
+        user: user
+      )
+
+    prompt_request
+    |> Ecto.Changeset.change(%{token_count: prompt_request.token_count + 1})
+    |> Repo.update!()
+
+    updated = Repo.get!(PromptRequest, prompt_request.id)
+    assert PromptRequests.attestation_status(updated) == :invalid
+  end
+
+  test "updates review status for prompt requests" do
+    {user, project} = setup_project()
+
+    {:ok, reviewer} = Accounts.get_or_create_user_by_email("reviewer@example.com")
+
+    {:ok, prompt_request} =
+      PromptRequests.create_prompt_request(
+        %{
+          title: "Review status check",
+          prompt: "Prompt",
+          result: "Result",
+          model: "gpt-4.1",
+          model_version: "2025-02-01",
+          origin: :ai_generated,
+          token_count: 1500,
+          generated_at: DateTime.utc_now() |> DateTime.truncate(:second),
+          system_prompt: "System",
+          conversation: %{"messages" => [%{"role" => "user", "content" => "Prompt"}]}
+        },
+        project: project,
+        user: user
+      )
+
+    assert prompt_request.review_status == :pending
+
+    {:ok, updated} = PromptRequests.review_prompt_request(prompt_request, reviewer, :accepted)
+
+    assert updated.review_status == :accepted
+    assert updated.reviewed_by_id == reviewer.id
+    assert updated.reviewed_at != nil
+  end
+
+  test "awards token earnings when prompt requests are accepted" do
+    {user, project} = setup_project()
+
+    {:ok, reviewer} = Accounts.get_or_create_user_by_email("earnings-reviewer@example.com")
+
+    {:ok, prompt_request} =
+      PromptRequests.create_prompt_request(
+        %{
+          title: "Earn tokens",
+          prompt: "Prompt",
+          result: "Result",
+          model: "gpt-4.1",
+          model_version: "2025-02-01",
+          origin: :ai_generated,
+          token_count: 1500,
+          generated_at: DateTime.utc_now() |> DateTime.truncate(:second),
+          system_prompt: "System",
+          conversation: %{"messages" => [%{"role" => "user", "content" => "Prompt"}]}
+        },
+        project: project,
+        user: user
+      )
+
+    assert Repo.aggregate(TokenEarning, :count, :id) == 0
+
+    {:ok, accepted} = PromptRequests.review_prompt_request(prompt_request, reviewer, :accepted)
+
+    assert Repo.aggregate(TokenEarning, :count, :id) == 1
+
+    earning =
+      Repo.get_by!(TokenEarning,
+        prompt_request_id: accepted.id,
+        reason: :prompt_request_accepted
+      )
+    assert earning.amount == AITokens.prompt_request_reward(accepted)
+    assert earning.user_id == user.id
+    assert earning.project_id == project.id
+
+    {:ok, _} = PromptRequests.review_prompt_request(accepted, reviewer, :accepted)
+    assert Repo.aggregate(TokenEarning, :count, :id) == 1
+  end
+
+  test "lists prompt registry with search and review status filters" do
+    {user, project} = setup_project()
+
+    {:ok, reviewer} = Accounts.get_or_create_user_by_email("registry-reviewer@example.com")
+
+    base_attrs = %{
+      model: "gpt-4.1",
+      model_version: "2025-02-01",
+      origin: :ai_generated,
+      token_count: 1200,
+      generated_at: DateTime.utc_now() |> DateTime.truncate(:second),
+      system_prompt: "System",
+      conversation: %{"messages" => [%{"role" => "user", "content" => "Prompt"}]}
+    }
+
+    {:ok, accepted_request} =
+      PromptRequests.create_prompt_request(
+        Map.merge(base_attrs, %{
+          title: "Bug fix prompt",
+          prompt: "Fix a bug in the registry",
+          result: "Patch applied"
+        }),
+        project: project,
+        user: user
+      )
+
+    {:ok, rejected_request} =
+      PromptRequests.create_prompt_request(
+        Map.merge(base_attrs, %{
+          title: "Refactor prompt",
+          prompt: "Refactor a subsystem",
+          result: "Refactor diff"
+        }),
+        project: project,
+        user: user
+      )
+
+    {:ok, accepted_request} =
+      PromptRequests.review_prompt_request(accepted_request, reviewer, :accepted)
+
+    {:ok, _rejected_request} =
+      PromptRequests.review_prompt_request(rejected_request, reviewer, :rejected)
+
+    [listed] =
+      PromptRequests.list_prompt_registry(
+        search: "Bug fix",
+        review_status: :accepted
+      )
+
+    assert listed.id == accepted_request.id
+    assert [] == PromptRequests.list_prompt_registry(review_status: :pending)
+    assert [_] = PromptRequests.list_prompt_registry(review_status: :rejected)
+  end
+
+  test "curates prompt requests and filters curated registry" do
+    {user, project} = setup_project()
+
+    {:ok, prompt_request} =
+      PromptRequests.create_prompt_request(
+        %{
+          title: "Curate me",
+          prompt: "Do a thing",
+          result: "Result",
+          model: "gpt-4.1",
+          model_version: "2025-02-01",
+          origin: :ai_generated,
+          token_count: 900,
+          generated_at: DateTime.utc_now() |> DateTime.truncate(:second),
+          system_prompt: "System",
+          conversation: %{"messages" => [%{"role" => "user", "content" => "Prompt"}]}
+        },
+        project: project,
+        user: user
+      )
+
+    assert [] == PromptRequests.list_prompt_registry(curated_only: true)
+
+    {:ok, curated} = PromptRequests.curate_prompt_request(prompt_request, user)
+    assert curated.curated_at
+    assert curated.curated_by_id == user.id
+
+    [listed] = PromptRequests.list_prompt_registry(curated_only: true)
+    assert listed.id == curated.id
+  end
+
+  test "creates and approves prompt templates for registry use" do
+    {user, project} = setup_project()
+
+    {:ok, template} =
+      PromptRequests.create_prompt_template(
+        %{
+          name: "Bug fix template",
+          description: "Template for fixing a bug",
+          prompt: "Fix the bug described in the issue.",
+          system_prompt: "You are a careful code reviewer.",
+          category: "bug fix"
+        },
+        created_by: user
+      )
+
+    assert [] == PromptRequests.list_prompt_templates(only_approved: true)
+
+    {:ok, approved} = PromptRequests.approve_prompt_template(template, user)
+    [listed] = PromptRequests.list_prompt_templates(only_approved: true)
+    assert listed.id == approved.id
+
+    {:ok, prompt_request} =
+      PromptRequests.create_prompt_request(
+        %{
+          title: "Template prompt",
+          prompt: "Use the template",
+          result: "Result",
+          model: "gpt-4.1",
+          model_version: "2025-02-01",
+          origin: :ai_generated,
+          token_count: 750,
+          generated_at: DateTime.utc_now() |> DateTime.truncate(:second),
+          system_prompt: "System",
+          conversation: %{"messages" => [%{"role" => "user", "content" => "Prompt"}]},
+          prompt_template_id: approved.id
+        },
+        project: project,
+        user: user
+      )
+
+    assert prompt_request.prompt_template_id == approved.id
   end
 end

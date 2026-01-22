@@ -4,6 +4,8 @@ defmodule Micelio.GRPC.SessionsServerTest do
   import Mimic
 
   alias Micelio.Accounts
+  alias Micelio.GRPC.Sessions.V1.CaptureSessionEventRequest
+  alias Micelio.GRPC.Sessions.V1.CaptureSessionEventResponse
   alias Micelio.GRPC.Sessions.V1.FileChange
   alias Micelio.GRPC.Sessions.V1.LandSessionRequest
   alias Micelio.GRPC.Sessions.V1.SessionResponse
@@ -11,10 +13,13 @@ defmodule Micelio.GRPC.SessionsServerTest do
   alias Micelio.Mic.Landing
   alias Micelio.Projects
   alias Micelio.Sessions
+  alias Micelio.Storage
+  alias Micelio.StorageHelper
   alias Micelio.Webhooks
 
   setup :verify_on_exit!
   setup :set_mimic_global
+  setup :setup_storage
 
   setup_all do
     Mimic.copy(Landing)
@@ -383,6 +388,56 @@ defmodule Micelio.GRPC.SessionsServerTest do
     assert message =~ "Direct lands to main are blocked"
   end
 
+  test "capture_session_event stores output payloads" do
+    {:ok, user} = Accounts.get_or_create_user_by_email("grpc-session-event@example.com")
+
+    {:ok, organization} =
+      Accounts.create_organization_for_user(user, %{
+        handle: "grpc-session-event-org",
+        name: "GRPC Sessions Event Org"
+      })
+
+    {:ok, project} =
+      Projects.create_project(%{
+        handle: "grpc-session-event-repo",
+        name: "GRPC Session Event Repo",
+        organization_id: organization.id
+      })
+
+    {:ok, session} =
+      Sessions.create_session(%{
+        session_id: "session-grpc-event-1",
+        goal: "Capture output",
+        project_id: project.id,
+        user_id: user.id
+      })
+
+    response =
+      SessionsServer.capture_session_event(
+        %CaptureSessionEventRequest{
+          user_id: user.id,
+          session_id: session.session_id,
+          payload: "hello from agent",
+          stream: "stderr",
+          format: "markdown"
+        },
+        nil
+      )
+
+    assert %CaptureSessionEventResponse{} = response
+    assert String.starts_with?(response.storage_key, "sessions/#{session.session_id}/events/")
+
+    {:ok, stored_json} = Storage.get(response.storage_key)
+    stored_event = Jason.decode!(stored_json)
+    response_event = Jason.decode!(response.event_json)
+
+    assert stored_event["type"] == "output"
+    assert stored_event["payload"]["text"] == "hello from agent"
+    assert stored_event["payload"]["stream"] == "stderr"
+    assert stored_event["payload"]["format"] == "markdown"
+    assert stored_event["id"] == response_event["id"]
+  end
+
   test "land_session supports epoch batching without landing" do
     {:ok, user} = Accounts.get_or_create_user_by_email("grpc-session-batch@example.com")
 
@@ -434,5 +489,9 @@ defmodule Micelio.GRPC.SessionsServerTest do
 
     persisted = Sessions.get_session_by_session_id(session.session_id)
     assert persisted.metadata["epoch_batch"] == 1
+  end
+
+  defp setup_storage(context) do
+    StorageHelper.setup_isolated_storage(context)
   end
 end

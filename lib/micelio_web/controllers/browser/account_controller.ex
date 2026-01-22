@@ -5,6 +5,7 @@ defmodule MicelioWeb.Browser.AccountController do
   alias Micelio.Activity
   alias Micelio.Projects
   alias Micelio.Repo
+  alias Micelio.Reputation
   alias Micelio.Sessions
   alias MicelioWeb.PageMeta
 
@@ -81,6 +82,11 @@ defmodule MicelioWeb.Browser.AccountController do
             account.handle
           end
 
+        reputation =
+          if user do
+            Reputation.trust_score_for_user(user)
+          end
+
         description =
           if user do
             "Projects and activity for @#{account.handle}."
@@ -103,6 +109,7 @@ defmodule MicelioWeb.Browser.AccountController do
           :empty_message,
           if(user, do: "No public projects yet.", else: "No projects yet.")
         )
+        |> assign(:reputation, reputation)
         |> assign(:organization_admin?, organization_admin?)
         |> assign(:activity_counts, activity_counts)
         |> assign(:activity_items, activity_items)

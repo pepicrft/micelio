@@ -19,6 +19,18 @@ defmodule Micelio.AuditLog do
   def changeset(log, attrs) do
     log
     |> cast(attrs, [:project_id, :user_id, :action, :metadata])
-    |> validate_required([:project_id, :action])
+    |> validate_required([:action])
+  end
+
+  def project_changeset(log, attrs) do
+    log
+    |> changeset(attrs)
+    |> validate_required([:project_id])
+  end
+
+  def user_changeset(log, attrs) do
+    log
+    |> changeset(attrs)
+    |> validate_required([:user_id])
   end
 end

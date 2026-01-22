@@ -17,6 +17,13 @@ config :logger, level: :warning
 config :micelio, Micelio.GRPC, enabled: false
 config :micelio, Micelio.Mailer, adapter: Swoosh.Adapters.Test
 config :micelio, Micelio.Mic.RollupScheduler, enabled: false
+config :micelio, Micelio.Errors.RetentionScheduler, enabled: false
+
+config :micelio, Micelio.Cloak,
+  json_library: Jason,
+  ciphers: [
+    default: {Cloak.Ciphers.AES.GCM, tag: "AES.GCM.V1", key: <<0::256>>}
+  ]
 
 config :micelio, Micelio.Repo,
   database: Path.join([System.tmp_dir!(), "micelio", "micelio_test#{test_partition}.sqlite3"]),
@@ -48,6 +55,9 @@ config :phoenix_pubsub, Micelio.PubSub,
 config :phoenix_pubsub, Micelio.PubSub, adapter: Phoenix.PubSub.Local
 
 config :micelio, :admin_emails, ["admin@example.com"]
+config :micelio, :errors,
+  capture_enabled: false,
+  retention_vacuum_enabled: false
 
 config :micelio, :github_oauth,
   client_id: "github-client-id",
@@ -64,6 +74,8 @@ config :micelio, :gitlab_oauth,
 config :micelio, :notifications_async, false
 
 config :micelio, Micelio.Projects.Import, allow_local_imports: true
+
+config :micelio, :prompt_request_flow, validation_enabled: false, validation_async: false
 
 # Initialize plugs at runtime for faster test compilation
 config :phoenix, :plug_init_mode, :runtime

@@ -23,6 +23,8 @@ defmodule Micelio.Projects.Project do
     has_many :access_tokens, Micelio.Projects.ProjectAccessToken
     has_many :webhooks, Micelio.Webhooks.Webhook
     has_many :prompt_requests, Micelio.PromptRequests.PromptRequest
+    has_many :token_contributions, Micelio.AITokens.TokenContribution
+    has_one :token_pool, Micelio.AITokens.TokenPool
 
     timestamps(type: :utc_datetime)
   end

@@ -16,6 +16,8 @@ defmodule MicelioWeb.PromptRequestLive.New do
              project_handle
            ),
          :ok <- Authorization.authorize(:project_read, socket.assigns.current_user, project) do
+      templates = PromptRequests.list_prompt_templates(only_approved: true)
+
       form =
         %PromptRequest{conversation: nil}
         |> PromptRequests.change_prompt_request()
@@ -32,6 +34,9 @@ defmodule MicelioWeb.PromptRequestLive.New do
         |> assign(:project, project)
         |> assign(:organization, organization)
         |> assign(:form, form)
+        |> assign(:prompt_templates, templates)
+        |> assign(:template_options, template_options(templates))
+        |> assign(:selected_template, nil)
 
       {:ok, socket}
     else
@@ -50,12 +55,15 @@ defmodule MicelioWeb.PromptRequestLive.New do
       |> PromptRequests.change_prompt_request(params)
       |> Map.put(:action, :validate)
 
-    {:noreply, assign(socket, form: to_form(changeset, as: :prompt_request))}
+    {:noreply,
+     socket
+     |> assign(:form, to_form(changeset, as: :prompt_request))
+     |> assign(:selected_template, template_from_params(params))}
   end
 
   @impl true
   def handle_event("save", %{"prompt_request" => params}, socket) do
-    case PromptRequests.create_prompt_request(params,
+    case PromptRequests.submit_prompt_request(params,
            project: socket.assigns.project,
            user: socket.assigns.current_user
          ) do
@@ -68,8 +76,53 @@ defmodule MicelioWeb.PromptRequestLive.New do
              ~p"/projects/#{socket.assigns.organization.account.handle}/#{socket.assigns.project.handle}/prompt-requests/#{prompt_request.id}"
          )}
 
-      {:error, changeset} ->
+      {:error, %Ecto.Changeset{} = changeset} ->
         {:noreply, assign(socket, form: to_form(Map.put(changeset, :action, :validate)))}
+
+      {:error, {:validation_failed, feedback, prompt_request}} ->
+        feedback_message = PromptRequests.validation_feedback_summary(feedback)
+
+        {:noreply,
+         socket
+         |> put_flash(:error, feedback_message)
+         |> push_navigate(
+           to:
+             ~p"/projects/#{socket.assigns.organization.account.handle}/#{socket.assigns.project.handle}/prompt-requests/#{prompt_request.id}"
+         )}
+
+      {:error, _reason} ->
+        {:noreply, put_flash(socket, :error, "Unable to submit prompt request.")}
+    end
+  end
+
+  @impl true
+  def handle_event("load_template", %{"template_id" => template_id}, socket) do
+    template =
+      case template_id do
+        nil -> nil
+        "" -> nil
+        id -> PromptRequests.get_prompt_template(id)
+      end
+
+    if template do
+      params =
+        (socket.assigns.form.params || %{})
+        |> Map.merge(%{
+          "prompt_template_id" => template.id,
+          "system_prompt" => template.system_prompt,
+          "prompt" => template.prompt
+        })
+
+      changeset =
+        %PromptRequest{}
+        |> PromptRequests.change_prompt_request(params)
+
+      {:noreply,
+       socket
+       |> assign(:form, to_form(changeset, as: :prompt_request))
+       |> assign(:selected_template, template)}
+    else
+      {:noreply, put_flash(socket, :error, "Select a template to load.")}
     end
   end
 
@@ -105,6 +158,34 @@ defmodule MicelioWeb.PromptRequestLive.New do
               class="prompt-request-input"
               error_class="prompt-request-input prompt-request-input-error"
             />
+          </div>
+
+          <div class="prompt-request-form-group">
+            <.input
+              field={@form[:prompt_template_id]}
+              type="select"
+              label="Prompt template"
+              options={@template_options}
+              prompt="Select a template (optional)"
+              class="prompt-request-input"
+              error_class="prompt-request-input prompt-request-input-error"
+            />
+            <div class="prompt-request-template-actions">
+              <button
+                type="button"
+                class="prompt-request-button prompt-request-button-secondary"
+                id="prompt-request-load-template"
+                phx-click="load_template"
+                phx-value-template-id={@form[:prompt_template_id].value}
+              >
+                Load template
+              </button>
+              <%= if @selected_template do %>
+                <span class="prompt-request-template-meta">
+                  {template_meta(@selected_template)}
+                </span>
+              <% end %>
+            </div>
           </div>
 
           <div class="prompt-request-form-group">
@@ -165,6 +246,40 @@ defmodule MicelioWeb.PromptRequestLive.New do
 
           <div class="prompt-request-form-group">
             <.input
+              field={@form[:execution_duration_ms]}
+              type="number"
+              label="Execution duration (ms)"
+              placeholder="e.g., 15420"
+              min="0"
+              class="prompt-request-input"
+              error_class="prompt-request-input prompt-request-input-error"
+            />
+          </div>
+
+          <div class="prompt-request-form-group">
+            <.input
+              field={@form[:execution_environment]}
+              type="textarea"
+              label="Execution environment (JSON)"
+              placeholder={~s({"runtime":"phoenix","os":"linux"})}
+              class="prompt-request-input prompt-request-textarea"
+              error_class="prompt-request-input prompt-request-input-error"
+            />
+          </div>
+
+          <div class="prompt-request-form-group">
+            <.input
+              field={@form[:parent_prompt_request_id]}
+              type="text"
+              label="Parent prompt request ID (optional)"
+              placeholder="Link to the prompt this builds on"
+              class="prompt-request-input"
+              error_class="prompt-request-input prompt-request-input-error"
+            />
+          </div>
+
+          <div class="prompt-request-form-group">
+            <.input
               field={@form[:system_prompt]}
               type="textarea"
               label="System prompt"
@@ -201,7 +316,7 @@ defmodule MicelioWeb.PromptRequestLive.New do
               field={@form[:conversation]}
               type="textarea"
               label="Conversation history (JSON)"
-              placeholder="{\"messages\": [{\"role\": \"user\", \"content\": \"...\"}]}"
+              placeholder={~s({"messages": [{"role": "user", "content": "..."}]})}
               class="prompt-request-input prompt-request-textarea"
               error_class="prompt-request-input prompt-request-input-error"
             />
@@ -233,5 +348,29 @@ defmodule MicelioWeb.PromptRequestLive.New do
       {"AI-assisted", "ai_assisted"},
       {"Human", "human"}
     ]
+  end
+
+  defp template_options(templates) do
+    Enum.map(templates, fn template -> {template.name, template.id} end)
+  end
+
+  defp template_from_params(%{"prompt_template_id" => ""}), do: nil
+  defp template_from_params(%{"prompt_template_id" => nil}), do: nil
+
+  defp template_from_params(%{"prompt_template_id" => template_id}) do
+    PromptRequests.get_prompt_template(template_id)
+  end
+
+  defp template_from_params(_params), do: nil
+
+  defp template_meta(template) do
+    description =
+      case template.description do
+        nil -> ""
+        "" -> ""
+        value -> " · #{value}"
+      end
+
+    "#{template.name}#{description}"
   end
 end

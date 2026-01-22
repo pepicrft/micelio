@@ -2,6 +2,7 @@ defmodule MicelioWeb.PromptRequestLive.Index do
   use MicelioWeb, :live_view
 
   alias Micelio.Authorization
+  alias Micelio.ContributionConfidence
   alias Micelio.PromptRequests
   alias Micelio.PromptRequests.PromptRequest
   alias Micelio.Projects
@@ -17,6 +18,7 @@ defmodule MicelioWeb.PromptRequestLive.Index do
            ),
          :ok <- Authorization.authorize(:project_read, socket.assigns.current_user, project) do
       prompt_requests = PromptRequests.list_prompt_requests_for_project(project)
+      confidence_scores = PromptRequests.confidence_scores(prompt_requests)
 
       socket =
         socket
@@ -29,6 +31,7 @@ defmodule MicelioWeb.PromptRequestLive.Index do
         |> assign(:project, project)
         |> assign(:organization, organization)
         |> assign(:prompt_requests, prompt_requests)
+        |> assign(:confidence_scores, confidence_scores)
 
       {:ok, socket}
     else
@@ -95,6 +98,22 @@ defmodule MicelioWeb.PromptRequestLive.Index do
                   <span>Version: {format_model(prompt_request.model_version)}</span>
                   <span>Tokens: {format_token_count(prompt_request.token_count)}</span>
                   <span>Submitted by {prompt_request.user.email}</span>
+                  <span>
+                    Confidence:
+                    {format_confidence(Map.get(@confidence_scores, prompt_request.id))}
+                  </span>
+                </div>
+                <div class="prompt-request-card-meta">
+                  <span>Generated: {format_datetime(prompt_request.generated_at)}</span>
+                  <span>Submitted: {format_datetime(prompt_request.inserted_at)}</span>
+                  <span>
+                    Lag:
+                    {format_generation_lag(prompt_request.generated_at, prompt_request.inserted_at)}
+                  </span>
+                  <span>
+                    Attestation:
+                    {attestation_label(PromptRequests.attestation_status(prompt_request))}
+                  </span>
                 </div>
               </.link>
             <% end %>
@@ -117,4 +136,55 @@ defmodule MicelioWeb.PromptRequestLive.Index do
 
   defp format_token_count(nil), do: "n/a"
   defp format_token_count(value) when is_integer(value), do: Integer.to_string(value)
+
+  defp format_confidence(%ContributionConfidence.Score{overall: overall, label: label}) do
+    "#{overall} (#{label})"
+  end
+
+  defp format_confidence(_score), do: "n/a"
+
+  defp format_datetime(nil), do: "n/a"
+
+  defp format_datetime(%DateTime{} = datetime) do
+    datetime
+    |> DateTime.truncate(:second)
+    |> Calendar.strftime("%Y-%m-%d %H:%M:%S UTC")
+  end
+
+  defp format_datetime(%NaiveDateTime{} = datetime) do
+    datetime
+    |> NaiveDateTime.truncate(:second)
+    |> Calendar.strftime("%Y-%m-%d %H:%M:%S")
+  end
+
+  defp format_generation_lag(%DateTime{} = generated_at, %DateTime{} = submitted_at) do
+    diff_seconds = DateTime.diff(submitted_at, generated_at, :second)
+
+    cond do
+      diff_seconds < 0 ->
+        "n/a"
+
+      diff_seconds < 60 ->
+        "<1m"
+
+      diff_seconds < 3600 ->
+        "#{div(diff_seconds, 60)}m"
+
+      diff_seconds < 86_400 ->
+        hours = div(diff_seconds, 3600)
+        minutes = div(rem(diff_seconds, 3600), 60)
+        "#{hours}h #{minutes}m"
+
+      true ->
+        days = div(diff_seconds, 86_400)
+        hours = div(rem(diff_seconds, 86_400), 3600)
+        "#{days}d #{hours}h"
+    end
+  end
+
+  defp format_generation_lag(_, _), do: "n/a"
+
+  defp attestation_label(:verified), do: "Verified"
+  defp attestation_label(:invalid), do: "Invalid"
+  defp attestation_label(:missing), do: "Missing"
 end

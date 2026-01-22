@@ -65,6 +65,19 @@ message ListSessionsRequest {
   string status = 4;
 }
 
+message CaptureSessionEventRequest {
+  string user_id = 1;
+  string session_id = 2;
+  string payload = 3;
+  string stream = 4;
+  string format = 5;
+}
+
+message CaptureSessionEventResponse {
+  string storage_key = 1;
+  string event_json = 2;
+}
+
 message SessionResponse {
   Session session = 1;
 }
@@ -78,4 +91,5 @@ service SessionService {
   rpc LandSession(LandSessionRequest) returns (SessionResponse);
   rpc GetSession(GetSessionRequest) returns (SessionResponse);
   rpc ListSessions(ListSessionsRequest) returns (ListSessionsResponse);
+  rpc CaptureSessionEvent(CaptureSessionEventRequest) returns (CaptureSessionEventResponse);
 }

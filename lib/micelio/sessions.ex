@@ -8,6 +8,7 @@ defmodule Micelio.Sessions do
   alias Micelio.Accounts.User
   alias Micelio.Projects.Project
   alias Micelio.Repo
+  alias Micelio.Sessions.EventCapture
   alias Micelio.Sessions.OGSummary
   alias Micelio.Sessions.Session
   alias Micelio.Sessions.SessionChange
@@ -75,12 +76,41 @@ defmodule Micelio.Sessions do
   end
 
   @doc """
+  Gets a session by database ID or session_id.
+  """
+  def get_session_by_identifier(identifier) when is_binary(identifier) do
+    case Repo.get(Session, identifier) do
+      %Session{} = session -> session
+      _ -> get_session_by_session_id(identifier)
+    end
+  end
+
+  @doc """
   Gets a single session with preloaded associations.
   """
   def get_session_with_associations(id) do
     Session
     |> Repo.get(id)
     |> Repo.preload([:user, :project])
+  end
+
+  @doc """
+  Gets a session by database ID or session_id with preloaded associations.
+  """
+  def get_session_with_associations_by_identifier(identifier) when is_binary(identifier) do
+    case Repo.get(Session, identifier) do
+      %Session{} = session ->
+        Repo.preload(session, [:user, :project])
+
+      _ ->
+        Session
+        |> where([s], s.session_id == ^identifier)
+        |> Repo.one()
+        |> case do
+          nil -> nil
+          session -> Repo.preload(session, [:user, :project])
+        end
+    end
   end
 
   @doc """
@@ -185,6 +215,183 @@ defmodule Micelio.Sessions do
     Repo.delete(session)
   end
 
+  ## Session Events
+
+  @doc """
+  Captures a structured session event and persists it to storage.
+  """
+  def capture_session_event(session_or_id, event, opts \\ []) do
+    EventCapture.capture_event(session_or_id, event, opts)
+  end
+
+  @doc """
+  Captures raw output as a structured session output event.
+  """
+  def capture_session_output(session_or_id, text, opts \\ []) do
+    EventCapture.capture_output(session_or_id, text, opts)
+  end
+
+  @doc """
+  Captures a structured event or wraps raw output as an output event.
+  """
+  def capture_session_payload(session_or_id, payload, opts \\ []) do
+    EventCapture.capture_payload(session_or_id, payload, opts)
+  end
+
+  @doc """
+  Captures stdout output as a structured session output event.
+  """
+  def capture_session_stdout(session_or_id, text, opts \\ []) do
+    EventCapture.capture_stdout(session_or_id, text, opts)
+  end
+
+  @doc """
+  Captures stderr output as a structured session output event.
+  """
+  def capture_session_stderr(session_or_id, text, opts \\ []) do
+    EventCapture.capture_stderr(session_or_id, text, opts)
+  end
+
+  @doc """
+  Lists session events from storage with optional filters.
+
+  Options:
+  - :types - list or comma-separated string of event types
+  - :since - unix timestamp in milliseconds or DateTime
+  - :after - storage key cursor
+  - :limit - max number of events to return
+  """
+  def list_session_events(session_or_id, opts \\ []) do
+    with {:ok, session_id} <- normalize_session_id(session_or_id),
+         {:ok, keys} <- Storage.list(session_event_prefix(session_id)) do
+      keys
+      |> Enum.sort()
+      |> filter_event_keys(opts, session_id)
+      |> load_session_events(opts)
+    end
+  end
+
+  defp normalize_session_id(%Session{session_id: session_id}) when is_binary(session_id),
+    do: {:ok, session_id}
+
+  defp normalize_session_id(session_id) when is_binary(session_id) and session_id != "",
+    do: {:ok, session_id}
+
+  defp normalize_session_id(_session_id), do: {:error, :invalid_session}
+
+  defp session_event_prefix(session_id), do: "sessions/#{session_id}/events"
+
+  defp filter_event_keys(keys, opts, session_id) do
+    keys
+    |> filter_after_key(Keyword.get(opts, :after), session_id)
+    |> filter_since_key(Keyword.get(opts, :since))
+    |> apply_limit(Keyword.get(opts, :limit))
+  end
+
+  defp filter_after_key(keys, nil, _session_id), do: keys
+
+  defp filter_after_key(keys, after_key, session_id) when is_binary(after_key) do
+    normalized =
+      if String.starts_with?(after_key, "sessions/") do
+        after_key
+      else
+        Path.join([session_event_prefix(session_id), after_key])
+      end
+
+    Enum.drop_while(keys, fn key -> key <= normalized end)
+  end
+
+  defp filter_after_key(keys, _after_key, _session_id), do: keys
+
+  defp filter_since_key(keys, nil), do: keys
+
+  defp filter_since_key(keys, %DateTime{} = since) do
+    filter_since_key(keys, DateTime.to_unix(since, :millisecond))
+  end
+
+  defp filter_since_key(keys, since_ms) when is_integer(since_ms) and since_ms >= 0 do
+    Enum.filter(keys, fn key ->
+      case event_key_timestamp(key) do
+        {:ok, timestamp} -> timestamp > since_ms
+        _ -> true
+      end
+    end)
+  end
+
+  defp filter_since_key(keys, _since_ms), do: keys
+
+  defp apply_limit(keys, limit) when is_integer(limit) and limit > 0 do
+    Enum.take(keys, limit)
+  end
+
+  defp apply_limit(keys, _limit), do: keys
+
+  defp event_key_timestamp(key) when is_binary(key) do
+    with [_, filename] <- String.split(key, "/events/", parts: 2),
+         [timestamp | _] <- String.split(filename, "-", parts: 2),
+         {value, ""} <- Integer.parse(timestamp) do
+      {:ok, value}
+    else
+      _ -> {:error, :invalid_key}
+    end
+  end
+
+  defp load_session_events(keys, opts) do
+    types = normalize_event_types(Keyword.get(opts, :types))
+
+    Enum.reduce_while(keys, {:ok, []}, fn key, {:ok, acc} ->
+      case Storage.get(key) do
+        {:ok, json} ->
+          case Jason.decode(json) do
+            {:ok, %{"type" => type} = event} ->
+              if type_allowed?(type, types) do
+                {:cont, {:ok, [%{storage_key: key, event: event, json: json} | acc]}}
+              else
+                {:cont, {:ok, acc}}
+              end
+
+            _ ->
+              {:cont, {:ok, acc}}
+          end
+
+        {:error, :not_found} ->
+          {:cont, {:ok, acc}}
+
+        {:error, reason} ->
+          {:halt, {:error, reason}}
+      end
+    end)
+    |> case do
+      {:ok, acc} -> {:ok, Enum.reverse(acc)}
+      error -> error
+    end
+  end
+
+  defp normalize_event_types(nil), do: nil
+
+  defp normalize_event_types(types) when is_list(types) do
+    types
+    |> Enum.map(&normalize_type_value/1)
+    |> Enum.reject(&is_nil/1)
+  end
+
+  defp normalize_event_types(types) when is_binary(types) do
+    types
+    |> String.split(",", trim: true)
+    |> Enum.map(&normalize_type_value/1)
+    |> Enum.reject(&is_nil/1)
+  end
+
+  defp normalize_event_types(_types), do: nil
+
+  defp normalize_type_value(type) when is_atom(type), do: normalize_type_value(Atom.to_string(type))
+  defp normalize_type_value(type) when is_binary(type), do: String.trim(type)
+  defp normalize_type_value(_type), do: nil
+
+  defp type_allowed?(_type, nil), do: true
+  defp type_allowed?(type, []), do: false
+  defp type_allowed?(type, allowed), do: type in allowed
+
   ## Session Changes
 
   @doc """
@@ -193,7 +400,7 @@ defmodule Micelio.Sessions do
   def get_session_with_changes(id) do
     Session
     |> Repo.get(id)
-    |> Repo.preload([:user, :project, :changes])
+    |> Repo.preload([:user, :project, :changes, :prompt_request])
   end
 
   @doc """

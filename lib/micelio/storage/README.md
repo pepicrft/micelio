@@ -228,10 +228,72 @@ Recommended S3 bucket policy for production:
 }
 ```
 
+### Recommended IAM Policies (Minimal Scope)
+
+**AWS S3 (IAM policy scoped to a single bucket):**
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject",
+        "s3:PutObject",
+        "s3:DeleteObject",
+        "s3:ListBucket"
+      ],
+      "Resource": [
+        "arn:aws:s3:::YOUR_BUCKET_NAME",
+        "arn:aws:s3:::YOUR_BUCKET_NAME/*"
+      ]
+    }
+  ]
+}
+```
+
+**Cloudflare R2 (API token permissions):**
+- Object Read
+- Object Write
+
+**MinIO (bucket-scoped policy JSON):**
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject",
+        "s3:PutObject",
+        "s3:DeleteObject",
+        "s3:ListBucket"
+      ],
+      "Resource": [
+        "arn:aws:s3:::YOUR_BUCKET_NAME",
+        "arn:aws:s3:::YOUR_BUCKET_NAME/*"
+      ]
+    }
+  ]
+}
+```
+
 ### Encryption
 - **Enable server-side encryption** (SSE-S3 or SSE-KMS)
 - **Use HTTPS** for all requests (enforced by default)
 - **Consider bucket versioning** for audit trails
+- **S3 credentials are encrypted at rest** in the Micelio database using Cloak
+
+### Security Checklist
+- Use dedicated credentials (avoid root/admin keys)
+- Enable bucket versioning for data recovery
+- Configure bucket lifecycle policies for cost control
+- Disable public access on the bucket
+- Rotate access keys regularly and revoke unused credentials
+
+### Operational Safeguards
+- Storage validation requests are rate limited to prevent credential stuffing.
+- S3 configuration changes are audit logged for traceability.
 
 ## Migration from Local to S3
 

@@ -44,6 +44,8 @@ defmodule Micelio.Accounts.User do
     has_many(:project_access_tokens, Micelio.Projects.ProjectAccessToken)
     has_many(:prompt_requests, Micelio.PromptRequests.PromptRequest)
     has_many(:prompt_suggestions, Micelio.PromptRequests.PromptSuggestion)
+    has_many(:token_contributions, Micelio.AITokens.TokenContribution)
+    has_many(:token_earnings, Micelio.AITokens.TokenEarning)
     has_many(:oauth_identities, Micelio.Accounts.OAuthIdentity)
     has_many(:passkeys, Micelio.Accounts.Passkey)
 

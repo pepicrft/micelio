@@ -1,6 +1,9 @@
 defmodule MicelioWeb.Browser.ProjectController do
   use MicelioWeb, :controller
 
+  alias Micelio.AITokens
+  alias Micelio.AITokens.TokenContribution
+  alias Micelio.AITokens.TokenPool
   alias Micelio.Accounts
   alias Micelio.Authorization
   alias Micelio.Mic.Binary
@@ -79,6 +82,29 @@ defmodule MicelioWeb.Browser.ProjectController do
       {:error, :invalid_target} ->
         conn
         |> put_flash(:error, "Select an organization you administer to fork.")
+        |> redirect(to: safe_return_path(return_to, account_handle, project_handle))
+
+      _ ->
+        send_resp(conn, 404, "Not found")
+    end
+  end
+
+  def contribute_tokens(conn, %{"account" => account_handle, "project" => project_handle} = params) do
+    return_to = get_in(params, ["token_contribution", "return_to"])
+
+    with account when not is_nil(account) <- conn.assigns.selected_account,
+         project when not is_nil(project) <- conn.assigns.selected_project,
+         user when not is_nil(user) <- conn.assigns.current_user,
+         :ok <- Authorization.authorize(:project_read, user, project),
+         {:ok, _contribution, _pool} <-
+           AITokens.contribute_tokens(project, user, Map.get(params, "token_contribution", %{})) do
+      conn
+      |> put_flash(:info, "Thanks for contributing tokens to this project.")
+      |> redirect(to: safe_return_path(return_to, account_handle, project_handle))
+    else
+      {:error, %Ecto.Changeset{} = changeset} ->
+        conn
+        |> put_flash(:error, format_contribution_errors(changeset))
         |> redirect(to: safe_return_path(return_to, account_handle, project_handle))
 
       _ ->
@@ -180,6 +206,7 @@ defmodule MicelioWeb.Browser.ProjectController do
     |> assign(:readme, readme)
     |> assign_star_data(project)
     |> assign_fork_data(project)
+    |> assign_token_pool_data(project)
     |> assign_badge_data(account, project)
     |> maybe_assign_schema_json_ld(dir_path, account, project)
     |> render(:show)
@@ -367,6 +394,41 @@ defmodule MicelioWeb.Browser.ProjectController do
     end
   end
 
+  defp assign_token_pool_data(conn, project) do
+    pool =
+      case AITokens.get_token_pool_by_project(project.id) do
+        %TokenPool{} = pool -> pool
+        nil -> %TokenPool{project_id: project.id, balance: 0, reserved: 0}
+      end
+
+    available = max(pool.balance - pool.reserved, 0)
+    usage = AITokens.project_usage_summary(project)
+    acceptance_rate = format_acceptance_rate(usage.accepted_prompt_requests, usage.total_prompt_requests)
+
+    form =
+      Phoenix.Component.to_form(
+        AITokens.change_token_contribution(%TokenContribution{}, %{}),
+        as: :token_contribution
+      )
+
+    conn
+    |> assign(:token_pool, pool)
+    |> assign(:token_pool_available, available)
+    |> assign(:token_usage, usage)
+    |> assign(:token_usage_acceptance_rate, acceptance_rate)
+    |> assign(:token_return_to, current_path(conn))
+    |> assign(:token_contribution_form, form)
+  end
+
+  defp format_acceptance_rate(accepted, total) when is_integer(accepted) and is_integer(total) do
+    if total > 0 do
+      rate = accepted / total * 100
+      "#{:erlang.float_to_binary(rate, decimals: 1)}%"
+    else
+      "n/a"
+    end
+  end
+
   defp safe_return_path(return_to, account_handle, project_handle) do
     if is_binary(return_to) and String.starts_with?(return_to, "/") do
       return_to
@@ -385,6 +447,18 @@ defmodule MicelioWeb.Browser.ProjectController do
       %Accounts.Organization{} = organization -> {:ok, organization}
       _ -> {:error, :invalid_target}
     end
+  end
+
+  defp format_contribution_errors(changeset) do
+    changeset
+    |> Ecto.Changeset.traverse_errors(fn {msg, opts} ->
+      Enum.reduce(opts, msg, fn {key, value}, acc ->
+        String.replace(acc, "%{#{key}}", to_string(value))
+      end)
+    end)
+    |> Enum.map_join("; ", fn {field, errors} ->
+      "#{field} #{Enum.join(errors, ", ")}"
+    end)
   end
 
   defp fork_attrs(params) do

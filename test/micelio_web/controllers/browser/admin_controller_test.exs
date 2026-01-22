@@ -3,6 +3,7 @@ defmodule MicelioWeb.Browser.AdminControllerTest do
 
   alias Micelio.Accounts
   alias Micelio.Projects
+  alias Micelio.PromptRequests
   alias Micelio.Sessions
 
   test "denies access to non-admin users", %{conn: conn} do
@@ -76,5 +77,67 @@ defmodule MicelioWeb.Browser.AdminControllerTest do
     assert html =~ "No organizations yet."
     assert html =~ "No projects yet."
     assert html =~ "No sessions yet."
+  end
+
+  test "shows usage dashboard with token metrics", %{conn: conn} do
+    {:ok, admin} = Accounts.get_or_create_user_by_email("admin@example.com")
+
+    {:ok, organization} =
+      Accounts.create_organization_for_user(admin, %{name: "Acme", handle: "acme"})
+
+    {:ok, project} =
+      Projects.create_project(%{
+        name: "Acme Repo",
+        handle: "acme-repo",
+        organization_id: organization.id,
+        visibility: "public"
+      })
+
+    {:ok, prompt_request} =
+      PromptRequests.create_prompt_request(
+        %{
+          title: "Add usage dashboard",
+          prompt: "Build the usage dashboard.",
+          result: "Done",
+          system_prompt: "System",
+          conversation: %{"messages" => [%{"role" => "user", "content" => "hi"}]},
+          origin: :ai_generated,
+          model: "gpt-4",
+          model_version: "2024-01-01",
+          token_count: 120,
+          generated_at: DateTime.utc_now()
+        },
+        project: project,
+        user: admin
+      )
+
+    {:ok, _} = PromptRequests.review_prompt_request(prompt_request, admin, :accepted)
+
+    conn =
+      conn
+      |> log_in_user(admin)
+      |> get(~p"/admin/usage")
+
+    html = html_response(conn, 200)
+    assert html =~ "Usage dashboard"
+    assert html =~ "id=\"admin-usage-dashboard\""
+    assert html =~ "id=\"admin-usage-overview\""
+    assert html =~ "id=\"admin-usage-projects\""
+    assert html =~ "id=\"admin-usage-projects-list\""
+    assert html =~ "id=\"admin-usage-project-#{project.id}\""
+  end
+
+  test "shows empty usage dashboard when no prompt requests exist", %{conn: conn} do
+    {:ok, admin} = Accounts.get_or_create_user_by_email("admin@example.com")
+
+    conn =
+      conn
+      |> log_in_user(admin)
+      |> get(~p"/admin/usage")
+
+    html = html_response(conn, 200)
+    assert html =~ "Usage dashboard"
+    assert html =~ "No usage yet."
+    assert html =~ "id=\"admin-usage-overview\""
   end
 end

@@ -77,5 +77,23 @@ for (const viewport of viewports) {
       await expect(page.locator("#project-file-content")).toBeVisible();
       await expectNoHorizontalOverflow(page);
     });
+
+    test("session event viewer fits on mobile", async ({ page }) => {
+      await page.goto(`/projects/${accountHandle}/${projectHandle}/sessions`, {
+        waitUntil: "domcontentloaded"
+      });
+      await expect(page.locator(".sessions-list")).toBeVisible();
+      await page
+        .getByRole("link", { name: "Stream session events" })
+        .first()
+        .click();
+      await expect(page.locator("#session-event-viewer")).toBeVisible();
+      await expect(page.locator(".session-event-card")).toBeVisible();
+      await expect(page.locator(".session-event-summary")).toContainText(
+        "42% - Downloading"
+      );
+      await expect(page.locator(".session-event-icon-progress")).toBeVisible();
+      await expectNoHorizontalOverflow(page);
+    });
   });
 }

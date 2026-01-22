@@ -26,6 +26,13 @@ defmodule MicelioWeb.AgentLive.Index do
             |> assign(:organization, organization)
             |> assign(:refresh_ms, @refresh_ms)
             |> assign(:refresh_seconds, div(@refresh_ms, 1000))
+            |> assign(:error_boundary_context, %{
+              route: ~p"/#{organization.account.handle}/#{project.handle}/agents",
+              params: %{"account" => account_handle, "repository" => repository_handle}
+            })
+            |> assign(:error_boundary_retry_path, ~p"/#{organization.account.handle}/#{project.handle}/agents")
+            |> assign(:error_boundary_user_id, socket.assigns.current_user && socket.assigns.current_user.id)
+            |> assign(:error_boundary_project_id, project.id)
             |> load_sessions()
             |> assign_agent_og_summary()
 
@@ -170,79 +177,87 @@ defmodule MicelioWeb.AgentLive.Index do
       current_scope={@current_scope}
       current_user={@current_user}
     >
-      <div class="agent-progress" id="agent-progress">
-        <header class="agent-progress-header" id="agent-progress-header">
-          <div>
-            <div class="agent-progress-breadcrumb" id="agent-progress-breadcrumb">
-              <.link navigate={~p"/#{@organization.account.handle}"}>{@organization.name}</.link>
-              <span>/</span>
-              <.link navigate={~p"/#{@organization.account.handle}/#{@project.handle}"}>
-                {@project.name}
-              </.link>
-              <span>/</span>
-              <span>Agents</span>
+      <.error_boundary
+        id="agent-progress-boundary"
+        context={@error_boundary_context}
+        retry_path={@error_boundary_retry_path}
+        user_id={@error_boundary_user_id}
+        project_id={@error_boundary_project_id}
+      >
+        <div class="agent-progress" id="agent-progress">
+          <header class="agent-progress-header" id="agent-progress-header">
+            <div>
+              <div class="agent-progress-breadcrumb" id="agent-progress-breadcrumb">
+                <.link navigate={~p"/#{@organization.account.handle}"}>{@organization.name}</.link>
+                <span>/</span>
+                <.link navigate={~p"/#{@organization.account.handle}/#{@project.handle}"}>
+                  {@project.name}
+                </.link>
+                <span>/</span>
+                <span>Agents</span>
+              </div>
+              <h1>Agent progress</h1>
+              <p class="agent-progress-subtitle">
+                Live sessions running for {@project.name}.
+              </p>
             </div>
-            <h1>Agent progress</h1>
-            <p class="agent-progress-subtitle">
-              Live sessions running for {@project.name}.
-            </p>
-          </div>
-          <div class="agent-progress-meta" id="agent-progress-meta">
-            <span>Updated {format_datetime(@refreshed_at)}</span>
-            <span>Refreshes every {@refresh_seconds}s</span>
-          </div>
-        </header>
+            <div class="agent-progress-meta" id="agent-progress-meta">
+              <span>Updated {format_datetime(@refreshed_at)}</span>
+              <span>Refreshes every {@refresh_seconds}s</span>
+            </div>
+          </header>
 
-        <section class="agent-progress-section" id="agent-progress-section">
-          <div class="agent-progress-section-header">
-            <h2>Active sessions</h2>
-            <span class="badge badge--caps" id="agent-progress-count">
-              {length(@sessions)} active
-            </span>
-          </div>
+          <section class="agent-progress-section" id="agent-progress-section">
+            <div class="agent-progress-section-header">
+              <h2>Active sessions</h2>
+              <span class="badge badge--caps" id="agent-progress-count">
+                {length(@sessions)} active
+              </span>
+            </div>
 
-          <%= if Enum.empty?(@sessions) do %>
-            <div class="agent-progress-empty" id="agent-progress-empty">
-              <p>No active agent sessions yet.</p>
-            </div>
-          <% else %>
-            <div class="agent-progress-list" id="agent-progress-list">
-              <%= for entry <- @sessions do %>
-                <article class="agent-progress-card" id={"agent-session-#{entry.session.id}"}>
-                  <div class="agent-progress-card-header">
-                    <div>
-                      <h3 class="agent-progress-goal">{entry.session.goal}</h3>
-                      <div class="agent-progress-agent">{entry.agent}</div>
+            <%= if Enum.empty?(@sessions) do %>
+              <div class="agent-progress-empty" id="agent-progress-empty">
+                <p>No active agent sessions yet.</p>
+              </div>
+            <% else %>
+              <div class="agent-progress-list" id="agent-progress-list">
+                <%= for entry <- @sessions do %>
+                  <article class="agent-progress-card" id={"agent-session-#{entry.session.id}"}>
+                    <div class="agent-progress-card-header">
+                      <div>
+                        <h3 class="agent-progress-goal">{entry.session.goal}</h3>
+                        <div class="agent-progress-agent">{entry.agent}</div>
+                      </div>
+                      <span class="badge badge--caps agent-progress-status">active</span>
                     </div>
-                    <span class="badge badge--caps agent-progress-status">active</span>
-                  </div>
-                  <div class="agent-progress-card-meta">
-                    <span>Started {format_datetime(entry.session.started_at)}</span>
-                    <span>Updated {format_datetime(entry.session.updated_at)}</span>
-                  </div>
-                  <div class="agent-progress-card-stats">
-                    <span>{entry.message_count} messages</span>
-                    <span>{entry.decision_count} decisions</span>
-                    <span>{entry.change_count} changes</span>
-                  </div>
-                  <%= if entry.last_message do %>
-                    <div class="agent-progress-message">
-                      <span class="agent-progress-message-role">
-                        {String.capitalize(entry.last_message.role)}
-                      </span>
-                      <span class="agent-progress-message-content">
-                        {truncate_text(entry.last_message.content, 180)}
-                      </span>
+                    <div class="agent-progress-card-meta">
+                      <span>Started {format_datetime(entry.session.started_at)}</span>
+                      <span>Updated {format_datetime(entry.session.updated_at)}</span>
                     </div>
-                  <% else %>
-                    <p class="agent-progress-message-empty">No updates yet.</p>
-                  <% end %>
-                </article>
-              <% end %>
-            </div>
-          <% end %>
-        </section>
-      </div>
+                    <div class="agent-progress-card-stats">
+                      <span>{entry.message_count} messages</span>
+                      <span>{entry.decision_count} decisions</span>
+                      <span>{entry.change_count} changes</span>
+                    </div>
+                    <%= if entry.last_message do %>
+                      <div class="agent-progress-message">
+                        <span class="agent-progress-message-role">
+                          {String.capitalize(entry.last_message.role)}
+                        </span>
+                        <span class="agent-progress-message-content">
+                          {truncate_text(entry.last_message.content, 180)}
+                        </span>
+                      </div>
+                    <% else %>
+                      <p class="agent-progress-message-empty">No updates yet.</p>
+                    <% end %>
+                  </article>
+                <% end %>
+              </div>
+            <% end %>
+          </section>
+        </div>
+      </.error_boundary>
     </Layouts.app>
     """
   end

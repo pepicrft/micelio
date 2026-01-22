@@ -2,6 +2,7 @@ alias Micelio.Accounts
 alias Micelio.Accounts.Organization
 alias Micelio.Mic.{Binary, Repository, Tree}
 alias Micelio.Projects
+alias Micelio.Sessions
 alias Micelio.Repo
 alias Micelio.Storage
 
@@ -76,6 +77,34 @@ project =
 
       updated
   end
+
+{:ok, user} = Accounts.get_or_create_user_by_email("playwright@example.com")
+
+session_id = "playwright-session"
+
+session =
+  Sessions.get_session_by_session_id(session_id) ||
+    case Sessions.create_session(%{
+           session_id: session_id,
+           goal: "Stream session events",
+           project_id: project.id,
+           user_id: user.id
+         }) do
+      {:ok, session} -> session
+      {:error, changeset} -> raise "Failed to create session: #{inspect(changeset.errors)}"
+    end
+
+case Sessions.list_session_events(session.session_id, limit: 1) do
+  {:ok, []} ->
+    {:ok, _} =
+      Sessions.capture_session_event(session, %{
+        type: "progress",
+        payload: %{percent: 42, message: "Downloading"}
+      })
+
+  _ ->
+    :ok
+end
 
 readme = "# Mobile Layout\n"
 readme_hash = :crypto.hash(:sha256, readme)

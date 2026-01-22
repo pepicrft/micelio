@@ -7,6 +7,8 @@ defmodule Micelio.GRPC.Sessions.V1.SessionService.Server do
   alias Micelio.GRPC.Sessions.V1
 
   alias Micelio.GRPC.Sessions.V1.{
+    CaptureSessionEventRequest,
+    CaptureSessionEventResponse,
     GetSessionRequest,
     LandSessionRequest,
     ListSessionsRequest,
@@ -208,6 +210,35 @@ defmodule Micelio.GRPC.Sessions.V1.SessionService.Server do
       }
     else
       nil -> {:error, not_found_status("Project not found.")}
+      false -> {:error, forbidden_status("You do not have access to this organization.")}
+      {:error, status} -> {:error, status}
+    end
+  end
+
+  def capture_session_event(%CaptureSessionEventRequest{} = request, stream) do
+    with :ok <- require_field(request.session_id, "session_id"),
+         :ok <- require_field(request.payload, "payload"),
+         {:ok, user} <- fetch_user(request.user_id, stream),
+         %Session{} = session <- Sessions.get_session_by_session_id(request.session_id),
+         project = Projects.get_project_with_organization(session.project_id),
+         true <- Accounts.user_in_organization?(user, project.organization.id) do
+      opts = build_event_opts(request)
+
+      case Sessions.capture_session_payload(session, request.payload, opts) do
+        {:ok, %{event: event, storage_key: key}} ->
+          case Jason.encode(event) do
+            {:ok, json} ->
+              %CaptureSessionEventResponse{storage_key: key, event_json: json}
+
+            {:error, _} ->
+              {:error, internal_status("Failed to encode event response.")}
+          end
+
+        {:error, reason} ->
+          {:error, invalid_status("Failed to capture event: #{format_event_error(reason)}")}
+      end
+    else
+      nil -> {:error, not_found_status("Session not found.")}
       false -> {:error, forbidden_status("You do not have access to this organization.")}
       {:error, status} -> {:error, status}
     end
@@ -447,6 +478,35 @@ defmodule Micelio.GRPC.Sessions.V1.SessionService.Server do
       other -> other
     end
   end
+
+  defp build_event_opts(%CaptureSessionEventRequest{} = request) do
+    stream = normalize_event_option(request.stream)
+    format = normalize_event_option(request.format)
+
+    []
+    |> maybe_put_opt(:stream, stream)
+    |> maybe_put_opt(:format, format)
+  end
+
+  defp maybe_put_opt(opts, _key, nil), do: opts
+  defp maybe_put_opt(opts, key, value), do: Keyword.put(opts, key, value)
+
+  defp normalize_event_option(value) when is_binary(value) do
+    value
+    |> String.trim()
+    |> String.downcase()
+    |> empty_to_nil()
+  end
+
+  defp normalize_event_option(_value), do: nil
+
+  defp format_event_error(%{index: index, reason: reason}),
+    do: "invalid event at #{index}: #{format_event_error(reason)}"
+
+  defp format_event_error(reason) when is_atom(reason),
+    do: Atom.to_string(reason)
+
+  defp format_event_error(reason), do: inspect(reason)
 
   defp format_timestamp(nil), do: ""
 

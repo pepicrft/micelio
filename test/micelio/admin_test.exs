@@ -168,6 +168,58 @@ defmodule Micelio.AdminTest do
                  session.project.organization.account.handle != ""
              end)
     end
+
+    test "usage_dashboard_stats/0 and list_project_usage/1 return prompt usage totals" do
+      {:ok, admin} = Accounts.get_or_create_user_by_email("admin@example.com")
+
+      {:ok, organization} =
+        Accounts.create_organization_for_user(admin, %{name: "Acme", handle: "acme"})
+
+      {:ok, project_one} =
+        Projects.create_project(%{
+          name: "Project One",
+          handle: "project-one",
+          organization_id: organization.id,
+          visibility: "public"
+        })
+
+      {:ok, project_two} =
+        Projects.create_project(%{
+          name: "Project Two",
+          handle: "project-two",
+          organization_id: organization.id,
+          visibility: "public"
+        })
+
+      {:ok, pr_one} =
+        create_prompt_request(project_one, admin, %{token_count: 150})
+
+      {:ok, pr_two} =
+        create_prompt_request(project_one, admin, %{token_count: 75})
+
+      {:ok, pr_three} =
+        create_prompt_request(project_two, admin, %{token_count: 200})
+
+      {:ok, _} = Micelio.PromptRequests.review_prompt_request(pr_one, admin, :accepted)
+      {:ok, _} = Micelio.PromptRequests.review_prompt_request(pr_three, admin, :accepted)
+
+      stats = Admin.usage_dashboard_stats()
+      assert stats.tokens_spent == 425
+      assert stats.accepted_prompt_requests == 2
+      assert stats.total_prompt_requests == 3
+
+      projects = Admin.list_project_usage(2)
+      assert Enum.map(projects, & &1.project_id) == [project_two.id, project_one.id]
+
+      [top | rest] = projects
+      assert top.tokens_spent == 200
+      assert top.accepted_prompt_requests == 1
+      assert top.total_prompt_requests == 1
+
+      assert Enum.any?(rest, fn entry ->
+               entry.project_id == project_one.id and entry.tokens_spent == 225
+             end)
+    end
   end
 
   defp set_inserted_at(struct, inserted_at) do
@@ -181,5 +233,24 @@ defmodule Micelio.AdminTest do
     struct
     |> Ecto.Changeset.change(%{inserted_at: inserted_at, updated_at: inserted_at})
     |> Repo.update!()
+  end
+
+  defp create_prompt_request(project, user, attrs) do
+    now = DateTime.utc_now() |> DateTime.truncate(:second)
+
+    base_attrs = %{
+      title: "Ship usage metrics",
+      prompt: "Build usage dashboard.",
+      result: "Done",
+      system_prompt: "System",
+      conversation: %{"messages" => [%{"role" => "user", "content" => "hi"}]},
+      origin: :ai_generated,
+      model: "gpt-4",
+      model_version: "2024-01-01",
+      token_count: 120,
+      generated_at: now
+    }
+
+    Micelio.PromptRequests.create_prompt_request(Map.merge(base_attrs, attrs), project: project, user: user)
   end
 end

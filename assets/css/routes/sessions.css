@@ -8,6 +8,11 @@
   --sessions-border-subtle: #d8d8d8;
   --sessions-danger-text: #b3261e;
   --sessions-danger-bg: #fdecea;
+  --sessions-event-status: #1f3d7a;
+  --sessions-event-progress: #0f766e;
+  --sessions-event-output: #374151;
+  --sessions-event-error: #b3261e;
+  --sessions-event-artifact: #a16207;
 }
 
 /* Sessions list styles */
@@ -207,6 +212,15 @@
   color: var(--theme-ui-colors-muted);
 }
 
+.session-prompt-request-link {
+  color: var(--theme-ui-colors-primary);
+  text-decoration: none;
+}
+
+.session-prompt-request-link:hover {
+  text-decoration: underline;
+}
+
 .session-show-actions {
   display: flex;
   gap: var(--theme-ui-space-1);
@@ -278,6 +292,11 @@
 
   .session-action {
     width: 100%;
+  }
+
+  .session-event-heading {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
 
@@ -361,4 +380,347 @@
 
 .info-message {
   font-style: italic;
+}
+
+.session-event-viewer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--theme-ui-space-2);
+}
+
+.session-event-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--theme-ui-space-2);
+}
+
+.session-event-status {
+  padding: calc(var(--theme-ui-space-1) / 2) var(--theme-ui-space-1);
+  border: var(--theme-ui-borders-thin);
+  font-size: 0.85rem;
+  font-weight: var(--theme-ui-fontWeights-bold);
+  background-color: var(--theme-ui-colors-border);
+  color: var(--theme-ui-colors-text);
+}
+
+.session-event-status[data-state="live"] {
+  background-color: var(--sessions-status-landed-bg);
+  color: var(--sessions-status-landed-text);
+}
+
+.session-event-status[data-state="warning"] {
+  background-color: var(--sessions-status-active-bg);
+  color: var(--sessions-status-active-text);
+}
+
+.session-event-status[data-state="error"] {
+  background-color: var(--sessions-danger-bg);
+  color: var(--sessions-danger-text);
+}
+
+.session-event-status[data-state="idle"] {
+  background-color: var(--theme-ui-colors-background);
+  color: var(--theme-ui-colors-muted);
+}
+
+.session-event-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--theme-ui-space-1);
+}
+
+.session-event-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--theme-ui-space-1);
+  padding: calc(var(--theme-ui-space-1) / 2) var(--theme-ui-space-1);
+  border: var(--theme-ui-borders-thin);
+  background-color: var(--theme-ui-colors-background);
+  cursor: pointer;
+}
+
+.session-event-filter input {
+  margin: 0;
+}
+
+.session-event-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: var(--theme-ui-fontWeights-bold);
+  letter-spacing: 0.02em;
+  border: var(--theme-ui-borders-thin);
+  background-color: var(--theme-ui-colors-background);
+}
+
+.session-event-pill-status {
+  color: var(--sessions-event-status);
+  border-color: var(--sessions-event-status);
+}
+
+.session-event-pill-progress {
+  color: var(--sessions-event-progress);
+  border-color: var(--sessions-event-progress);
+}
+
+.session-event-pill-output {
+  color: var(--sessions-event-output);
+  border-color: var(--sessions-event-output);
+}
+
+.session-event-pill-error {
+  color: var(--sessions-event-error);
+  border-color: var(--sessions-event-error);
+}
+
+.session-event-pill-artifact {
+  color: var(--sessions-event-artifact);
+  border-color: var(--sessions-event-artifact);
+}
+
+.session-event-stream {
+  display: flex;
+  flex-direction: column;
+  gap: var(--theme-ui-space-2);
+}
+
+.session-event-empty {
+  color: var(--theme-ui-colors-muted);
+  font-style: italic;
+}
+
+.session-event-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--theme-ui-space-2);
+}
+
+.session-event-card {
+  border: var(--theme-ui-borders-thin);
+  border-left: 4px solid var(--theme-ui-colors-border);
+  background-color: var(--theme-ui-colors-background);
+  padding: var(--theme-ui-space-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--theme-ui-space-1);
+}
+
+.session-event-card-header {
+  display: flex;
+  align-items: center;
+  gap: var(--theme-ui-space-1);
+  flex-wrap: wrap;
+}
+
+.session-event-type {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: var(--theme-ui-fontWeights-bold);
+  background-color: var(--theme-ui-colors-border);
+  color: var(--theme-ui-colors-text);
+}
+
+.session-event-type-status {
+  background-color: var(--sessions-status-active-bg);
+  color: var(--sessions-event-status);
+}
+
+.session-event-type-progress {
+  background-color: #d1fae5;
+  color: var(--sessions-event-progress);
+}
+
+.session-event-type-output {
+  background-color: #f3f4f6;
+  color: var(--sessions-event-output);
+}
+
+.session-event-type-error {
+  background-color: var(--sessions-danger-bg);
+  color: var(--sessions-event-error);
+}
+
+.session-event-type-artifact {
+  background-color: #fef3c7;
+  color: var(--sessions-event-artifact);
+}
+
+.session-event-card.session-event-status {
+  border-left-color: var(--sessions-event-status);
+}
+
+.session-event-card.session-event-progress {
+  border-left-color: var(--sessions-event-progress);
+}
+
+.session-event-card.session-event-output {
+  border-left-color: var(--sessions-event-output);
+}
+
+.session-event-card.session-event-error {
+  border-left-color: var(--sessions-event-error);
+}
+
+.session-event-card.session-event-artifact {
+  border-left-color: var(--sessions-event-artifact);
+}
+
+.session-event-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 999px;
+  border: var(--theme-ui-borders-thin);
+  font-size: 0.65rem;
+  font-weight: var(--theme-ui-fontWeights-bold);
+  background-color: var(--theme-ui-colors-background);
+}
+
+.session-event-icon-status {
+  color: var(--sessions-event-status);
+  border-color: var(--sessions-event-status);
+}
+
+.session-event-icon-progress {
+  color: var(--sessions-event-progress);
+  border-color: var(--sessions-event-progress);
+}
+
+.session-event-icon-output {
+  color: var(--sessions-event-output);
+  border-color: var(--sessions-event-output);
+}
+
+.session-event-icon-error {
+  color: var(--sessions-event-error);
+  border-color: var(--sessions-event-error);
+}
+
+.session-event-icon-artifact {
+  color: var(--sessions-event-artifact);
+  border-color: var(--sessions-event-artifact);
+}
+
+.session-event-time {
+  color: var(--theme-ui-colors-muted);
+  font-size: 0.85rem;
+}
+
+.session-event-source {
+  color: var(--theme-ui-colors-muted);
+  font-size: 0.85rem;
+  text-transform: capitalize;
+}
+
+.session-event-summary {
+  font-weight: var(--theme-ui-fontWeights-medium);
+}
+
+.session-event-progress {
+  display: flex;
+  align-items: center;
+  gap: var(--theme-ui-space-1);
+}
+
+.session-event-progress-track {
+  flex: 1;
+  height: 0.5rem;
+  border-radius: 999px;
+  background-color: var(--theme-ui-colors-border);
+  overflow: hidden;
+}
+
+.session-event-progress-bar {
+  height: 100%;
+  background-color: var(--sessions-event-progress);
+  transition: width 0.2s ease;
+}
+
+.session-event-progress-label {
+  min-width: 3rem;
+  text-align: right;
+  font-size: 0.8rem;
+  color: var(--theme-ui-colors-muted);
+}
+
+.session-event-artifact {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--theme-ui-space-1) / 2);
+}
+
+.session-event-artifact-link {
+  color: var(--theme-ui-colors-primary);
+  font-weight: var(--theme-ui-fontWeights-medium);
+  text-decoration: none;
+}
+
+.session-event-artifact-link:hover {
+  text-decoration: underline;
+}
+
+.session-event-artifact-image {
+  max-width: 100%;
+  border-radius: var(--theme-ui-radii-base);
+  border: var(--theme-ui-borders-thin);
+  background-color: var(--theme-ui-colors-background);
+}
+
+.session-event-artifact-meta {
+  font-size: 0.8rem;
+  color: var(--theme-ui-colors-muted);
+}
+
+.session-event-output-block summary {
+  cursor: pointer;
+  color: var(--theme-ui-colors-primary);
+  font-weight: var(--theme-ui-fontWeights-medium);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.session-event-output-stream {
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  border: var(--theme-ui-borders-thin);
+  font-size: 0.7rem;
+  letter-spacing: 0.02em;
+  color: var(--theme-ui-colors-muted);
+}
+
+.session-event-output {
+  padding: var(--theme-ui-space-1);
+  border: var(--theme-ui-borders-thin);
+  background-color: var(--theme-ui-colors-background);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-family: var(--theme-ui-fonts-mono);
+  font-size: 0.85rem;
+}
+
+.session-event-details summary {
+  cursor: pointer;
+  color: var(--theme-ui-colors-primary);
+  font-weight: var(--theme-ui-fontWeights-medium);
+}
+
+.session-event-payload {
+  padding: var(--theme-ui-space-1);
+  border: var(--theme-ui-borders-thin);
+  background-color: var(--theme-ui-colors-background);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-family: var(--theme-ui-fonts-mono);
+  font-size: 0.85rem;
 }

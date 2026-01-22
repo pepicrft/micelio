@@ -3,7 +3,7 @@ defmodule MicelioWeb.SessionLiveTest do
 
   import Phoenix.LiveViewTest
 
-  alias Micelio.{Accounts, Projects, Sessions}
+  alias Micelio.{Accounts, PromptRequests, Projects, Sessions}
   alias Micelio.Sessions.OGSummary
   alias MicelioWeb.OpenGraphImage
 
@@ -174,6 +174,362 @@ defmodule MicelioWeb.SessionLiveTest do
       assert html =~ "Use Phoenix"
       assert html =~ "Best framework"
       assert html =~ "custom_key"
+    end
+
+    test "shows prompt request link when session originates from a prompt request", %{
+      conn: conn,
+      project: project,
+      user: user,
+      organization: organization
+    } do
+      {:ok, prompt_request} =
+        PromptRequests.create_prompt_request(
+          %{
+            title: "Prompt to PR",
+            prompt: "Do the thing",
+            result: "Output",
+            origin: :human,
+            system_prompt: "System",
+            conversation: %{"messages" => [%{"role" => "user", "content" => "Ship it"}]}
+          },
+          project: project,
+          user: user
+        )
+
+      {:ok, accepted_prompt_request} =
+        PromptRequests.review_prompt_request(prompt_request, user, :accepted)
+
+      session = Sessions.get_session(accepted_prompt_request.session_id)
+
+      {:ok, _live, html} =
+        live(
+          conn,
+          "/projects/#{organization.account.handle}/#{project.handle}/sessions/#{session.id}"
+        )
+
+      assert html =~ "Prompt request:"
+      assert html =~ "Prompt to PR"
+      assert html =~
+               "/projects/#{organization.account.handle}/#{project.handle}/prompt-requests/#{prompt_request.id}"
+    end
+
+    test "renders session event viewer controls", %{
+      conn: conn,
+      project: project,
+      user: user,
+      organization: organization
+    } do
+      {:ok, session} =
+        Sessions.create_session(%{
+          session_id: "event-viewer-session",
+          goal: "Stream events",
+          project_id: project.id,
+          user_id: user.id
+        })
+
+      {:ok, _live, html} =
+        live(
+          conn,
+          "/projects/#{organization.account.handle}/#{project.handle}/sessions/#{session.id}"
+        )
+
+      assert html =~ "Session events"
+      assert html =~ "data-events-url=\"/api/sessions/#{session.session_id}/events/stream\""
+      assert html =~ "session-event-icon-status"
+      assert html =~ ">Status<"
+      assert html =~ ">Progress<"
+      assert html =~ ">Output<"
+      assert html =~ ">Error<"
+      assert html =~ ">Artifact<"
+    end
+
+    test "renders initial session events and cursor", %{
+      conn: conn,
+      project: project,
+      user: user,
+      organization: organization
+    } do
+      {:ok, session} =
+        Sessions.create_session(%{
+          session_id: "event-snapshot-session",
+          goal: "Snapshot events",
+          project_id: project.id,
+          user_id: user.id
+        })
+
+      {:ok, _} =
+        Sessions.capture_session_event(session, %{
+          type: "status",
+          payload: %{state: "running", message: "booting"}
+        })
+
+      {:ok, %{storage_key: cursor}} =
+        Sessions.capture_session_event(session, %{
+          type: "output",
+          payload: %{text: "hello", stream: "stdout", format: "text"}
+        })
+
+      {:ok, _live, html} =
+        live(
+          conn,
+          "/projects/#{organization.account.handle}/#{project.handle}/sessions/#{session.id}"
+        )
+
+      assert html =~ "session-event-card"
+      assert html =~ "data-type=\"status\""
+      assert html =~ "data-type=\"output\""
+      assert html =~ "session-event-icon-status"
+      assert html =~ "running - booting"
+      assert html =~ "hello"
+      assert html =~ "data-after=\"#{cursor}\""
+    end
+
+    test "renders session event detail payloads", %{
+      conn: conn,
+      project: project,
+      user: user,
+      organization: organization
+    } do
+      {:ok, session} =
+        Sessions.create_session(%{
+          session_id: "event-detail-session",
+          goal: "Payload details",
+          project_id: project.id,
+          user_id: user.id
+        })
+
+      {:ok, _} =
+        Sessions.capture_session_event(session, %{
+          type: "status",
+          payload: %{state: "running", message: "booting"}
+        })
+
+      {:ok, _live, html} =
+        live(
+          conn,
+          "/projects/#{organization.account.handle}/#{project.handle}/sessions/#{session.id}"
+        )
+
+      assert html =~ "data-role=\"event-details\""
+      assert html =~ "session-event-payload"
+      assert html =~ "&quot;payload&quot;"
+    end
+
+    test "renders progress summaries with percent and message", %{
+      conn: conn,
+      project: project,
+      user: user,
+      organization: organization
+    } do
+      {:ok, session} =
+        Sessions.create_session(%{
+          session_id: "event-progress-summary",
+          goal: "Track progress",
+          project_id: project.id,
+          user_id: user.id
+        })
+
+      {:ok, _} =
+        Sessions.capture_session_event(session, %{
+          type: "progress",
+          payload: %{percent: 42, message: "Downloading"}
+        })
+
+      {:ok, _live, html} =
+        live(
+          conn,
+          "/projects/#{organization.account.handle}/#{project.handle}/sessions/#{session.id}"
+        )
+
+      assert html =~ "42% - Downloading"
+    end
+
+    test "renders progress bars for long-running work", %{
+      conn: conn,
+      project: project,
+      user: user,
+      organization: organization
+    } do
+      {:ok, session} =
+        Sessions.create_session(%{
+          session_id: "event-progress-bar",
+          goal: "Show progress bar",
+          project_id: project.id,
+          user_id: user.id
+        })
+
+      {:ok, _} =
+        Sessions.capture_session_event(session, %{
+          type: "progress",
+          payload: %{percent: 50, message: "Syncing"}
+        })
+
+      {:ok, _live, html} =
+        live(
+          conn,
+          "/projects/#{organization.account.handle}/#{project.handle}/sessions/#{session.id}"
+        )
+
+      assert html =~ "session-event-progress"
+      assert html =~ "aria-valuenow=\"50\""
+    end
+
+    test "renders artifact image previews", %{
+      conn: conn,
+      project: project,
+      user: user,
+      organization: organization
+    } do
+      {:ok, session} =
+        Sessions.create_session(%{
+          session_id: "event-artifact-image",
+          goal: "Show images",
+          project_id: project.id,
+          user_id: user.id
+        })
+
+      {:ok, _} =
+        Sessions.capture_session_event(session, %{
+          type: "artifact",
+          payload: %{
+            kind: "image",
+            name: "preview.png",
+            uri: "https://example.com/preview.png",
+            content_type: "image/png"
+          }
+        })
+
+      {:ok, _live, html} =
+        live(
+          conn,
+          "/projects/#{organization.account.handle}/#{project.handle}/sessions/#{session.id}"
+        )
+
+      assert html =~ "session-event-artifact-image"
+      assert html =~ "src=\"https://example.com/preview.png\""
+    end
+
+    test "renders output in collapsible sections", %{
+      conn: conn,
+      project: project,
+      user: user,
+      organization: organization
+    } do
+      {:ok, session} =
+        Sessions.create_session(%{
+          session_id: "event-output-collapsible",
+          goal: "Show output",
+          project_id: project.id,
+          user_id: user.id
+        })
+
+      {:ok, _} =
+        Sessions.capture_session_event(session, %{
+          type: "output",
+          payload: %{text: "Hello output", stream: "stdout", format: "text"}
+        })
+
+      {:ok, _live, html} =
+        live(
+          conn,
+          "/projects/#{organization.account.handle}/#{project.handle}/sessions/#{session.id}"
+        )
+
+      assert html =~ "session-event-output-block"
+      assert html =~ "Output"
+      assert html =~ "STDOUT"
+    end
+
+    test "opens short output blocks by default", %{
+      conn: conn,
+      project: project,
+      user: user,
+      organization: organization
+    } do
+      {:ok, session} =
+        Sessions.create_session(%{
+          session_id: "event-output-open",
+          goal: "Short output",
+          project_id: project.id,
+          user_id: user.id
+        })
+
+      {:ok, _} =
+        Sessions.capture_session_event(session, %{
+          type: "output",
+          payload: %{text: "Short output", stream: "stdout", format: "text"}
+        })
+
+      {:ok, _live, html} =
+        live(
+          conn,
+          "/projects/#{organization.account.handle}/#{project.handle}/sessions/#{session.id}"
+        )
+
+      document = Floki.parse_document!(html)
+      output_blocks = Floki.find(document, "details.session-event-output-block")
+
+      assert length(output_blocks) == 1
+      assert Floki.attribute(output_blocks, "open") == ["open"]
+    end
+
+    test "collapses long output blocks by default", %{
+      conn: conn,
+      project: project,
+      user: user,
+      organization: organization
+    } do
+      {:ok, session} =
+        Sessions.create_session(%{
+          session_id: "event-output-closed",
+          goal: "Long output",
+          project_id: project.id,
+          user_id: user.id
+        })
+
+      long_output = String.duplicate("A", 241)
+
+      {:ok, _} =
+        Sessions.capture_session_event(session, %{
+          type: "output",
+          payload: %{text: long_output, stream: "stdout", format: "text"}
+        })
+
+      {:ok, _live, html} =
+        live(
+          conn,
+          "/projects/#{organization.account.handle}/#{project.handle}/sessions/#{session.id}"
+        )
+
+      document = Floki.parse_document!(html)
+      output_blocks = Floki.find(document, "details.session-event-output-block")
+
+      assert length(output_blocks) == 1
+      assert Floki.attribute(output_blocks, "open") == []
+    end
+
+    test "shows empty session event state when no events exist", %{
+      conn: conn,
+      project: project,
+      user: user,
+      organization: organization
+    } do
+      {:ok, session} =
+        Sessions.create_session(%{
+          session_id: "event-empty-session",
+          goal: "No events yet",
+          project_id: project.id,
+          user_id: user.id
+        })
+
+      {:ok, _live, html} =
+        live(
+          conn,
+          "/projects/#{organization.account.handle}/#{project.handle}/sessions/#{session.id}"
+        )
+
+      assert html =~ "data-role=\"event-empty\""
+      assert html =~ "No events yet."
     end
 
     test "displays conversation with role labels", %{

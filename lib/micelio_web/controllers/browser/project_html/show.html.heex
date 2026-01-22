@@ -135,6 +135,67 @@
       </section>
     <% end %>
 
+    <section class="project-token-pool" id="project-token-pool">
+      <h2 class="project-token-title">AI token pool</h2>
+      <p class="project-token-balance">
+        Balance: {@token_pool.balance} tokens
+      </p>
+      <p class="project-token-available">
+        Available: {@token_pool_available} tokens
+      </p>
+      <%= if @current_user do %>
+        <.form
+          for={@token_contribution_form}
+          id="project-token-form"
+          class="project-token-form"
+          action={~p"/#{@account.handle}/#{@project.handle}/token-contributions"}
+          method="post"
+        >
+          <input
+            type="hidden"
+            name="token_contribution[return_to]"
+            value={@token_return_to}
+          />
+          <div class="project-token-fields">
+            <.input
+              field={@token_contribution_form[:amount]}
+              type="number"
+              min="1"
+              step="1"
+              label="Tokens"
+            />
+          </div>
+          <button type="submit" class="project-token-submit" id="project-token-submit">
+            Contribute
+          </button>
+        </.form>
+      <% else %>
+        <p class="project-token-login">
+          <a href={~p"/auth/login"}>Sign in</a> to contribute tokens.
+        </p>
+      <% end %>
+    </section>
+
+    <section class="project-token-usage" id="project-token-usage">
+      <h2 class="project-token-title">AI token usage</h2>
+      <div class="project-token-usage-grid">
+        <div class="project-token-usage-card">
+          <span class="project-token-usage-label">Tokens spent</span>
+          <span class="project-token-usage-value">{@token_usage.tokens_spent}</span>
+          <span class="project-token-usage-meta">Total tokens across prompt requests</span>
+        </div>
+        <div class="project-token-usage-card">
+          <span class="project-token-usage-label">Value delivered</span>
+          <span class="project-token-usage-value">
+            {@token_usage.accepted_prompt_requests}
+          </span>
+          <span class="project-token-usage-meta">
+            Accepted prompts ({@token_usage_acceptance_rate})
+          </span>
+        </div>
+      </div>
+    </section>
+
     <div class="project-browser">
       <% segments = if @dir_path == "", do: [], else: String.split(@dir_path, "/") %>
       <% last_segment_index = length(segments) - 1 %>

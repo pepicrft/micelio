@@ -12,6 +12,7 @@ defmodule MicelioWeb.Browser.RepositoryController do
   def blame(conn, params), do: delegate(conn, params, &ProjectController.blame/2)
   def toggle_star(conn, params), do: delegate(conn, params, &ProjectController.toggle_star/2)
   def fork(conn, params), do: delegate(conn, params, &ProjectController.fork/2)
+  def contribute_tokens(conn, params), do: delegate(conn, params, &ProjectController.contribute_tokens/2)
 
   def badge(conn, _params) do
     with account when not is_nil(account) <- conn.assigns.selected_account,

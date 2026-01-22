@@ -66,7 +66,7 @@ defmodule Micelio.AgentInfra.Billing do
           }
         }
 
-  def usage_from_plan(%ProvisioningPlan{} = plan, opts \ []) do
+  def usage_from_plan(%ProvisioningPlan{} = plan, opts \\ []) do
     ttl_seconds = plan.ttl_seconds || Keyword.get(opts, :ttl_seconds, default_ttl_seconds())
     cpu_core_seconds = plan.cpu_cores * ttl_seconds
     memory_mb_seconds = plan.memory_mb * ttl_seconds
@@ -91,12 +91,12 @@ defmodule Micelio.AgentInfra.Billing do
     }
   end
 
-  def reserve_for_plan(%Account{} = account, %ProvisioningPlan{} = plan, opts \ []) do
+  def reserve_for_plan(%Account{} = account, %ProvisioningPlan{} = plan, opts \\ []) do
     usage = usage_from_plan(plan, opts)
     reserve_usage(account.id, usage, opts)
   end
 
-  def reserve_usage(account_id, %__MODULE__{} = usage, opts \ []) when is_binary(account_id) do
+  def reserve_usage(account_id, %__MODULE__{} = usage, opts \\ []) when is_binary(account_id) do
     {period_start, period_end} = quota_period(DateTime.utc_now(), opts)
     limits = Map.merge(default_limits(), normalize_limits(Keyword.get(opts, :limits, %{})))
 
@@ -152,7 +152,7 @@ defmodule Micelio.AgentInfra.Billing do
     end
   end
 
-  def quota_period(%DateTime{} = now, opts \ []) do
+  def quota_period(%DateTime{} = now, opts \\ []) do
     period = Keyword.get(opts, :period, :month)
 
     case period do

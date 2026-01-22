@@ -38,6 +38,10 @@ config :logger, :default_formatter,
   format: "$time $metadata[$level] $message\n",
   metadata: [:request_id]
 
+if config_env() != :test do
+  config :logger, backends: [:console, Micelio.Errors.LoggerBackend]
+end
+
 config :micelio, Micelio.GRPC,
   enabled: false,
   port: 50_051,
@@ -78,12 +82,39 @@ config :micelio, :api_rate_limit,
   authenticated_limit: 500,
   authenticated_window_ms: 60_000
 
+config :micelio, :s3_validation_rate_limit,
+  limit: 10,
+  window_ms: 60_000
+
 config :micelio, :github_oauth, []
 config :micelio, :gitlab_oauth, []
 config :micelio, :project_limits, max_projects_per_tenant: 25
 config :micelio, :project_llm_models, ["gpt-4.1-mini", "gpt-4.1"]
 config :micelio, :project_llm_default, "gpt-4.1-mini"
 config :micelio, :remote_execution, allowed_commands: []
+config :micelio, :errors,
+  retention_days: 90,
+  resolved_retention_days: 30,
+  unresolved_retention_days: 90,
+  retention_archive_enabled: false,
+  retention_archive_prefix: "errors/archives",
+  retention_vacuum_enabled: true,
+  retention_table_warn_threshold: 100_000,
+  retention_oban_enabled: false,
+  dedupe_window_seconds: 300,
+  capture_enabled: true,
+  capture_rate_limit_per_kind_per_minute: 100,
+  capture_rate_limit_total_per_minute: 1000,
+  sampling_after_occurrences: 100,
+  sampling_rate: 0.1,
+  notification_threshold_count: 10,
+  notification_threshold_window_seconds: 300,
+  notification_fingerprint_rate_limit_seconds: 3600,
+  notification_total_rate_limit_seconds: 3600,
+  notification_total_rate_limit_max: 10
+
+config :micelio, :validation_environments,
+  min_quality_score: 80
 
 config :micelio, Micelio.AgentInfra.Billing,
   limits: %{
@@ -99,6 +130,11 @@ config :micelio, Micelio.AgentInfra.Billing,
   },
   unit_price_cents: 1,
   default_ttl_seconds: 3600
+
+config :micelio, Micelio.Errors.RetentionScheduler,
+  enabled: true,
+  run_hour: 3,
+  run_minute: 0
 
 config :micelio,
   ecto_repos: [Micelio.Repo],

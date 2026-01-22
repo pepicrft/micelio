@@ -1,5 +1,7 @@
 @import "./theme/tokens.css";
 
+@import "./components/error_boundary.css";
+
 @import "./routes/navbar.css";
 @import "./routes/footer.css";
 @import "./routes/home.css";
@@ -21,3 +23,7 @@
 @import "./routes/search.css";
 @import "./routes/webhooks.css";
 @import "./routes/admin_dashboard.css";
+@import "./routes/admin_prompts.css";
+@import "./routes/admin_errors.css";
+@import "./routes/admin_error_notifications.css";
+@import "./routes/storage_settings.css";

@@ -98,6 +98,17 @@ defmodule MicelioWeb.Plugs.OpenGraphCacheBuster do
     |> normalize_cache_buster()
   end
 
+  defp normalize_cache_buster(nil), do: nil
+
+  defp normalize_cache_buster(value) when is_binary(value) do
+    case String.trim(value) do
+      "" -> nil
+      trimmed -> trimmed
+    end
+  end
+
+  defp normalize_cache_buster(_value), do: nil
+
   defp maybe_disable_crawler_cache(conn, platform) when is_binary(platform) do
     case get_resp_header(conn, "cache-control") do
       [] -> put_resp_header(conn, "cache-control", "no-cache, max-age=0, must-revalidate")

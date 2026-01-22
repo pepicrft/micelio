@@ -2,6 +2,7 @@ defmodule MicelioWeb.Browser.RepositoryControllerTest do
   use MicelioWeb.ConnCase, async: true
 
   alias Micelio.Accounts
+  alias Micelio.AITokens
   alias Micelio.Mic.{Binary, Repository, Tree}
   alias Micelio.Projects
   alias Micelio.Sessions
@@ -177,6 +178,29 @@ defmodule MicelioWeb.Browser.RepositoryControllerTest do
     assert html =~ "[![#{organization.account.handle}/#{project.handle}]("
     assert html =~ "id=\"project-badge-markdown\""
     assert html =~ "id=\"project-badge-html\""
+  end
+
+  test "allows contributing tokens to a project", %{
+    conn: conn,
+    organization: organization,
+    project: project
+  } do
+    %{conn: conn, user: _user} = register_and_log_in_user(%{conn: conn})
+    return_to = ~p"/#{organization.account.handle}/#{project.handle}"
+
+    conn =
+      conn
+      |> with_csrf()
+      |> post(~p"/#{organization.account.handle}/#{project.handle}/token-contributions", %{
+        "token_contribution" => %{"amount" => "15", "return_to" => return_to}
+      })
+
+    assert redirected_to(conn) == return_to
+    assert Phoenix.Flash.get(conn.assigns.flash, :info) ==
+             "Thanks for contributing tokens to this project."
+
+    pool = AITokens.get_token_pool_by_project(project.id)
+    assert pool.balance == 15
   end
 
   test "returns not found for badges on private repositories", %{

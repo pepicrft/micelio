@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "benchmarks": [
+    {
+      "id": "json_encode",
+      "max_ms": 500
+    },
+    {
+      "id": "map_build",
+      "max_ms": 500
+    },
+    {
+      "id": "string_concat",
+      "max_ms": 500
+    }
+  ]
+}

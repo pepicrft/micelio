@@ -63,3 +63,30 @@ defmodule Micelio.TestValidationExecutor do
     {:ok, %{exit_code: 0, stdout: "ok", resource_usage: %{}}}
   end
 end
+
+defmodule Micelio.TestFailingValidationExecutor do
+  @behaviour Micelio.ValidationEnvironments.Executor
+
+  @impl true
+  def run(_instance_ref, "mix", ["compile" | _], _env) do
+    {:ok, %{exit_code: 0, stdout: "compiled", resource_usage: %{cpu_seconds: 1.0}}}
+  end
+
+  def run(_instance_ref, "mix", ["format" | _], _env) do
+    {:ok, %{exit_code: 0, stdout: "formatted", resource_usage: %{cpu_seconds: 0.5}}}
+  end
+
+  def run(_instance_ref, "mix", ["test" | _], _env) do
+    {:ok,
+     %{
+       exit_code: 1,
+       stdout: "tests failed",
+       resource_usage: %{cpu_seconds: 1.5, memory_mb: 128},
+       coverage_delta: -0.02
+     }}
+  end
+
+  def run(_instance_ref, _command, _args, _env) do
+    {:ok, %{exit_code: 0, stdout: "ok", resource_usage: %{}}}
+  end
+end

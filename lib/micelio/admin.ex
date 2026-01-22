@@ -7,6 +7,7 @@ defmodule Micelio.Admin do
 
   alias Micelio.Accounts.{Organization, User}
   alias Micelio.Projects.Project
+  alias Micelio.PromptRequests.PromptRequest
   alias Micelio.Repo
   alias Micelio.Sessions.Session
 
@@ -101,6 +102,63 @@ defmodule Micelio.Admin do
     |> join(:left, [s, u, p, o], a in assoc(o, :account))
     |> preload([_s, u, p, o, a], user: u, project: {p, organization: {o, account: a}})
     |> order_by([s], desc: s.inserted_at)
+    |> limit(^limit)
+    |> Repo.all()
+  end
+
+  @doc """
+  Returns aggregate AI token usage metrics across all prompt requests.
+  """
+  def usage_dashboard_stats do
+    tokens_spent =
+      Repo.one(
+        from pr in PromptRequest,
+          select: fragment("COALESCE(?, 0)", sum(pr.token_count))
+      ) || 0
+
+    accepted_prompt_requests =
+      Repo.one(
+        from pr in PromptRequest,
+          where: pr.review_status == :accepted,
+          select: count(pr.id)
+      ) || 0
+
+    total_prompt_requests =
+      Repo.one(
+        from pr in PromptRequest,
+          select: count(pr.id)
+      ) || 0
+
+    %{
+      tokens_spent: tokens_spent,
+      accepted_prompt_requests: accepted_prompt_requests,
+      total_prompt_requests: total_prompt_requests
+    }
+  end
+
+  @doc """
+  Returns per-project usage stats for prompt request token usage.
+  """
+  def list_project_usage(limit \\ 20) when is_integer(limit) and limit > 0 do
+    PromptRequest
+    |> join(:inner, [pr], p in assoc(pr, :project))
+    |> join(:inner, [pr, p], o in assoc(p, :organization))
+    |> join(:inner, [pr, p, o], a in assoc(o, :account))
+    |> group_by([_pr, p, _o, a], [p.id, p.name, p.handle, a.handle])
+    |> select([pr, p, _o, a], %{
+      project_id: p.id,
+      project_name: p.name,
+      project_handle: p.handle,
+      account_handle: a.handle,
+      tokens_spent: fragment("COALESCE(?, 0)", sum(pr.token_count)),
+      total_prompt_requests: count(pr.id),
+      accepted_prompt_requests:
+        fragment("SUM(CASE WHEN ? = 'accepted' THEN 1 ELSE 0 END)", pr.review_status)
+    })
+    |> order_by([pr, _p, _o, _a], [
+      desc: fragment("COALESCE(?, 0)", sum(pr.token_count)),
+      desc: count(pr.id)
+    ])
     |> limit(^limit)
     |> Repo.all()
   end

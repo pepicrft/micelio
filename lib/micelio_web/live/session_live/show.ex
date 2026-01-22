@@ -2,7 +2,11 @@ defmodule MicelioWeb.SessionLive.Show do
   use MicelioWeb, :live_view
 
   alias Micelio.{Authorization, Projects, Sessions}
+  alias Micelio.Sessions.EventSchema
   alias MicelioWeb.PageMeta
+
+  @event_snapshot_limit 50
+  @max_session_events 200
 
   @impl true
   def mount(
@@ -50,6 +54,8 @@ defmodule MicelioWeb.SessionLive.Show do
                   |> assign(:organization, organization)
                   |> assign(:session, session)
                   |> assign(:change_stats, change_stats)
+                  |> assign(:event_types, EventSchema.event_types())
+                  |> load_event_snapshot()
                   |> assign_session_og_summary()
 
                 {:ok, socket}
@@ -144,6 +150,13 @@ defmodule MicelioWeb.SessionLive.Show do
 
   defp format_file_size(_), do: ""
 
+  defp prompt_request_title(%{title: title, id: id}) do
+    case title do
+      value when is_binary(value) and String.trim(value) != "" -> value
+      _ -> "Prompt request #{id}"
+    end
+  end
+
   defp session_og_stats(%{total: total, added: added, modified: modified, deleted: deleted})
        when is_integer(total) and is_integer(added) and is_integer(modified) and is_integer(deleted) do
     %{
@@ -167,6 +180,234 @@ defmodule MicelioWeb.SessionLive.Show do
         socket
     end
   end
+
+  defp load_event_snapshot(socket) do
+    session = socket.assigns.session
+
+    case Sessions.list_session_events(session.session_id, limit: @event_snapshot_limit) do
+      {:ok, events} ->
+        last_cursor =
+          case List.last(events) do
+            %{storage_key: storage_key} -> storage_key
+            _ -> nil
+          end
+
+        socket
+        |> assign(:event_snapshot, events)
+        |> assign(:event_after_cursor, last_cursor)
+
+      {:error, _reason} ->
+        socket
+        |> assign(:event_snapshot, [])
+        |> assign(:event_after_cursor, nil)
+    end
+  end
+
+  defp event_type(%{"type" => type}) when is_binary(type), do: type
+  defp event_type(_event), do: "unknown"
+
+  defp event_payload(%{"payload" => payload}) when is_map(payload), do: payload
+  defp event_payload(_event), do: %{}
+
+  defp event_output_text(event) do
+    payload = event_payload(event)
+
+    if event_type(event) == "output" and is_binary(payload["text"]) do
+      payload["text"]
+    end
+  end
+
+  defp event_output_stream(event) do
+    payload = event_payload(event)
+
+    if event_type(event) == "output" and is_binary(payload["stream"]) do
+      payload["stream"]
+    end
+  end
+
+  defp output_open?(output) when is_binary(output) do
+    String.length(output) <= 240
+  end
+
+  defp output_open?(_output), do: false
+
+  defp event_summary(event) do
+    payload = event_payload(event)
+
+    case event_type(event) do
+      "status" ->
+        parts =
+          []
+          |> maybe_push(payload["state"])
+          |> maybe_push(payload["message"])
+          |> maybe_push(format_percent(payload["percent"]))
+
+        Enum.join(parts, " - ")
+
+      "progress" ->
+        cond do
+          is_number(payload["percent"]) ->
+            join_summary([format_percent(payload["percent"]), payload["message"]])
+
+          is_number(payload["current"]) and is_number(payload["total"]) ->
+            unit = payload["unit"] || ""
+
+            "#{payload["current"]}/#{payload["total"]} #{unit}"
+            |> String.trim()
+            |> then(&join_summary([&1, payload["message"]]))
+
+          is_binary(payload["message"]) ->
+            payload["message"]
+
+          true ->
+            ""
+        end
+
+      "output" ->
+        payload["text"]
+        |> truncate_text(140)
+
+      "error" ->
+        if is_binary(payload["message"]), do: payload["message"], else: ""
+
+      "artifact" ->
+        cond do
+          is_binary(payload["name"]) -> payload["name"]
+          is_binary(payload["uri"]) -> payload["uri"]
+          true -> ""
+        end
+
+      _ ->
+        ""
+    end
+  end
+
+  defp format_percent(nil), do: nil
+  defp format_percent(percent) when is_number(percent), do: "#{percent}%"
+  defp format_percent(_), do: nil
+
+  defp join_summary(parts) when is_list(parts) do
+    parts
+    |> Enum.filter(fn part -> is_binary(part) and part != "" end)
+    |> Enum.join(" - ")
+  end
+
+  defp event_progress_percent(event) do
+    payload = event_payload(event)
+
+    percent =
+      cond do
+        is_number(payload["percent"]) ->
+          payload["percent"]
+
+        is_number(payload["current"]) and is_number(payload["total"]) and payload["total"] > 0 ->
+          payload["current"] / payload["total"] * 100
+
+        true ->
+          nil
+      end
+
+    if is_number(percent) do
+      percent
+      |> max(0)
+      |> min(100)
+    end
+  end
+
+  defp maybe_push(list, value) when is_binary(value) and value != "", do: list ++ [value]
+  defp maybe_push(list, value) when is_number(value), do: list ++ ["#{value}"]
+  defp maybe_push(list, _value), do: list
+
+  defp truncate_text(nil, _max), do: ""
+
+  defp truncate_text(text, max) when is_binary(text) do
+    if String.length(text) > max do
+      String.slice(text, 0, max) <> "..."
+    else
+      text
+    end
+  end
+
+  defp format_event_timestamp(nil), do: nil
+
+  defp format_event_timestamp(timestamp) when is_binary(timestamp) do
+    case DateTime.from_iso8601(timestamp) do
+      {:ok, datetime, _offset} ->
+        Calendar.strftime(datetime, "%b %d, %Y %H:%M:%S UTC")
+
+      _ ->
+        timestamp
+    end
+  end
+
+  defp event_timestamp_attr(nil), do: nil
+
+  defp event_timestamp_attr(timestamp) when is_binary(timestamp) do
+    case DateTime.from_iso8601(timestamp) do
+      {:ok, datetime, _offset} -> DateTime.to_iso8601(datetime)
+      _ -> nil
+    end
+  end
+
+  defp format_event_source(%{"label" => label}) when is_binary(label) and label != "", do: label
+
+  defp format_event_source(%{"kind" => kind}) when is_binary(kind) and kind != "" do
+    String.capitalize(kind)
+  end
+
+  defp format_event_source(_source), do: "System"
+
+  defp artifact_uri(%{"uri" => uri}) when is_binary(uri) and uri != "", do: uri
+  defp artifact_uri(_payload), do: nil
+
+  defp artifact_label(payload) do
+    cond do
+      is_binary(payload["name"]) and payload["name"] != "" -> payload["name"]
+      is_binary(payload["uri"]) and payload["uri"] != "" -> payload["uri"]
+      true -> "Artifact"
+    end
+  end
+
+  defp artifact_detail(payload) do
+    parts =
+      []
+      |> maybe_push(payload["kind"])
+      |> maybe_push(format_file_size(payload["size_bytes"]))
+
+    join_summary(parts)
+  end
+
+  defp artifact_image?(payload) do
+    kind = payload["kind"]
+    content_type = payload["content_type"]
+    uri = payload["uri"]
+
+    cond do
+      kind == "image" ->
+        true
+
+      is_binary(content_type) and String.starts_with?(content_type, "image/") ->
+        true
+
+      is_binary(uri) ->
+        String.downcase(uri)
+        |> String.ends_with?([".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg"])
+
+      true ->
+        false
+    end
+  end
+
+  defp event_payload_json(event) do
+    Jason.encode!(event, pretty: true)
+  end
+
+  defp event_type_icon("status"), do: "S"
+  defp event_type_icon("progress"), do: "P"
+  defp event_type_icon("output"), do: "O"
+  defp event_type_icon("error"), do: "E"
+  defp event_type_icon("artifact"), do: "A"
+  defp event_type_icon(_type), do: "?"
 
   @impl true
   def render(assigns) do
@@ -211,6 +452,20 @@ defmodule MicelioWeb.SessionLive.Show do
             <%= if @session.user do %>
               <div>
                 <strong>Author:</strong> {@session.user.email}
+              </div>
+            <% end %>
+            <%= if @session.prompt_request do %>
+              <div>
+                <strong>Prompt request:</strong>
+                <.link
+                  navigate={
+                    ~p"/projects/#{@organization.account.handle}/#{@project.handle}/prompt-requests/#{@session.prompt_request.id}"
+                  }
+                  class="session-prompt-request-link"
+                  id="session-prompt-request-link"
+                >
+                  {prompt_request_title(@session.prompt_request)}
+                </.link>
               </div>
             <% end %>
           </div>
@@ -293,6 +548,161 @@ defmodule MicelioWeb.SessionLive.Show do
               </div>
             </section>
           <% end %>
+
+          <section
+            id="session-event-viewer"
+            class="session-section session-event-viewer"
+            phx-hook="SessionEventViewer"
+            data-events-url={
+              ~p"/api/sessions/#{@session.session_id}/events/stream"
+            }
+            data-after={@event_after_cursor}
+            data-max-events={@max_session_events}
+          >
+            <div class="session-event-heading">
+              <h2>Session events</h2>
+              <span class="session-event-status" data-role="event-status" data-state="connecting">
+                Connecting...
+              </span>
+            </div>
+            <div class="session-event-filters" role="group" aria-label="Filter session events">
+              <%= for type <- @event_types do %>
+                <label class="session-event-filter">
+                  <input type="checkbox" name="event-types" value={type} checked />
+                  <span class={"session-event-pill session-event-pill-#{type}"}>
+                    <span class={"session-event-icon session-event-icon-#{type}"} aria-hidden="true">
+                      {event_type_icon(type)}
+                    </span>
+                    {String.capitalize(type)}
+                  </span>
+                </label>
+              <% end %>
+            </div>
+            <div class="session-event-stream">
+              <p
+                class="session-event-empty"
+                data-role="event-empty"
+                hidden={Enum.any?(@event_snapshot)}
+              >
+                No events yet.
+              </p>
+              <div
+                class="session-event-list"
+                id="session-event-list"
+                data-role="event-list"
+                role="log"
+                aria-live="polite"
+                aria-relevant="additions"
+                phx-update="ignore"
+              >
+                <%= for %{event: event} <- @event_snapshot do %>
+                  <article
+                    class={"session-event-card session-event-#{event_type(event)}"}
+                    data-type={event_type(event)}
+                  >
+                    <div class="session-event-card-header">
+                      <span class={"session-event-type session-event-type-#{event_type(event)}"}>
+                        <span
+                          class={"session-event-icon session-event-icon-#{event_type(event)}"}
+                          aria-hidden="true"
+                        >
+                          {event_type_icon(event_type(event))}
+                        </span>
+                        {String.capitalize(event_type(event))}
+                      </span>
+                      <%= if timestamp = format_event_timestamp(event["timestamp"]) do %>
+                        <time
+                          class="session-event-time"
+                          datetime={event_timestamp_attr(event["timestamp"])}
+                        >
+                          {timestamp}
+                        </time>
+                      <% end %>
+                      <span class="session-event-source">
+                        {format_event_source(event["source"])}
+                      </span>
+                    </div>
+                    <%= if summary = event_summary(event) do %>
+                      <%= if summary != "" do %>
+                        <div class="session-event-summary">{summary}</div>
+                      <% end %>
+                    <% end %>
+                    <%= if percent = event_progress_percent(event) do %>
+                      <div
+                        class="session-event-progress"
+                        role="progressbar"
+                        aria-valuemin="0"
+                        aria-valuemax="100"
+                        aria-valuenow={percent}
+                      >
+                        <div class="session-event-progress-track">
+                          <div
+                            class="session-event-progress-bar"
+                            style={"width: #{percent}%"}
+                          >
+                          </div>
+                        </div>
+                        <span class="session-event-progress-label">{format_percent(percent)}</span>
+                      </div>
+                    <% end %>
+                    <%= if event_type(event) == "artifact" do %>
+                      <% payload = event_payload(event) %>
+                      <%= if uri = artifact_uri(payload) do %>
+                        <div class="session-event-artifact">
+                          <%= if artifact_image?(payload) do %>
+                            <a
+                              class="session-event-artifact-link"
+                              href={uri}
+                              target="_blank"
+                              rel="noopener"
+                            >
+                              <img
+                                class="session-event-artifact-image"
+                                src={uri}
+                                alt={artifact_label(payload)}
+                                loading="lazy"
+                              />
+                            </a>
+                          <% else %>
+                            <a
+                              class="session-event-artifact-link"
+                              href={uri}
+                              target="_blank"
+                              rel="noopener"
+                            >
+                              {artifact_label(payload)}
+                            </a>
+                          <% end %>
+                          <%= if detail = artifact_detail(payload) do %>
+                            <%= if detail != "" do %>
+                              <div class="session-event-artifact-meta">{detail}</div>
+                            <% end %>
+                          <% end %>
+                        </div>
+                      <% end %>
+                    <% end %>
+                    <%= if output = event_output_text(event) do %>
+                      <details class="session-event-output-block" open={output_open?(output)}>
+                        <summary>
+                          Output
+                          <%= if stream = event_output_stream(event) do %>
+                            <span class="session-event-output-stream">
+                              {String.upcase(stream)}
+                            </span>
+                          <% end %>
+                        </summary>
+                        <pre class="session-event-output">{output}</pre>
+                      </details>
+                    <% end %>
+                    <details class="session-event-details" data-role="event-details">
+                      <summary>Details</summary>
+                      <pre class="session-event-payload"><code>{event_payload_json(event)}</code></pre>
+                    </details>
+                  </article>
+                <% end %>
+              </div>
+            </div>
+          </section>
 
           <section class="session-section">
             <h2>Changes</h2>
