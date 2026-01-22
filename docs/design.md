@@ -1,6 +1,6 @@
 # Micelio Session Architecture
 
-This document describes the session architecture with BTRFS and S3 for immutable file storage.
+This document describes the session architecture with S3 for immutable blob and tree storage, and a custom NFS server for session isolation and copy-on-write semantics.
 
 ## Overview
 
@@ -22,35 +22,24 @@ Micelio sessions represent isolated units of work with full reproducibility guar
 │  │                         Local Developer                              │    │
 │  │                                                                      │    │
 │  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────────┐  │    │
-│  │  │    mic CLI   │  │   mic-fs     │  │     BTRFS Volume         │  │    │
-│  │  │  (Zig CLI)   │  │  (NFS Daemon)│  │  (Copy-on-Write)        │  │    │
+│  │  │    mic CLI   │  │   mic-fs     │  │   Custom NFS Server      │  │    │
+│  │  │  (Zig CLI)   │  │  (NFS Daemon)│  │  (hif/src/fs/nfs.zig)    │  │    │
 │  │  └──────────────┘  └──────────────┘  └──────────────────────────┘  │    │
 │  └─────────────────────────────────────────────────────────────────────┘    │
 │                                    │                                         │
 │                                    ▼                                         │
 │  ┌─────────────────────────────────────────────────────────────────────┐    │
-│  │                         Database (SQLite/PostgreSQL)                 │    │
+│  │                    S3 (Source of Truth)                              │    │
 │  │                                                                      │    │
 │  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────────┐ │    │
-│  │  │  Sessions   │  │   Trees     │  │       Session Trees         │ │    │
+│  │  │   Blobs     │  │   Trees     │  │      Sessions               │ │    │
 │  │  │             │  │             │  │                             │ │    │
-│  │  │ - id        │  │ - hash      │  │ - session_id (FK)           │ │    │
-│  │  │ - goal      │  │ - blob_refs │  │ - base_tree (FK)            │ │    │
-│  │  │ - status    │  │ - children  │  │ - diff (blob refs added/    │ │    │
-│  │  │ - created_at│  │ - metadata  │  │   removed from base)        │ │    │
+│  │  │ - content   │  │ - B+ tree   │  │ - metadata (goal, status)   │ │    │
+│  │  │ - addressed │  │ - in S3!    │  │ - session tree (base+diff)  │ │    │
+│  │  │ - immutable │  │ - indexed   │  │ - conversation + decisions  │ │    │
 │  │  └─────────────┘  └─────────────┘  └─────────────────────────────┘ │    │
-│  └─────────────────────────────────────────────────────────────────────┘    │
-│                                    │                                         │
-│                                    ▼                                         │
-│  ┌─────────────────────────────────────────────────────────────────────┐    │
-│  │                    S3 (Immutable Blob Storage)                       │    │
 │  │                                                                      │    │
-│  │  Content-addressed blob storage:                                     │    │
-│  │  s3://micelio-{org}/projects/{id}/                                   │    │
-│  │  ├── blobs/{hash[0:2]}/{hash}      # Raw file content               │    │
-│  │  └── trees/{hash[0:2]}/{hash}      # Serialized tree structures     │    │
-│  │                                                                      │    │
-│  │  Key property: Each version = new blob (immutable)                   │    │
+│  │  S3 is the single source of truth for all data                      │    │
 │  └─────────────────────────────────────────────────────────────────────┘    │
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
@@ -58,14 +47,11 @@ Micelio sessions represent isolated units of work with full reproducibility guar
 
 ## Core Concepts
 
-### 1. S3: Immutable Blob Storage
+### 1. S3: Source of Truth
 
-All file content lives in S3 as **content-addressed blobs**:
+All data lives in S3 - **blobs, trees, and sessions**:
 
-- **Content-addressed**: Blob hash = SHA-256 of content
-- **Immutable**: Never modified, only created
-- **Deduplicated**: Same content = same blob (automatic)
-
+**Blobs** - Content-addressed file content:
 ```
 s3://micelio-{org}/projects/{project_id}/
 └── blobs/
@@ -73,54 +59,80 @@ s3://micelio-{org}/projects/{project_id}/
         └── {hash}          # Raw blob content, zstd compressed
 ```
 
-**Why S3 for blobs?**
-- 11 nines durability
-- Infinite scalability
-- Pay only for storage used
-- Content-addressing enables deduplication
-
-### 2. Database: Tree Mappings
-
-The database maps file paths to S3 blob hashes (like Git's tree/index):
-
-```sql
--- Trees store the complete project structure at a point in time
-CREATE TABLE trees (
-    id UUID PRIMARY KEY,
-    project_id UUID NOT NULL,
-    tree_hash TEXT NOT NULL UNIQUE,  -- SHA-256 of serialized tree
-    parent_tree_id UUID,             -- Parent tree for ancestry
-    metadata JSONB,                  -- Size, timestamps, etc.
-    created_at TIMESTAMP NOT NULL
-);
-
--- Session trees track changes from a base snapshot
-CREATE TABLE session_trees (
-    id UUID PRIMARY KEY,
-    session_id UUID NOT NULL,
-    base_tree_id UUID NOT NULL,      -- Snapshot taken at session start
-    status TEXT NOT NULL,            -- active, landed, abandoned
-    created_at TIMESTAMP NOT NULL
-);
-
--- File mappings in each tree
-CREATE TABLE tree_entries (
-    id UUID PRIMARY KEY,
-    tree_id UUID NOT NULL,
-    path TEXT NOT NULL,              -- File path relative to project root
-    blob_hash TEXT NOT NULL,         -- Reference to S3 blob
-    mode INTEGER NOT NULL,           -- File permissions
-    created_at TIMESTAMP NOT NULL
-);
+**Trees** - B+ tree structures stored in S3:
+```
+s3://micelio-{org}/projects/{project_id}/
+└── trees/
+    └── {hash[0:2]}/
+        └── {hash}          # Serialized B+ tree (content-addressed)
 ```
 
-**Why database for trees?**
-- Fast path lookups (O(1) for file content)
-- Efficient diff computation (compare tree entries)
-- Query flexibility (find all files matching pattern)
-- Transactional updates (atomic session commits)
+**Sessions** - Session metadata and trees:
+```
+s3://micelio-{org}/projects/{project_id}/
+└── sessions/
+    └── {session_id}/
+        ├── metadata.json   # Goal, conversation, decisions
+        └── tree.json       # Session tree (base + diff)
+```
 
-### 3. Sessions as Snapshots
+**Key properties:**
+- **Content-addressed**: Hash = SHA-256 of content
+- **Immutable**: Never modified, only created
+- **Deduplicated**: Same content = same blob (automatic)
+- **Source of truth**: S3 is the single source, no filesystem dependencies
+
+### 2. Custom NFS Server: CoW Semantics
+
+The NFS server (`hif/src/fs/nfs.zig`) implements **copy-on-write semantics**:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│           Custom NFS Server (hif/src/fs/nfs.zig)        │
+├─────────────────────────────────────────────────────────┤
+│                                                          │
+│  CoW Semantics Implemented:                              │
+│  ├── Read: Return blob from S3 (cached locally)         │
+│  ├── Write: Create new blob in S3, update tree          │
+│  ├── Delete: Mark blob as deleted (immutable storage)   │
+│  └── Snapshot: Export tree hash as read-only view       │
+│                                                          │
+│  Per-Session Exports:                                    │
+│  ├── /exports/sessions/{session-id}/                    │
+│  │   └── @ (points to session's base tree in S3)        │
+│  │                                                        │
+│  Isolation Guarantees:                                   │
+│  ├── Session A sees: tree-A (its snapshot)              │
+│  ├── Session B sees: tree-B (its snapshot)              │
+│  └── Neither sees other's unlanded changes              │
+│                                                          │
+└─────────────────────────────────────────────────────────┘
+```
+
+**Why custom NFS server?**
+- **No BTRFS dependency**: We control CoW semantics ourselves
+- **Portable**: Works on any OS, not tied to filesystem features
+- **Session isolation**: Each session gets its own export
+- **S3-backed**: All data ultimately lives in S3
+
+### 3. Copy-on-Write: Concept, Not Filesystem
+
+Copy-on-write (CoW) is a **data design pattern**, not a filesystem feature:
+
+| CoW as Filesystem Feature | CoW as Data Pattern |
+|---------------------------|---------------------|
+| BTRFS, ZFS, APFS | Our NFS server implements it |
+| Kernel-level | Application-level (Zig) |
+| Tied to filesystem | Works with any storage (S3) |
+| Platform-dependent | Portable across platforms |
+
+**How we implement CoW:**
+1. **Read**: NFS reads blob from S3, caches locally
+2. **Write**: NFS creates NEW blob in S3, updates session tree
+3. **Snapshot**: NFS exports session tree hash as read-only view
+4. **Landing**: Merge session tree to base tree (new tree in S3)
+
+### 4. Sessions as Snapshots
 
 Each session starts with a **snapshot** of the current project tree:
 
@@ -132,7 +144,7 @@ Session Lifecycle:
 │     ┌─────────────────────────────────────────────────────┐    │
 │     │ mic session start "add auth middleware"             │    │
 │     │                                                      │    │
-│     │ - Snapshot current tree (T0)                        │    │
+│     │ - Snapshot current tree (T0) in S3                  │    │
 │     │ - Create session record with goal + conversation    │    │
 │     │ - Allocate session-specific NFS export              │    │
 │     │ - Return session context to agent                   │    │
@@ -145,12 +157,12 @@ Session Lifecycle:
 │     │                                                      │    │
 │     │ - Create new blobs in S3 (immutable)                │    │
 │     │ - Update session tree with new blob refs            │    │
-│     │ - Base tree (T0) remains unchanged                  │    │
+│     │ - Base tree (T0) remains unchanged in S3            │    │
 │     │ - Other sessions don't see these changes            │    │
 │     │                                                      │    │
 │     │ Session tree:                                        │    │
-│     │   base: T0                                           │    │
-│     │   diff: +auth.go, ~main.go (changes from T0)        │    │
+│     │   base: T0 (tree hash in S3)                        │    │
+│     │   diff: +auth.go, ~main.go (new blob refs)          │    │
 │     └─────────────────────────────────────────────────────┘    │
 │                              │                                │
 │                              ▼                                │
@@ -159,8 +171,8 @@ Session Lifecycle:
 │     │ mic land                                             │    │
 │     │                                                      │    │
 │     │ - Compute new tree from: base_tree + session diff   │    │
-│     │ - Store new tree in database                        │    │
-│     │ - Update project head to new tree                   │    │
+│     │ - Store new tree in S3 (immutable)                  │    │
+│     │ - Update project head to new tree hash              │    │
 │     │ - Archive session as "landed"                       │    │
 │     │                                                      │    │
 │     │ Result:                                              │    │
@@ -172,49 +184,24 @@ Session Lifecycle:
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### 4. BTRFS Integration
-
-BTRFS provides efficient storage through **copy-on-write (CoW)**:
-
-```
-BTRFS Subvolumes:
-┌─────────────────────────────────────────┐
-│  Project Volume                          │
-│  ├── sessions/                          │
-│  │   ├── session-abc123/                │
-│  │   │   ├── @ (snapshot of T0)         │  ← Read-only snapshot
-│  │   │   └── @session/                  │  ← Writable session workspace
-│  │   └── session-def456/                │
-│  │       ├── @ (snapshot of T1)         │
-│  │       └── @session/                  │
-│  └── current/                           │
-│      └── @ (current project HEAD)       │
-└─────────────────────────────────────────┘
-```
-
-**BTRFS Benefits:**
-- **Snapshots are metadata-only**: Instant, no storage cost
-- **Copy-on-write**: Efficient duplication of unchanged data
-- **NFS-compatible**: Can export subvolumes for network access
-
 ### 5. NFS Exports for Consistency
 
-Each session gets its own NFS export pointing to its snapshot:
+Each session gets its own NFS export pointing to its snapshot in S3:
 
 ```
 Session NFS Exports:
 ┌─────────────────────────────────────────────────────────────┐
 │  Session A Export:  /exports/sessions/session-a            │
-│  → Points to: sessions/session-a/@                         │
+│  → Points to: tree hash T0 in S3                           │
 │  → Sees: snapshot of tree T0                               │
 │  → Does NOT see: unlanded changes from Session B           │
 │                                                              │
 │  Session B Export:  /exports/sessions/session-b            │
-│  → Points to: sessions/session-b/@                         │
+│  → Points to: tree hash T0 in S3                           │
 │  → Sees: snapshot of tree T0                               │
 │  → Independent from Session A                               │
 │                                                              │
-│  Landing creates new base tree, doesn't modify old          │
+│  Landing creates new tree T1 in S3, doesn't modify T0      │
 │  Cloning session sees same snapshot on any machine          │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -223,106 +210,64 @@ Session NFS Exports:
 
 | Property | How It's Achieved |
 |----------|-------------------|
-| **Isolation** | Each session has dedicated NFS export pointing to its snapshot tree |
-| **Immutability** | S3 blobs never modified, only created |
+| **Isolation** | Each session has dedicated NFS export pointing to its snapshot tree in S3 |
+| **Immutability** | S3 blobs and trees never modified, only created |
 | **Reproducibility** | Same session ID → same tree → same blobs → same files |
-| **Atomic landing** | Database transaction + conditional S3 writes |
-| **No phantom reads** | Snapshot isolation level for database queries |
-
-## Session Tree Structure
-
-```elixir
-# Session tree structure
-defmodule Micelio.SessionTree do
-  @type t :: %__MODULE__{
-          id: UUID.t(),
-          session_id: UUID.t(),
-          base_tree_id: UUID.t(),
-          status: :active | :landed | :abandoned,
-          entries: [%Entry{}]
-        }
-
-  defstruct [
-    :id,
-    :session_id,
-    :base_tree_id,
-    :status,
-    entries: []
-  ]
-end
-
-defmodule Micelio.TreeEntry do
-  @type t :: %__MODULE__{
-          path: String.t(),
-          blob_hash: String.t(),
-          mode: non_neg_integer()
-        }
-
-  defstruct [:path, :blob_hash, :mode]
-end
-```
-
-## Comparison with Previous Design
-
-| Aspect | Previous Design | Current Design |
-|--------|----------------|----------------|
-| **Storage** | Everything in S3 | S3 (blobs) + Database (mappings) |
-| **Sessions** | Binary blobs in S3 | Database records referencing trees |
-| **Trees** | B+ trees in S3 | Database tables with fast lookups |
-| **Isolation** | Logical (session IDs) | Physical (NFS exports + snapshots) |
-| **BTRFS** | Not integrated | Integrated for efficient snapshots |
-| **Landing** | S3 conditional writes | Database transaction + S3 blobs |
-
-### Why the Change?
-
-1. **Database for trees** provides:
-   - Faster path lookups (indexed queries)
-   - Efficient diff computation (SQL joins)
-   - Transactional guarantees for landing
-
-2. **NFS exports per session** provide:
-   - True isolation (filesystems don't lie)
-   - Compatibility with standard tools
-   - Clear semantics for "what the session sees"
-
-3. **BTRFS snapshots** provide:
-   - Storage efficiency (CoW)
-   - Instant session creation
-   - Easy rollback (clone snapshot)
+| **Atomic landing** | S3 conditional writes (if-match / if-none-match) |
+| **Source of truth** | S3 is the single source for all blobs, trees, and sessions |
 
 ## Storage Layout
 
 ```
-micelio-{org}/
-└── projects/
-    └── {project_id}/
-        ├── s3/
-        │   └── blobs/
-        │       └── {hash[0:2]}/
-        │           └── {hash}           # Content-addressed blob
-        │
-        └── database/
-            ├── trees/                   # Tree metadata
-            │   └── {tree_id}/
-            │       └── metadata.json
-            │
-            └── sessions/
-                └── {session_id}/
-                    ├── tree.json        # Session tree (base + diff)
-                    └── metadata.json    # Goal, conversation, etc.
+s3://micelio-{org}/projects/{project_id}/
+├── blobs/
+│   └── {hash[0:2]}/
+│       └── {hash}           # Raw blob content, zstd compressed
+│
+├── trees/
+│   └── {hash[0:2]}/
+│       └── {hash}           # Serialized B+ tree (content-addressed)
+│
+└── sessions/
+    └── {session_id}/
+        ├── metadata.json    # Goal, conversation, decisions
+        └── tree.json        # Session tree (base tree hash + diff)
 
-BTRFS Volume Structure:
-└── /mnt/btrfs/
-    └── projects/
-        └── {project_id}/
-            ├── sessions/
-            │   └── {session_id}/
-            │       ├── @               # Read-only snapshot
-            │       └── @session/       # Writable workspace
-            │
-            └── current/
-                └── @                   # Current HEAD
+Local NFS Server (hif/src/fs/nfs.zig):
+/exports/sessions/{session-id}/
+└── @                    # Symbolic link or export pointing to S3 tree hash
 ```
+
+## Comparison with Original Design
+
+| Aspect | Original Design | Current Design |
+|--------|----------------|----------------|
+| **Blobs** | S3 | S3 (unchanged) |
+| **Trees** | B+ trees in S3 | B+ trees in S3 (restored!) |
+| **Sessions** | In S3 | In S3 |
+| **NFS Server** | Custom, implements CoW | Custom, implements CoW (unchanged) |
+| **BTRFS** | Mentioned as reference | BTRFS as reference only (not required!) |
+| **CoW** | Filesystem-level | NFS server implements CoW semantics |
+
+**Key clarification:**
+- BTRFS was discussed but is **NOT a requirement**
+- We implement our own NFS server with CoW semantics
+- B+ trees stay in S3 as originally designed
+- S3 is the source of truth for all data
+
+## BTRFS as Reference
+
+BTRFS is mentioned here as a **reference implementation** showing how CoW can work at the filesystem level:
+
+**BTRFS Benefits (for reference only):**
+- Snapshots are metadata-only (instant, no storage cost)
+- Copy-on-write for efficient duplication
+- NFS-compatible subvolumes
+
+**Our approach:**
+- We implement similar semantics in our custom NFS server
+- But we store data in S3, not on a BTRFS volume
+- This makes the system portable and cloud-native
 
 ## Session API
 
@@ -338,7 +283,7 @@ message StartSessionRequest {
 message StartSessionResponse {
   string session_id = 1;
   string nfs_export_path = 2;
-  TreeSnapshot base_snapshot = 3;
+  string base_tree_hash = 3;  // Tree hash in S3
 }
 ```
 
@@ -351,7 +296,7 @@ message LandSessionRequest {
 }
 
 message LandSessionResponse {
-  string new_tree_id = 1;
+  string new_tree_hash = 1;   // New tree in S3
   string landed_commit = 2;
   repeated FileChange changes = 3;
 }
@@ -360,7 +305,7 @@ message LandSessionResponse {
 ## Workflow Example
 
 ```bash
-# 1. Start session (creates snapshot)
+# 1. Start session (creates snapshot in S3)
 mic session start "add authentication" \
   --project=myorg/myproject \
   --goal="Implement JWT-based auth for API"
@@ -368,18 +313,18 @@ mic session start "add authentication" \
 # Output:
 # Session ID: sess-abc123
 # NFS Export: /mnt/micelio/sessions/sess-abc123
-# Snapshot: tree-xyz789 (based on HEAD)
+# Base Tree: sha256:xyz789 (in S3)
 
-# 2. Work in session (edits go to session tree)
+# 2. Work in session (edits create new blobs in S3)
 cd /mnt/micelio/sessions/sess-abc123
-# Edit files normally - changes tracked in session tree
+# Edit files normally - NFS server creates new blobs in S3
 
-# 3. Land (merge session tree to base)
+# 3. Land (merge creates new tree in S3)
 mic session land sess-abc123 --message="Add JWT authentication"
 
 # Result:
-# New tree created with session changes
-# Project HEAD updated to new tree
+# New tree T1 created in S3
+# Project HEAD updated to T1
 # Session marked as "landed"
 ```
 
@@ -387,9 +332,9 @@ mic session land sess-abc123 --message="Add JWT authentication"
 
 | Operation | Complexity | Notes |
 |-----------|------------|-------|
-| File lookup | O(1) | Database index on path |
-| Session snapshot | O(1) | BTRFS snapshot (metadata only) |
-| Tree diff | O(changes) | Compare tree entries |
+| File lookup | O(log n) | B+ tree traversal in S3 |
+| Session snapshot | O(1) | Just record tree hash (no data copy) |
+| Tree diff | O(changes) | Compare tree structures |
 | Landing | O(changes log n) | Bloom filter for conflict detection |
 | Blob storage | O(1) | S3 PUT with content hash |
 
@@ -398,11 +343,12 @@ mic session land sess-abc123 --message="Add JWT authentication"
 1. **Bloom filters** for fast conflict detection during landing
 2. **Zstd compression** for blobs (automatic, configurable)
 3. **Content-defined chunking** for large files
-4. **Tiered caching**: RAM → SSD → S3 for hot data
+4. **Tiered caching**: RAM → local SSD → S3 for hot data
 5. **P2P sharing** of blobs between agents
 
 ## References
 
-- [BTRFS Wiki](https://btrfs.wiki.kernel.org/)
 - [Content-Addressable Storage](https://en.wikipedia.org/wiki/Content-addressable_storage)
 - [Copy-on-Write](https://en.wikipedia.org/wiki/Copy-on-write)
+- [B-Trees](https://en.wikipedia.org/wiki/B-tree)
+- [NFS Protocol](https://tools.ietf.org/html/rfc1813)
