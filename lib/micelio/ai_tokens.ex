@@ -15,7 +15,7 @@ defmodule Micelio.AITokens do
   alias Micelio.Repo
   alias Ecto.Multi
 
-  import Ecto.Query, only: [where: 2, where: 3, lock: 2, from: 2, sum: 1, count: 1, fragment: 1]
+  import Ecto.Query
 
   def get_token_pool(id), do: Repo.get(TokenPool, id)
 

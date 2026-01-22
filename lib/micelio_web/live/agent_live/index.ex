@@ -28,7 +28,7 @@ defmodule MicelioWeb.AgentLive.Index do
             |> assign(:refresh_seconds, div(@refresh_ms, 1000))
             |> assign(:error_boundary_context, %{
               route: ~p"/#{organization.account.handle}/#{project.handle}/agents",
-              params: %{"account" => account_handle, "repository" => repository_handle}
+              params: %{"account" => account_handle, "project" => project_handle}
             })
             |> assign(:error_boundary_retry_path, ~p"/#{organization.account.handle}/#{project.handle}/agents")
             |> assign(:error_boundary_user_id, socket.assigns.current_user && socket.assigns.current_user.id)

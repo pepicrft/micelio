@@ -99,7 +99,8 @@ defmodule Micelio.AgentInfra.SessionManager do
 
   defp normalize_id(_id), do: {:error, :invalid_session_id}
 
-  defp normalize_state(state) when is_atom(state) and state in states(), do: {:ok, state}
+  @states [:queued, :starting, :running, :stopping, :stopped, :failed, :expired]
+  defp normalize_state(state) when is_atom(state) and state in @states, do: {:ok, state}
 
   defp normalize_state(state) when is_binary(state) do
     state = state |> String.trim() |> String.downcase()
@@ -164,7 +165,8 @@ defmodule Micelio.AgentInfra.SessionManager do
 
   defp normalize_access_point(_point), do: {:error, :invalid_access_point}
 
-  defp normalize_access_type(type) when is_atom(type) and type in access_types(), do: {:ok, type}
+  @access_types [:ssh, :http, :grpc, :websocket]
+  defp normalize_access_type(type) when is_atom(type) and type in @access_types, do: {:ok, type}
 
   defp normalize_access_type(type) when is_binary(type) do
     type = type |> String.trim() |> String.downcase()

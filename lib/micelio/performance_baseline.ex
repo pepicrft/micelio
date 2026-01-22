@@ -5,18 +5,12 @@ defmodule Micelio.PerformanceBaseline do
 
   @default_baseline_path Path.expand("priv/performance_baseline.json")
 
-  @benchmarks [
-    %{id: "json_encode", label: "JSON encode 1k entries", max_ms: 500, fun: &benchmark_json/0},
-    %{id: "map_build", label: "Map build 50k entries", max_ms: 500, fun: &benchmark_map/0},
-    %{id: "string_concat", label: "String concat 10k entries", max_ms: 500, fun: &benchmark_string/0}
-  ]
-
   def run(opts \\ []) do
     baseline_path = Keyword.get(opts, :path, @default_baseline_path)
     baseline = load_baseline(baseline_path)
 
     results =
-      Enum.map(@benchmarks, fn benchmark ->
+      Enum.map(benchmarks(), fn benchmark ->
         max_ms = Map.get(baseline, benchmark.id, benchmark.max_ms)
         duration_ms = measure_ms(benchmark.fun)
         status = if duration_ms <= max_ms, do: "passed", else: "failed"
@@ -37,6 +31,14 @@ defmodule Micelio.PerformanceBaseline do
     else
       {:error, payload}
     end
+  end
+
+  defp benchmarks do
+    [
+      %{id: "json_encode", label: "JSON encode 1k entries", max_ms: 500, fun: &benchmark_json/0},
+      %{id: "map_build", label: "Map build 50k entries", max_ms: 500, fun: &benchmark_map/0},
+      %{id: "string_concat", label: "String concat 10k entries", max_ms: 500, fun: &benchmark_string/0}
+    ]
   end
 
   defp load_baseline(path) do

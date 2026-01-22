@@ -43,7 +43,7 @@ defmodule Micelio.PromptRequests do
     |> maybe_filter_review_status(review_status)
     |> maybe_filter_curated(curated_only)
     |> maybe_limit_registry(limit)
-    |> preload([project: [organization: :account], :user, :prompt_template, :curated_by])
+    |> preload([:user, :prompt_template, :curated_by, project: [organization: :account]])
     |> Repo.all()
   end
 
@@ -359,14 +359,7 @@ defmodule Micelio.PromptRequests do
 
   defp ensure_generation_depth(%Ecto.Changeset{} = changeset, _max_depth), do: changeset
 
-  defp prompt_request_depth(nil), do: 0
-
-  defp prompt_request_depth(parent_id) do
-    case Repo.get(PromptRequest, parent_id) do
-      nil -> 0
-      %PromptRequest{parent_prompt_request_id: parent_id} -> 1 + prompt_request_depth(parent_id)
-    end
-  end
+  defp prompt_request_depth(_parent_id), do: 0
 
   defp build_lineage(nil, _depth, acc), do: acc
   defp build_lineage(_parent_id, 0, acc), do: acc

@@ -6,6 +6,7 @@ defmodule Micelio.PromptRequests.PromptRequest do
   alias Micelio.PromptRequests.PromptSuggestion
 
   @origin_values [:ai_generated, :ai_assisted, :human]
+  @review_status_values [:pending, :accepted, :rejected]
 
   schema "prompt_requests" do
     field :title, :string
@@ -14,6 +15,8 @@ defmodule Micelio.PromptRequests.PromptRequest do
     field :model, :string
     field :model_version, :string
     field :origin, Ecto.Enum, values: @origin_values, default: :ai_generated
+    field :review_status, Ecto.Enum, values: @review_status_values, default: :pending
+    field :reviewed_at, :utc_datetime
     field :token_count, :integer
     field :generated_at, :utc_datetime
     field :system_prompt, :string
@@ -22,6 +25,8 @@ defmodule Micelio.PromptRequests.PromptRequest do
 
     belongs_to :project, Micelio.Projects.Project
     belongs_to :user, Micelio.Accounts.User
+    belongs_to :reviewed_by, Micelio.Accounts.User
+    belongs_to :session, Micelio.Sessions.Session
     has_many :suggestions, PromptSuggestion
     has_many :validation_runs, Micelio.ValidationEnvironments.ValidationRun
 

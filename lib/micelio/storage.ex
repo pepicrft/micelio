@@ -301,8 +301,12 @@ defmodule Micelio.Storage do
 
   defp drop_blank_field(attrs, key) do
     case Map.fetch(attrs, key) do
-      {:ok, value} when is_binary(value) and String.trim(value) == "" ->
-        Map.delete(attrs, key)
+      {:ok, value} when is_binary(value) ->
+        if String.trim(value) == "" do
+          Map.delete(attrs, key)
+        else
+          attrs
+        end
 
       _ ->
         attrs
@@ -432,15 +436,15 @@ defmodule Micelio.Storage do
     "Validation rate limit exceeded. Please try again later."
   end
 
-  defp log_s3_config_audit(%Micelio.Accounts.User{} = user, %S3Config{} = before, %S3Config{} = after) do
+  defp log_s3_config_audit(%Micelio.Accounts.User{} = user, %S3Config{} = before_config, %S3Config{} = after_config) do
     action =
-      if is_nil(before.id) do
+      if is_nil(before_config.id) do
         "storage.s3_config.created"
       else
         "storage.s3_config.updated"
       end
 
-    case Audit.log_user_action(user, action, metadata: s3_audit_metadata(after)) do
+    case Audit.log_user_action(user, action, metadata: s3_audit_metadata(after_config)) do
       {:ok, _log} -> :ok
       {:error, changeset} -> Logger.warning("storage.s3_config audit_failed=#{inspect(changeset.errors)}")
     end

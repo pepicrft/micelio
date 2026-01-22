@@ -238,4 +238,27 @@ defmodule MicelioWeb.AdminPromptTemplatesLive.Index do
 
   defp template_status(%PromptTemplate{approved_at: nil}), do: "pending"
   defp template_status(%PromptTemplate{}), do: "approved"
+
+  defp prune_params(params) do
+    {filters, rest} = Map.pop(params, "filters", %{})
+
+    cleaned_filters =
+      filters
+      |> Enum.reject(fn {_key, value} -> is_nil(value) end)
+      |> Map.new()
+
+    cleaned_rest =
+      rest
+      |> Enum.reject(fn {_key, value} -> value in [nil, ""] end)
+      |> Map.new()
+
+    cleaned_params =
+      if map_size(cleaned_filters) > 0 do
+        Map.put(cleaned_rest, "filters", cleaned_filters)
+      else
+        cleaned_rest
+      end
+
+    Plug.Conn.Query.encode(cleaned_params)
+  end
 end

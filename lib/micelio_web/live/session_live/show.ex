@@ -152,8 +152,12 @@ defmodule MicelioWeb.SessionLive.Show do
 
   defp prompt_request_title(%{title: title, id: id}) do
     case title do
-      value when is_binary(value) and String.trim(value) != "" -> value
-      _ -> "Prompt request #{id}"
+      value when is_binary(value) ->
+        trimmed = String.trim(value)
+        if trimmed != "", do: trimmed, else: "Prompt request #{id}"
+
+      _ ->
+        "Prompt request #{id}"
     end
   end
 
