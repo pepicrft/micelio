@@ -355,9 +355,27 @@ grpc_tls =
 
 github_oauth =
   [
-    client_id: System.get_env("GITHUB_OAUTH_CLIENT_ID"),
-    client_secret: System.get_env("GITHUB_OAUTH_CLIENT_SECRET"),
-    redirect_uri: System.get_env("GITHUB_OAUTH_REDIRECT_URI")
+    client_id:
+      (if config_env() == :dev do
+         System.get_env("GITHUB_OAUTH_CLIENT_ID_DEV") ||
+           System.get_env("GITHUB_OAUTH_CLIENT_ID")
+       else
+         System.get_env("GITHUB_OAUTH_CLIENT_ID")
+       end),
+    client_secret:
+      (if config_env() == :dev do
+         System.get_env("GITHUB_OAUTH_CLIENT_SECRET_DEV") ||
+           System.get_env("GITHUB_OAUTH_CLIENT_SECRET")
+       else
+         System.get_env("GITHUB_OAUTH_CLIENT_SECRET")
+       end),
+    redirect_uri:
+      (if config_env() == :dev do
+         System.get_env("GITHUB_OAUTH_REDIRECT_URI_DEV") ||
+           System.get_env("GITHUB_OAUTH_REDIRECT_URI")
+       else
+         System.get_env("GITHUB_OAUTH_REDIRECT_URI")
+       end)
   ]
   |> Enum.reject(fn {_key, value} -> is_nil(value) or value == "" end)
 
@@ -408,9 +426,27 @@ end
 
 gitlab_oauth =
   [
-    client_id: System.get_env("GITLAB_OAUTH_CLIENT_ID"),
-    client_secret: System.get_env("GITLAB_OAUTH_CLIENT_SECRET"),
-    redirect_uri: System.get_env("GITLAB_OAUTH_REDIRECT_URI")
+    client_id:
+      (if config_env() == :dev do
+         System.get_env("GITLAB_OAUTH_CLIENT_ID_DEV") ||
+           System.get_env("GITLAB_OAUTH_CLIENT_ID")
+       else
+         System.get_env("GITLAB_OAUTH_CLIENT_ID")
+       end),
+    client_secret:
+      (if config_env() == :dev do
+         System.get_env("GITLAB_OAUTH_CLIENT_SECRET_DEV") ||
+           System.get_env("GITLAB_OAUTH_CLIENT_SECRET")
+       else
+         System.get_env("GITLAB_OAUTH_CLIENT_SECRET")
+       end),
+    redirect_uri:
+      (if config_env() == :dev do
+         System.get_env("GITLAB_OAUTH_REDIRECT_URI_DEV") ||
+           System.get_env("GITLAB_OAUTH_REDIRECT_URI")
+       else
+         System.get_env("GITLAB_OAUTH_REDIRECT_URI")
+       end)
   ]
   |> Enum.reject(fn {_key, value} -> is_nil(value) or value == "" end)
 

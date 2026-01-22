@@ -11,7 +11,7 @@ msgstr ""
 "Language: en\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: lib/micelio_web/components/layouts.ex:102
+#: lib/micelio_web/components/layouts.ex:103
 #, elixir-autogen, elixir-format
 msgid "Account (@%{handle})"
 msgstr ""
@@ -26,8 +26,8 @@ msgstr ""
 msgid "Agent-Native by Design"
 msgstr ""
 
-#: lib/micelio_web/components/layouts.ex:182
-#: lib/micelio_web/components/layouts.ex:190
+#: lib/micelio_web/components/layouts.ex:187
+#: lib/micelio_web/components/layouts.ex:195
 #, elixir-autogen, elixir-format
 msgid "Attempting to reconnect"
 msgstr ""
@@ -82,7 +82,7 @@ msgstr ""
 msgid "Forge-first architecture with object storage at the core"
 msgstr ""
 
-#: lib/micelio_web/components/layouts.ex:118
+#: lib/micelio_web/components/layouts.ex:119
 #, elixir-autogen, elixir-format
 msgid "Get started"
 msgstr ""
@@ -92,7 +92,7 @@ msgstr ""
 msgid "Human + AI Collaboration"
 msgstr ""
 
-#: lib/micelio_web/components/layouts.ex:138
+#: lib/micelio_web/components/layouts.ex:140
 #, elixir-autogen, elixir-format
 msgid "Legal"
 msgstr ""
@@ -214,7 +214,7 @@ msgstr ""
 msgid "Sessions capture goal, reasoning, and changes together. Built for hundreds of AI agents working concurrently, with stateless compute that auto-scales based on demand."
 msgstr ""
 
-#: lib/micelio_web/components/layouts.ex:188
+#: lib/micelio_web/components/layouts.ex:193
 #, elixir-autogen, elixir-format
 msgid "Something went wrong!"
 msgstr ""
@@ -224,7 +224,7 @@ msgstr ""
 msgid "Targets Google/Meta scale: 1B+ files, 500k+ landings per day, 100k+ concurrent sessions. Object storage-first architecture with O(log n) operations."
 msgstr ""
 
-#: lib/micelio_web/components/layouts.ex:81
+#: lib/micelio_web/components/layouts.ex:82
 #, elixir-autogen, elixir-format
 msgid "Toggle theme"
 msgstr ""
@@ -239,7 +239,7 @@ msgstr ""
 msgid "View Projects"
 msgstr ""
 
-#: lib/micelio_web/components/layouts.ex:180
+#: lib/micelio_web/components/layouts.ex:185
 #, elixir-autogen, elixir-format
 msgid "We can't find the internet"
 msgstr ""
@@ -254,17 +254,17 @@ msgstr ""
 msgid "You do not have access to this project."
 msgstr ""
 
-#: lib/micelio_web/components/layouts.ex:88
+#: lib/micelio_web/components/layouts.ex:89
 #, elixir-autogen, elixir-format
 msgid "admin"
 msgstr ""
 
-#: lib/micelio_web/components/layouts.ex:71
+#: lib/micelio_web/components/layouts.ex:72
 #, elixir-autogen, elixir-format
 msgid "blog"
 msgstr ""
 
-#: lib/micelio_web/components/layouts.ex:72
+#: lib/micelio_web/components/layouts.ex:73
 #, elixir-autogen, elixir-format
 msgid "changelog"
 msgstr ""
@@ -281,42 +281,42 @@ msgid_plural "contributions"
 msgstr[0] ""
 msgstr[1] ""
 
-#: lib/micelio_web/components/layouts.ex:141
+#: lib/micelio_web/components/layouts.ex:143
 #, elixir-autogen, elixir-format
 msgid "cookies"
 msgstr ""
 
-#: lib/micelio_web/components/layouts.ex:142
+#: lib/micelio_web/components/layouts.ex:144
 #, elixir-autogen, elixir-format
 msgid "impressum"
 msgstr ""
 
-#: lib/micelio_web/components/layouts.ex:94
+#: lib/micelio_web/components/layouts.ex:95
 #, elixir-autogen, elixir-format
 msgid "logout"
 msgstr ""
 
-#: lib/micelio_web/components/layouts.ex:140
+#: lib/micelio_web/components/layouts.ex:142
 #, elixir-autogen, elixir-format
 msgid "privacy"
 msgstr ""
 
-#: lib/micelio_web/components/layouts.ex:90
+#: lib/micelio_web/components/layouts.ex:91
 #, elixir-autogen, elixir-format
 msgid "projects"
 msgstr ""
 
-#: lib/micelio_web/components/layouts.ex:73
+#: lib/micelio_web/components/layouts.ex:74
 #, elixir-autogen, elixir-format
 msgid "search"
 msgstr ""
 
-#: lib/micelio_web/components/layouts.ex:139
+#: lib/micelio_web/components/layouts.ex:141
 #, elixir-autogen, elixir-format
 msgid "terms"
 msgstr ""
 
-#: lib/micelio_web/components/layouts.ex:83
+#: lib/micelio_web/components/layouts.ex:84
 #, elixir-autogen, elixir-format
 msgid "theme"
 msgstr ""
@@ -366,47 +366,117 @@ msgstr "The forge is the source of truth. Coordinator-free landing with content-
 msgid "Signals"
 msgstr "Signals"
 
-#: lib/micelio_web/controllers/browser/auth_html/new.html.heex:51
+#: lib/micelio_web/controllers/browser/auth_html/new.html.heex:52
 #, elixir-autogen, elixir-format
 msgid "Continue with GitHub"
 msgstr "Continue with GitHub"
 
-#: lib/micelio_web/controllers/browser/auth_html/new.html.heex:55
+#: lib/micelio_web/controllers/browser/auth_html/new.html.heex:56
 #, elixir-autogen, elixir-format
 msgid "Continue with GitLab"
 msgstr "Continue with GitLab"
 
-#: lib/micelio_web/controllers/browser/auth_html/new.html.heex:26
+#: lib/micelio_web/controllers/browser/auth_html/new.html.heex:27
 #, elixir-autogen, elixir-format
 msgid "Email"
 msgstr "Email"
 
-#: lib/micelio_web/controllers/browser/auth_html/new.html.heex:12
+#: lib/micelio_web/controllers/browser/auth_html/new.html.heex:13
 #, elixir-autogen, elixir-format
 msgid "Enter your email and we'll send you a magic link."
 msgstr "Enter your email and we'll send you a magic link."
 
-#: lib/micelio_web/controllers/browser/auth_html/new.html.heex:37
+#: lib/micelio_web/controllers/browser/auth_html/new.html.heex:38
 #, elixir-autogen, elixir-format
 msgid "Send magic link"
 msgstr "Send magic link"
 
-#: lib/micelio_web/controllers/browser/auth_html/new.html.heex:11
+#: lib/micelio_web/controllers/browser/auth_html/new.html.heex:12
 #, elixir-autogen, elixir-format
 msgid "Sign in to Micelio"
 msgstr "Sign in to Micelio"
 
-#: lib/micelio_web/controllers/browser/auth_html/new.html.heex:46
+#: lib/micelio_web/controllers/browser/auth_html/new.html.heex:47
 #, elixir-autogen, elixir-format
 msgid "Use passkey"
 msgstr "Use passkey"
 
-#: lib/micelio_web/controllers/browser/auth_html/new.html.heex:42
+#: lib/micelio_web/controllers/browser/auth_html/new.html.heex:43
 #, elixir-autogen, elixir-format
 msgid "or"
 msgstr "or"
 
-#: lib/micelio_web/controllers/browser/auth_html/new.html.heex:27
+#: lib/micelio_web/controllers/browser/auth_html/new.html.heex:28
 #, elixir-autogen, elixir-format
 msgid "you@example.com"
 msgstr "you@example.com"
+
+#: lib/micelio_web/controllers/browser/auth_controller.ex:271
+#, elixir-autogen, elixir-format
+msgid "%{error}: %{description}"
+msgstr "%{error}: %{description}"
+
+#: lib/micelio_web/controllers/browser/auth_controller.ex:253
+#, elixir-autogen, elixir-format
+msgid "%{provider} login failed. Please try again."
+msgstr "%{provider} login failed. Please try again."
+
+#: lib/micelio_web/controllers/browser/auth_controller.ex:256
+#, elixir-autogen, elixir-format
+msgid "%{provider} login failed. Reason: %{reason}"
+msgstr "%{provider} login failed. Reason: %{reason}"
+
+#: lib/micelio_web/controllers/browser/auth_controller.ex:295
+#, elixir-autogen, elixir-format
+msgid "%{type} (%{details})"
+msgstr "%{type} (%{details})"
+
+#: lib/micelio_web/controllers/browser/auth_controller.ex:290
+#, elixir-autogen, elixir-format
+msgid "email fetch failed"
+msgstr "email fetch failed"
+
+#: lib/micelio_web/controllers/browser/auth_controller.ex:300
+#, elixir-autogen, elixir-format
+msgid "email not available from provider"
+msgstr "email not available from provider"
+
+#: lib/micelio_web/controllers/browser/auth_controller.ex:306
+#, elixir-autogen, elixir-format
+msgid "invalid OAuth state"
+msgstr "invalid OAuth state"
+
+#: lib/micelio_web/controllers/browser/auth_controller.ex:309
+#, elixir-autogen, elixir-format
+msgid "network error: %{reason}"
+msgstr "network error: %{reason}"
+
+#: lib/micelio_web/controllers/browser/auth_controller.ex:274
+#, elixir-autogen, elixir-format
+msgid "oauth error: %{error}"
+msgstr "oauth error: %{error}"
+
+#: lib/micelio_web/controllers/browser/auth_controller.ex:303
+#, elixir-autogen, elixir-format
+msgid "provider user id missing"
+msgstr "provider user id missing"
+
+#: lib/micelio_web/controllers/browser/auth_controller.ex:321
+#, elixir-autogen, elixir-format
+msgid "status %{status}"
+msgstr "status %{status}"
+
+#: lib/micelio_web/controllers/browser/auth_controller.ex:319
+#, elixir-autogen, elixir-format
+msgid "status %{status}: %{message}"
+msgstr "status %{status}: %{message}"
+
+#: lib/micelio_web/controllers/browser/auth_controller.ex:288
+#, elixir-autogen, elixir-format
+msgid "token exchange failed"
+msgstr "token exchange failed"
+
+#: lib/micelio_web/controllers/browser/auth_controller.ex:289
+#, elixir-autogen, elixir-format
+msgid "user fetch failed"
+msgstr "user fetch failed"

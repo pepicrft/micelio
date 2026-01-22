@@ -144,11 +144,12 @@ defmodule MicelioWeb.Browser.AuthController do
   @doc """
   Handles the GitHub OAuth callback and signs the user in.
   """
-  def github_callback(conn, %{"error" => error}) do
+  def github_callback(conn, %{"error" => error} = params) do
     Logger.warning("GitHub OAuth callback error", error: error)
+    description = Map.get(params, "error_description")
 
     conn
-    |> put_flash(:error, "GitHub login failed. Please try again.")
+    |> oauth_failure_flash("GitHub", {:oauth_error, error, description})
     |> redirect(to: ~p"/auth/login")
   end
 
@@ -171,12 +172,12 @@ defmodule MicelioWeb.Browser.AuthController do
           Logger.warning("GitHub OAuth callback failed", reason: inspect(reason))
 
           conn
-          |> put_flash(:error, "GitHub login failed. Please try again.")
+          |> oauth_failure_flash("GitHub", reason)
           |> redirect(to: ~p"/auth/login")
       end
     else
       conn
-      |> put_flash(:error, "GitHub login failed. Please try again.")
+      |> oauth_failure_flash("GitHub", :invalid_oauth_state)
       |> redirect(to: ~p"/auth/login")
     end
   end
@@ -184,11 +185,12 @@ defmodule MicelioWeb.Browser.AuthController do
   @doc """
   Handles the GitLab OAuth callback and signs the user in.
   """
-  def gitlab_callback(conn, %{"error" => error}) do
+  def gitlab_callback(conn, %{"error" => error} = params) do
     Logger.warning("GitLab OAuth callback error", error: error)
+    description = Map.get(params, "error_description")
 
     conn
-    |> put_flash(:error, "GitLab login failed. Please try again.")
+    |> oauth_failure_flash("GitLab", {:oauth_error, error, description})
     |> redirect(to: ~p"/auth/login")
   end
 
@@ -211,12 +213,12 @@ defmodule MicelioWeb.Browser.AuthController do
           Logger.warning("GitLab OAuth callback failed", reason: inspect(reason))
 
           conn
-          |> put_flash(:error, "GitLab login failed. Please try again.")
+          |> oauth_failure_flash("GitLab", reason)
           |> redirect(to: ~p"/auth/login")
       end
     else
       conn
-      |> put_flash(:error, "GitLab login failed. Please try again.")
+      |> oauth_failure_flash("GitLab", :invalid_oauth_state)
       |> redirect(to: ~p"/auth/login")
     end
   end
@@ -244,6 +246,125 @@ defmodule MicelioWeb.Browser.AuthController do
     |> clear_session()
     |> put_flash(:info, "You have been logged out.")
     |> redirect(to: ~p"/")
+  end
+
+  defp oauth_failure_flash(conn, provider, reason) do
+    message =
+      case oauth_failure_details(reason) do
+        nil ->
+          gettext("%{provider} login failed. Please try again.", provider: provider)
+
+        details ->
+          gettext("%{provider} login failed. Reason: %{reason}",
+            provider: provider,
+            reason: details
+          )
+      end
+
+    put_flash(conn, :error, message)
+  end
+
+  defp oauth_failure_details({:oauth_error, error, description}) do
+    error = normalize_oauth_text(error)
+    description = normalize_oauth_text(description)
+
+    cond do
+      error && description ->
+        gettext("%{error}: %{description}", error: error, description: description)
+
+      error ->
+        gettext("oauth error: %{error}", error: error)
+
+      description ->
+        description
+
+      true ->
+        nil
+    end
+  end
+
+  defp oauth_failure_details({type, status, body})
+       when type in [:token_exchange_failed, :user_fetch_failed, :emails_fetch_failed] do
+    type_label =
+      case type do
+        :token_exchange_failed -> gettext("token exchange failed")
+        :user_fetch_failed -> gettext("user fetch failed")
+        :emails_fetch_failed -> gettext("email fetch failed")
+      end
+
+    case oauth_status_details(status, body) do
+      nil -> type_label
+      details -> gettext("%{type} (%{details})", type: type_label, details: details)
+    end
+  end
+
+  defp oauth_failure_details(:email_not_available),
+    do: gettext("email not available from provider")
+
+  defp oauth_failure_details(:missing_provider_user_id),
+    do: gettext("provider user id missing")
+
+  defp oauth_failure_details(:invalid_oauth_state),
+    do: gettext("invalid OAuth state")
+
+  defp oauth_failure_details(%Req.TransportError{reason: reason}),
+    do: gettext("network error: %{reason}", reason: inspect(reason))
+
+  defp oauth_failure_details(reason) when is_binary(reason), do: reason
+  defp oauth_failure_details(reason) when is_atom(reason), do: Atom.to_string(reason)
+  defp oauth_failure_details(reason), do: inspect(reason)
+
+  defp oauth_status_details(status, body) when is_integer(status) do
+    message = oauth_body_message(body)
+
+    if message do
+      gettext("status %{status}: %{message}", status: status, message: message)
+    else
+      gettext("status %{status}", status: status)
+    end
+  end
+
+  defp oauth_status_details(_status, _body), do: nil
+
+  defp oauth_body_message(%{} = body) do
+    error = normalize_oauth_text(Map.get(body, "error"))
+
+    description =
+      normalize_oauth_text(Map.get(body, "error_description")) ||
+        normalize_oauth_text(Map.get(body, "message"))
+
+    cond do
+      error && description -> "#{error} - #{description}"
+      error -> error
+      description -> description
+      true -> nil
+    end
+  end
+
+  defp oauth_body_message(body) when is_binary(body) do
+    body
+    |> String.trim()
+    |> normalize_oauth_text()
+    |> truncate_oauth_text()
+  end
+
+  defp oauth_body_message(_body), do: nil
+
+  defp normalize_oauth_text(value) when is_binary(value) do
+    trimmed = String.trim(value)
+    if trimmed == "", do: nil, else: trimmed
+  end
+
+  defp normalize_oauth_text(_value), do: nil
+
+  defp truncate_oauth_text(nil), do: nil
+
+  defp truncate_oauth_text(text) do
+    if String.length(text) > 160 do
+      String.slice(text, 0, 157) <> "..."
+    else
+      text
+    end
   end
 
   defp delivery_error_metadata(reason) do
