@@ -1,4 +1,0 @@
-[project]
-id = "micelio"
-description = "Micelio session-first forge"
-working_directory = "/root/src/micelio"
