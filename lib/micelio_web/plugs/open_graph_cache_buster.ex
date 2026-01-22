@@ -51,7 +51,6 @@ defmodule MicelioWeb.Plugs.OpenGraphCacheBuster do
       end
 
     if is_binary(og_cache_buster) and og_cache_buster != "" do
-
       conn
       |> maybe_put_session("og_cache_buster", og_cache_buster)
       |> PageMeta.put(open_graph: %{cache_buster: og_cache_buster})

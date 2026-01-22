@@ -52,7 +52,15 @@ defmodule Micelio.Errors.AgentReporter do
 
     capture_opts =
       opts
-      |> Keyword.drop([:session, :session_id, :session_ref, :action_limit, :metadata, :context, :error_kind])
+      |> Keyword.drop([
+        :session,
+        :session_id,
+        :session_ref,
+        :action_limit,
+        :metadata,
+        :context,
+        :error_kind
+      ])
       |> Keyword.put(:kind, :agent_crash)
       |> Keyword.put(:metadata, metadata)
       |> Keyword.put(:context, context)
@@ -62,7 +70,8 @@ defmodule Micelio.Errors.AgentReporter do
 
     cond do
       is_exception(reason) ->
-        Capture.capture_exception(reason,
+        Capture.capture_exception(
+          reason,
           Keyword.merge(capture_opts, stacktrace: stacktrace, error_kind: error_kind)
         )
 

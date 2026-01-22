@@ -177,7 +177,8 @@ defmodule Micelio.ValidationEnvironments do
 
           {:error, fallback_reason} ->
             {:cont,
-             {:error, %{primary: reason, fallback: fallback_reason, fallback_provider: provider_id}}}
+             {:error,
+              %{primary: reason, fallback: fallback_reason, fallback_provider: provider_id}}}
         end
       end)
       |> case do

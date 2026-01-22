@@ -63,19 +63,22 @@ defmodule Micelio.AgentInfra.Protocol do
   """
   @spec normalize_status(term()) :: {:ok, status()} | {:error, atom()}
   def normalize_status(%{} = status) do
-    with {:ok, state} <- normalize_state(get_field(status, :state)),
-         hostname <- normalize_hostname(get_field(status, :hostname)),
-         ip_address <- normalize_ip_address(get_field(status, :ip_address)),
-         metadata <- normalize_metadata(get_field(status, :metadata)) do
-      {:ok,
-       %{
-         state: state,
-         hostname: hostname,
-         ip_address: ip_address,
-         metadata: metadata
-       }}
-    else
-      {:error, _reason} = error -> error
+    case normalize_state(get_field(status, :state)) do
+      {:ok, state} ->
+        hostname = normalize_hostname(get_field(status, :hostname))
+        ip_address = normalize_ip_address(get_field(status, :ip_address))
+        metadata = normalize_metadata(get_field(status, :metadata))
+
+        {:ok,
+         %{
+           state: state,
+           hostname: hostname,
+           ip_address: ip_address,
+           metadata: metadata
+         }}
+
+      {:error, _reason} = error ->
+        error
     end
   end
 
@@ -87,9 +90,10 @@ defmodule Micelio.AgentInfra.Protocol do
   @spec normalize_instance(term()) :: {:ok, instance()} | {:error, atom()}
   def normalize_instance(%{} = instance) do
     with {:ok, ref} <- normalize_ref(get_field(instance, :ref)),
-         {:ok, status} <- normalize_status(get_field(instance, :status)),
-         provider <- normalize_provider(get_field(instance, :provider)),
-         metadata <- normalize_metadata(get_field(instance, :metadata)) do
+         {:ok, status} <- normalize_status(get_field(instance, :status)) do
+      provider = normalize_provider(get_field(instance, :provider))
+      metadata = normalize_metadata(get_field(instance, :metadata))
+
       {:ok,
        %{
          ref: ref,
@@ -108,7 +112,8 @@ defmodule Micelio.AgentInfra.Protocol do
   Normalizes a list of provider instance payloads into the canonical protocol shape.
   """
   @spec normalize_instances(list() | nil) ::
-          {:ok, instances()} | {:error, :invalid_instances | %{index: non_neg_integer(), reason: atom()}}
+          {:ok, instances()}
+          | {:error, :invalid_instances | %{index: non_neg_integer(), reason: atom()}}
   def normalize_instances(nil), do: {:ok, []}
 
   def normalize_instances(instances) when is_list(instances) do
@@ -153,25 +158,29 @@ defmodule Micelio.AgentInfra.Protocol do
   """
   @spec normalize_error(term()) :: {:ok, error()} | {:error, atom()}
   def normalize_error(%{} = error) do
-    with {:ok, code} <- normalize_error_code(get_field(error, :code)),
-         message <- normalize_error_message(get_field(error, :message)),
-         retryable <- normalize_boolean(get_field(error, :retryable)),
-         metadata <- normalize_metadata(get_field(error, :metadata)) do
-      {:ok,
-       %{
-         code: code,
-         message: message,
-         retryable: retryable,
-         metadata: metadata
-       }}
-    else
-      {:error, _reason} = error -> error
+    case normalize_error_code(get_field(error, :code)) do
+      {:ok, code} ->
+        message = normalize_error_message(get_field(error, :message))
+        retryable = normalize_boolean(get_field(error, :retryable))
+        metadata = normalize_metadata(get_field(error, :metadata))
+
+        {:ok,
+         %{
+           code: code,
+           message: message,
+           retryable: retryable,
+           metadata: metadata
+         }}
+
+      {:error, _reason} = error ->
+        error
     end
   end
 
   def normalize_error(_error), do: {:error, :invalid_error}
 
-  defp normalize_state(state) when state in [:starting, :running, :stopped, :terminated, :error], do: {:ok, state}
+  defp normalize_state(state) when state in [:starting, :running, :stopped, :terminated, :error],
+    do: {:ok, state}
 
   defp normalize_state(state) when is_binary(state) do
     state

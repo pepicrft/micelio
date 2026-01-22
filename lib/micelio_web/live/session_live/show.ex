@@ -1,12 +1,11 @@
 defmodule MicelioWeb.SessionLive.Show do
   use MicelioWeb, :live_view
 
-  alias Micelio.{Authorization, Projects, Sessions}
   alias Micelio.Sessions.EventSchema
+  alias Micelio.{Authorization, Projects, Sessions}
   alias MicelioWeb.PageMeta
 
   @event_snapshot_limit 50
-  @max_session_events 200
 
   @impl true
   def mount(
@@ -154,7 +153,7 @@ defmodule MicelioWeb.SessionLive.Show do
     case title do
       value when is_binary(value) ->
         trimmed = String.trim(value)
-        if trimmed != "", do: trimmed, else: "Prompt request #{id}"
+        if trimmed == "", do: "Prompt request #{id}", else: trimmed
 
       _ ->
         "Prompt request #{id}"
@@ -162,7 +161,8 @@ defmodule MicelioWeb.SessionLive.Show do
   end
 
   defp session_og_stats(%{total: total, added: added, modified: modified, deleted: deleted})
-       when is_integer(total) and is_integer(added) and is_integer(modified) and is_integer(deleted) do
+       when is_integer(total) and is_integer(added) and is_integer(modified) and
+              is_integer(deleted) do
     %{
       files: total,
       added: added,
@@ -557,9 +557,7 @@ defmodule MicelioWeb.SessionLive.Show do
             id="session-event-viewer"
             class="session-section session-event-viewer"
             phx-hook="SessionEventViewer"
-            data-events-url={
-              ~p"/api/sessions/#{@session.session_id}/events/stream"
-            }
+            data-events-url={~p"/api/sessions/#{@session.session_id}/events/stream"}
             data-after={@event_after_cursor}
             data-max-events={@max_session_events}
           >

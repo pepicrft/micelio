@@ -2,15 +2,15 @@
   flash={@flash}
   current_scope={assigns[:current_scope]}
   current_user={assigns[:current_user]}
-    locale={assigns[:locale] || "en"}
-    current_path={assigns[:current_path] || "/"}
+  locale={assigns[:locale] || "en"}
+  current_path={assigns[:current_path] || "/"}
 >
   <div class="legal-container" id="privacy-policy">
     <.header>
       Privacy Policy
       <:subtitle>
-        This is a draft for a service operated from Germany. It references GDPR (EU) and German
-        data protection and cookie rules. It is not legal advice.
+        This policy applies to a service operated from Germany. It references GDPR (EU) and German
+        data protection and cookie rules.
       </:subtitle>
     </.header>
 
@@ -107,14 +107,7 @@
         >
           {MicelioWeb.LegalInfo.hosting_provider().name}
         </a>;
-        payments and invoicing via <a
-          href={MicelioWeb.LegalInfo.merchant_of_record().url}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          {MicelioWeb.LegalInfo.merchant_of_record().name}
-        </a>.
-        Email delivery via <a
+        email delivery via <a
           href={MicelioWeb.LegalInfo.email_provider().url}
           target="_blank"
           rel="noopener noreferrer"

@@ -10,6 +10,7 @@ defmodule Micelio.Repo.Migrations.CreatePromptRequests do
       add :model, :string, null: false
       add :system_prompt, :text, null: false
       add :conversation, :map, null: false, default: %{}
+
       add :project_id, references(:projects, type: :binary_id, on_delete: :delete_all),
         null: false
 
@@ -25,6 +26,7 @@ defmodule Micelio.Repo.Migrations.CreatePromptRequests do
     create table(:prompt_suggestions, primary_key: false) do
       add :id, :binary_id, primary_key: true
       add :suggestion, :text, null: false
+
       add :prompt_request_id,
           references(:prompt_requests, type: :binary_id, on_delete: :delete_all),
           null: false

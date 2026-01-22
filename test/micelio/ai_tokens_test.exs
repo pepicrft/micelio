@@ -1,11 +1,11 @@
 defmodule Micelio.AITokensTest do
   use Micelio.DataCase, async: true
 
+  alias Micelio.Accounts
   alias Micelio.AITokens
   alias Micelio.AITokens.TokenContribution
-  alias Micelio.Accounts
-  alias Micelio.PromptRequests
   alias Micelio.Projects
+  alias Micelio.PromptRequests
   alias Micelio.Repo
 
   setup do
@@ -13,7 +13,11 @@ defmodule Micelio.AITokensTest do
       Accounts.create_organization(%{handle: "ai-tokens", name: "AI Tokens"})
 
     {:ok, project} =
-      Projects.create_project(%{handle: "token-pool", name: "Token Pool", organization_id: organization.id})
+      Projects.create_project(%{
+        handle: "token-pool",
+        name: "Token Pool",
+        organization_id: organization.id
+      })
 
     {:ok, organization: organization, project: project}
   end

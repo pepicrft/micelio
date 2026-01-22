@@ -82,7 +82,9 @@ defmodule Micelio.Errors.RetentionTest do
     now = ~U[2024-01-01 00:00:00Z]
     resolved_cutoff = DateTime.add(now, -40 * 86_400, :second)
     unresolved_cutoff = DateTime.add(now, -100 * 86_400, :second)
-    tmp_dir = Path.join(System.tmp_dir!(), "micelio-retention-#{System.unique_integer([:positive])}")
+
+    tmp_dir =
+      Path.join(System.tmp_dir!(), "micelio-retention-#{System.unique_integer([:positive])}")
 
     File.mkdir_p!(tmp_dir)
     Process.put(:micelio_storage_config, backend: :local, local_path: tmp_dir)

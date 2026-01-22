@@ -42,8 +42,7 @@ defmodule Micelio.AgentInfra.CloudPlatforms do
     %{
       id: :gcp,
       name: "GCP",
-      summary:
-        "Strong network and pricing flexibility, but lacks native Firecracker support.",
+      summary: "Strong network and pricing flexibility, but lacks native Firecracker support.",
       strengths: [
         "Custom machine types and preemptible options",
         "Clean networking and project isolation model",
@@ -89,8 +88,7 @@ defmodule Micelio.AgentInfra.CloudPlatforms do
     %{
       id: :fly,
       name: "Fly.io",
-      summary:
-        "Managed Firecracker microVMs with fast startup and global edge reach.",
+      summary: "Managed Firecracker microVMs with fast startup and global edge reach.",
       strengths: [
         "Firecracker-based VMs with straightforward developer UX",
         "Global footprint for low-latency agent sessions",

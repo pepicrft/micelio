@@ -30,8 +30,14 @@ defmodule MicelioWeb.AgentLive.Index do
               route: ~p"/#{organization.account.handle}/#{project.handle}/agents",
               params: %{"account" => account_handle, "project" => project_handle}
             })
-            |> assign(:error_boundary_retry_path, ~p"/#{organization.account.handle}/#{project.handle}/agents")
-            |> assign(:error_boundary_user_id, socket.assigns.current_user && socket.assigns.current_user.id)
+            |> assign(
+              :error_boundary_retry_path,
+              ~p"/#{organization.account.handle}/#{project.handle}/agents"
+            )
+            |> assign(
+              :error_boundary_user_id,
+              socket.assigns.current_user && socket.assigns.current_user.id
+            )
             |> assign(:error_boundary_project_id, project.id)
             |> load_sessions()
             |> assign_agent_og_summary()
@@ -136,8 +142,7 @@ defmodule MicelioWeb.AgentLive.Index do
     %{commits: commits, files: files}
   end
 
-  defp session_file_paths(%{session: %{changes: changes}})
-       when is_list(changes) do
+  defp session_file_paths(%{session: %{changes: changes}}) when is_list(changes) do
     changes
     |> Enum.map(& &1.file_path)
     |> Enum.filter(&is_binary/1)

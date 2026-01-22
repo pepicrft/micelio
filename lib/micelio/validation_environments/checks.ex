@@ -93,40 +93,47 @@ defmodule Micelio.ValidationEnvironments.Checks do
     min_coverage_delta = Keyword.get(opts, :min_coverage_delta)
 
     {results, failed?} =
-      Enum.reduce(checks, {%{checks: [], coverage_delta: nil, resource_usage: %{}}, false}, fn check,
-                                                                                               {acc, failed?} ->
-        started_at = System.monotonic_time(:millisecond)
+      Enum.reduce(
+        checks,
+        {%{checks: [], coverage_delta: nil, resource_usage: %{}}, false},
+        fn check, {acc, failed?} ->
+          started_at = System.monotonic_time(:millisecond)
 
-        {:ok, result} = executor.run(instance_ref, check.command, check.args, check.env)
+          {:ok, result} = executor.run(instance_ref, check.command, check.args, check.env)
 
-        duration_ms = System.monotonic_time(:millisecond) - started_at
+          duration_ms = System.monotonic_time(:millisecond) - started_at
 
-        coverage_delta = Map.get(result, :coverage_delta) || acc.coverage_delta
+          coverage_delta = Map.get(result, :coverage_delta) || acc.coverage_delta
 
-        resource_usage =
-          acc.resource_usage
-          |> merge_resource_usage(Map.get(result, :resource_usage, %{}))
+          resource_usage =
+            acc.resource_usage
+            |> merge_resource_usage(Map.get(result, :resource_usage, %{}))
 
-        entry = %{
-          "id" => check.id,
-          "label" => check.label,
-          "kind" => Atom.to_string(check.kind),
-          "command" => check.command,
-          "args" => check.args,
-          "env" => check.env,
-          "exit_code" => result.exit_code,
-          "stdout" => Map.get(result, :stdout, ""),
-          "duration_ms" => duration_ms,
-          "resource_usage" => Map.get(result, :resource_usage, %{})
-        }
+          entry = %{
+            "id" => check.id,
+            "label" => check.label,
+            "kind" => Atom.to_string(check.kind),
+            "command" => check.command,
+            "args" => check.args,
+            "env" => check.env,
+            "exit_code" => result.exit_code,
+            "stdout" => Map.get(result, :stdout, ""),
+            "duration_ms" => duration_ms,
+            "resource_usage" => Map.get(result, :resource_usage, %{})
+          }
 
-        updated_checks = acc.checks ++ [entry]
+          updated_checks = acc.checks ++ [entry]
 
-        {
-          %{checks: updated_checks, coverage_delta: coverage_delta, resource_usage: resource_usage},
-          failed? or result.exit_code != 0
-        }
-      end)
+          {
+            %{
+              checks: updated_checks,
+              coverage_delta: coverage_delta,
+              resource_usage: resource_usage
+            },
+            failed? or result.exit_code != 0
+          }
+        end
+      )
 
     outcome =
       if failed? do

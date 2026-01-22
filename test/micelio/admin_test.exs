@@ -251,6 +251,9 @@ defmodule Micelio.AdminTest do
       generated_at: now
     }
 
-    Micelio.PromptRequests.create_prompt_request(Map.merge(base_attrs, attrs), project: project, user: user)
+    Micelio.PromptRequests.create_prompt_request(Map.merge(base_attrs, attrs),
+      project: project,
+      user: user
+    )
   end
 end

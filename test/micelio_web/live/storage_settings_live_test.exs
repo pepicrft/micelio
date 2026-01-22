@@ -111,19 +111,19 @@ defmodule MicelioWeb.StorageSettingsLiveTest do
 
     {:ok, view, _html} = live(conn, ~p"/settings/storage")
 
-    assert has_element?(view, "input[name=\"s3_config[secret_access_key]\"][type=\"password\"]")
+    assert has_element?(view, ~s(input[name="s3_config[secret_access_key]"][type="password"]))
 
     view
     |> element("#storage-secret-toggle")
     |> render_click()
 
-    assert has_element?(view, "input[name=\"s3_config[secret_access_key]\"][type=\"text\"]")
+    assert has_element?(view, ~s(input[name="s3_config[secret_access_key]"][type="text"]))
 
     view
     |> element("#storage-secret-toggle")
     |> render_click()
 
-    assert has_element?(view, "input[name=\"s3_config[secret_access_key]\"][type=\"password\"]")
+    assert has_element?(view, ~s(input[name="s3_config[secret_access_key]"][type="password"]))
   end
 
   test "shows validation errors when test connection fails", %{conn: conn} do
@@ -187,12 +187,12 @@ defmodule MicelioWeb.StorageSettingsLiveTest do
 
     assert has_element?(
              view,
-             "select[name=\"s3_config[region]\"] option[selected][value=\"us-east-1\"]"
+             ~s(select[name="s3_config[region]"] option[selected][value="us-east-1"])
            )
 
     assert has_element?(
              view,
-             "input[name=\"s3_config[endpoint_url]\"][value=\"https://s3.us-east-1.amazonaws.com\"]"
+             ~s(input[name="s3_config[endpoint_url]"][value="https://s3.us-east-1.amazonaws.com"])
            )
   end
 
@@ -218,7 +218,7 @@ defmodule MicelioWeb.StorageSettingsLiveTest do
 
     assert has_element?(
              view,
-             "input[name=\"s3_config[endpoint_url]\"][value=\"https://account-id.r2.cloudflarestorage.com\"]"
+             ~s(input[name="s3_config[endpoint_url]"][value="https://account-id.r2.cloudflarestorage.com"])
            )
   end
 
@@ -286,7 +286,8 @@ defmodule MicelioWeb.StorageSettingsLiveTest do
       "secret_access_key" => "secret-key"
     }
 
-    {:ok, _config, _result} = Storage.upsert_user_s3_config(user, params, validator: ErrorValidator)
+    {:ok, _config, _result} =
+      Storage.upsert_user_s3_config(user, params, validator: ErrorValidator)
 
     conn = log_in_user(conn, user)
     {:ok, _view, html} = live(conn, ~p"/settings/storage")

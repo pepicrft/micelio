@@ -19,7 +19,10 @@ defmodule Micelio.Storage.UserS3Test do
 
   test "uses user S3 config when validated" do
     user = user_fixture()
-    config = s3_config_fixture(user, %{validated_at: DateTime.utc_now(), path_prefix: "users/#{user.id}"})
+
+    config =
+      s3_config_fixture(user, %{validated_at: DateTime.utc_now(), path_prefix: "users/#{user.id}"})
+
     key = "projects/1/file.txt"
     content = "user-s3"
 
@@ -101,7 +104,13 @@ defmodule Micelio.Storage.UserS3Test do
     assert {:ok, ^key} = UserS3.put(user.id, key, content)
 
     assert_receive {:telemetry,
-                    %{backend: :user_s3, fallback: false, operation: :put, status: :ok, user_id: ^user.id}}
+                    %{
+                      backend: :user_s3,
+                      fallback: false,
+                      operation: :put,
+                      status: :ok,
+                      user_id: ^user.id
+                    }}
   end
 
   test "emits telemetry for fallback to instance storage" do
@@ -129,10 +138,22 @@ defmodule Micelio.Storage.UserS3Test do
     end)
 
     assert_receive {:telemetry,
-                    %{backend: :user_s3, fallback: false, operation: :put, status: :error, user_id: ^user.id}}
+                    %{
+                      backend: :user_s3,
+                      fallback: false,
+                      operation: :put,
+                      status: :error,
+                      user_id: ^user.id
+                    }}
 
     assert_receive {:telemetry,
-                    %{backend: :instance, fallback: true, operation: :put, status: :ok, user_id: ^user.id}}
+                    %{
+                      backend: :instance,
+                      fallback: true,
+                      operation: :put,
+                      status: :ok,
+                      user_id: ^user.id
+                    }}
   end
 
   defp user_fixture do

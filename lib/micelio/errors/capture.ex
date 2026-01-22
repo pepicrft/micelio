@@ -99,8 +99,6 @@ defmodule Micelio.Errors.Capture do
       cutoff =
         if is_integer(dedupe_window_seconds) and dedupe_window_seconds > 0 do
           DateTime.add(now, -dedupe_window_seconds, :second)
-        else
-          nil
         end
 
       Repo.transaction(fn ->
@@ -111,8 +109,6 @@ defmodule Micelio.Errors.Capture do
             |> order_by([error], desc: error.last_seen_at)
             |> limit(1)
             |> Repo.one()
-          else
-            nil
           end
 
         result =
@@ -164,7 +160,8 @@ defmodule Micelio.Errors.Capture do
         {:ok, {{:error, reason}, _deduped?}} ->
           {:error, reason}
 
-        {:error, reason} -> {:error, reason}
+        {:error, reason} ->
+          {:error, reason}
       end
     end
   end
@@ -218,7 +215,10 @@ defmodule Micelio.Errors.Capture do
 
   defp normalize_message(message) do
     message
-    |> String.replace(~r/\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/i, ":uuid")
+    |> String.replace(
+      ~r/\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/i,
+      ":uuid"
+    )
     |> String.replace(~r/\b\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z?\b/, ":timestamp")
     |> String.replace(~r/\b\d+\b/, ":number")
   end
@@ -238,10 +238,13 @@ defmodule Micelio.Errors.Capture do
   end
 
   defp sampled_out?(fingerprint, opts) do
-    sample_after = Keyword.get(opts, :sampling_after_occurrences, Config.sampling_after_occurrences())
+    sample_after =
+      Keyword.get(opts, :sampling_after_occurrences, Config.sampling_after_occurrences())
+
     sample_rate = Keyword.get(opts, :sampling_rate, Config.sampling_rate())
 
-    if is_integer(sample_after) and sample_after > 0 and is_number(sample_rate) and sample_rate < 1 do
+    if is_integer(sample_after) and sample_after > 0 and is_number(sample_rate) and
+         sample_rate < 1 do
       total =
         Error
         |> where([error], error.fingerprint == ^fingerprint)

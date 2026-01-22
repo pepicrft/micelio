@@ -47,7 +47,8 @@ defmodule MicelioWeb.ProjectLive.Index do
            |> assign(:projects_count, projects_count)
            |> put_flash(:info, gettext("Project deleted successfully."))}
         else
-          {:noreply, put_flash(socket, :error, gettext("You do not have access to this project."))}
+          {:noreply,
+           put_flash(socket, :error, gettext("You do not have access to this project."))}
         end
     end
   end

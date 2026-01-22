@@ -130,7 +130,10 @@ defmodule Micelio.AgentInfra.ProtocolTest do
   end
 
   test "normalize_instances reports the first invalid entry" do
-    payloads = [%{ref: "vm-123", status: %{state: :running}}, %{ref: nil, status: %{state: :running}}]
+    payloads = [
+      %{ref: "vm-123", status: %{state: :running}},
+      %{ref: nil, status: %{state: :running}}
+    ]
 
     assert {:error, %{index: 1, reason: :invalid_instance_ref}} =
              Protocol.normalize_instances(payloads)

@@ -37,7 +37,15 @@ defmodule Micelio.AgentInfra.SessionRequest do
   """
   def changeset(request, attrs) do
     request
-    |> cast(attrs, [:purpose, :workspace_ref, :command, :env, :working_dir, :ttl_seconds, :metadata])
+    |> cast(attrs, [
+      :purpose,
+      :workspace_ref,
+      :command,
+      :env,
+      :working_dir,
+      :ttl_seconds,
+      :metadata
+    ])
     |> cast_embed(:plan, required: true)
     |> validate_required([:purpose, :workspace_ref, :working_dir])
     |> validate_inclusion(:purpose, purpose_values())

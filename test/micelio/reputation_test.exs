@@ -1,17 +1,17 @@
 defmodule Micelio.ReputationTest do
   use Micelio.DataCase, async: true
 
+  import Ecto.Query, warn: false
+
   alias Micelio.Accounts
+  alias Micelio.Projects
   alias Micelio.PromptRequests
   alias Micelio.PromptRequests.PromptRequest
-  alias Micelio.Projects
-  alias Micelio.Reputation
   alias Micelio.Repo
+  alias Micelio.Reputation
   alias Micelio.Sessions
   alias Micelio.ValidationEnvironments
   alias Micelio.ValidationEnvironments.ValidationRun
-
-  import Ecto.Query, warn: false
 
   defp setup_project(email) do
     {:ok, user} = Accounts.get_or_create_user_by_email(email)

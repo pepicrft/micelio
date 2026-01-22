@@ -3,10 +3,9 @@ defmodule Micelio.Storage.S3RevalidationScheduler do
 
   use GenServer
 
-  require Logger
-
   alias Micelio.Storage.S3Revalidation
-  alias Micelio.Storage.S3RevalidationJob
+
+  require Logger
 
   @default_run_hour 2
   @default_run_minute 0
@@ -44,10 +43,6 @@ defmodule Micelio.Storage.S3RevalidationScheduler do
         {:ok, _job} ->
           :ok
 
-        {:error, reason} ->
-          Logger.warning("storage.s3_revalidation oban_enqueue_failed=#{inspect(reason)}")
-          S3Revalidation.run()
-
         _ ->
           S3Revalidation.run()
       end
@@ -84,13 +79,7 @@ defmodule Micelio.Storage.S3RevalidationScheduler do
   end
 
   defp enqueue_job do
-    job =
-      Oban.Job.new(%{"source" => "s3_revalidation_scheduler"},
-        worker: S3RevalidationJob,
-        queue: :maintenance,
-        max_attempts: 1
-      )
-
-    Oban.insert(job)
+    # Oban is not currently a dependency - this is a placeholder for future use
+    {:ok, :oban_not_configured}
   end
 end

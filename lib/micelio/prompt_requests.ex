@@ -5,15 +5,15 @@ defmodule Micelio.PromptRequests do
 
   import Ecto.Query, warn: false
 
+  alias Ecto.Multi
   alias Micelio.AITokens
   alias Micelio.ContributionConfidence
   alias Micelio.PromptRequests.{PromptRequest, PromptSuggestion, PromptTemplate}
+  alias Micelio.Repo
   alias Micelio.Sessions.Session
   alias Micelio.ValidationEnvironments
   alias Micelio.ValidationEnvironments.ValidationRun
-  alias Micelio.Repo
   alias MicelioWeb.Endpoint
-  alias Ecto.Multi
 
   def confidence_score(%PromptRequest{} = prompt_request, opts \\ []) do
     ContributionConfidence.score_for_prompt_request(prompt_request, opts)
@@ -56,7 +56,8 @@ defmodule Micelio.PromptRequests do
 
   def get_prompt_request_for_project(project, id) do
     PromptRequest
-    |> where([prompt_request],
+    |> where(
+      [prompt_request],
       prompt_request.project_id == ^project.id and prompt_request.id == ^id
     )
     |> preload([:user, :parent_prompt_request, :prompt_template, :curated_by, suggestions: :user])
@@ -139,7 +140,8 @@ defmodule Micelio.PromptRequests do
     validation_async =
       Keyword.get(opts, :validation_async, Keyword.get(flow_opts, :validation_async, true))
 
-    validation_opts = Keyword.get(opts, :validation_opts, Keyword.get(flow_opts, :validation_opts, []))
+    validation_opts =
+      Keyword.get(opts, :validation_opts, Keyword.get(flow_opts, :validation_opts, []))
 
     task_budget_amount =
       Keyword.get(opts, :task_budget_amount, Keyword.get(flow_opts, :task_budget_amount))
@@ -218,20 +220,32 @@ defmodule Micelio.PromptRequests do
 
   def validation_feedback_summary(feedback) do
     case format_validation_feedback(feedback) do
-      nil -> "Validation failed."
-      %{} = formatted -> Map.get(formatted, "summary") || Map.get(formatted, :summary) || "Validation failed."
-      other -> to_string(other)
+      nil ->
+        "Validation failed."
+
+      %{} = formatted ->
+        Map.get(formatted, "summary") || Map.get(formatted, :summary) || "Validation failed."
+
+      other ->
+        to_string(other)
     end
   end
 
   def run_validation(%PromptRequest{} = prompt_request, opts \\ []) do
     config_opts = Application.get_env(:micelio, :validation_environments, [])
-    ValidationEnvironments.run_for_prompt_request(prompt_request, Keyword.merge(config_opts, opts))
+
+    ValidationEnvironments.run_for_prompt_request(
+      prompt_request,
+      Keyword.merge(config_opts, opts)
+    )
   end
 
   def run_validation_async(%PromptRequest{} = prompt_request, notify_pid, opts \\ []) do
     Task.Supervisor.start_child(Micelio.ValidationEnvironments.Supervisor, fn ->
-      finalize_prompt_request_validation(prompt_request, Keyword.put(opts, :notify_pid, notify_pid))
+      finalize_prompt_request_validation(
+        prompt_request,
+        Keyword.put(opts, :notify_pid, notify_pid)
+      )
     end)
   end
 
@@ -388,10 +402,6 @@ defmodule Micelio.PromptRequests do
     :ok
   end
 
-  defp run_prompt_request_validation(%PromptRequest{} = prompt_request, validation_opts, false) do
-    finalize_prompt_request_validation(prompt_request, validation_opts)
-  end
-
   defp finalize_prompt_request_validation(%PromptRequest{} = prompt_request, validation_opts) do
     case run_validation(prompt_request, validation_opts) do
       {:ok, run} ->
@@ -518,7 +528,10 @@ defmodule Micelio.PromptRequests do
     {:ok, prompt_request}
   end
 
-  defp maybe_create_prompt_request_session(_repo, %PromptRequest{session_id: session_id} = prompt_request)
+  defp maybe_create_prompt_request_session(
+         _repo,
+         %PromptRequest{session_id: session_id} = prompt_request
+       )
        when is_binary(session_id) do
     {:ok, prompt_request}
   end
@@ -526,12 +539,10 @@ defmodule Micelio.PromptRequests do
   defp maybe_create_prompt_request_session(repo, %PromptRequest{} = prompt_request) do
     attrs = prompt_request_session_attrs(prompt_request)
 
-    with {:ok, session} <- repo.insert(Session.create_changeset(%Session{}, attrs)),
-         {:ok, updated_prompt_request} <-
-           prompt_request
-           |> Ecto.Changeset.change(%{session_id: session.id})
-           |> repo.update() do
-      {:ok, updated_prompt_request}
+    with {:ok, session} <- repo.insert(Session.create_changeset(%Session{}, attrs)) do
+      prompt_request
+      |> Ecto.Changeset.change(%{session_id: session.id})
+      |> repo.update()
     end
   end
 
@@ -650,13 +661,20 @@ defmodule Micelio.PromptRequests do
   defp quality_score_payload(%ValidationRun{metrics: metrics}) when is_map(metrics) do
     scores = Map.get(metrics, "quality_scores") || Map.get(metrics, :quality_scores)
     overall = Map.get(metrics, "quality_score") || Map.get(metrics, :quality_score)
-    threshold_failed = Map.get(metrics, "quality_threshold_failed") || Map.get(metrics, :quality_threshold_failed)
-    threshold_min = Map.get(metrics, "quality_threshold_min") || Map.get(metrics, :quality_threshold_min)
+
+    threshold_failed =
+      Map.get(metrics, "quality_threshold_failed") || Map.get(metrics, :quality_threshold_failed)
+
+    threshold_min =
+      Map.get(metrics, "quality_threshold_min") || Map.get(metrics, :quality_threshold_min)
 
     %{}
     |> maybe_put_value("quality_scores", normalize_score_keys(scores))
     |> maybe_put_value("quality_score", overall)
-    |> maybe_put_value("quality_threshold", quality_threshold_payload(threshold_failed, threshold_min))
+    |> maybe_put_value(
+      "quality_threshold",
+      quality_threshold_payload(threshold_failed, threshold_min)
+    )
   end
 
   defp quality_score_payload(_run), do: %{}
@@ -668,7 +686,9 @@ defmodule Micelio.PromptRequests do
 
     if threshold_failed do
       score = Map.get(metrics, "quality_score") || Map.get(metrics, :quality_score)
-      min_score = Map.get(metrics, "quality_threshold_min") || Map.get(metrics, :quality_threshold_min)
+
+      min_score =
+        Map.get(metrics, "quality_threshold_min") || Map.get(metrics, :quality_threshold_min)
 
       "Validation failed: quality score #{format_score(score)}/100 below minimum #{format_score(min_score)}."
     else
@@ -714,7 +734,9 @@ defmodule Micelio.PromptRequests do
     end
   end
 
-  defp failure_payload(%ValidationRun{check_results: %{"error" => %{"stage" => stage, "reason" => reason}}}) do
+  defp failure_payload(%ValidationRun{
+         check_results: %{"error" => %{"stage" => stage, "reason" => reason}}
+       }) do
     %{
       "failures" => [
         %{
@@ -771,8 +793,7 @@ defmodule Micelio.PromptRequests do
 
   defp format_command(command, args) do
     [command | List.wrap(args)]
-    |> Enum.map(&to_string/1)
-    |> Enum.join(" ")
+    |> Enum.map_join(" ", &to_string/1)
   end
 
   defp normalize_score_keys(nil), do: nil

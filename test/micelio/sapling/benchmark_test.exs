@@ -17,7 +17,9 @@ defmodule Micelio.Sapling.BenchmarkTest do
     end
 
     assert :ok == Benchmark.ensure_tools([:git], finder: finder)
-    assert {:error, {:missing_tools, [:sapling]}} = Benchmark.ensure_tools([:git, :sapling], finder: finder)
+
+    assert {:error, {:missing_tools, [:sapling]}} =
+             Benchmark.ensure_tools([:git, :sapling], finder: finder)
   end
 
   test "tool_availability returns available and missing tools" do
@@ -94,7 +96,15 @@ defmodule Micelio.Sapling.BenchmarkTest do
     }
 
     summary = [
-      %{scenario: :status, tool: :git, runs: 1, avg_us: 1000, min_us: 900, max_us: 1100, avg_output_bytes: 42}
+      %{
+        scenario: :status,
+        tool: :git,
+        runs: 1,
+        avg_us: 1000,
+        min_us: 900,
+        max_us: 1100,
+        avg_output_bytes: 42
+      }
     ]
 
     markdown = Benchmark.format_markdown(report, summary)

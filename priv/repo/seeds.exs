@@ -99,9 +99,7 @@ with {:ok, user} <- Accounts.get_or_create_user_by_email(user_email),
       IO.puts("Micelio workspace already seeded: #{project.handle}/#{project.name}")
 
     {:ok, %{file_count: file_count}} ->
-      IO.puts(
-        "Seeded Micelio workspace: #{project.handle}/#{project.name} (#{file_count} files)"
-      )
+      IO.puts("Seeded Micelio workspace: #{project.handle}/#{project.name} (#{file_count} files)")
 
     {:error, reason} ->
       raise "Failed to seed micelio workspace: #{inspect(reason)}"

@@ -4,9 +4,9 @@ defmodule Micelio.PromptRequestsTest do
   alias Micelio.Accounts
   alias Micelio.AITokens
   alias Micelio.AITokens.TokenEarning
+  alias Micelio.Projects
   alias Micelio.PromptRequests
   alias Micelio.PromptRequests.PromptRequest
-  alias Micelio.Projects
   alias Micelio.Repo
   alias Micelio.Sessions
 
@@ -231,8 +231,13 @@ defmodule Micelio.PromptRequestsTest do
     session = Sessions.get_session(updated.session_id)
     assert session.session_id == "prompt-request-#{prompt_request.id}"
     assert session.metadata["prompt_request"]["prompt"] == attrs.prompt
-    assert session.metadata["prompt_request"]["execution_environment"] == attrs.execution_environment
-    assert session.metadata["prompt_request"]["execution_duration_ms"] == attrs.execution_duration_ms
+
+    assert session.metadata["prompt_request"]["execution_environment"] ==
+             attrs.execution_environment
+
+    assert session.metadata["prompt_request"]["execution_duration_ms"] ==
+             attrs.execution_duration_ms
+
     assert is_binary(session.metadata["prompt_request"]["attestation"]["signature"])
     [run | _] = PromptRequests.list_validation_runs(updated)
     assert run.status == :passed
@@ -585,7 +590,9 @@ defmodule Micelio.PromptRequestsTest do
       )
 
     {:ok, _pool} = AITokens.create_token_pool(project, %{balance: 5000, reserved: 0})
-    assert {:ok, _budget, _pool} = AITokens.upsert_task_budget(prompt_request, %{"amount" => "3000"})
+
+    assert {:ok, _budget, _pool} =
+             AITokens.upsert_task_budget(prompt_request, %{"amount" => "3000"})
 
     assert {:ok, run} =
              PromptRequests.run_validation(prompt_request,
@@ -638,7 +645,9 @@ defmodule Micelio.PromptRequestsTest do
       )
 
     {:ok, _pool} = AITokens.create_token_pool(project, %{balance: 5000, reserved: 0})
-    assert {:ok, _budget, _pool} = AITokens.upsert_task_budget(prompt_request, %{"amount" => "3000"})
+
+    assert {:ok, _budget, _pool} =
+             AITokens.upsert_task_budget(prompt_request, %{"amount" => "3000"})
 
     assert {:ok, _pid} =
              PromptRequests.run_validation_async(prompt_request, self(),
@@ -802,6 +811,7 @@ defmodule Micelio.PromptRequestsTest do
         prompt_request_id: accepted.id,
         reason: :prompt_request_accepted
       )
+
     assert earning.amount == AITokens.prompt_request_reward(accepted)
     assert earning.user_id == user.id
     assert earning.project_id == project.id

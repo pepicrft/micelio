@@ -17,16 +17,24 @@ defmodule Micelio.PromptRequests.PromptRequest do
     field :origin, Ecto.Enum, values: @origin_values, default: :ai_generated
     field :review_status, Ecto.Enum, values: @review_status_values, default: :pending
     field :reviewed_at, :utc_datetime
+    field :curated_at, :utc_datetime
     field :token_count, :integer
     field :generated_at, :utc_datetime
     field :system_prompt, :string
     field :conversation, :map, default: %{}
     field :attestation, :map, default: %{}
+    field :execution_environment, :map
+    field :execution_duration_ms, :integer
+    field :validation_feedback, :string
+    field :validation_iterations, :integer, default: 0
 
     belongs_to :project, Micelio.Projects.Project
     belongs_to :user, Micelio.Accounts.User
     belongs_to :reviewed_by, Micelio.Accounts.User
+    belongs_to :curated_by, Micelio.Accounts.User
     belongs_to :session, Micelio.Sessions.Session
+    belongs_to :parent_prompt_request, __MODULE__
+    belongs_to :prompt_template, Micelio.PromptRequests.PromptTemplate
     has_many :suggestions, PromptSuggestion
     has_many :validation_runs, Micelio.ValidationEnvironments.ValidationRun
 
@@ -185,5 +193,18 @@ defmodule Micelio.PromptRequests.PromptRequest do
       _ ->
         add_error(changeset, :generated_at, "must be valid datetime")
     end
+  end
+
+  @doc "Changeset for reviewing a prompt request."
+  def review_changeset(prompt_request, attrs) do
+    prompt_request
+    |> cast(attrs, [:review_status, :reviewed_at, :reviewed_by_id])
+    |> validate_inclusion(:review_status, @review_status_values)
+  end
+
+  @doc "Changeset for curating a prompt request."
+  def curation_changeset(prompt_request, attrs) do
+    prompt_request
+    |> cast(attrs, [:curated_at, :curated_by_id])
   end
 end

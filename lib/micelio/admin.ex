@@ -155,10 +155,10 @@ defmodule Micelio.Admin do
       accepted_prompt_requests:
         fragment("SUM(CASE WHEN ? = 'accepted' THEN 1 ELSE 0 END)", pr.review_status)
     })
-    |> order_by([pr, _p, _o, _a], [
+    |> order_by([pr, _p, _o, _a],
       desc: fragment("COALESCE(?, 0)", sum(pr.token_count)),
       desc: count(pr.id)
-    ])
+    )
     |> limit(^limit)
     |> Repo.all()
   end

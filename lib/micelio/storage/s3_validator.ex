@@ -138,24 +138,25 @@ defmodule Micelio.Storage.S3Validator do
   defp head_bucket(config, opts) do
     url = build_bucket_url(config)
 
-    with {:ok, response} <- request(config, :head, url, nil, [], opts) do
-      case response.status do
-        200 ->
-          {:ok, response}
+    case request(config, :head, url, nil, [], opts) do
+      {:ok, response} ->
+        case response.status do
+          200 ->
+            {:ok, response}
 
-        301 ->
-          {:error, :bucket, "Bucket exists but region/endpoint mismatch (301 redirect)."}
+          301 ->
+            {:error, :bucket, "Bucket exists but region/endpoint mismatch (301 redirect)."}
 
-        403 ->
-          {:error, :bucket, "Access denied when checking bucket."}
+          403 ->
+            {:error, :bucket, "Access denied when checking bucket."}
 
-        404 ->
-          {:error, :bucket, "Bucket not found."}
+          404 ->
+            {:error, :bucket, "Bucket not found."}
 
-        status ->
-          {:error, :bucket, "Bucket check failed with status #{status}."}
-      end
-    else
+          status ->
+            {:error, :bucket, "Bucket check failed with status #{status}."}
+        end
+
       {:error, reason} ->
         {:error, :bucket, "Bucket check failed: #{inspect(reason)}"}
     end
@@ -165,18 +166,19 @@ defmodule Micelio.Storage.S3Validator do
     key = test_key(config)
     url = build_object_url(config, key)
 
-    with {:ok, response} <- request(config, :put, url, @validation_payload, [], opts) do
-      case response.status do
-        status when status in 200..299 ->
-          {:ok, response}
+    case request(config, :put, url, @validation_payload, [], opts) do
+      {:ok, response} ->
+        case response.status do
+          status when status in 200..299 ->
+            {:ok, response}
 
-        403 ->
-          {:error, :write, "Access denied when writing test object."}
+          403 ->
+            {:error, :write, "Access denied when writing test object."}
 
-        status ->
-          {:error, :write, "Write test failed with status #{status}."}
-      end
-    else
+          status ->
+            {:error, :write, "Write test failed with status #{status}."}
+        end
+
       {:error, reason} ->
         {:error, :write, "Write test failed: #{inspect(reason)}"}
     end
@@ -186,25 +188,26 @@ defmodule Micelio.Storage.S3Validator do
     key = test_key(config)
     url = build_object_url(config, key)
 
-    with {:ok, response} <- request(config, :get, url, nil, [], opts) do
-      case response.status do
-        200 ->
-          if response.body == @validation_payload do
-            {:ok, response}
-          else
-            {:error, :read, "Read test returned unexpected content."}
-          end
+    case request(config, :get, url, nil, [], opts) do
+      {:ok, response} ->
+        case response.status do
+          200 ->
+            if response.body == @validation_payload do
+              {:ok, response}
+            else
+              {:error, :read, "Read test returned unexpected content."}
+            end
 
-        403 ->
-          {:error, :read, "Access denied when reading test object."}
+          403 ->
+            {:error, :read, "Access denied when reading test object."}
 
-        404 ->
-          {:error, :read, "Test object not found when reading."}
+          404 ->
+            {:error, :read, "Test object not found when reading."}
 
-        status ->
-          {:error, :read, "Read test failed with status #{status}."}
-      end
-    else
+          status ->
+            {:error, :read, "Read test failed with status #{status}."}
+        end
+
       {:error, reason} ->
         {:error, :read, "Read test failed: #{inspect(reason)}"}
     end
@@ -214,18 +217,19 @@ defmodule Micelio.Storage.S3Validator do
     key = test_key(config)
     url = build_object_url(config, key)
 
-    with {:ok, response} <- request(config, :delete, url, nil, [], opts) do
-      case response.status do
-        status when status in [200, 204] ->
-          {:ok, response}
+    case request(config, :delete, url, nil, [], opts) do
+      {:ok, response} ->
+        case response.status do
+          status when status in [200, 204] ->
+            {:ok, response}
 
-        403 ->
-          {:error, :delete, "Access denied when deleting test object."}
+          403 ->
+            {:error, :delete, "Access denied when deleting test object."}
 
-        status ->
-          {:error, :delete, "Delete test failed with status #{status}."}
-      end
-    else
+          status ->
+            {:error, :delete, "Delete test failed with status #{status}."}
+        end
+
       {:error, reason} ->
         {:error, :delete, "Delete test failed: #{inspect(reason)}"}
     end
@@ -258,22 +262,23 @@ defmodule Micelio.Storage.S3Validator do
     else
       url = build_bucket_acl_url(config)
 
-      with {:ok, response} <- request(config, :get, url, nil, [], opts) do
-        case response.status do
-          200 ->
-            if bucket_acl_public?(response.body) do
-              {:warning, "Bucket ACL appears to allow public access."}
-            else
-              :ok
-            end
+      case request(config, :get, url, nil, [], opts) do
+        {:ok, response} ->
+          case response.status do
+            200 ->
+              if bucket_acl_public?(response.body) do
+                {:warning, "Bucket ACL appears to allow public access."}
+              else
+                :ok
+              end
 
-          403 ->
-            {:warning, "Bucket ACL check denied; verify bucket privacy manually."}
+            403 ->
+              {:warning, "Bucket ACL check denied; verify bucket privacy manually."}
 
-          status ->
-            {:warning, "Bucket ACL check returned status #{status}."}
-        end
-      else
+            status ->
+              {:warning, "Bucket ACL check returned status #{status}."}
+          end
+
         {:error, reason} ->
           {:warning, "Bucket ACL check failed: #{inspect(reason)}"}
       end
@@ -309,7 +314,17 @@ defmodule Micelio.Storage.S3Validator do
         {:ok, response} ->
           if retryable_status?(response.status) and attempts_left > 1 do
             Process.sleep(backoff_ms)
-            do_request(config, method, url, body, headers, timeout_ms, attempts_left - 1, backoff_ms)
+
+            do_request(
+              config,
+              method,
+              url,
+              body,
+              headers,
+              timeout_ms,
+              attempts_left - 1,
+              backoff_ms
+            )
           else
             {:ok, response}
           end
@@ -317,7 +332,17 @@ defmodule Micelio.Storage.S3Validator do
         {:error, reason} ->
           if attempts_left > 1 do
             Process.sleep(backoff_ms)
-            do_request(config, method, url, body, headers, timeout_ms, attempts_left - 1, backoff_ms)
+
+            do_request(
+              config,
+              method,
+              url,
+              body,
+              headers,
+              timeout_ms,
+              attempts_left - 1,
+              backoff_ms
+            )
           else
             {:error, reason}
           end
@@ -349,7 +374,7 @@ defmodule Micelio.Storage.S3Validator do
 
   defp build_url(config, key) do
     base_uri = config.endpoint |> String.trim_trailing("/") |> URI.parse()
-    key_path = if is_binary(key), do: encode_key(key), else: nil
+    key_path = if is_binary(key), do: encode_key(key)
 
     {host, path} =
       case config.url_style do
@@ -512,7 +537,7 @@ defmodule Micelio.Storage.S3Validator do
     :ok
   end
 
-  defp build_signed_request(config, method, url, body \\ nil, extra_headers \\ []) do
+  defp build_signed_request(config, method, url, body, extra_headers) do
     uri = URI.parse(url)
 
     headers =

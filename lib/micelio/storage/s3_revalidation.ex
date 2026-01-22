@@ -1,10 +1,10 @@
 defmodule Micelio.Storage.S3Revalidation do
   @moduledoc false
 
-  require Logger
-
   alias Micelio.Repo
   alias Micelio.Storage.S3Config
+
+  require Logger
 
   def run do
     validator = validator_module()
@@ -13,11 +13,11 @@ defmodule Micelio.Storage.S3Revalidation do
 
     Enum.each(configs, fn config ->
       case validator.validate(config) do
-        {:ok, result} ->
+        {:ok, _result} ->
           update_config(config, %{validated_at: now, last_error: nil})
 
-        {:error, result} ->
-          message = error_message(result)
+        {:error, error} ->
+          message = error_message(error)
           update_config(config, %{validated_at: nil, last_error: message})
       end
     end)

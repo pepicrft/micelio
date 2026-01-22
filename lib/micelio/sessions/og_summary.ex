@@ -152,8 +152,7 @@ defmodule Micelio.Sessions.OGSummary do
     changes =
       changes
       |> Enum.take(@max_changes)
-      |> Enum.map(&format_change/1)
-      |> Enum.join("\n")
+      |> Enum.map_join("\n", &format_change/1)
 
     """
     Summarize these agent code changes for an Open Graph description.

@@ -301,14 +301,11 @@ defmodule MicelioWeb.Browser.AuthController do
   defp oauth_failure_details(:email_not_available),
     do: gettext("email not available from provider")
 
-  defp oauth_failure_details(:missing_email),
-    do: gettext("email not available from provider")
+  defp oauth_failure_details(:missing_email), do: gettext("email not available from provider")
 
-  defp oauth_failure_details(:missing_provider_user_id),
-    do: gettext("provider user id missing")
+  defp oauth_failure_details(:missing_provider_user_id), do: gettext("provider user id missing")
 
-  defp oauth_failure_details(:invalid_oauth_state),
-    do: gettext("invalid OAuth state")
+  defp oauth_failure_details(:invalid_oauth_state), do: gettext("invalid OAuth state")
 
   defp oauth_failure_details(%Ecto.Changeset{}), do: nil
 
@@ -357,7 +354,7 @@ defmodule MicelioWeb.Browser.AuthController do
 
   defp normalize_oauth_text(value) when is_binary(value) do
     trimmed = String.trim(value)
-    if trimmed == "", do: nil, else: trimmed
+    if trimmed != "", do: trimmed
   end
 
   defp normalize_oauth_text(_value), do: nil

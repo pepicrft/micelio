@@ -99,8 +99,20 @@ defmodule Micelio.Sapling.InteroperabilityTest do
           status: :ok,
           steps: [
             %{label: :git_init, command: "git", args: ["init"], status: 0, output: "ok"},
-            %{label: :git_status, command: "git", args: ["status", "--short"], status: 0, output: "ok"},
-            %{label: :git_log, command: "git", args: ["log", "-n", "5", "--oneline"], status: 0, output: "ok"}
+            %{
+              label: :git_status,
+              command: "git",
+              args: ["status", "--short"],
+              status: 0,
+              output: "ok"
+            },
+            %{
+              label: :git_log,
+              command: "git",
+              args: ["log", "-n", "5", "--oneline"],
+              status: 0,
+              output: "ok"
+            }
           ]
         }
       ]

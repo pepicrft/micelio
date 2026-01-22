@@ -247,16 +247,18 @@ defmodule Micelio.Sessions.EventSchema do
   defp normalize_timestamp(_timestamp), do: {:error, :invalid_timestamp}
 
   defp normalize_source(%{} = source) do
-    with {:ok, kind} <- normalize_source_kind(get_field(source, :kind)) do
-      {:ok,
-       %{
-         kind: kind,
-         id: normalize_optional_string(get_field(source, :id)),
-         label: normalize_optional_string(get_field(source, :label)),
-         metadata: normalize_metadata(get_field(source, :metadata))
-       }}
-    else
-      {:error, _reason} = error -> error
+    case normalize_source_kind(get_field(source, :kind)) do
+      {:ok, kind} ->
+        {:ok,
+         %{
+           kind: kind,
+           id: normalize_optional_string(get_field(source, :id)),
+           label: normalize_optional_string(get_field(source, :label)),
+           metadata: normalize_metadata(get_field(source, :metadata))
+         }}
+
+      {:error, _reason} = error ->
+        error
     end
   end
 
@@ -315,8 +317,10 @@ defmodule Micelio.Sessions.EventSchema do
 
   defp normalize_payload("output", %{} = payload) do
     with {:ok, text} <- normalize_required_string(get_field(payload, :text)),
-         {:ok, stream} <- normalize_optional_enum(get_field(payload, :stream), @output_streams, "stdout"),
-         {:ok, format} <- normalize_optional_enum(get_field(payload, :format), @output_formats, "text") do
+         {:ok, stream} <-
+           normalize_optional_enum(get_field(payload, :stream), @output_streams, "stdout"),
+         {:ok, format} <-
+           normalize_optional_enum(get_field(payload, :format), @output_formats, "text") do
       {:ok,
        %{
          text: text,
@@ -329,17 +333,19 @@ defmodule Micelio.Sessions.EventSchema do
   end
 
   defp normalize_payload("error", %{} = payload) do
-    with {:ok, message} <- normalize_required_string(get_field(payload, :message)) do
-      {:ok,
-       %{
-         message: message,
-         code: normalize_optional_string(get_field(payload, :code)),
-         retryable: normalize_boolean(get_field(payload, :retryable)),
-         stacktrace: normalize_optional_string(get_field(payload, :stacktrace)),
-         metadata: normalize_metadata(get_field(payload, :metadata))
-       }}
-    else
-      {:error, _reason} -> {:error, :invalid_error_payload}
+    case normalize_required_string(get_field(payload, :message)) do
+      {:ok, message} ->
+        {:ok,
+         %{
+           message: message,
+           code: normalize_optional_string(get_field(payload, :code)),
+           retryable: normalize_boolean(get_field(payload, :retryable)),
+           stacktrace: normalize_optional_string(get_field(payload, :stacktrace)),
+           metadata: normalize_metadata(get_field(payload, :metadata))
+         }}
+
+      {:error, _reason} ->
+        {:error, :invalid_error_payload}
     end
   end
 

@@ -25,7 +25,14 @@ defmodule Micelio.AITokens.TokenEarning do
   """
   def changeset(earning, attrs) do
     earning
-    |> cast(attrs, [:amount, :reason, :project_id, :user_id, :prompt_request_id, :prompt_suggestion_id])
+    |> cast(attrs, [
+      :amount,
+      :reason,
+      :project_id,
+      :user_id,
+      :prompt_request_id,
+      :prompt_suggestion_id
+    ])
     |> validate_required([:amount, :reason, :project_id, :user_id, :prompt_request_id])
     |> validate_number(:amount, greater_than: 0)
     |> maybe_require_prompt_suggestion()

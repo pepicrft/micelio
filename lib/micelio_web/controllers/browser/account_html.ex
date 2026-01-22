@@ -9,7 +9,8 @@ defmodule MicelioWeb.Browser.AccountHTML do
   def activity_action_label(:project_created), do: "Created project"
   def activity_action_label(_), do: "Updated"
 
-  def prompt_request_origin_label(origin), do: Micelio.PromptRequests.PromptRequest.origin_label(origin)
+  def prompt_request_origin_label(origin),
+    do: Micelio.PromptRequests.PromptRequest.origin_label(origin)
 
   def prompt_request_origin_value(origin) when is_atom(origin), do: Atom.to_string(origin)
   def prompt_request_origin_value(origin) when is_binary(origin), do: origin

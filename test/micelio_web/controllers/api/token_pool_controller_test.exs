@@ -11,8 +11,16 @@ defmodule MicelioWeb.Api.TokenPoolControllerTest do
 
   setup do
     {:ok, user} = Accounts.get_or_create_user_by_email("token-pool-api@example.com")
-    {:ok, organization} = Accounts.create_organization_for_user(user, %{handle: "token-org", name: "Token Org"})
-    {:ok, project} = Projects.create_project(%{handle: "token-project", name: "Token Project", organization_id: organization.id})
+
+    {:ok, organization} =
+      Accounts.create_organization_for_user(user, %{handle: "token-org", name: "Token Org"})
+
+    {:ok, project} =
+      Projects.create_project(%{
+        handle: "token-project",
+        name: "Token Project",
+        organization_id: organization.id
+      })
 
     {:ok, pool} = AITokens.create_token_pool(project, %{balance: 1200, reserved: 200})
     token = create_access_token(user)
@@ -20,7 +28,13 @@ defmodule MicelioWeb.Api.TokenPoolControllerTest do
     %{user: user, token: token, project: project, pool: pool, organization: organization}
   end
 
-  test "shows token pool for authorized user", %{conn: conn, token: token, project: project, pool: pool, organization: organization} do
+  test "shows token pool for authorized user", %{
+    conn: conn,
+    token: token,
+    project: project,
+    pool: pool,
+    organization: organization
+  } do
     conn =
       conn
       |> put_req_header("accept", "application/json")
@@ -33,7 +47,12 @@ defmodule MicelioWeb.Api.TokenPoolControllerTest do
     assert body["data"]["reserved"] == 200
   end
 
-  test "updates token pool", %{conn: conn, token: token, project: project, organization: organization} do
+  test "updates token pool", %{
+    conn: conn,
+    token: token,
+    project: project,
+    organization: organization
+  } do
     conn =
       conn
       |> put_req_header("accept", "application/json")
@@ -47,7 +66,12 @@ defmodule MicelioWeb.Api.TokenPoolControllerTest do
     assert body["data"]["reserved"] == 100
   end
 
-  test "rejects invalid token pool updates", %{conn: conn, token: token, project: project, organization: organization} do
+  test "rejects invalid token pool updates", %{
+    conn: conn,
+    token: token,
+    project: project,
+    organization: organization
+  } do
     conn =
       conn
       |> put_req_header("accept", "application/json")

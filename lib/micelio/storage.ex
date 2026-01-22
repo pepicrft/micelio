@@ -14,14 +14,14 @@ defmodule Micelio.Storage do
       STORAGE_CDN_BASE_URL=https://cdn.example.com/micelio
   """
 
-  @type user_ref :: Micelio.Accounts.User.t() | Ecto.UUID.t() | nil
-
-  require Logger
-
   alias Micelio.Audit
   alias Micelio.Repo
   alias Micelio.Storage.S3Config
   alias Micelio.Storage.S3Validator
+
+  require Logger
+
+  @type user_ref :: Micelio.Accounts.User.t() | Ecto.UUID.t() | nil
 
   @callback put(user_ref(), String.t(), binary()) :: {:ok, String.t()} | {:error, term()}
   @callback get(user_ref(), String.t()) :: {:ok, binary()} | {:error, term()}
@@ -155,7 +155,9 @@ defmodule Micelio.Storage do
   @doc """
   Returns a changeset for editing a user's S3 configuration.
   """
-  def change_user_s3_config(%Micelio.Accounts.User{} = user, attrs \\ %{}) do
+  def change_user_s3_config(user_or_config, attrs \\ %{})
+
+  def change_user_s3_config(%Micelio.Accounts.User{} = user, attrs) do
     config = get_user_s3_config(user) || %S3Config{user_id: user.id}
     change_user_s3_config(config, attrs)
   end
@@ -163,7 +165,7 @@ defmodule Micelio.Storage do
   def change_user_s3_config(%S3Config{} = config, attrs) do
     config_for_form =
       if attrs == %{} do
-        %S3Config{config | access_key_id: nil, secret_access_key: nil}
+        %{config | access_key_id: nil, secret_access_key: nil}
       else
         config
       end
@@ -174,7 +176,9 @@ defmodule Micelio.Storage do
   @doc """
   Returns a changeset for validating a user's S3 configuration.
   """
-  def user_s3_changeset(%Micelio.Accounts.User{} = user, attrs \\ %{}) do
+  def user_s3_changeset(user_or_config, attrs \\ %{})
+
+  def user_s3_changeset(%Micelio.Accounts.User{} = user, attrs) do
     config = get_user_s3_config(user) || %S3Config{user_id: user.id}
     user_s3_changeset(config, attrs)
   end
@@ -244,7 +248,9 @@ defmodule Micelio.Storage do
   """
   def delete_user_s3_config(%Micelio.Accounts.User{} = user) do
     case get_user_s3_config(user) do
-      nil -> {:ok, nil}
+      nil ->
+        {:ok, nil}
+
       %S3Config{} = config ->
         with {:ok, deleted} <- Repo.delete(config) do
           log_s3_config_deleted(user, config)
@@ -278,7 +284,7 @@ defmodule Micelio.Storage do
   end
 
   defp normalize_attrs(attrs) do
-    Enum.into(attrs, %{}, fn
+    Map.new(attrs, fn
       {key, value} when is_atom(key) -> {Atom.to_string(key), value}
       {key, value} -> {key, value}
     end)
@@ -436,7 +442,11 @@ defmodule Micelio.Storage do
     "Validation rate limit exceeded. Please try again later."
   end
 
-  defp log_s3_config_audit(%Micelio.Accounts.User{} = user, %S3Config{} = before_config, %S3Config{} = after_config) do
+  defp log_s3_config_audit(
+         %Micelio.Accounts.User{} = user,
+         %S3Config{} = before_config,
+         %S3Config{} = after_config
+       ) do
     action =
       if is_nil(before_config.id) do
         "storage.s3_config.created"
@@ -445,15 +455,23 @@ defmodule Micelio.Storage do
       end
 
     case Audit.log_user_action(user, action, metadata: s3_audit_metadata(after_config)) do
-      {:ok, _log} -> :ok
-      {:error, changeset} -> Logger.warning("storage.s3_config audit_failed=#{inspect(changeset.errors)}")
+      {:ok, _log} ->
+        :ok
+
+      {:error, changeset} ->
+        Logger.warning("storage.s3_config audit_failed=#{inspect(changeset.errors)}")
     end
   end
 
   defp log_s3_config_deleted(%Micelio.Accounts.User{} = user, %S3Config{} = config) do
-    case Audit.log_user_action(user, "storage.s3_config.deleted", metadata: s3_audit_metadata(config)) do
-      {:ok, _log} -> :ok
-      {:error, changeset} -> Logger.warning("storage.s3_config audit_failed=#{inspect(changeset.errors)}")
+    case Audit.log_user_action(user, "storage.s3_config.deleted",
+           metadata: s3_audit_metadata(config)
+         ) do
+      {:ok, _log} ->
+        :ok
+
+      {:error, changeset} ->
+        Logger.warning("storage.s3_config audit_failed=#{inspect(changeset.errors)}")
     end
   end
 

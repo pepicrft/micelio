@@ -44,7 +44,9 @@ defmodule Micelio.Sapling.StackWorkflowTest do
     assert report.available_tools == [:git]
     assert length(report.results) == 1
     assert Enum.any?(hd(report.results).steps, &(&1.label == :stack_view))
-    assert_received {:cmd, "git", ["log", "--graph", "--oneline", "--decorate", "--all", "-n", "20"], _opts}
+
+    assert_received {:cmd, "git",
+                     ["log", "--graph", "--oneline", "--decorate", "--all", "-n", "20"], _opts}
   end
 
   test "run captures sapling stack view without git branch steps" do

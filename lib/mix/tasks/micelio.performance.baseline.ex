@@ -1,7 +1,7 @@
 defmodule Mix.Tasks.Micelio.Performance.Baseline do
-  use Mix.Task
-
   @shortdoc "Validates Micelio performance baselines"
+
+  use Mix.Task
 
   @impl true
   def run(args) do

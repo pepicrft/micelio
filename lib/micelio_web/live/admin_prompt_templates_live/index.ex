@@ -166,8 +166,7 @@ defmodule MicelioWeb.AdminPromptTemplatesLive.Index do
                   name="filters[approved_only]"
                   value="true"
                   checked={@filters["approved_only"] in ["true", "on", "1"]}
-                />
-                Approved only
+                /> Approved only
               </label>
             </form>
           </div>

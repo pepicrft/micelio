@@ -48,6 +48,7 @@ defmodule MicelioWeb.Browser.AccountControllerTest do
 
     {:ok, _} = Sessions.land_session(private_session)
     {:ok, _} = Projects.star_project(user, public_project)
+
     {:ok, _prompt_request} =
       PromptRequests.create_prompt_request(
         %{

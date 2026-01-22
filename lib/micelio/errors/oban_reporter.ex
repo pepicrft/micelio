@@ -56,7 +56,9 @@ defmodule Micelio.Errors.ObanReporter do
   defp job_metadata(metadata) do
     job = Map.get(metadata, :job, %{})
     args = Map.get(job, :args, %{})
-    correlation_id = Map.get(args, "correlation_id") || Map.get(args, :correlation_id) || Map.get(job, :id)
+
+    correlation_id =
+      Map.get(args, "correlation_id") || Map.get(args, :correlation_id) || Map.get(job, :id)
 
     %{
       job_id: Map.get(job, :id),

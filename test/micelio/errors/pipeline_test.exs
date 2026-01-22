@@ -9,8 +9,8 @@ defmodule Micelio.Errors.PipelineTest do
   alias Micelio.Errors.ObanReporter
   alias Micelio.Errors.Telemetry
   alias Micelio.Projects
-  alias Micelio.Sessions
   alias Micelio.Repo
+  alias Micelio.Sessions
 
   require Logger
 

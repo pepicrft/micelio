@@ -3,8 +3,8 @@ defmodule MicelioWeb.SessionLiveTest do
 
   import Phoenix.LiveViewTest
 
-  alias Micelio.{Accounts, PromptRequests, Projects, Sessions}
   alias Micelio.Sessions.OGSummary
+  alias Micelio.{Accounts, PromptRequests, Projects, Sessions}
   alias MicelioWeb.OpenGraphImage
 
   describe "SessionLive.Index" do
@@ -209,6 +209,7 @@ defmodule MicelioWeb.SessionLiveTest do
 
       assert html =~ "Prompt request:"
       assert html =~ "Prompt to PR"
+
       assert html =~
                "/projects/#{organization.account.handle}/#{project.handle}/prompt-requests/#{prompt_request.id}"
     end

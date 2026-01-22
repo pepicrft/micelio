@@ -71,6 +71,7 @@ defmodule Micelio.AgentInfra.SessionManagerTest do
     }
 
     assert {:ok, normalized} = SessionManager.normalize_session(session)
+
     assert [%{type: :ssh, uri: "ssh://agent@host:2222", metadata: %{"port" => 2222}}] =
              normalized.access
   end

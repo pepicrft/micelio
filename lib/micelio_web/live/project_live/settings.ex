@@ -26,8 +26,7 @@ defmodule MicelioWeb.ProjectLive.Settings do
             |> assign(:page_title, "Project settings")
             |> PageMeta.assign(
               description: "Edit project settings.",
-              canonical_url:
-                url(~p"/#{organization.account.handle}/#{project.handle}/settings")
+              canonical_url: url(~p"/#{organization.account.handle}/#{project.handle}/settings")
             )
             |> assign(:project, project)
             |> assign(:organization, organization)

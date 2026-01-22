@@ -1,10 +1,10 @@
 defmodule Micelio.ErrorsTest do
   use Micelio.DataCase, async: true
 
+  alias Micelio.Accounts
   alias Micelio.Errors
   alias Micelio.Errors.Error
   alias Micelio.Repo
-  alias Micelio.Accounts
 
   test "create_error/1 persists required fields with defaults" do
     now = DateTime.utc_now() |> DateTime.truncate(:second)

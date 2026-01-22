@@ -7,7 +7,10 @@ defmodule Micelio.Repo.Migrations.FixProjectInteractionsPk do
     create table(:project_interactions, primary_key: false) do
       add :id, :binary_id, primary_key: true
       add :user_id, references(:users, type: :binary_id, on_delete: :delete_all), null: false
-      add :project_id, references(:projects, type: :binary_id, on_delete: :delete_all), null: false
+
+      add :project_id, references(:projects, type: :binary_id, on_delete: :delete_all),
+        null: false
+
       add :last_interacted_at, :utc_datetime, null: false
       add :interaction_count, :integer, null: false, default: 0
       add :last_interaction_type, :string

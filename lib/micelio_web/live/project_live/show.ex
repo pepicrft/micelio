@@ -3,8 +3,8 @@ defmodule MicelioWeb.ProjectLive.Show do
 
   alias Micelio.Authorization
   alias Micelio.Notifications
-  alias Micelio.PromptRequests
   alias Micelio.Projects
+  alias Micelio.PromptRequests
   alias Micelio.Sessions
   alias MicelioWeb.PageMeta
 
@@ -173,7 +173,9 @@ defmodule MicelioWeb.ProjectLive.Show do
             Sessions ({@session_count})
           </.link>
           <.link
-            navigate={~p"/projects/#{@organization.account.handle}/#{@project.handle}/prompt-requests"}
+            navigate={
+              ~p"/projects/#{@organization.account.handle}/#{@project.handle}/prompt-requests"
+            }
             class="project-show-nav-link"
           >
             Prompt Requests ({@prompt_request_count})

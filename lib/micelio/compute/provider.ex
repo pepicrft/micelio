@@ -6,8 +6,8 @@ defmodule Micelio.AgentInfra.Provider do
   provision, inspect, and terminate agent VMs across multiple platforms.
   """
 
-  alias Micelio.AgentInfra.ProvisioningRequest
   alias Micelio.AgentInfra.Protocol
+  alias Micelio.AgentInfra.ProvisioningRequest
 
   @typedoc "Opaque reference returned by a provider when a VM is provisioned."
   @type instance_ref :: term()

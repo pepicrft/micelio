@@ -319,7 +319,10 @@ defmodule Micelio.Projects do
       |> join(:left, [p], o in assoc(p, :organization))
       |> join(:left, [p, o], a in assoc(o, :account))
       |> preload([_p, o, a], organization: {o, account: a})
-      |> order_by([p], fragment("ts_rank(search_vector, to_tsquery('english', ?)) DESC", ^tsquery))
+      |> order_by(
+        [p],
+        fragment("ts_rank(search_vector, to_tsquery('english', ?)) DESC", ^tsquery)
+      )
       |> limit(^limit)
       |> Repo.all()
     end

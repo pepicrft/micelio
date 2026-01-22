@@ -4,6 +4,7 @@ defmodule Micelio.Repo.Migrations.CreateValidationRuns do
   def change do
     create table(:validation_runs, primary_key: false) do
       add :id, :binary_id, primary_key: true
+
       add :prompt_request_id,
           references(:prompt_requests, type: :binary_id, on_delete: :delete_all),
           null: false

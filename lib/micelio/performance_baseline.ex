@@ -37,7 +37,12 @@ defmodule Micelio.PerformanceBaseline do
     [
       %{id: "json_encode", label: "JSON encode 1k entries", max_ms: 500, fun: &benchmark_json/0},
       %{id: "map_build", label: "Map build 50k entries", max_ms: 500, fun: &benchmark_map/0},
-      %{id: "string_concat", label: "String concat 10k entries", max_ms: 500, fun: &benchmark_string/0}
+      %{
+        id: "string_concat",
+        label: "String concat 10k entries",
+        max_ms: 500,
+        fun: &benchmark_string/0
+      }
     ]
   end
 

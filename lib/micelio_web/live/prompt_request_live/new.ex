@@ -2,13 +2,17 @@ defmodule MicelioWeb.PromptRequestLive.New do
   use MicelioWeb, :live_view
 
   alias Micelio.Authorization
+  alias Micelio.Projects
   alias Micelio.PromptRequests
   alias Micelio.PromptRequests.PromptRequest
-  alias Micelio.Projects
   alias MicelioWeb.PageMeta
 
   @impl true
-  def mount(%{"organization_handle" => org_handle, "project_handle" => project_handle}, _session, socket) do
+  def mount(
+        %{"organization_handle" => org_handle, "project_handle" => project_handle},
+        _session,
+        socket
+      ) do
     with {:ok, project, organization} <-
            Projects.get_project_for_user_by_handle(
              socket.assigns.current_user,
@@ -29,7 +33,9 @@ defmodule MicelioWeb.PromptRequestLive.New do
         |> PageMeta.assign(
           description: "Submit a prompt request for #{project.name}.",
           canonical_url:
-            url(~p"/projects/#{organization.account.handle}/#{project.handle}/prompt-requests/new")
+            url(
+              ~p"/projects/#{organization.account.handle}/#{project.handle}/prompt-requests/new"
+            )
         )
         |> assign(:project, project)
         |> assign(:organization, organization)

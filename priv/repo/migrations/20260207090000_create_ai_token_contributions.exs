@@ -5,7 +5,10 @@ defmodule Micelio.Repo.Migrations.CreateAiTokenContributions do
     create table(:ai_token_contributions, primary_key: false) do
       add :id, :binary_id, primary_key: true
       add :amount, :integer, null: false
-      add :project_id, references(:projects, type: :binary_id, on_delete: :delete_all), null: false
+
+      add :project_id, references(:projects, type: :binary_id, on_delete: :delete_all),
+        null: false
+
       add :user_id, references(:users, type: :binary_id, on_delete: :delete_all), null: false
 
       timestamps(type: :utc_datetime)

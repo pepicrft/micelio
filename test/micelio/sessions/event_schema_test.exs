@@ -56,7 +56,12 @@ defmodule Micelio.Sessions.EventSchemaTest do
   end
 
   test "normalize_event rejects unknown event types" do
-    event = %{type: "nope", timestamp: "2025-02-02T10:00:00Z", source: %{kind: "agent"}, payload: %{}}
+    event = %{
+      type: "nope",
+      timestamp: "2025-02-02T10:00:00Z",
+      source: %{kind: "agent"},
+      payload: %{}
+    }
 
     assert {:error, :invalid_event_type} = EventSchema.normalize_event(event)
   end

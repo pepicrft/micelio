@@ -7,9 +7,9 @@ defmodule Micelio.Activity do
 
   alias Micelio.Accounts
   alias Micelio.Accounts.User
-  alias Micelio.PromptRequests.PromptRequest
   alias Micelio.Projects.Project
   alias Micelio.Projects.ProjectStar
+  alias Micelio.PromptRequests.PromptRequest
   alias Micelio.Repo
   alias Micelio.Sessions.Session
 

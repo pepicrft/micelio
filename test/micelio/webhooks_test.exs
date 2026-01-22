@@ -122,7 +122,8 @@ defmodule Micelio.WebhooksTest do
 
     test "dispatches known events synchronously with async: false", %{project: project} do
       # Use async: false to run synchronously without mocking Task.Supervisor
-      assert :ok == Webhooks.dispatch_project_event(project, "push", %{"ok" => true}, async: false)
+      assert :ok ==
+               Webhooks.dispatch_project_event(project, "push", %{"ok" => true}, async: false)
     end
 
     test "rejects unknown events", %{project: project} do
@@ -194,7 +195,9 @@ defmodule Micelio.WebhooksTest do
         })
 
       {:ok, user} =
-        Accounts.get_or_create_user_by_email("session-landed-#{System.unique_integer([:positive])}@example.com")
+        Accounts.get_or_create_user_by_email(
+          "session-landed-#{System.unique_integer([:positive])}@example.com"
+        )
 
       {:ok, session} =
         Sessions.create_session(%{

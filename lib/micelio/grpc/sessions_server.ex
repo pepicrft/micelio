@@ -503,8 +503,7 @@ defmodule Micelio.GRPC.Sessions.V1.SessionService.Server do
   defp format_event_error(%{index: index, reason: reason}),
     do: "invalid event at #{index}: #{format_event_error(reason)}"
 
-  defp format_event_error(reason) when is_atom(reason),
-    do: Atom.to_string(reason)
+  defp format_event_error(reason) when is_atom(reason), do: Atom.to_string(reason)
 
   defp format_event_error(reason), do: inspect(reason)
 

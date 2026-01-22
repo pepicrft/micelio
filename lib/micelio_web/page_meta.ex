@@ -314,7 +314,14 @@ defmodule MicelioWeb.PageMeta do
   end
 
   defp update_og_image_urls(og, cache_buster) when is_map(og) and is_binary(cache_buster) do
-    keys = [:image, "image", "og:image", :"og:image", "og:image:secure_url", :"og:image:secure_url"]
+    keys = [
+      :image,
+      "image",
+      "og:image",
+      :"og:image",
+      "og:image:secure_url",
+      :"og:image:secure_url"
+    ]
 
     Enum.reduce(keys, og, fn key, acc ->
       case Map.fetch(acc, key) do

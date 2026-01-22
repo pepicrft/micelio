@@ -15,13 +15,22 @@ defmodule Micelio.Errors.RateLimiter do
 
   @impl true
   def init(state) do
-    :ets.new(@table, [:named_table, :set, :public, read_concurrency: true, write_concurrency: true])
+    :ets.new(@table, [
+      :named_table,
+      :set,
+      :public,
+      read_concurrency: true,
+      write_concurrency: true
+    ])
+
     {:ok, state}
   end
 
   def allow?(kind) when is_atom(kind) do
     case :ets.whereis(@table) do
-      :undefined -> true
+      :undefined ->
+        true
+
       _table ->
         minute = current_minute()
         maybe_cleanup(minute)

@@ -1,8 +1,8 @@
 defmodule MicelioWeb.Api.SessionEventControllerTest do
   use MicelioWeb.ConnCase
 
-  alias Micelio.{Accounts, Projects, Sessions}
   alias Micelio.StorageHelper
+  alias Micelio.{Accounts, Projects, Sessions}
 
   setup :setup_storage
 
@@ -43,14 +43,17 @@ defmodule MicelioWeb.Api.SessionEventControllerTest do
     %{session: session}
   end
 
-  test "streams a snapshot of session events when follow is false", %{conn: conn, session: session} do
+  test "streams a snapshot of session events when follow is false", %{
+    conn: conn,
+    session: session
+  } do
     conn = get(conn, "/api/sessions/#{session.session_id}/events/stream?follow=false")
 
     assert conn.status == 200
     assert ["text/event-stream; charset=utf-8"] = get_resp_header(conn, "content-type")
     assert String.contains?(conn.resp_body, "retry: 1000")
     assert String.contains?(conn.resp_body, "event: session_event")
-    assert String.contains?(conn.resp_body, "\"type\":\"status\"")
+    assert String.contains?(conn.resp_body, ~s("type":"status"))
     assert String.contains?(conn.resp_body, "id: sessions/#{session.session_id}/events/")
   end
 
@@ -61,26 +64,32 @@ defmodule MicelioWeb.Api.SessionEventControllerTest do
     t3 = DateTime.add(now, -1, :second)
 
     {:ok, _} =
-      Sessions.capture_session_event(session, %{
-        type: "output",
-        payload: %{text: "first", stream: "stdout", format: "text"}
-      },
+      Sessions.capture_session_event(
+        session,
+        %{
+          type: "output",
+          payload: %{text: "first", stream: "stdout", format: "text"}
+        },
         timestamp: t1
       )
 
     {:ok, _} =
-      Sessions.capture_session_event(session, %{
-        type: "output",
-        payload: %{text: "second", stream: "stdout", format: "text"}
-      },
+      Sessions.capture_session_event(
+        session,
+        %{
+          type: "output",
+          payload: %{text: "second", stream: "stdout", format: "text"}
+        },
         timestamp: t2
       )
 
     {:ok, _} =
-      Sessions.capture_session_event(session, %{
-        type: "error",
-        payload: %{message: "boom"}
-      },
+      Sessions.capture_session_event(
+        session,
+        %{
+          type: "error",
+          payload: %{message: "boom"}
+        },
         timestamp: t3
       )
 
@@ -93,10 +102,10 @@ defmodule MicelioWeb.Api.SessionEventControllerTest do
       )
 
     assert conn.status == 200
-    assert String.contains?(conn.resp_body, "\"type\":\"output\"")
-    assert String.contains?(conn.resp_body, "\"text\":\"second\"")
-    refute String.contains?(conn.resp_body, "\"text\":\"first\"")
-    refute String.contains?(conn.resp_body, "\"type\":\"error\"")
+    assert String.contains?(conn.resp_body, ~s("type":"output"))
+    assert String.contains?(conn.resp_body, ~s("text":"second"))
+    refute String.contains?(conn.resp_body, ~s("text":"first"))
+    refute String.contains?(conn.resp_body, ~s("type":"error"))
   end
 
   test "accepts ISO8601 since cursor for snapshot filtering", %{conn: conn, session: session} do
@@ -105,18 +114,22 @@ defmodule MicelioWeb.Api.SessionEventControllerTest do
     t2 = DateTime.add(now, -1, :second)
 
     {:ok, _} =
-      Sessions.capture_session_event(session, %{
-        type: "output",
-        payload: %{text: "first", stream: "stdout", format: "text"}
-      },
+      Sessions.capture_session_event(
+        session,
+        %{
+          type: "output",
+          payload: %{text: "first", stream: "stdout", format: "text"}
+        },
         timestamp: t1
       )
 
     {:ok, _} =
-      Sessions.capture_session_event(session, %{
-        type: "output",
-        payload: %{text: "second", stream: "stdout", format: "text"}
-      },
+      Sessions.capture_session_event(
+        session,
+        %{
+          type: "output",
+          payload: %{text: "second", stream: "stdout", format: "text"}
+        },
         timestamp: t2
       )
 
@@ -129,8 +142,8 @@ defmodule MicelioWeb.Api.SessionEventControllerTest do
       )
 
     assert conn.status == 200
-    assert String.contains?(conn.resp_body, "\"text\":\"second\"")
-    refute String.contains?(conn.resp_body, "\"text\":\"first\"")
+    assert String.contains?(conn.resp_body, ~s("text":"second"))
+    refute String.contains?(conn.resp_body, ~s("text":"first"))
   end
 
   test "respects last-event-id for snapshot pagination", %{conn: conn, session: session} do
@@ -139,18 +152,22 @@ defmodule MicelioWeb.Api.SessionEventControllerTest do
     t2 = DateTime.add(now, -1, :second)
 
     {:ok, first} =
-      Sessions.capture_session_event(session, %{
-        type: "output",
-        payload: %{text: "first", stream: "stdout", format: "text"}
-      },
+      Sessions.capture_session_event(
+        session,
+        %{
+          type: "output",
+          payload: %{text: "first", stream: "stdout", format: "text"}
+        },
         timestamp: t1
       )
 
     {:ok, _} =
-      Sessions.capture_session_event(session, %{
-        type: "output",
-        payload: %{text: "second", stream: "stdout", format: "text"}
-      },
+      Sessions.capture_session_event(
+        session,
+        %{
+          type: "output",
+          payload: %{text: "second", stream: "stdout", format: "text"}
+        },
         timestamp: t2
       )
 
@@ -160,8 +177,8 @@ defmodule MicelioWeb.Api.SessionEventControllerTest do
       |> get("/api/sessions/#{session.session_id}/events/stream?follow=false")
 
     assert conn.status == 200
-    refute String.contains?(conn.resp_body, "\"text\":\"first\"")
-    assert String.contains?(conn.resp_body, "\"text\":\"second\"")
+    refute String.contains?(conn.resp_body, ~s("text":"first"))
+    assert String.contains?(conn.resp_body, ~s("text":"second"))
   end
 
   test "returns bad request for invalid event types", %{conn: conn, session: session} do
@@ -181,8 +198,8 @@ defmodule MicelioWeb.Api.SessionEventControllerTest do
     conn = get(conn, "/api/sessions/#{session.session_id}/events/stream?follow=false&type=output")
 
     assert conn.status == 200
-    assert String.contains?(conn.resp_body, "\"text\":\"aliased\"")
-    refute String.contains?(conn.resp_body, "\"type\":\"status\"")
+    assert String.contains?(conn.resp_body, ~s("text":"aliased"))
+    refute String.contains?(conn.resp_body, ~s("type":"status"))
   end
 
   test "returns bad request for invalid since cursor", %{conn: conn, session: session} do
@@ -205,18 +222,22 @@ defmodule MicelioWeb.Api.SessionEventControllerTest do
     t2 = DateTime.add(now, -1, :second)
 
     {:ok, _} =
-      Sessions.capture_session_event(session, %{
-        type: "output",
-        payload: %{text: "first", stream: "stdout", format: "text"}
-      },
+      Sessions.capture_session_event(
+        session,
+        %{
+          type: "output",
+          payload: %{text: "first", stream: "stdout", format: "text"}
+        },
         timestamp: t1
       )
 
     {:ok, _} =
-      Sessions.capture_session_event(session, %{
-        type: "output",
-        payload: %{text: "second", stream: "stdout", format: "text"}
-      },
+      Sessions.capture_session_event(
+        session,
+        %{
+          type: "output",
+          payload: %{text: "second", stream: "stdout", format: "text"}
+        },
         timestamp: t2
       )
 
@@ -227,8 +248,8 @@ defmodule MicelioWeb.Api.SessionEventControllerTest do
       )
 
     assert conn.status == 200
-    assert String.contains?(conn.resp_body, "\"text\":\"first\"")
-    refute String.contains?(conn.resp_body, "\"text\":\"second\"")
+    assert String.contains?(conn.resp_body, ~s("text":"first"))
+    refute String.contains?(conn.resp_body, ~s("text":"second"))
   end
 
   test "returns bad request for invalid limit", %{conn: conn, session: session} do

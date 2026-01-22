@@ -196,6 +196,7 @@ defmodule MicelioWeb.Browser.RepositoryControllerTest do
       })
 
     assert redirected_to(conn) == return_to
+
     assert Phoenix.Flash.get(conn.assigns.flash, :info) ==
              "Thanks for contributing tokens to this project."
 

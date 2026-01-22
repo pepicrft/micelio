@@ -3,13 +3,17 @@ defmodule MicelioWeb.PromptRequestLive.Index do
 
   alias Micelio.Authorization
   alias Micelio.ContributionConfidence
+  alias Micelio.Projects
   alias Micelio.PromptRequests
   alias Micelio.PromptRequests.PromptRequest
-  alias Micelio.Projects
   alias MicelioWeb.PageMeta
 
   @impl true
-  def mount(%{"organization_handle" => org_handle, "project_handle" => project_handle}, _session, socket) do
+  def mount(
+        %{"organization_handle" => org_handle, "project_handle" => project_handle},
+        _session,
+        socket
+      ) do
     with {:ok, project, organization} <-
            Projects.get_project_for_user_by_handle(
              socket.assigns.current_user,
@@ -61,7 +65,9 @@ defmodule MicelioWeb.PromptRequestLive.Index do
           </:subtitle>
           <:actions>
             <.link
-              navigate={~p"/projects/#{@organization.account.handle}/#{@project.handle}/prompt-requests/new"}
+              navigate={
+                ~p"/projects/#{@organization.account.handle}/#{@project.handle}/prompt-requests/new"
+              }
               class="prompt-request-button"
               id="new-prompt-request"
             >
@@ -87,9 +93,7 @@ defmodule MicelioWeb.PromptRequestLive.Index do
               >
                 <div class="prompt-request-card-title">
                   {prompt_request.title}
-                  <span
-                    class={"badge badge--caps prompt-request-origin prompt-request-origin-#{origin_value(prompt_request.origin)}"}
-                  >
+                  <span class={"badge badge--caps prompt-request-origin prompt-request-origin-#{origin_value(prompt_request.origin)}"}>
                     {origin_label(prompt_request.origin)}
                   </span>
                 </div>
@@ -99,20 +103,20 @@ defmodule MicelioWeb.PromptRequestLive.Index do
                   <span>Tokens: {format_token_count(prompt_request.token_count)}</span>
                   <span>Submitted by {prompt_request.user.email}</span>
                   <span>
-                    Confidence:
-                    {format_confidence(Map.get(@confidence_scores, prompt_request.id))}
+                    Confidence: {format_confidence(Map.get(@confidence_scores, prompt_request.id))}
                   </span>
                 </div>
                 <div class="prompt-request-card-meta">
                   <span>Generated: {format_datetime(prompt_request.generated_at)}</span>
                   <span>Submitted: {format_datetime(prompt_request.inserted_at)}</span>
                   <span>
-                    Lag:
-                    {format_generation_lag(prompt_request.generated_at, prompt_request.inserted_at)}
+                    Lag: {format_generation_lag(
+                      prompt_request.generated_at,
+                      prompt_request.inserted_at
+                    )}
                   </span>
                   <span>
-                    Attestation:
-                    {attestation_label(PromptRequests.attestation_status(prompt_request))}
+                    Attestation: {attestation_label(PromptRequests.attestation_status(prompt_request))}
                   </span>
                 </div>
               </.link>

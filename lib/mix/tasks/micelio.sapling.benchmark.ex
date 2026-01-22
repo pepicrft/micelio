@@ -20,7 +20,13 @@ defmodule Mix.Tasks.Micelio.Sapling.Benchmark do
 
     {opts, _} =
       OptionParser.parse(args,
-        strict: [repo: :string, runs: :integer, output: :string, tools: :string, allow_missing: :boolean]
+        strict: [
+          repo: :string,
+          runs: :integer,
+          output: :string,
+          tools: :string,
+          allow_missing: :boolean
+        ]
       )
 
     repo_path = Keyword.get(opts, :repo, File.cwd!())

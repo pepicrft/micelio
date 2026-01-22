@@ -55,22 +55,21 @@ defmodule Micelio.Projects.Import do
       ProjectImport
       |> Repo.get!(import.id)
       |> Repo.preload(:project)
+
     metadata = import.metadata || %{}
     head_key = Project.head_key(import.project_id)
 
     case Map.get(metadata, "previous_head") do
       nil ->
-        with {:ok, _} <- Storage.delete(head_key),
-             {:ok, import} <- update_import(import, %{status: "rolled_back"}) do
-          {:ok, import}
+        with {:ok, _} <- Storage.delete(head_key) do
+          update_import(import, %{status: "rolled_back"})
         end
 
       encoded_head when is_binary(encoded_head) ->
         head_binary = Base.decode64!(encoded_head)
 
-        with {:ok, _} <- Storage.put(head_key, head_binary),
-             {:ok, import} <- update_import(import, %{status: "rolled_back"}) do
-          {:ok, import}
+        with {:ok, _} <- Storage.put(head_key, head_binary) do
+          update_import(import, %{status: "rolled_back"})
         end
     end
   end

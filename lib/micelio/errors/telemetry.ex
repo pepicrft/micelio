@@ -3,9 +3,9 @@ defmodule Micelio.Errors.Telemetry do
 
   use GenServer
 
+  alias Micelio.Errors.AgentReporter
   alias Micelio.Errors.Capture
   alias Micelio.Errors.Config
-  alias Micelio.Errors.AgentReporter
   alias Micelio.Errors.ObanReporter
 
   @live_view_handler_id "micelio-errors-liveview"
@@ -55,7 +55,12 @@ defmodule Micelio.Errors.Telemetry do
 
   defp attach_live_view do
     if Code.ensure_loaded?(Phoenix.LiveView) do
-      :telemetry.attach_many(@live_view_handler_id, @live_view_events, &__MODULE__.handle_live_view_exception/4, nil)
+      :telemetry.attach_many(
+        @live_view_handler_id,
+        @live_view_events,
+        &__MODULE__.handle_live_view_exception/4,
+        nil
+      )
     else
       :ok
     end

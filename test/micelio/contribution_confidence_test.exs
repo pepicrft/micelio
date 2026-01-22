@@ -26,7 +26,8 @@ defmodule Micelio.ContributionConfidenceTest do
         organization_id: organization.id
       })
 
-    {:ok, prompt_request} = PromptRequests.create_prompt_request(attrs, project: project, user: user)
+    {:ok, prompt_request} =
+      PromptRequests.create_prompt_request(attrs, project: project, user: user)
 
     prompt_request
   end
@@ -138,7 +139,13 @@ defmodule Micelio.ContributionConfidenceTest do
   test "auto_accept? uses default threshold and overrides" do
     assert ContributionConfidence.auto_accept?(%ContributionConfidence.Score{overall: 60})
     refute ContributionConfidence.auto_accept?(%ContributionConfidence.Score{overall: 59})
-    assert ContributionConfidence.auto_accept?(%ContributionConfidence.Score{overall: 75}, auto_accept_threshold: 70)
-    refute ContributionConfidence.auto_accept?(%ContributionConfidence.Score{overall: 70}, auto_accept_threshold: 75)
+
+    assert ContributionConfidence.auto_accept?(%ContributionConfidence.Score{overall: 75},
+             auto_accept_threshold: 70
+           )
+
+    refute ContributionConfidence.auto_accept?(%ContributionConfidence.Score{overall: 70},
+             auto_accept_threshold: 75
+           )
   end
 end

@@ -6,8 +6,8 @@ defmodule Micelio.ContributionConfidence do
   import Ecto.Query, warn: false
 
   alias Micelio.PromptRequests.PromptRequest
-  alias Micelio.Reputation
   alias Micelio.Repo
+  alias Micelio.Reputation
   alias Micelio.ValidationEnvironments.ValidationRun
 
   @default_validation_score 50
@@ -56,7 +56,7 @@ defmodule Micelio.ContributionConfidence do
     reputation_by_user_id = reputations_by_user_id(prompt_requests, opts)
 
     prompt_requests
-    |> Enum.map(fn prompt_request ->
+    |> Map.new(fn prompt_request ->
       reputation = Map.get(reputation_by_user_id, prompt_request.user_id)
 
       score =
@@ -67,7 +67,6 @@ defmodule Micelio.ContributionConfidence do
 
       {prompt_request.id, score}
     end)
-    |> Map.new()
   end
 
   def label_for_score(score) when is_integer(score) do
@@ -115,7 +114,8 @@ defmodule Micelio.ContributionConfidence do
 
   defp token_efficiency_score(nil, _opts), do: @default_token_efficiency_score
 
-  defp token_efficiency_score(token_count, opts) when is_integer(token_count) and token_count >= 0 do
+  defp token_efficiency_score(token_count, opts)
+       when is_integer(token_count) and token_count >= 0 do
     baseline = resolve_token_baseline(opts)
 
     score =
@@ -143,7 +143,7 @@ defmodule Micelio.ContributionConfidence do
       _ ->
         ValidationRun
         |> where([run], run.prompt_request_id == ^prompt_request.id)
-        |> order_by([run], [desc: run.completed_at, desc: run.inserted_at])
+        |> order_by([run], desc: run.completed_at, desc: run.inserted_at)
         |> limit(1)
         |> Repo.one()
     end
@@ -156,7 +156,7 @@ defmodule Micelio.ContributionConfidence do
 
     ValidationRun
     |> where([run], run.prompt_request_id in ^ids)
-    |> order_by([run], [desc: run.completed_at, desc: run.inserted_at])
+    |> order_by([run], desc: run.completed_at, desc: run.inserted_at)
     |> distinct([run], run.prompt_request_id)
     |> select([run], {run.prompt_request_id, run})
     |> Repo.all()
@@ -174,10 +174,9 @@ defmodule Micelio.ContributionConfidence do
     prompt_requests
     |> Enum.filter(& &1.user)
     |> Enum.uniq_by(& &1.user_id)
-    |> Enum.map(fn prompt_request ->
+    |> Map.new(fn prompt_request ->
       {prompt_request.user_id, Reputation.trust_score_for_user(prompt_request.user)}
     end)
-    |> Map.new()
   end
 
   defp resolve_weights(opts) do

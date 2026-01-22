@@ -11,8 +11,16 @@ defmodule MicelioWeb.Api.TokenContributionControllerTest do
 
   setup do
     {:ok, user} = Accounts.get_or_create_user_by_email("token-contrib-api@example.com")
-    {:ok, organization} = Accounts.create_organization_for_user(user, %{handle: "token-org", name: "Token Org"})
-    {:ok, project} = Projects.create_project(%{handle: "token-project", name: "Token Project", organization_id: organization.id})
+
+    {:ok, organization} =
+      Accounts.create_organization_for_user(user, %{handle: "token-org", name: "Token Org"})
+
+    {:ok, project} =
+      Projects.create_project(%{
+        handle: "token-project",
+        name: "Token Project",
+        organization_id: organization.id
+      })
 
     token = create_access_token(user)
 
@@ -29,9 +37,12 @@ defmodule MicelioWeb.Api.TokenContributionControllerTest do
       conn
       |> put_req_header("accept", "application/json")
       |> put_req_header("authorization", "Bearer #{token}")
-      |> post(~p"/api/projects/#{organization.account.handle}/#{project.handle}/token-contributions", %{
-        token_contribution: %{amount: 50}
-      })
+      |> post(
+        ~p"/api/projects/#{organization.account.handle}/#{project.handle}/token-contributions",
+        %{
+          token_contribution: %{amount: 50}
+        }
+      )
 
     body = json_response(conn, 201)
     assert body["data"]["contribution"]["amount"] == 50
@@ -51,9 +62,12 @@ defmodule MicelioWeb.Api.TokenContributionControllerTest do
       conn
       |> put_req_header("accept", "application/json")
       |> put_req_header("authorization", "Bearer #{token}")
-      |> post(~p"/api/projects/#{organization.account.handle}/#{project.handle}/token-contributions", %{
-        token_contribution: %{amount: 0}
-      })
+      |> post(
+        ~p"/api/projects/#{organization.account.handle}/#{project.handle}/token-contributions",
+        %{
+          token_contribution: %{amount: 0}
+        }
+      )
 
     body = json_response(conn, 422)
     assert "greater than 0" in body["error"]["amount"]
@@ -69,7 +83,10 @@ defmodule MicelioWeb.Api.TokenContributionControllerTest do
       conn
       |> put_req_header("accept", "application/json")
       |> put_req_header("authorization", "Bearer #{token}")
-      |> post(~p"/api/projects/#{organization.account.handle}/#{project.handle}/token-contributions", %{})
+      |> post(
+        ~p"/api/projects/#{organization.account.handle}/#{project.handle}/token-contributions",
+        %{}
+      )
 
     body = json_response(conn, 400)
     assert body["error"] == "token_contribution payload is required"
@@ -79,9 +96,12 @@ defmodule MicelioWeb.Api.TokenContributionControllerTest do
     conn =
       conn
       |> put_req_header("accept", "application/json")
-      |> post(~p"/api/projects/#{organization.account.handle}/#{project.handle}/token-contributions", %{
-        token_contribution: %{amount: 10}
-      })
+      |> post(
+        ~p"/api/projects/#{organization.account.handle}/#{project.handle}/token-contributions",
+        %{
+          token_contribution: %{amount: 10}
+        }
+      )
 
     body = json_response(conn, 401)
     assert body["error"] == "Authentication required"
@@ -106,9 +126,12 @@ defmodule MicelioWeb.Api.TokenContributionControllerTest do
       conn
       |> put_req_header("accept", "application/json")
       |> put_req_header("authorization", "Bearer #{other_token}")
-      |> post(~p"/api/projects/#{organization.account.handle}/#{private_project.handle}/token-contributions", %{
-        token_contribution: %{amount: 25}
-      })
+      |> post(
+        ~p"/api/projects/#{organization.account.handle}/#{private_project.handle}/token-contributions",
+        %{
+          token_contribution: %{amount: 25}
+        }
+      )
 
     body = json_response(conn, 403)
     assert body["error"] == "Not authorized to contribute tokens"

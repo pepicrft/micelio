@@ -83,8 +83,8 @@ retention_archive_enabled =
 
 retention_archive_prefix =
   System.get_env("ERROR_RETENTION_ARCHIVE_PREFIX") ||
-    (Application.get_env(:micelio, :errors, [])
-     |> Keyword.get(:retention_archive_prefix, "errors/archives"))
+    Application.get_env(:micelio, :errors, [])
+    |> Keyword.get(:retention_archive_prefix, "errors/archives")
 
 retention_vacuum_enabled =
   case System.get_env("ERROR_RETENTION_VACUUM_ENABLED") do
@@ -173,22 +173,6 @@ sampling_rate =
         :error -> 0.1
       end
   end
-
-config :micelio, :errors,
-  external_sentry_enabled: external_sentry_enabled,
-  retention_days: retention_days,
-  resolved_retention_days: resolved_retention_days,
-  unresolved_retention_days: unresolved_retention_days,
-  retention_archive_enabled: retention_archive_enabled,
-  retention_archive_prefix: retention_archive_prefix,
-  retention_vacuum_enabled: retention_vacuum_enabled,
-  retention_table_warn_threshold: retention_table_warn_threshold,
-  capture_enabled: capture_enabled,
-  dedupe_window_seconds: dedupe_window_seconds,
-  capture_rate_limit_per_kind_per_minute: rate_limit_per_kind,
-  capture_rate_limit_total_per_minute: rate_limit_total,
-  sampling_after_occurrences: sampling_after_occurrences,
-  sampling_rate: sampling_rate
 
 # Storage configuration (local by default, S3 opt-in)
 storage_backend =
@@ -356,28 +340,44 @@ grpc_tls =
 github_oauth =
   [
     client_id:
-      (if config_env() == :dev do
-         System.get_env("GITHUB_OAUTH_CLIENT_ID_DEV") ||
-           System.get_env("GITHUB_OAUTH_CLIENT_ID")
-       else
-         System.get_env("GITHUB_OAUTH_CLIENT_ID")
-       end),
+      if config_env() == :dev do
+        System.get_env("GITHUB_OAUTH_CLIENT_ID_DEV") ||
+          System.get_env("GITHUB_OAUTH_CLIENT_ID")
+      else
+        System.get_env("GITHUB_OAUTH_CLIENT_ID")
+      end,
     client_secret:
-      (if config_env() == :dev do
-         System.get_env("GITHUB_OAUTH_CLIENT_SECRET_DEV") ||
-           System.get_env("GITHUB_OAUTH_CLIENT_SECRET")
-       else
-         System.get_env("GITHUB_OAUTH_CLIENT_SECRET")
-       end),
+      if config_env() == :dev do
+        System.get_env("GITHUB_OAUTH_CLIENT_SECRET_DEV") ||
+          System.get_env("GITHUB_OAUTH_CLIENT_SECRET")
+      else
+        System.get_env("GITHUB_OAUTH_CLIENT_SECRET")
+      end,
     redirect_uri:
-      (if config_env() == :dev do
-         System.get_env("GITHUB_OAUTH_REDIRECT_URI_DEV") ||
-           System.get_env("GITHUB_OAUTH_REDIRECT_URI")
-       else
-         System.get_env("GITHUB_OAUTH_REDIRECT_URI")
-       end)
+      if config_env() == :dev do
+        System.get_env("GITHUB_OAUTH_REDIRECT_URI_DEV") ||
+          System.get_env("GITHUB_OAUTH_REDIRECT_URI")
+      else
+        System.get_env("GITHUB_OAUTH_REDIRECT_URI")
+      end
   ]
   |> Enum.reject(fn {_key, value} -> is_nil(value) or value == "" end)
+
+config :micelio, :errors,
+  external_sentry_enabled: external_sentry_enabled,
+  retention_days: retention_days,
+  resolved_retention_days: resolved_retention_days,
+  unresolved_retention_days: unresolved_retention_days,
+  retention_archive_enabled: retention_archive_enabled,
+  retention_archive_prefix: retention_archive_prefix,
+  retention_vacuum_enabled: retention_vacuum_enabled,
+  retention_table_warn_threshold: retention_table_warn_threshold,
+  capture_enabled: capture_enabled,
+  dedupe_window_seconds: dedupe_window_seconds,
+  capture_rate_limit_per_kind_per_minute: rate_limit_per_kind,
+  capture_rate_limit_total_per_minute: rate_limit_total,
+  sampling_after_occurrences: sampling_after_occurrences,
+  sampling_rate: sampling_rate
 
 if config_env() != :test do
   cloak_key =
@@ -398,21 +398,23 @@ if config_env() != :test do
       end
     end)
 
+  previous_ciphers =
+    previous_keys
+    |> Enum.with_index(1)
+    |> Enum.map(fn {{tag, key}, index} ->
+      {
+        String.to_atom("previous_#{index}"),
+        {Cloak.Ciphers.AES.GCM, [tag: tag, key: Base.decode64!(key)]}
+      }
+    end)
+
   ciphers =
     [
       default: {
         Cloak.Ciphers.AES.GCM,
-        tag: "AES.GCM.V1",
-        key: Base.decode64!(cloak_key)
+        [tag: "AES.GCM.V1", key: Base.decode64!(cloak_key)]
       }
-    ] ++
-      Enum.with_index(previous_keys, 1)
-      |> Enum.map(fn {{tag, key}, index} ->
-        {
-          String.to_atom("previous_#{index}"),
-          {Cloak.Ciphers.AES.GCM, tag: tag, key: Base.decode64!(key)}
-        }
-      end)
+    ] ++ previous_ciphers
 
   config :micelio, Micelio.Cloak, json_library: Jason, ciphers: ciphers
 end
@@ -427,33 +429,33 @@ end
 gitlab_oauth =
   [
     client_id:
-      (if config_env() == :dev do
-         System.get_env("GITLAB_OAUTH_CLIENT_ID_DEV") ||
-           System.get_env("GITLAB_OAUTH_CLIENT_ID")
-       else
-         System.get_env("GITLAB_OAUTH_CLIENT_ID")
-       end),
+      if config_env() == :dev do
+        System.get_env("GITLAB_OAUTH_CLIENT_ID_DEV") ||
+          System.get_env("GITLAB_OAUTH_CLIENT_ID")
+      else
+        System.get_env("GITLAB_OAUTH_CLIENT_ID")
+      end,
     client_secret:
-      (if config_env() == :dev do
-         System.get_env("GITLAB_OAUTH_CLIENT_SECRET_DEV") ||
-           System.get_env("GITLAB_OAUTH_CLIENT_SECRET")
-       else
-         System.get_env("GITLAB_OAUTH_CLIENT_SECRET")
-       end),
+      if config_env() == :dev do
+        System.get_env("GITLAB_OAUTH_CLIENT_SECRET_DEV") ||
+          System.get_env("GITLAB_OAUTH_CLIENT_SECRET")
+      else
+        System.get_env("GITLAB_OAUTH_CLIENT_SECRET")
+      end,
     redirect_uri:
-      (if config_env() == :dev do
-         System.get_env("GITLAB_OAUTH_REDIRECT_URI_DEV") ||
-           System.get_env("GITLAB_OAUTH_REDIRECT_URI")
-       else
-         System.get_env("GITLAB_OAUTH_REDIRECT_URI")
-       end),
+      if config_env() == :dev do
+        System.get_env("GITLAB_OAUTH_REDIRECT_URI_DEV") ||
+          System.get_env("GITLAB_OAUTH_REDIRECT_URI")
+      else
+        System.get_env("GITLAB_OAUTH_REDIRECT_URI")
+      end,
     scope:
-      (if config_env() == :dev do
-         System.get_env("GITLAB_OAUTH_SCOPE_DEV") ||
-           System.get_env("GITLAB_OAUTH_SCOPE")
-       else
-         System.get_env("GITLAB_OAUTH_SCOPE")
-       end)
+      if config_env() == :dev do
+        System.get_env("GITLAB_OAUTH_SCOPE_DEV") ||
+          System.get_env("GITLAB_OAUTH_SCOPE")
+      else
+        System.get_env("GITLAB_OAUTH_SCOPE")
+      end
   ]
   |> Enum.reject(fn {_key, value} -> is_nil(value) or value == "" end)
 
@@ -508,11 +510,6 @@ if config_env() == :prod do
 
   maybe_ipv6 = if System.get_env("ECTO_IPV6") in ~w(true 1), do: [:inet6], else: []
 
-  config :micelio, Micelio.Repo,
-    url: database_url,
-    pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
-    socket_options: maybe_ipv6
-
   # The secret key base is used to sign/encrypt cookies and other secrets.
   # A default value is used in config/dev.exs and config/test.exs but you
   # want to use a different value for prod and you most likely don't want
@@ -544,6 +541,11 @@ if config_env() == :prod do
     |> Enum.map(fn {name, _} -> name end)
 
   config :micelio, Micelio.GRPC, require_auth_token: true
+
+  config :micelio, Micelio.Repo,
+    url: database_url,
+    pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
+    socket_options: maybe_ipv6
 
   config :micelio, MicelioWeb.Endpoint,
     url: [host: host, port: 443, scheme: "https"],

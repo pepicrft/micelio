@@ -90,11 +90,20 @@ defmodule Micelio.Errors do
 
     %{
       resolved_retention_days:
-        if(from_settings?, do: settings.resolved_retention_days, else: Config.resolved_retention_days()),
+        if(from_settings?,
+          do: settings.resolved_retention_days,
+          else: Config.resolved_retention_days()
+        ),
       unresolved_retention_days:
-        if(from_settings?, do: settings.unresolved_retention_days, else: Config.unresolved_retention_days()),
+        if(from_settings?,
+          do: settings.unresolved_retention_days,
+          else: Config.unresolved_retention_days()
+        ),
       archive_enabled:
-        if(from_settings?, do: settings.archive_enabled, else: Config.retention_archive_enabled?()),
+        if(from_settings?,
+          do: settings.archive_enabled,
+          else: Config.retention_archive_enabled?()
+        ),
       archive_prefix: Config.retention_archive_prefix(),
       table_warn_threshold: Config.retention_table_warn_threshold()
     }
@@ -206,8 +215,7 @@ defmodule Micelio.Errors do
       |> Map.new()
 
     Error.severities()
-    |> Enum.map(&{&1, Map.get(results, &1, 0)})
-    |> Map.new()
+    |> Map.new(&{&1, Map.get(results, &1, 0)})
   end
 
   defp apply_filters(query, filters) do
@@ -296,12 +304,14 @@ defmodule Micelio.Errors do
   defp filter_end_date(query, _), do: query
 
   defp apply_sort(query, :oldest), do: order_by(query, asc: :last_seen_at)
+
   defp apply_sort(query, :occurrences),
-    do: order_by(query, [error], [desc: error.occurrence_count, desc: error.last_seen_at])
+    do: order_by(query, [error], desc: error.occurrence_count, desc: error.last_seen_at)
+
   defp apply_sort(query, _), do: order_by(query, desc: :last_seen_at)
 
   defp normalize_enum(value, allowed) when is_atom(value) do
-    if value in allowed, do: value, else: nil
+    if value in allowed, do: value
   end
 
   defp normalize_enum(value, allowed) when is_binary(value) do
@@ -310,12 +320,10 @@ defmodule Micelio.Errors do
       |> String.trim()
       |> String.downcase()
 
-    if normalized == "" do
-      nil
-    else
+    if normalized != "" do
       atom = String.to_existing_atom(normalized)
 
-      if atom in allowed, do: atom, else: nil
+      if atom in allowed, do: atom
     end
   rescue
     ArgumentError -> nil

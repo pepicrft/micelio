@@ -12,18 +12,20 @@ test_partition = System.get_env("MIX_TEST_PARTITION")
 # Run `mix help test` for more information.
 config :logger, level: :warning
 
-# We don't run a server during test. If one is required,
-# you can enable the server option below.
-config :micelio, Micelio.GRPC, enabled: false
-config :micelio, Micelio.Mailer, adapter: Swoosh.Adapters.Test
-config :micelio, Micelio.Mic.RollupScheduler, enabled: false
-config :micelio, Micelio.Errors.RetentionScheduler, enabled: false
-
 config :micelio, Micelio.Cloak,
   json_library: Jason,
   ciphers: [
     default: {Cloak.Ciphers.AES.GCM, tag: "AES.GCM.V1", key: <<0::256>>}
   ]
+
+config :micelio, Micelio.Errors.RetentionScheduler, enabled: false
+
+# We don't run a server during test. If one is required,
+# you can enable the server option below.
+config :micelio, Micelio.GRPC, enabled: false
+config :micelio, Micelio.Mailer, adapter: Swoosh.Adapters.Test
+config :micelio, Micelio.Mic.RollupScheduler, enabled: false
+config :micelio, Micelio.Projects.Import, allow_local_imports: true
 
 config :micelio, Micelio.Repo,
   username: "postgres",
@@ -38,17 +40,8 @@ config :micelio, MicelioWeb.Endpoint,
   secret_key_base: "7CasJHWDMv4jqFHNq+m+JV10UTi5t6g4FH0RJBPjOPwTEbBg2vI/VDZknktJ4B4/",
   server: false
 
-# Configure PubSub with minimal pool size to reduce TCP socket contention in tests
-config :phoenix_pubsub, Micelio.PubSub,
-  pool_size: 1
-
-# Use Local adapter for tests to avoid TCP socket permission issues in restricted environments
-# The Local adapter runs entirely in-memory without network dependencies
-# This fixes :eperm errors when running tests in Docker/containerized environments
-# where TCP socket creation is restricted
-config :phoenix_pubsub, Micelio.PubSub, adapter: Phoenix.PubSub.Local
-
 config :micelio, :admin_emails, ["admin@example.com"]
+
 config :micelio, :errors,
   capture_enabled: false,
   retention_vacuum_enabled: false
@@ -66,9 +59,6 @@ config :micelio, :gitlab_oauth,
   http_client: Micelio.Auth.GitLabClientStub
 
 config :micelio, :notifications_async, false
-
-config :micelio, Micelio.Projects.Import, allow_local_imports: true
-
 config :micelio, :prompt_request_flow, validation_enabled: false, validation_async: false
 
 # Initialize plugs at runtime for faster test compilation
@@ -81,6 +71,15 @@ config :phoenix,
 # Enable helpful, but potentially expensive runtime checks
 config :phoenix_live_view,
   enable_expensive_runtime_checks: true
+
+# Use Local adapter for tests to avoid TCP socket permission issues in restricted environments
+# The Local adapter runs entirely in-memory without network dependencies
+# This fixes :eperm errors when running tests in Docker/containerized environments
+# where TCP socket creation is restricted
+config :phoenix_pubsub, Micelio.PubSub, adapter: Phoenix.PubSub.Local
+
+# Configure PubSub with minimal pool size to reduce TCP socket contention in tests
+config :phoenix_pubsub, Micelio.PubSub, pool_size: 1
 
 # Disable swoosh api client as it is only required for production adapters
 config :swoosh, :api_client, false

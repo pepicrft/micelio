@@ -1,14 +1,15 @@
 defmodule MicelioWeb.Api.SessionEventController do
   use MicelioWeb, :controller
 
-  alias Micelio.{Authorization, Sessions}
   alias Micelio.Sessions.EventSchema
+  alias Micelio.{Authorization, Sessions}
 
   @default_poll_ms 1_000
   @heartbeat_ms 15_000
 
   def stream(conn, %{"id" => identifier} = params) do
-    with %Sessions.Session{} = session <- Sessions.get_session_with_associations_by_identifier(identifier),
+    with %Sessions.Session{} = session <-
+           Sessions.get_session_with_associations_by_identifier(identifier),
          :ok <- authorize_session(conn, session),
          {:ok, types} <- parse_types(params),
          {:ok, since} <- parse_since(params),
@@ -195,7 +196,7 @@ defmodule MicelioWeb.Api.SessionEventController do
         end
 
       {:error, _reason} ->
-        _ = chunk(conn, "event: error\ndata: {\"message\":\"Event stream failed\"}\n\n")
+        _ = chunk(conn, ~s(event: error\ndata: {"message":"Event stream failed"}\n\n))
         conn
     end
   end

@@ -17,7 +17,8 @@ defmodule MicelioWeb.Browser.PageHTML do
 
   def popular_projects_section(assigns) do
     assigns =
-      assign(assigns,
+      assign(
+        assigns,
         :title,
         if(assigns.current_user,
           do: gettext("Recent projects"),
@@ -26,7 +27,8 @@ defmodule MicelioWeb.Browser.PageHTML do
       )
 
     assigns =
-      assign(assigns,
+      assign(
+        assigns,
         :subtitle,
         if(assigns.current_user,
           do: gettext("Projects you've worked on recently."),
@@ -35,7 +37,8 @@ defmodule MicelioWeb.Browser.PageHTML do
       )
 
     assigns =
-      assign(assigns,
+      assign(
+        assigns,
         :empty_message,
         if(assigns.current_user,
           do: gettext("No recent projects yet."),
@@ -84,7 +87,11 @@ defmodule MicelioWeb.Browser.PageHTML do
                     action={~p"/#{project.organization.account.handle}/#{project.handle}/star"}
                     method="post"
                   >
-                    <input type="hidden" name="_csrf_token" value={Phoenix.Controller.get_csrf_token()} />
+                    <input
+                      type="hidden"
+                      name="_csrf_token"
+                      value={Phoenix.Controller.get_csrf_token()}
+                    />
                     <input type="hidden" name="star[return_to]" value={return_to} />
                     <button
                       type="submit"
@@ -99,9 +106,9 @@ defmodule MicelioWeb.Browser.PageHTML do
                     >
                       <span class="sr-only">
                         <%= if project.starred do %>
-                          <%= gettext("Unpulse") %>
+                          {gettext("Unpulse")}
                         <% else %>
-                          <%= gettext("Pulse") %>
+                          {gettext("Pulse")}
                         <% end %>
                       </span>
                       <%= if project.starred do %>

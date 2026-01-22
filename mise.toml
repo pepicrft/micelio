@@ -1,3 +1,8 @@
+[env]
+# Development-only encryption key for Cloak (32 bytes, base64 encoded)
+# DO NOT use this key in production - generate a unique key with: openssl rand -base64 32
+CLOAK_KEY = "qzyRtI6urxJU7CID/s/OI9/hE6lkWGVu+g31nk6Grdg="
+
 [tools]
 elixir = "1.19.4-otp-28"
 erlang = "28.3"

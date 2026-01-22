@@ -10,7 +10,11 @@ defmodule MicelioWeb.OrganizationLive.Settings do
   def mount(%{"organization_handle" => handle}, _session, socket) do
     case Accounts.get_organization_by_handle(handle) do
       {:ok, organization} ->
-        if Authorization.authorize(:organization_update, socket.assigns.current_user, organization) ==
+        if Authorization.authorize(
+             :organization_update,
+             socket.assigns.current_user,
+             organization
+           ) ==
              :ok do
           account = organization.account
           {form, llm_default_options} = build_form(account, %{})

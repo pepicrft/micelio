@@ -51,7 +51,8 @@ defmodule Micelio.Sapling.AgentCommitWorkflowTest do
                String.contains?(Enum.at(step.args, 2), "Mic-Session: session-1")
            end)
 
-    assert_received {:cmd, "git", ["log", "--graph", "--oneline", "--decorate", "--all", "-n", "10"], _opts}
+    assert_received {:cmd, "git",
+                     ["log", "--graph", "--oneline", "--decorate", "--all", "-n", "10"], _opts}
   end
 
   test "format_markdown renders report sections" do

@@ -176,11 +176,13 @@ defmodule MicelioWeb.Router do
 
     get("/:organization_handle/:project_handle/token-pool", TokenPoolController, :show)
     patch("/:organization_handle/:project_handle/token-pool", TokenPoolController, :update)
+
     post(
       "/:organization_handle/:project_handle/token-contributions",
       TokenContributionController,
       :create
     )
+
     post(
       "/:organization_handle/:project_handle/prompt-requests",
       PromptRequestController,
@@ -236,7 +238,12 @@ defmodule MicelioWeb.Router do
       live("/new", ProjectLive.New, :new)
       live("/:organization_handle/:project_handle/edit", ProjectLive.Edit, :edit)
       live("/:organization_handle/:project_handle", ProjectLive.Show, :show)
-      live("/:organization_handle/:project_handle/prompt-requests", PromptRequestLive.Index, :index)
+
+      live(
+        "/:organization_handle/:project_handle/prompt-requests",
+        PromptRequestLive.Index,
+        :index
+      )
 
       live(
         "/:organization_handle/:project_handle/prompt-requests/new",

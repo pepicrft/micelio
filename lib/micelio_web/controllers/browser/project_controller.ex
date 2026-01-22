@@ -1,10 +1,10 @@
 defmodule MicelioWeb.Browser.ProjectController do
   use MicelioWeb, :controller
 
+  alias Micelio.Accounts
   alias Micelio.AITokens
   alias Micelio.AITokens.TokenContribution
   alias Micelio.AITokens.TokenPool
-  alias Micelio.Accounts
   alias Micelio.Authorization
   alias Micelio.Mic.Binary
   alias Micelio.Mic.Project, as: MicProject
@@ -109,7 +109,10 @@ defmodule MicelioWeb.Browser.ProjectController do
     end
   end
 
-  def contribute_tokens(conn, %{"account" => account_handle, "project" => project_handle} = params) do
+  def contribute_tokens(
+        conn,
+        %{"account" => account_handle, "project" => project_handle} = params
+      ) do
     return_to = get_in(params, ["token_contribution", "return_to"])
 
     with account when not is_nil(account) <- conn.assigns.selected_account,
@@ -437,7 +440,9 @@ defmodule MicelioWeb.Browser.ProjectController do
 
     available = max(pool.balance - pool.reserved, 0)
     usage = AITokens.project_usage_summary(project)
-    acceptance_rate = format_acceptance_rate(usage.accepted_prompt_requests, usage.total_prompt_requests)
+
+    acceptance_rate =
+      format_acceptance_rate(usage.accepted_prompt_requests, usage.total_prompt_requests)
 
     form =
       Phoenix.Component.to_form(

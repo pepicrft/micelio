@@ -26,8 +26,7 @@ defmodule Micelio.ErrorBoundary do
   attr :retry_path, :string, default: nil
   attr :report_href, :string, default: nil
   attr :title, :string, default: "Something went wrong"
-  attr :message, :string,
-    default: "We hit a snag rendering this section. Please try again."
+  attr :message, :string, default: "We hit a snag rendering this section. Please try again."
   attr :capture_async, :boolean, default: true
 
   slot :inner_block, required: true
@@ -61,22 +60,20 @@ defmodule Micelio.ErrorBoundary do
         </div>
       </section>
     <% else %>
-      <%= @content %>
+      {@content}
     <% end %>
     """
   end
 
   defp safe_render(assigns) do
-    try do
-      changed = Map.get(assigns, :__changed__, %{})
-      {Phoenix.Component.__render_slot__(changed, assigns.inner_block, nil), nil}
-    rescue
-      exception ->
-        {nil, {:exception, exception, __STACKTRACE__}}
-    catch
-      :exit, reason ->
-        {nil, {:exit, reason, __STACKTRACE__}}
-    end
+    changed = Map.get(assigns, :__changed__, %{})
+    {Phoenix.Component.__render_slot__(changed, assigns.inner_block, nil), nil}
+  rescue
+    exception ->
+      {nil, {:exception, exception, __STACKTRACE__}}
+  catch
+    :exit, reason ->
+      {nil, {:exit, reason, __STACKTRACE__}}
   end
 
   defp capture_error(assigns, {:exception, exception, stacktrace}) do

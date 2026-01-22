@@ -3,8 +3,8 @@ defmodule Micelio.Storage.S3ConfigAuditTest do
 
   alias Micelio.Accounts
   alias Micelio.AuditLog
-  alias Micelio.Storage
   alias Micelio.Repo
+  alias Micelio.Storage
 
   defmodule Validator do
     def validate(_config, _opts \\ []) do

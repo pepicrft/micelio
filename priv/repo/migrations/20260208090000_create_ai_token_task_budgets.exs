@@ -4,6 +4,7 @@ defmodule Micelio.Repo.Migrations.CreateAiTokenTaskBudgets do
   def change do
     create table(:ai_token_task_budgets, primary_key: false) do
       add :id, :binary_id, primary_key: true
+
       add :token_pool_id, references(:ai_token_pools, type: :binary_id, on_delete: :delete_all),
         null: false
 

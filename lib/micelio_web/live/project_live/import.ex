@@ -196,7 +196,7 @@ defmodule MicelioWeb.ProjectLive.Import do
             </p>
             <ul>
               <%= for stage <- @stages do %>
-                <li><%= stage_label(stage) %> — <%= stage_state(stage, @import) %></li>
+                <li>{stage_label(stage)} — {stage_state(stage, @import)}</li>
               <% end %>
             </ul>
             <%= if @import.error_message do %>

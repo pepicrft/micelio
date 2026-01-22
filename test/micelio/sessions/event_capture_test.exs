@@ -1,10 +1,10 @@
 defmodule Micelio.Sessions.EventCaptureTest do
   use Micelio.DataCase
 
-  alias Micelio.{Accounts, Projects, Sessions}
   alias Micelio.Sessions.EventCapture
   alias Micelio.Storage
   alias Micelio.StorageHelper
+  alias Micelio.{Accounts, Projects, Sessions}
 
   setup :setup_storage
 

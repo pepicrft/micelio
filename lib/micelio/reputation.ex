@@ -35,12 +35,11 @@ defmodule Micelio.Reputation do
 
     by_type =
       @types
-      |> Enum.map(fn type ->
+      |> Map.new(fn type ->
         type_contributions = Enum.filter(contributions, &(&1.type == type))
         type_validations = Map.get(validation_stats.by_type, type, %{passed: [], total: []})
         {type, score_for_metrics(metrics_for_contributions(type_contributions, type_validations))}
       end)
-      |> Map.new()
 
     %Score{
       overall: score_for_metrics(overall_metrics),
@@ -119,7 +118,7 @@ defmodule Micelio.Reputation do
     by_type =
       prompt_requests
       |> Enum.group_by(&classify_prompt_request/1)
-      |> Enum.map(fn {type, requests} ->
+      |> Map.new(fn {type, requests} ->
         request_ids = MapSet.new(Enum.map(requests, & &1.id))
 
         type_runs = Enum.filter(runs, &MapSet.member?(request_ids, &1.prompt_request_id))
@@ -130,7 +129,6 @@ defmodule Micelio.Reputation do
            total: type_runs
          }}
       end)
-      |> Map.new()
 
     %{
       by_prompt_request: by_prompt_request,
@@ -207,7 +205,7 @@ defmodule Micelio.Reputation do
     }
   end
 
-  defp score_for_metrics(%{total_weight: 0.0}), do: 0
+  defp score_for_metrics(%{total_weight: +0.0}), do: 0
 
   defp score_for_metrics(metrics) do
     base =
@@ -295,18 +293,11 @@ defmodule Micelio.Reputation do
     %{pass_rate: pass_rate}
   end
 
-  defp validation_metrics(%{passed: passed, total: total}, _now) do
-    weighted_total = length(total) * 1.0
-    weighted_passed = length(passed) * 1.0
-    pass_rate = if weighted_total > 0, do: weighted_passed / weighted_total, else: 0.4
-    %{pass_rate: pass_rate}
-  end
-
   defp volume_score(total_weight) do
     min(1.0, total_weight / @volume_target)
   end
 
-  defp rate(_numerator, 0.0), do: 0.0
+  defp rate(_numerator, +0.0), do: +0.0
   defp rate(numerator, denominator), do: numerator / denominator
 
   defp decay_weight(%DateTime{} = occurred_at, now) do

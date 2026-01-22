@@ -205,8 +205,7 @@ defmodule MicelioWeb.AdminErrorsLive.Show do
   defp status_label(%Error{resolved_at: nil}), do: "Unresolved"
   defp status_label(%Error{}), do: "Resolved"
 
-  defp current_note(%Error{metadata: %{"resolution_note" => note}}) when is_binary(note),
-    do: note
+  defp current_note(%Error{metadata: %{"resolution_note" => note}}) when is_binary(note), do: note
 
   defp current_note(_), do: ""
 end

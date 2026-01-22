@@ -2,15 +2,14 @@
   flash={@flash}
   current_scope={assigns[:current_scope]}
   current_user={assigns[:current_user]}
-    locale={assigns[:locale] || "en"}
-    current_path={assigns[:current_path] || "/"}
+  locale={assigns[:locale] || "en"}
+  current_path={assigns[:current_path] || "/"}
 >
   <div class="legal-container" id="terms-of-service">
     <.header>
       Terms of Service
       <:subtitle>
-        Draft terms for a service operated from Germany. This is not legal advice and should be
-        reviewed by counsel.
+        Terms for a service operated from Germany.
       </:subtitle>
     </.header>
 
@@ -42,21 +41,10 @@
         <li>The Service is available to businesses and individuals.</li>
       </ul>
 
-      <h2>4. Subscriptions and billing</h2>
+      <h2>4. Pricing</h2>
       <p>
-        <strong>Pricing (current):</strong>
-        $5 per seat for organizations with private projects; free for personal and open source projects.
-      </p>
-      <p>
-        Billing is handled by
-        <a
-          href={MicelioWeb.LegalInfo.merchant_of_record().url}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          {MicelioWeb.LegalInfo.merchant_of_record().name}
-        </a>
-        as Merchant of Record. Your receipts/invoices and payment method processing may be handled by Polar and its processors.
+        Micelio is currently free to use. We may introduce paid features in the future, at which
+        point we will update these terms and provide notice.
       </p>
 
       <h2>5. Acceptable use</h2>

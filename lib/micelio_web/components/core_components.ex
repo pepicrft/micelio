@@ -653,7 +653,11 @@ defmodule MicelioWeb.CoreComponents do
     assigns = assign(assigns, :locales, @supported_locales)
 
     ~H"""
-    <div class={["language-selector", @class]} role="navigation" aria-label={gettext("Language selection")}>
+    <div
+      class={["language-selector", @class]}
+      role="navigation"
+      aria-label={gettext("Language selection")}
+    >
       <label for="language-select" class="sr-only">{gettext("Select language")}</label>
       <select
         id="language-select"

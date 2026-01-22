@@ -19,7 +19,10 @@ defmodule Micelio.Sapling.Benchmark do
     %{
       id: :log,
       description: "Recent history",
-      commands: %{git: {"git", ["log", "-n", "200", "--oneline"]}, sapling: {"sl", ["log", "-l", "200"]}}
+      commands: %{
+        git: {"git", ["log", "-n", "200", "--oneline"]},
+        sapling: {"sl", ["log", "-l", "200"]}
+      }
     },
     %{
       id: :diff,
@@ -61,7 +64,9 @@ defmodule Micelio.Sapling.Benchmark do
     |> Enum.reject(&(&1 == ""))
     |> Enum.map(&normalize_tool/1)
     |> case do
-      [] -> {:error, {:unknown_tools, tools}}
+      [] ->
+        {:error, {:unknown_tools, tools}}
+
       normalized ->
         if Enum.any?(normalized, &is_nil/1) do
           {:error, {:unknown_tools, tools}}
@@ -100,7 +105,7 @@ defmodule Micelio.Sapling.Benchmark do
     runner = Keyword.get(opts, :runner, &System.cmd/3)
 
     tools
-    |> Enum.map(fn tool ->
+    |> Map.new(fn tool ->
       {output, status} = runner.(tool_command(tool), ["--version"], [])
 
       version =
@@ -116,7 +121,6 @@ defmodule Micelio.Sapling.Benchmark do
 
       {tool, version}
     end)
-    |> Map.new()
   end
 
   @spec ensure_repo(String.t()) :: :ok | {:error, term()}
@@ -219,8 +223,15 @@ defmodule Micelio.Sapling.Benchmark do
 
     missing_lines =
       case missing_tools do
-        [] -> []
-        _ -> ["", "Missing tools: `#{Enum.join(missing_tools, ", ")}`", "Results include only available tools."]
+        [] ->
+          []
+
+        _ ->
+          [
+            "",
+            "Missing tools: `#{Enum.join(missing_tools, ", ")}`",
+            "Results include only available tools."
+          ]
       end
 
     header =

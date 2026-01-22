@@ -3,13 +3,13 @@ defmodule Micelio.AgentInfra do
   API for shaping agent VM provisioning plans.
   """
 
+  alias Micelio.Accounts.Account
   alias Micelio.AgentInfra.Billing
+  alias Micelio.AgentInfra.CloudPlatforms
+  alias Micelio.AgentInfra.ProviderRegistry
   alias Micelio.AgentInfra.ProvisioningPlan
   alias Micelio.AgentInfra.ProvisioningRequest
-  alias Micelio.AgentInfra.ProviderRegistry
   alias Micelio.AgentInfra.SessionRequest
-  alias Micelio.AgentInfra.CloudPlatforms
-  alias Micelio.Accounts.Account
   alias Micelio.AITokens
   alias Micelio.PromptRequests.PromptRequest
 

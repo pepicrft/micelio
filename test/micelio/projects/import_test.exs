@@ -100,7 +100,7 @@ defmodule Micelio.Projects.ImportTest do
   end
 
   defp create_git_repo(label) do
-    unless System.find_executable("git") do
+    if !System.find_executable("git") do
       raise "git is required for import tests"
     end
 
@@ -111,6 +111,7 @@ defmodule Micelio.Projects.ImportTest do
     run_git(["init", "-b", "main", base])
     File.write!(Path.join(base, "README.md"), "Hello from #{label}\n")
     run_git(["-C", base, "add", "."])
+
     run_git([
       "-C",
       base,

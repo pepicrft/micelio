@@ -34,7 +34,9 @@ defmodule Micelio.Sessions.EventCapture do
   Captures raw output as a structured output event.
   """
   @spec capture_output(Session.t() | String.t(), String.t(), Keyword.t()) :: capture_result
-  def capture_output(session_or_id, text, opts \\ []) when is_binary(text) do
+  def capture_output(session_or_id, text, opts \\ [])
+
+  def capture_output(session_or_id, text, opts) when is_binary(text) do
     stream = Keyword.get(opts, :stream, "stdout")
     format = Keyword.get(opts, :format, detect_output_format(text))
 

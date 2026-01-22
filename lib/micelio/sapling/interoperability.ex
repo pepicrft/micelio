@@ -61,7 +61,7 @@ defmodule Micelio.Sapling.Interoperability do
     runner = Keyword.get(opts, :runner, &System.cmd/3)
 
     tools
-    |> Enum.map(fn tool ->
+    |> Map.new(fn tool ->
       {output, status} = runner.(tool_command(tool), ["--version"], [])
 
       version =
@@ -77,7 +77,6 @@ defmodule Micelio.Sapling.Interoperability do
 
       {tool, version}
     end)
-    |> Map.new()
   end
 
   @spec run(keyword()) :: {:ok, map()}
@@ -195,10 +194,24 @@ defmodule Micelio.Sapling.Interoperability do
 
           {[], :ok}
           |> run_step(:git_init, tool_command(:git), ["init"], repo_path, env, runner)
-          |> run_step(:git_config, tool_command(:git), identity_args(:git), repo_path, env, runner)
+          |> run_step(
+            :git_config,
+            tool_command(:git),
+            identity_args(:git),
+            repo_path,
+            env,
+            runner
+          )
           |> write_readme(repo_path, fs)
           |> run_step(:git_add, tool_command(:git), add_args(:git), repo_path, env, runner)
-          |> run_step(:git_commit, tool_command(:git), commit_args(:git, "base: git repo"), repo_path, env, runner)
+          |> run_step(
+            :git_commit,
+            tool_command(:git),
+            commit_args(:git, "base: git repo"),
+            repo_path,
+            env,
+            runner
+          )
       end
 
     {steps, _} =
@@ -225,7 +238,8 @@ defmodule Micelio.Sapling.Interoperability do
   end
 
   defp run_sapling_repo(requested, available, tmp_root, runner, fs) do
-    repo_path = Path.join(tmp_root, "sapling_interop_sapling_#{System.unique_integer([:positive])}")
+    repo_path =
+      Path.join(tmp_root, "sapling_interop_sapling_#{System.unique_integer([:positive])}")
 
     requested_sapling = MapSet.member?(requested, :sapling)
     available_sapling = MapSet.member?(available, :sapling)
@@ -243,10 +257,31 @@ defmodule Micelio.Sapling.Interoperability do
           env = tool_env(:sapling)
 
           {[], :ok}
-          |> run_step(:sapling_init_git, tool_command(:sapling), ["init", "--git"], repo_path, env, runner)
-          |> run_step(:sapling_config, tool_command(:sapling), identity_args(:sapling), repo_path, env, runner)
+          |> run_step(
+            :sapling_init_git,
+            tool_command(:sapling),
+            ["init", "--git"],
+            repo_path,
+            env,
+            runner
+          )
+          |> run_step(
+            :sapling_config,
+            tool_command(:sapling),
+            identity_args(:sapling),
+            repo_path,
+            env,
+            runner
+          )
           |> write_readme(repo_path, fs)
-          |> run_step(:sapling_add, tool_command(:sapling), add_args(:sapling), repo_path, env, runner)
+          |> run_step(
+            :sapling_add,
+            tool_command(:sapling),
+            add_args(:sapling),
+            repo_path,
+            env,
+            runner
+          )
           |> run_step(
             :sapling_commit,
             tool_command(:sapling),
@@ -288,16 +323,36 @@ defmodule Micelio.Sapling.Interoperability do
       not requested_sapling ->
         steps =
           steps
-          |> skip_step(:sapling_status, tool_command(:sapling), ["status"], "tool not requested: sapling")
-          |> skip_step(:sapling_log, tool_command(:sapling), ["log", "-l", "5"], "tool not requested: sapling")
+          |> skip_step(
+            :sapling_status,
+            tool_command(:sapling),
+            ["status"],
+            "tool not requested: sapling"
+          )
+          |> skip_step(
+            :sapling_log,
+            tool_command(:sapling),
+            ["log", "-l", "5"],
+            "tool not requested: sapling"
+          )
 
         {steps, git_status}
 
       not available_sapling ->
         steps =
           steps
-          |> skip_step(:sapling_status, tool_command(:sapling), ["status"], "missing tool: sapling")
-          |> skip_step(:sapling_log, tool_command(:sapling), ["log", "-l", "5"], "missing tool: sapling")
+          |> skip_step(
+            :sapling_status,
+            tool_command(:sapling),
+            ["status"],
+            "missing tool: sapling"
+          )
+          |> skip_step(
+            :sapling_log,
+            tool_command(:sapling),
+            ["log", "-l", "5"],
+            "missing tool: sapling"
+          )
 
         {steps, git_status}
 
@@ -305,7 +360,12 @@ defmodule Micelio.Sapling.Interoperability do
         steps =
           steps
           |> skip_step(:sapling_status, tool_command(:sapling), ["status"], "git repo not ready")
-          |> skip_step(:sapling_log, tool_command(:sapling), ["log", "-l", "5"], "git repo not ready")
+          |> skip_step(
+            :sapling_log,
+            tool_command(:sapling),
+            ["log", "-l", "5"],
+            "git repo not ready"
+          )
 
         {steps, git_status}
 
@@ -314,11 +374,25 @@ defmodule Micelio.Sapling.Interoperability do
 
         {steps, :ok}
         |> run_step(:sapling_status, tool_command(:sapling), ["status"], repo_path, env, runner)
-        |> run_step(:sapling_log, tool_command(:sapling), ["log", "-l", "5"], repo_path, env, runner)
+        |> run_step(
+          :sapling_log,
+          tool_command(:sapling),
+          ["log", "-l", "5"],
+          repo_path,
+          env,
+          runner
+        )
     end
   end
 
-  defp maybe_run_git_on_sapling_repo(steps, sapling_status, repo_path, requested, available, runner) do
+  defp maybe_run_git_on_sapling_repo(
+         steps,
+         sapling_status,
+         repo_path,
+         requested,
+         available,
+         runner
+       ) do
     requested_git = MapSet.member?(requested, :git)
     available_git = MapSet.member?(available, :git)
 
@@ -326,24 +400,54 @@ defmodule Micelio.Sapling.Interoperability do
       not requested_git ->
         steps =
           steps
-          |> skip_step(:git_status, tool_command(:git), ["status", "--short"], "tool not requested: git")
-          |> skip_step(:git_log, tool_command(:git), ["log", "-n", "5", "--oneline"], "tool not requested: git")
+          |> skip_step(
+            :git_status,
+            tool_command(:git),
+            ["status", "--short"],
+            "tool not requested: git"
+          )
+          |> skip_step(
+            :git_log,
+            tool_command(:git),
+            ["log", "-n", "5", "--oneline"],
+            "tool not requested: git"
+          )
 
         {steps, sapling_status}
 
       not available_git ->
         steps =
           steps
-          |> skip_step(:git_status, tool_command(:git), ["status", "--short"], "missing tool: git")
-          |> skip_step(:git_log, tool_command(:git), ["log", "-n", "5", "--oneline"], "missing tool: git")
+          |> skip_step(
+            :git_status,
+            tool_command(:git),
+            ["status", "--short"],
+            "missing tool: git"
+          )
+          |> skip_step(
+            :git_log,
+            tool_command(:git),
+            ["log", "-n", "5", "--oneline"],
+            "missing tool: git"
+          )
 
         {steps, sapling_status}
 
       sapling_status != :ok ->
         steps =
           steps
-          |> skip_step(:git_status, tool_command(:git), ["status", "--short"], "sapling repo not ready")
-          |> skip_step(:git_log, tool_command(:git), ["log", "-n", "5", "--oneline"], "sapling repo not ready")
+          |> skip_step(
+            :git_status,
+            tool_command(:git),
+            ["status", "--short"],
+            "sapling repo not ready"
+          )
+          |> skip_step(
+            :git_log,
+            tool_command(:git),
+            ["log", "-n", "5", "--oneline"],
+            "sapling repo not ready"
+          )
 
         {steps, sapling_status}
 
@@ -351,8 +455,22 @@ defmodule Micelio.Sapling.Interoperability do
         env = tool_env(:git)
 
         {steps, :ok}
-        |> run_step(:git_status, tool_command(:git), ["status", "--short"], repo_path, env, runner)
-        |> run_step(:git_log, tool_command(:git), ["log", "-n", "5", "--oneline"], repo_path, env, runner)
+        |> run_step(
+          :git_status,
+          tool_command(:git),
+          ["status", "--short"],
+          repo_path,
+          env,
+          runner
+        )
+        |> run_step(
+          :git_log,
+          tool_command(:git),
+          ["log", "-n", "5", "--oneline"],
+          repo_path,
+          env,
+          runner
+        )
     end
   end
 
@@ -369,7 +487,12 @@ defmodule Micelio.Sapling.Interoperability do
     |> skip_step(:sapling_init_git, tool_command(:sapling), ["init", "--git"], reason)
     |> skip_step(:sapling_config, tool_command(:sapling), identity_args(:sapling), reason)
     |> skip_step(:sapling_add, tool_command(:sapling), add_args(:sapling), reason)
-    |> skip_step(:sapling_commit, tool_command(:sapling), commit_args(:sapling, "base: sapling repo"), reason)
+    |> skip_step(
+      :sapling_commit,
+      tool_command(:sapling),
+      commit_args(:sapling, "base: sapling repo"),
+      reason
+    )
   end
 
   defp skip_step(steps, label, cmd, args, reason) do
@@ -391,7 +514,8 @@ defmodule Micelio.Sapling.Interoperability do
     {steps, :ok}
   end
 
-  defp run_step({steps, :error}, _label, _cmd, _args, _repo_path, _env, _runner), do: {steps, :error}
+  defp run_step({steps, :error}, _label, _cmd, _args, _repo_path, _env, _runner),
+    do: {steps, :error}
 
   defp run_step({steps, :ok}, label, cmd, args, repo_path, env, runner) do
     {output, status} = runner.(cmd, args, command_opts(repo_path, env))
@@ -417,7 +541,7 @@ defmodule Micelio.Sapling.Interoperability do
     statuses = Enum.map(steps, & &1.status)
 
     cond do
-      Enum.any?(statuses, &is_integer(&1) and &1 != 0) -> :error
+      Enum.any?(statuses, &(is_integer(&1) and &1 != 0)) -> :error
       Enum.all?(statuses, &(&1 == :skipped)) -> :skipped
       true -> :ok
     end
@@ -434,13 +558,18 @@ defmodule Micelio.Sapling.Interoperability do
 
   defp summary_lines(results) do
     Enum.map(results, fn scenario ->
-      compatibility = Map.get(scenario, :compatibility) || compatibility_label(scenario.steps || [])
+      compatibility =
+        Map.get(scenario, :compatibility) || compatibility_label(scenario.steps || [])
+
       status = Map.get(scenario, :status, :unknown)
       "#{scenario.description}: #{compatibility} (status #{status})"
     end)
   end
 
-  defp format_scenario(%{description: description, repo_path: repo_path, status: status, steps: steps} = scenario) do
+  defp format_scenario(
+         %{description: description, repo_path: repo_path, status: status, steps: steps} =
+           scenario
+       ) do
     compatibility = Map.get(scenario, :compatibility) || compatibility_label(steps)
 
     [
@@ -495,7 +624,7 @@ defmodule Micelio.Sapling.Interoperability do
     cond do
       Enum.all?(statuses, &(&1 == 0)) -> :ok
       Enum.any?(statuses, &(&1 == :skipped or is_nil(&1))) -> :blocked
-      Enum.any?(statuses, &is_integer(&1) and &1 != 0) -> :error
+      Enum.any?(statuses, &(is_integer(&1) and &1 != 0)) -> :error
       true -> :unknown
     end
   end
@@ -511,7 +640,9 @@ defmodule Micelio.Sapling.Interoperability do
   end
 
   defp missing_tools_line([]), do: []
-  defp missing_tools_line(missing_tools), do: ["Missing tools: `#{Enum.join(missing_tools, ", ")}`"]
+
+  defp missing_tools_line(missing_tools),
+    do: ["Missing tools: `#{Enum.join(missing_tools, ", ")}`"]
 
   defp normalize_tool(:git), do: :git
   defp normalize_tool(:sapling), do: :sapling

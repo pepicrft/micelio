@@ -1,8 +1,8 @@
 defmodule MicelioWeb.Api.TokenContributionController do
   use MicelioWeb, :controller
 
-  alias Micelio.AITokens
   alias Micelio.Accounts
+  alias Micelio.AITokens
   alias Micelio.Authorization
   alias Micelio.Projects
 

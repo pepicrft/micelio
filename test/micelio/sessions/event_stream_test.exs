@@ -1,8 +1,8 @@
 defmodule Micelio.Sessions.EventStreamTest do
   use Micelio.DataCase
 
-  alias Micelio.{Accounts, Projects, Sessions}
   alias Micelio.StorageHelper
+  alias Micelio.{Accounts, Projects, Sessions}
 
   setup :setup_storage
 
@@ -43,26 +43,32 @@ defmodule Micelio.Sessions.EventStreamTest do
     t3 = DateTime.add(now, -1, :second)
 
     {:ok, _} =
-      Sessions.capture_session_event(session, %{
-        type: "status",
-        payload: %{state: "running"}
-      },
+      Sessions.capture_session_event(
+        session,
+        %{
+          type: "status",
+          payload: %{state: "running"}
+        },
         timestamp: t1
       )
 
     {:ok, _} =
-      Sessions.capture_session_event(session, %{
-        type: "output",
-        payload: %{text: "first", stream: "stdout", format: "text"}
-      },
+      Sessions.capture_session_event(
+        session,
+        %{
+          type: "output",
+          payload: %{text: "first", stream: "stdout", format: "text"}
+        },
         timestamp: t2
       )
 
     {:ok, _} =
-      Sessions.capture_session_event(session, %{
-        type: "output",
-        payload: %{text: "second", stream: "stdout", format: "text"}
-      },
+      Sessions.capture_session_event(
+        session,
+        %{
+          type: "output",
+          payload: %{text: "second", stream: "stdout", format: "text"}
+        },
         timestamp: t3
       )
 

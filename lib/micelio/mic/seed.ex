@@ -21,7 +21,7 @@ defmodule Micelio.Mic.Seed do
          {:ok, tree} <- store_files(project_id, root_path, files),
          {:ok, tree_hash} <- store_tree(project_id, tree),
          {:ok, _} <- store_head(project_id, position, tree_hash) do
-         {:ok, %{file_count: length(files), tree_hash: tree_hash}}
+      {:ok, %{file_count: length(files), tree_hash: tree_hash}}
     end
   end
 

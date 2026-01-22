@@ -6,8 +6,8 @@ defmodule Micelio.Errors.NotifierTest do
 
   alias Micelio.Errors
   alias Micelio.Errors.Error
-  alias Micelio.Errors.Notifier
   alias Micelio.Errors.NotificationLog
+  alias Micelio.Errors.Notifier
   alias Micelio.Repo
 
   setup :verify_on_exit!

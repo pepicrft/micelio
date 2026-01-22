@@ -42,6 +42,26 @@ if config_env() != :test do
   config :logger, backends: [:console, Micelio.Errors.LoggerBackend]
 end
 
+config :micelio, Micelio.AgentInfra.Billing,
+  limits: %{
+    cpu_core_seconds: 120_000,
+    memory_mb_seconds: 61_440_000,
+    disk_gb_seconds: 1_800_000,
+    billable_units: 200_000
+  },
+  unit_weights: %{
+    cpu_core_second: 1,
+    memory_mb_second: 1,
+    disk_gb_second: 5
+  },
+  unit_price_cents: 1,
+  default_ttl_seconds: 3600
+
+config :micelio, Micelio.Errors.RetentionScheduler,
+  enabled: true,
+  run_hour: 3,
+  run_minute: 0
+
 config :micelio, Micelio.GRPC,
   enabled: false,
   port: 50_051,
@@ -67,6 +87,11 @@ config :micelio, MicelioWeb.Endpoint,
   pubsub_server: Micelio.PubSub,
   live_view: [signing_salt: "uBaIW6yU"]
 
+# Gettext configuration
+config :micelio, MicelioWeb.Gettext,
+  default_locale: "en",
+  locales: ~w(en ko zh_CN zh_TW ja)
+
 config :micelio, :admin_emails, []
 
 config :micelio, :api_rate_limit,
@@ -75,16 +100,6 @@ config :micelio, :api_rate_limit,
   authenticated_limit: 500,
   authenticated_window_ms: 60_000
 
-config :micelio, :s3_validation_rate_limit,
-  limit: 10,
-  window_ms: 60_000
-
-config :micelio, :github_oauth, []
-config :micelio, :gitlab_oauth, []
-config :micelio, :project_limits, max_projects_per_tenant: 25
-config :micelio, :project_llm_models, ["gpt-4.1-mini", "gpt-4.1"]
-config :micelio, :project_llm_default, "gpt-4.1-mini"
-config :micelio, :remote_execution, allowed_commands: []
 config :micelio, :errors,
   retention_days: 90,
   resolved_retention_days: 30,
@@ -106,28 +121,18 @@ config :micelio, :errors,
   notification_total_rate_limit_seconds: 3600,
   notification_total_rate_limit_max: 10
 
-config :micelio, :validation_environments,
-  min_quality_score: 80
+config :micelio, :github_oauth, []
+config :micelio, :gitlab_oauth, []
+config :micelio, :project_limits, max_projects_per_tenant: 25
+config :micelio, :project_llm_default, "gpt-4.1-mini"
+config :micelio, :project_llm_models, ["gpt-4.1-mini", "gpt-4.1"]
+config :micelio, :remote_execution, allowed_commands: []
 
-config :micelio, Micelio.AgentInfra.Billing,
-  limits: %{
-    cpu_core_seconds: 120_000,
-    memory_mb_seconds: 61_440_000,
-    disk_gb_seconds: 1_800_000,
-    billable_units: 200_000
-  },
-  unit_weights: %{
-    cpu_core_second: 1,
-    memory_mb_second: 1,
-    disk_gb_second: 5
-  },
-  unit_price_cents: 1,
-  default_ttl_seconds: 3600
+config :micelio, :s3_validation_rate_limit,
+  limit: 10,
+  window_ms: 60_000
 
-config :micelio, Micelio.Errors.RetentionScheduler,
-  enabled: true,
-  run_hour: 3,
-  run_minute: 0
+config :micelio, :validation_environments, min_quality_score: 80
 
 config :micelio,
   ecto_repos: [Micelio.Repo],
@@ -138,11 +143,6 @@ config :mime, :types, %{
   "application/activity+json" => ["activity+json"],
   "application/jrd+json" => ["jrd+json"]
 }
-
-# Gettext configuration
-config :micelio, MicelioWeb.Gettext,
-  default_locale: "en",
-  locales: ~w(en ko zh_CN zh_TW ja)
 
 # Use Jason for JSON parsing in Phoenix
 # of this file so it overrides the configuration defined above.

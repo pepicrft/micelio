@@ -5,8 +5,8 @@ defmodule MicelioWeb.AgentLiveTest do
   import Mimic
   import Phoenix.LiveViewTest
 
-  alias Micelio.{Accounts, Projects, Sessions}
   alias Micelio.Sessions.OGSummary
+  alias Micelio.{Accounts, Projects, Sessions}
   alias MicelioWeb.OpenGraphImage
 
   setup :verify_on_exit!

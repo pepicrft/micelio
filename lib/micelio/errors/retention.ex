@@ -15,6 +15,7 @@ defmodule Micelio.Errors.Retention do
 
   def run(opts \\ []) do
     policy = Keyword.get(opts, :policy, Errors.retention_policy())
+
     now =
       Keyword.get_lazy(opts, :now, fn ->
         DateTime.utc_now() |> DateTime.truncate(:second)
@@ -83,7 +84,9 @@ defmodule Micelio.Errors.Retention do
 
     deleted =
       case errors do
-        [] -> 0
+        [] ->
+          0
+
         _ ->
           ids = Enum.map(errors, & &1.id)
           {count, _} = Repo.delete_all(from(error in Error, where: error.id in ^ids))
@@ -138,8 +141,11 @@ defmodule Micelio.Errors.Retention do
 
         statement ->
           case Repo.query(statement) do
-            {:ok, _} -> :ok
-            {:error, reason} -> Logger.warning("error retention vacuum failed: #{inspect(reason)}")
+            {:ok, _} ->
+              :ok
+
+            {:error, reason} ->
+              Logger.warning("error retention vacuum failed: #{inspect(reason)}")
           end
       end
     end
@@ -148,7 +154,6 @@ defmodule Micelio.Errors.Retention do
   defp vacuum_statement do
     case Repo.__adapter__() do
       Ecto.Adapters.Postgres -> "VACUUM ANALYZE errors"
-      Ecto.Adapters.SQLite3 -> "VACUUM"
       _ -> nil
     end
   end

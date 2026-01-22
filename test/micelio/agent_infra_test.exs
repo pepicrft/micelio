@@ -2,10 +2,10 @@ defmodule Micelio.AgentInfraTest do
   use Micelio.DataCase, async: true
 
   alias Micelio.Accounts
-  alias Micelio.AITokens
   alias Micelio.AgentInfra
-  alias Micelio.PromptRequests
+  alias Micelio.AITokens
   alias Micelio.Projects
+  alias Micelio.PromptRequests
 
   defp setup_prompt_request do
     {:ok, user} = Accounts.get_or_create_user_by_email("agent-runner@example.com")
@@ -69,7 +69,9 @@ defmodule Micelio.AgentInfraTest do
     {user, project, prompt_request} = setup_prompt_request()
 
     {:ok, _pool} = AITokens.create_token_pool(project, %{balance: 2000, reserved: 0})
-    assert {:ok, _budget, _pool} = AITokens.upsert_task_budget(prompt_request, %{"amount" => "1500"})
+
+    assert {:ok, _budget, _pool} =
+             AITokens.upsert_task_budget(prompt_request, %{"amount" => "1500"})
 
     assert {:ok, request} =
              AgentInfra.build_request_with_quota(user.account, plan_attrs(),

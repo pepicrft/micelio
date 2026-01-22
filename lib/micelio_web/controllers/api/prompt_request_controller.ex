@@ -3,8 +3,8 @@ defmodule MicelioWeb.Api.PromptRequestController do
 
   alias Micelio.Accounts
   alias Micelio.Authorization
-  alias Micelio.PromptRequests
   alias Micelio.Projects
+  alias Micelio.PromptRequests
 
   def create(conn, %{
         "organization_handle" => organization_handle,
@@ -104,7 +104,8 @@ defmodule MicelioWeb.Api.PromptRequestController do
       generated_at: format_datetime(prompt_request.generated_at),
       review_status: review_status_value(prompt_request.review_status),
       reviewed_at: format_datetime(prompt_request.reviewed_at),
-      validation_feedback: PromptRequests.format_validation_feedback(prompt_request.validation_feedback),
+      validation_feedback:
+        PromptRequests.format_validation_feedback(prompt_request.validation_feedback),
       validation_iterations: prompt_request.validation_iterations,
       execution_environment: prompt_request.execution_environment,
       execution_duration_ms: prompt_request.execution_duration_ms,

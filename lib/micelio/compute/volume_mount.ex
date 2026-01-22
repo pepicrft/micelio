@@ -37,7 +37,8 @@ defmodule Micelio.AgentInfra.VolumeMount do
     |> validate_required([:name, :source, :target, :access, :type])
     |> validate_length(:name, min: 1, max: 64)
     |> validate_format(:name, ~r/^[a-z0-9][a-z0-9-_]*$/i,
-      message: "must start with a letter or number and use only alphanumerics, dashes, or underscores"
+      message:
+        "must start with a letter or number and use only alphanumerics, dashes, or underscores"
     )
     |> validate_inclusion(:access, ["ro", "rw"])
     |> validate_inclusion(:type, ["volume", "bind"])

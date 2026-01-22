@@ -15,8 +15,12 @@ defmodule Micelio.Errors.NotificationEmail do
     |> to(recipient)
     |> from(default_from())
     |> subject("[Micelio] #{error.severity} #{error.kind} error")
-    |> html_body(error_html(%{error: error, reason: reason, url: url, first_seen_at: first_seen_at}))
-    |> text_body(error_text(%{error: error, reason: reason, url: url, first_seen_at: first_seen_at}))
+    |> html_body(
+      error_html(%{error: error, reason: reason, url: url, first_seen_at: first_seen_at})
+    )
+    |> text_body(
+      error_text(%{error: error, reason: reason, url: url, first_seen_at: first_seen_at})
+    )
   end
 
   defp default_from do

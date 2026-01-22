@@ -10,7 +10,8 @@ defmodule Micelio.AgentInfra.SessionManager do
   @type session_id :: String.t()
 
   @typedoc "Canonical session state."
-  @type session_state :: :queued | :starting | :running | :stopping | :stopped | :failed | :expired
+  @type session_state ::
+          :queued | :starting | :running | :stopping | :stopped | :failed | :expired
 
   @typedoc "Supported access channel for a session."
   @type access_type :: :ssh | :http | :grpc | :websocket
@@ -68,8 +69,9 @@ defmodule Micelio.AgentInfra.SessionManager do
          {:ok, access} <- normalize_access(get_field(session, :access)),
          {:ok, created_at} <- normalize_datetime(get_field(session, :created_at), :created_at),
          {:ok, started_at} <- normalize_optional_datetime(get_field(session, :started_at)),
-         {:ok, expires_at} <- normalize_optional_datetime(get_field(session, :expires_at)),
-         metadata <- normalize_metadata(get_field(session, :metadata)) do
+         {:ok, expires_at} <- normalize_optional_datetime(get_field(session, :expires_at)) do
+      metadata = normalize_metadata(get_field(session, :metadata))
+
       {:ok,
        %{
          id: id,
@@ -155,8 +157,8 @@ defmodule Micelio.AgentInfra.SessionManager do
 
   defp normalize_access_point(%{} = point) do
     with {:ok, type} <- normalize_access_type(get_field(point, :type)),
-         {:ok, uri} <- normalize_uri(get_field(point, :uri)),
-         metadata <- normalize_metadata(get_field(point, :metadata)) do
+         {:ok, uri} <- normalize_uri(get_field(point, :uri)) do
+      metadata = normalize_metadata(get_field(point, :metadata))
       {:ok, %{type: type, uri: uri, metadata: metadata}}
     else
       {:error, _reason} = error -> error

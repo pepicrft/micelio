@@ -168,7 +168,7 @@ defmodule Micelio.Storage.TieredTest do
       config
       |> Keyword.put(:cdn_base_url, "https://cdn.example")
       |> Keyword.put(:cache_memory_max_bytes, 1_000_000)
-      |> Keyword.put(:req_options, [plug: {Req.Test, Micelio.Storage.TieredTest}, retry: false])
+      |> Keyword.put(:req_options, plug: {Req.Test, Micelio.Storage.TieredTest}, retry: false)
 
     assert {:ok, ^content} = Tiered.get(key, config)
     assert File.exists?(Path.join(cache_dir, key))
@@ -192,7 +192,7 @@ defmodule Micelio.Storage.TieredTest do
     config =
       config
       |> Keyword.put(:cdn_base_url, "https://cdn.example")
-      |> Keyword.put(:req_options, [plug: {Req.Test, Micelio.Storage.TieredTest}, retry: false])
+      |> Keyword.put(:req_options, plug: {Req.Test, Micelio.Storage.TieredTest}, retry: false)
 
     assert {:ok, ^content} = Tiered.get(key, config)
     assert {:ok, %{etag: ^etag, size: ^size}} = Tiered.head(key, config)
@@ -215,7 +215,7 @@ defmodule Micelio.Storage.TieredTest do
     config =
       config
       |> Keyword.put(:cdn_base_url, "https://cdn.example")
-      |> Keyword.put(:req_options, [plug: {Req.Test, Micelio.Storage.TieredTest}, retry: false])
+      |> Keyword.put(:req_options, plug: {Req.Test, Micelio.Storage.TieredTest}, retry: false)
 
     assert {:ok, ^content} = Tiered.get(key, config)
     assert File.exists?(Path.join(cache_dir, key))
@@ -232,7 +232,7 @@ defmodule Micelio.Storage.TieredTest do
     config =
       config
       |> Keyword.put(:cdn_base_url, "https://cdn.example")
-      |> Keyword.put(:req_options, [plug: {Req.Test, Micelio.Storage.TieredTest}, retry: false])
+      |> Keyword.put(:req_options, plug: {Req.Test, Micelio.Storage.TieredTest}, retry: false)
 
     assert Tiered.exists?(key, config)
   end
@@ -254,7 +254,7 @@ defmodule Micelio.Storage.TieredTest do
     config =
       config
       |> Keyword.put(:cdn_base_url, "https://cdn.example")
-      |> Keyword.put(:req_options, [plug: {Req.Test, Micelio.Storage.TieredTest}, retry: false])
+      |> Keyword.put(:req_options, plug: {Req.Test, Micelio.Storage.TieredTest}, retry: false)
 
     assert {:ok, %{content: ^content, etag: ^etag}} = Tiered.get_with_metadata(key, config)
     assert File.exists?(Path.join(cache_dir, key))
@@ -329,7 +329,7 @@ defmodule Micelio.Storage.TieredTest do
     config =
       config
       |> Keyword.put(:cdn_base_url, "https://cdn.example")
-      |> Keyword.put(:req_options, [plug: {Req.Test, Micelio.Storage.TieredTest}, retry: false])
+      |> Keyword.put(:req_options, plug: {Req.Test, Micelio.Storage.TieredTest}, retry: false)
 
     assert {:ok, %{etag: ^etag, size: ^size}} = Tiered.head(key, config)
     assert File.exists?(Path.join(cache_dir, key))
@@ -350,7 +350,7 @@ defmodule Micelio.Storage.TieredTest do
       |> Keyword.put(:cache_disk_path, nil)
       |> Keyword.put(:cache_memory_max_bytes, 0)
       |> Keyword.put(:cache_namespace, "#{config[:cache_namespace]}-head-origin")
-      |> Keyword.put(:req_options, [plug: {Req.Test, Micelio.Storage.TieredTest}, retry: false])
+      |> Keyword.put(:req_options, plug: {Req.Test, Micelio.Storage.TieredTest}, retry: false)
 
     {:ok, ^key} = Local.put(key, content, base_path: origin_dir)
     {:ok, %{etag: etag}} = Local.get_with_metadata(key, base_path: origin_dir)

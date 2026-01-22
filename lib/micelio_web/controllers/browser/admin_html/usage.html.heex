@@ -56,8 +56,7 @@
                 </span>
               </div>
               <div class="admin-list-meta">
-                {project.tokens_spent} tokens · {project.accepted_prompt_requests}/
-                {project.total_prompt_requests} accepted
+                {project.tokens_spent} tokens · {project.accepted_prompt_requests}/ {project.total_prompt_requests} accepted
                 ({format_acceptance_rate(
                   project.accepted_prompt_requests,
                   project.total_prompt_requests

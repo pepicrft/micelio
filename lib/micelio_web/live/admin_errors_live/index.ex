@@ -61,7 +61,7 @@ defmodule MicelioWeb.AdminErrorsLive.Index do
       }
       |> prune_params()
 
-    {:noreply, push_patch(socket, to: ~p"/admin/errors?#{params}" )}
+    {:noreply, push_patch(socket, to: ~p"/admin/errors?#{params}")}
   end
 
   @impl true
@@ -74,7 +74,7 @@ defmodule MicelioWeb.AdminErrorsLive.Index do
       }
       |> prune_params()
 
-    {:noreply, push_patch(socket, to: ~p"/admin/errors?#{params}" )}
+    {:noreply, push_patch(socket, to: ~p"/admin/errors?#{params}")}
   end
 
   @impl true
@@ -87,7 +87,7 @@ defmodule MicelioWeb.AdminErrorsLive.Index do
       }
       |> prune_params()
 
-    {:noreply, push_patch(socket, to: ~p"/admin/errors?#{params}" )}
+    {:noreply, push_patch(socket, to: ~p"/admin/errors?#{params}")}
   end
 
   @impl true
@@ -205,7 +205,9 @@ defmodule MicelioWeb.AdminErrorsLive.Index do
               <select id="admin-errors-sort" name="sort">
                 <option value="newest" selected={@sort == "newest"}>Newest</option>
                 <option value="oldest" selected={@sort == "oldest"}>Oldest</option>
-                <option value="occurrences" selected={@sort == "occurrences"}>Most occurrences</option>
+                <option value="occurrences" selected={@sort == "occurrences"}>
+                  Most occurrences
+                </option>
               </select>
             </form>
           </div>
@@ -378,7 +380,7 @@ defmodule MicelioWeb.AdminErrorsLive.Index do
   defp status_label(%Error{resolved_at: nil}), do: "Unresolved"
   defp status_label(%Error{}), do: "Resolved"
 
-  defp page_count(total, limit) when total == 0, do: 1
+  defp page_count(total, _limit) when total == 0, do: 1
 
   defp page_count(total, limit) do
     total

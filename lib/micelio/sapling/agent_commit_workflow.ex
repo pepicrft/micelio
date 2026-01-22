@@ -78,7 +78,9 @@ defmodule Micelio.Sapling.AgentCommitWorkflow do
     cleanup = Keyword.get(opts, :cleanup, true)
 
     started_at = DateTime.utc_now()
-    availability = tool_availability(tools, finder: Keyword.get(opts, :finder, &System.find_executable/1))
+
+    availability =
+      tool_availability(tools, finder: Keyword.get(opts, :finder, &System.find_executable/1))
 
     results =
       Enum.map(availability.available, fn tool ->
@@ -199,11 +201,25 @@ defmodule Micelio.Sapling.AgentCommitWorkflow do
     {steps, status} =
       {[], :ok}
       |> run_step(:init_repo, tool_command(tool), ["init"], repo_path, env, runner)
-      |> run_step(:configure_identity, tool_command(tool), identity_args(tool), repo_path, env, runner)
+      |> run_step(
+        :configure_identity,
+        tool_command(tool),
+        identity_args(tool),
+        repo_path,
+        env,
+        runner
+      )
       |> create_base_commit(tool, repo_path, env, runner, fs)
       |> create_session_commits(tool, session_ids, repo_path, env, runner, fs)
       |> run_step(:stack_view, tool_command(tool), stack_view_args(tool), repo_path, env, runner)
-      |> run_step(:message_view, tool_command(tool), message_view_args(tool, session_ids), repo_path, env, runner)
+      |> run_step(
+        :message_view,
+        tool_command(tool),
+        message_view_args(tool, session_ids),
+        repo_path,
+        env,
+        runner
+      )
 
     if cleanup do
       fs.rm_rf!(repo_path)
@@ -217,18 +233,33 @@ defmodule Micelio.Sapling.AgentCommitWorkflow do
     }
   end
 
-  defp create_base_commit({steps, :error}, _tool, _repo_path, _env, _runner, _fs), do: {steps, :error}
+  defp create_base_commit({steps, :error}, _tool, _repo_path, _env, _runner, _fs),
+    do: {steps, :error}
 
   defp create_base_commit({steps, :ok}, tool, repo_path, env, runner, fs) do
     fs.write!(Path.join(repo_path, "README.md"), "# Agent Commit Workflow\n\nBase commit.\n")
 
     {steps, :ok}
     |> run_step(:stage_base, tool_command(tool), add_args(tool), repo_path, env, runner)
-    |> run_step(:commit_base, tool_command(tool), commit_args(tool, "base: initialize repo"), repo_path, env, runner)
+    |> run_step(
+      :commit_base,
+      tool_command(tool),
+      commit_args(tool, "base: initialize repo"),
+      repo_path,
+      env,
+      runner
+    )
   end
 
-  defp create_session_commits({steps, :error}, _tool, _session_ids, _repo_path, _env, _runner, _fs),
-    do: {steps, :error}
+  defp create_session_commits(
+         {steps, :error},
+         _tool,
+         _session_ids,
+         _repo_path,
+         _env,
+         _runner,
+         _fs
+       ), do: {steps, :error}
 
   defp create_session_commits({steps, :ok}, tool, session_ids, repo_path, env, runner, fs) do
     Enum.reduce(session_ids, {steps, :ok}, fn session_id, acc ->
@@ -251,8 +282,6 @@ defmodule Micelio.Sapling.AgentCommitWorkflow do
       end
     end)
   end
-
-  defp write_session_file({steps, :error}, _repo_path, _session_id, _fs), do: {steps, :error}
 
   defp write_session_file({steps, :ok}, repo_path, session_id, fs) do
     notes_dir = Path.join(repo_path, "sessions")
@@ -277,7 +306,8 @@ defmodule Micelio.Sapling.AgentCommitWorkflow do
     |> Enum.join("\n")
   end
 
-  defp run_step({steps, :error}, _label, _cmd, _args, _repo_path, _env, _runner), do: {steps, :error}
+  defp run_step({steps, :error}, _label, _cmd, _args, _repo_path, _env, _runner),
+    do: {steps, :error}
 
   defp run_step({steps, :ok}, label, cmd, args, repo_path, env, runner) do
     {output, status} =
@@ -330,7 +360,9 @@ defmodule Micelio.Sapling.AgentCommitWorkflow do
   defp commit_args(:git, message), do: ["commit", "-m", message]
   defp commit_args(:sapling, message), do: ["commit", "-m", message]
 
-  defp stack_view_args(:git), do: ["log", "--graph", "--oneline", "--decorate", "--all", "-n", "10"]
+  defp stack_view_args(:git),
+    do: ["log", "--graph", "--oneline", "--decorate", "--all", "-n", "10"]
+
   defp stack_view_args(:sapling), do: ["stack"]
 
   defp message_view_args(:git, session_ids) do

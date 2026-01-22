@@ -6,8 +6,6 @@ defmodule MicelioWeb.AdminPromptRegistryLive.Index do
   alias Micelio.PromptRequests.PromptRequest
   alias MicelioWeb.PageMeta
 
-  @review_statuses [:pending, :accepted, :rejected]
-
   @impl true
   def mount(_params, _session, socket) do
     socket =
@@ -83,8 +81,7 @@ defmodule MicelioWeb.AdminPromptRegistryLive.Index do
                 name="filters[curated_only]"
                 value="true"
                 checked={@filters["curated_only"] in ["true", "on", "1"]}
-              />
-              Curated only
+              /> Curated only
             </label>
           </form>
         </section>
@@ -115,8 +112,7 @@ defmodule MicelioWeb.AdminPromptRegistryLive.Index do
                       <span>Tokens: {prompt_request.token_count || 0}</span>
                       <span>·</span>
                       <span>
-                        Confidence:
-                        {format_confidence(Map.get(@confidence_scores, prompt_request.id))}
+                        Confidence: {format_confidence(Map.get(@confidence_scores, prompt_request.id))}
                       </span>
                     </div>
                     <div class="admin-prompts-card-meta">

@@ -3,19 +3,19 @@ defmodule Micelio.AITokens do
   Context helpers for AI token pools.
   """
 
+  import Ecto.Query
+
+  alias Ecto.Multi
+  alias Micelio.Accounts.User
   alias Micelio.AITokens.EarningPolicy
+  alias Micelio.AITokens.TaskBudget
   alias Micelio.AITokens.TokenContribution
   alias Micelio.AITokens.TokenEarning
   alias Micelio.AITokens.TokenPool
-  alias Micelio.AITokens.TaskBudget
-  alias Micelio.Accounts.User
+  alias Micelio.Projects.Project
   alias Micelio.PromptRequests.PromptRequest
   alias Micelio.PromptRequests.PromptSuggestion
-  alias Micelio.Projects.Project
   alias Micelio.Repo
-  alias Ecto.Multi
-
-  import Ecto.Query
 
   def get_token_pool(id), do: Repo.get(TokenPool, id)
 
@@ -230,7 +230,9 @@ defmodule Micelio.AITokens do
       |> Map.take(["amount"])
 
     Multi.new()
-    |> Multi.run(:pool, fn repo, _changes -> fetch_or_create_pool(repo, prompt_request.project_id) end)
+    |> Multi.run(:pool, fn repo, _changes ->
+      fetch_or_create_pool(repo, prompt_request.project_id)
+    end)
     |> Multi.run(:budget, fn repo, _changes -> fetch_budget(repo, prompt_request.id) end)
     |> Multi.run(:budget_changeset, fn _repo, %{budget: budget, pool: pool} ->
       changeset =
@@ -241,7 +243,8 @@ defmodule Micelio.AITokens do
 
       if changeset.valid?, do: {:ok, changeset}, else: {:error, changeset}
     end)
-    |> Multi.run(:pool_update, fn repo, %{pool: pool, budget: budget, budget_changeset: changeset} ->
+    |> Multi.run(:pool_update, fn repo,
+                                  %{pool: pool, budget: budget, budget_changeset: changeset} ->
       new_amount = Ecto.Changeset.get_field(changeset, :amount) || 0
       old_amount = budget.amount || 0
       delta = new_amount - old_amount

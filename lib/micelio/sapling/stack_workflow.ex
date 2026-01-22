@@ -182,7 +182,8 @@ defmodule Micelio.Sapling.StackWorkflow do
   end
 
   defp run_tool(tool, sessions, tmp_root, runner, fs, cleanup) do
-    repo_path = Path.join(tmp_root, "sapling_stack_workflow_#{tool}_#{System.unique_integer([:positive])}")
+    repo_path =
+      Path.join(tmp_root, "sapling_stack_workflow_#{tool}_#{System.unique_integer([:positive])}")
 
     fs.mkdir_p!(repo_path)
 
@@ -191,7 +192,14 @@ defmodule Micelio.Sapling.StackWorkflow do
     {steps, status} =
       {[], :ok}
       |> run_step(:init_repo, tool_command(tool), ["init"], repo_path, env, runner)
-      |> run_step(:configure_identity, tool_command(tool), identity_args(tool), repo_path, env, runner)
+      |> run_step(
+        :configure_identity,
+        tool_command(tool),
+        identity_args(tool),
+        repo_path,
+        env,
+        runner
+      )
       |> create_base_commit(tool, repo_path, env, runner, fs)
       |> create_session_commits(tool, sessions, repo_path, env, runner, fs)
       |> run_step(:stack_view, tool_command(tool), stack_view_args(tool), repo_path, env, runner)
@@ -209,14 +217,22 @@ defmodule Micelio.Sapling.StackWorkflow do
     }
   end
 
-  defp create_base_commit({steps, :error}, _tool, _repo_path, _env, _runner, _fs), do: {steps, :error}
+  defp create_base_commit({steps, :error}, _tool, _repo_path, _env, _runner, _fs),
+    do: {steps, :error}
 
   defp create_base_commit({steps, :ok}, tool, repo_path, env, runner, fs) do
     fs.write!(Path.join(repo_path, "README.md"), "# Stacked Workflow\n\nBase commit.\n")
 
     {steps, :ok}
     |> run_step(:stage_base, tool_command(tool), add_args(tool), repo_path, env, runner)
-    |> run_step(:commit_base, tool_command(tool), commit_args(tool, "base: initialize repo"), repo_path, env, runner)
+    |> run_step(
+      :commit_base,
+      tool_command(tool),
+      commit_args(tool, "base: initialize repo"),
+      repo_path,
+      env,
+      runner
+    )
   end
 
   defp create_session_commits({steps, :error}, _tool, _sessions, _repo_path, _env, _runner, _fs),
@@ -248,13 +264,20 @@ defmodule Micelio.Sapling.StackWorkflow do
     end)
   end
 
-  defp maybe_create_branch({steps, :error}, _tool, _branch_name, _repo_path, _env, _runner), do: {steps, :error}
-
   defp maybe_create_branch({steps, :ok}, :git, branch_name, repo_path, env, runner) do
-    run_step({steps, :ok}, :checkout_branch, "git", ["checkout", "-b", branch_name], repo_path, env, runner)
+    run_step(
+      {steps, :ok},
+      :checkout_branch,
+      "git",
+      ["checkout", "-b", branch_name],
+      repo_path,
+      env,
+      runner
+    )
   end
 
-  defp maybe_create_branch({steps, :ok}, :sapling, _branch_name, _repo_path, _env, _runner), do: {steps, :ok}
+  defp maybe_create_branch({steps, :ok}, :sapling, _branch_name, _repo_path, _env, _runner),
+    do: {steps, :ok}
 
   defp write_session_file({steps, :error}, _repo_path, _session, _fs), do: {steps, :error}
 
@@ -270,7 +293,8 @@ defmodule Micelio.Sapling.StackWorkflow do
     {steps, :ok}
   end
 
-  defp run_step({steps, :error}, _label, _cmd, _args, _repo_path, _env, _runner), do: {steps, :error}
+  defp run_step({steps, :error}, _label, _cmd, _args, _repo_path, _env, _runner),
+    do: {steps, :error}
 
   defp run_step({steps, :ok}, label, cmd, args, repo_path, env, runner) do
     {output, status} =
@@ -323,7 +347,9 @@ defmodule Micelio.Sapling.StackWorkflow do
   defp commit_args(:git, message), do: ["commit", "-m", message]
   defp commit_args(:sapling, message), do: ["commit", "-m", message]
 
-  defp stack_view_args(:git), do: ["log", "--graph", "--oneline", "--decorate", "--all", "-n", "20"]
+  defp stack_view_args(:git),
+    do: ["log", "--graph", "--oneline", "--decorate", "--all", "-n", "20"]
+
   defp stack_view_args(:sapling), do: ["stack"]
 
   defp log_view_args(:git), do: ["show-branch", "--more=5"]

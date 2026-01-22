@@ -45,7 +45,9 @@ defmodule Micelio.RemoteExecutionTest do
 
   test "enqueue_task marks task as failed if supervisor is unavailable", %{user: user} do
     assert {:error, _reason} =
-             RemoteExecution.enqueue_task(user, %{command: "echo"}, supervisor: :missing_supervisor)
+             RemoteExecution.enqueue_task(user, %{command: "echo"},
+               supervisor: :missing_supervisor
+             )
 
     task = Repo.get_by!(ExecutionTask, user_id: user.id, command: "echo")
     assert task.status == :failed

@@ -384,12 +384,14 @@ defmodule Micelio.Sessions do
 
   defp normalize_event_types(_types), do: nil
 
-  defp normalize_type_value(type) when is_atom(type), do: normalize_type_value(Atom.to_string(type))
+  defp normalize_type_value(type) when is_atom(type),
+    do: normalize_type_value(Atom.to_string(type))
+
   defp normalize_type_value(type) when is_binary(type), do: String.trim(type)
   defp normalize_type_value(_type), do: nil
 
   defp type_allowed?(_type, nil), do: true
-  defp type_allowed?(type, []), do: false
+  defp type_allowed?(_type, []), do: false
   defp type_allowed?(type, allowed), do: type in allowed
 
   ## Session Changes

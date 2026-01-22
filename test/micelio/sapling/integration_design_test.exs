@@ -30,7 +30,15 @@ defmodule Micelio.Sapling.IntegrationDesignTest do
     markdown = IntegrationDesign.format_markdown(report)
 
     assert String.contains?(markdown, "## Open questions")
-    assert String.contains?(markdown, "- Should Sapling be required only for new projects or also allow migrations?")
-    assert String.contains?(markdown, "- Which Sapling stack view should power the web UI (stack vs log)?")
+
+    assert String.contains?(
+             markdown,
+             "- Should Sapling be required only for new projects or also allow migrations?"
+           )
+
+    assert String.contains?(
+             markdown,
+             "- Which Sapling stack view should power the web UI (stack vs log)?"
+           )
   end
 end

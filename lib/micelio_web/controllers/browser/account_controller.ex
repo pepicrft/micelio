@@ -52,7 +52,11 @@ defmodule MicelioWeb.Browser.AccountController do
 
         organization_admin? =
           if organization && conn.assigns[:current_user] do
-            Accounts.user_role_in_organization?(conn.assigns.current_user, organization.id, "admin")
+            Accounts.user_role_in_organization?(
+              conn.assigns.current_user,
+              organization.id,
+              "admin"
+            )
           else
             false
           end

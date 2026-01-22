@@ -19,7 +19,8 @@ defmodule MicelioWeb.StorageSettingsLive do
   @provider_data %{
     aws_s3: %{
       label: "AWS S3",
-      docs_url: "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html",
+      docs_url:
+        "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html",
       help: [
         "Create an IAM user with scoped S3 access to your bucket.",
         "Region must match the bucket's region for AWS endpoints.",
@@ -180,13 +181,15 @@ defmodule MicelioWeb.StorageSettingsLive do
       |> Map.put(:action, :validate)
 
     if changeset.valid? do
+      current_user = socket.assigns.current_user
+
       {:noreply,
        socket
        |> assign(:form, to_form(changeset, as: :s3_config))
        |> assign(:test_status, :checking)
        |> assign(:test_result, nil)
        |> start_async(:s3_test, fn ->
-         Storage.validate_user_s3_config(socket.assigns.current_user, params)
+         Storage.validate_user_s3_config(current_user, params)
        end)}
     else
       {:noreply,
@@ -443,7 +446,7 @@ defmodule MicelioWeb.StorageSettingsLive do
                       phx-click="toggle-secret"
                       id="storage-secret-toggle"
                     >
-                      <%= if @show_secret, do: "Hide", else: "Show" %>
+                      {if @show_secret, do: "Hide", else: "Show"}
                     </button>
                   </div>
                   <%= if @s3_config do %>
@@ -723,7 +726,7 @@ defmodule MicelioWeb.StorageSettingsLive do
       "path_prefix" => config.path_prefix
     }
     |> Enum.reject(fn {_key, value} -> is_nil(value) end)
-    |> Enum.into(%{})
+    |> Map.new()
   end
 
   defp format_date(%DateTime{} = datetime) do

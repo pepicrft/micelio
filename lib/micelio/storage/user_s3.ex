@@ -5,10 +5,10 @@ defmodule Micelio.Storage.UserS3 do
 
   @behaviour Micelio.Storage
 
-  require Logger
-
   alias Micelio.Repo
   alias Micelio.Storage.S3Config
+
+  require Logger
 
   @config_table :micelio_storage_user_s3_config_cache
   @failure_table :micelio_storage_user_s3_failure_cache
@@ -254,6 +254,7 @@ defmodule Micelio.Storage.UserS3 do
 
   defp update_last_error(%S3Config{} = config, message) when is_binary(message) do
     changeset = Ecto.Changeset.change(config, %{last_error: message})
+
     case Repo.update(changeset) do
       {:ok, updated} ->
         refresh_cache(updated)

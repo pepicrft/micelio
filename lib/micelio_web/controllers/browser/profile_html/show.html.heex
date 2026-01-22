@@ -2,8 +2,8 @@
   flash={@flash}
   current_scope={assigns[:current_scope]}
   current_user={assigns[:current_user]}
-    locale={assigns[:locale] || "en"}
-    current_path={assigns[:current_path] || "/"}
+  locale={assigns[:locale] || "en"}
+  current_path={assigns[:current_path] || "/"}
 >
   <div class="account-profile">
     <div class="account-profile-header">
@@ -143,7 +143,7 @@
         <p class="account-profile-form-hint account-profile-status" id="account-s3-status">
           <%= cond do %>
             <% @s3_config.validated_at -> %>
-              Validated on <%= format_date(@s3_config.validated_at) %>.
+              Validated on {format_date(@s3_config.validated_at)}.
             <% @s3_config.last_error -> %>
               Validation failed.
             <% true -> %>
@@ -152,7 +152,7 @@
         </p>
         <%= if @s3_config.last_error do %>
           <p class="account-profile-form-hint account-profile-status account-profile-status-error">
-            <%= @s3_config.last_error %>
+            {@s3_config.last_error}
           </p>
         <% end %>
       <% else %>

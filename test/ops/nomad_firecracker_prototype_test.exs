@@ -4,6 +4,7 @@ defmodule Micelio.Ops.NomadFirecrackerPrototypeTest do
   test "prototype docs and artifacts exist" do
     readme = Path.expand("../../ops/nomad-firecracker/README.md", __DIR__)
     job_spec = Path.expand("../../ops/nomad-firecracker/nomad-firecracker-agent.hcl", __DIR__)
+
     firecracker_config =
       Path.expand("../../ops/nomad-firecracker/firecracker-micelio.json", __DIR__)
 

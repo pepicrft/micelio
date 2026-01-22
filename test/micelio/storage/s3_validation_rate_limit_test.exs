@@ -33,7 +33,9 @@ defmodule Micelio.Storage.S3ValidationRateLimitTest do
 
   test "rate limits validation during S3 config upsert" do
     unique = Ecto.UUID.generate()
-    {:ok, user} = Accounts.get_or_create_user_by_email("storage-upsert-rate-#{unique}@example.com")
+
+    {:ok, user} =
+      Accounts.get_or_create_user_by_email("storage-upsert-rate-#{unique}@example.com")
 
     params = s3_params("micelio-upsert-bucket")
 

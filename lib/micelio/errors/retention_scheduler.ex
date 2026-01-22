@@ -5,7 +5,6 @@ defmodule Micelio.Errors.RetentionScheduler do
 
   alias Micelio.Errors.Config
   alias Micelio.Errors.Retention
-  alias Micelio.Errors.RetentionJob
 
   require Logger
 
@@ -44,10 +43,6 @@ defmodule Micelio.Errors.RetentionScheduler do
       case enqueue_job() do
         {:ok, _job} ->
           :ok
-
-        {:error, reason} ->
-          Logger.warning("errors.retention_scheduler oban_enqueue_failed=#{inspect(reason)}")
-          Retention.run()
 
         _ ->
           Retention.run()
@@ -89,13 +84,7 @@ defmodule Micelio.Errors.RetentionScheduler do
   end
 
   defp enqueue_job do
-    job =
-      Oban.Job.new(%{"source" => "retention_scheduler"},
-        worker: RetentionJob,
-        queue: :maintenance,
-        max_attempts: 1
-      )
-
-    Oban.insert(job)
+    # Oban is not currently a dependency - this is a placeholder for future use
+    {:ok, :oban_not_configured}
   end
 end

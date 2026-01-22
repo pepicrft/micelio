@@ -150,7 +150,10 @@ defmodule Micelio.AgentInfra.BillingTest do
     assert status.used.billable_units == usage.billable_units
 
     assert status.remaining.cpu_core_seconds == limits.cpu_core_seconds - usage.cpu_core_seconds
-    assert status.remaining.memory_mb_seconds == limits.memory_mb_seconds - usage.memory_mb_seconds
+
+    assert status.remaining.memory_mb_seconds ==
+             limits.memory_mb_seconds - usage.memory_mb_seconds
+
     assert status.remaining.disk_gb_seconds == limits.disk_gb_seconds - usage.disk_gb_seconds
     assert status.remaining.billable_units == limits.billable_units - usage.billable_units
   end
@@ -177,6 +180,7 @@ defmodule Micelio.AgentInfra.BillingTest do
       }
     ]
 
-    assert {:ok, %ProvisioningRequest{}} = AgentInfra.build_request_with_quota(account, attrs, opts)
+    assert {:ok, %ProvisioningRequest{}} =
+             AgentInfra.build_request_with_quota(account, attrs, opts)
   end
 end

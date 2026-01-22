@@ -2,8 +2,8 @@
   flash={@flash}
   current_scope={assigns[:current_scope]}
   current_user={assigns[:current_user]}
-    locale={assigns[:locale] || "en"}
-    current_path={assigns[:current_path] || "/"}
+  locale={assigns[:locale] || "en"}
+  current_path={assigns[:current_path] || "/"}
 >
   <div class="project-container">
     <.header>
@@ -52,9 +52,9 @@
               >
                 <span class="sr-only">
                   <%= if @starred? do %>
-                    <%= gettext("Unpulse") %>
+                    {gettext("Unpulse")}
                   <% else %>
-                    <%= gettext("Pulse") %>
+                    {gettext("Pulse")}
                   <% end %>
                 </span>
                 <%= if @starred? do %>
@@ -85,16 +85,16 @@
                   </svg>
                 <% end %>
                 <span class="project-star-count">{@stars_count}</span>
-            </button>
-          </.form>
-        <% end %>
-        <%= if is_nil(@current_user) do %>
-          <span class="project-stars-count" id="project-stars-count">
-            <span class="sr-only">{gettext("Pulses")}</span>
-            {@stars_count}
-          </span>
-        <% end %>
-      </div>
+              </button>
+            </.form>
+          <% end %>
+          <%= if is_nil(@current_user) do %>
+            <span class="project-stars-count" id="project-stars-count">
+              <span class="sr-only">{gettext("Pulses")}</span>
+              {@stars_count}
+            </span>
+          <% end %>
+        </div>
         <%= if @current_user && @fork_organizations != [] do %>
           <.form
             for={@fork_form}

@@ -13,7 +13,23 @@ defmodule Micelio.Errors.LoggerBackend do
      }}
   end
 
+  # New Logger format (OTP 21+)
   def handle_event({:log, level, _gl, {Logger, msg, ts, md}}, state) do
+    do_handle_log(level, msg, ts, md, state)
+  end
+
+  # Old Logger format (for compatibility)
+  def handle_event({level, _gl, {Logger, msg, ts, md}}, state)
+      when level in [:debug, :info, :notice, :warning, :warn, :error] do
+    do_handle_log(level, msg, ts, md, state)
+  end
+
+  def handle_event(:flush, state), do: {:ok, state}
+
+  # Catch-all for any other event format
+  def handle_event(_event, state), do: {:ok, state}
+
+  defp do_handle_log(level, msg, ts, md, state) do
     if should_capture?(level, state.level) do
       message =
         Logger.Formatter.format(state.formatter, level, msg, ts, md)
@@ -29,8 +45,6 @@ defmodule Micelio.Errors.LoggerBackend do
 
     {:ok, state}
   end
-
-  def handle_event(:flush, state), do: {:ok, state}
 
   def handle_call({:configure, opts}, state) do
     {:ok, :ok, Map.merge(state, Map.new(opts))}

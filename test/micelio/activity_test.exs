@@ -47,6 +47,7 @@ defmodule Micelio.ActivityTest do
       })
 
     {:ok, _} = Sessions.land_session(private_session)
+
     {:ok, prompt_request} =
       PromptRequests.create_prompt_request(
         %{
