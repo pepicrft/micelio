@@ -1,36 +1,41 @@
 :root {
-  /* GitHub-inspired color palette - Light mode */
-  --theme-ui-colors-text: #1f2328;
-  --theme-ui-colors-background: #ffffff;
-  --theme-ui-colors-primary: #1f2328;
-  --theme-ui-colors-secondary: #59636e;
-  --theme-ui-colors-muted: #59636e;
-  --theme-ui-colors-border: #d1d9e0;
-  --theme-ui-colors-accent: #0969da;
-  --theme-ui-colors-surface: #f6f8fa;
-  --theme-ui-colors-surfaceText: #1f2328;
-  --theme-ui-colors-danger: #d1242f;
-  --theme-ui-colors-dangerText: #ffffff;
-  --theme-ui-colors-success: #1a7f37;
-  --theme-ui-colors-activity-0: #ebedf0;
-  --theme-ui-colors-activity-1: #9be9a8;
-  --theme-ui-colors-activity-2: #40c463;
-  --theme-ui-colors-activity-3: #30a14e;
-  --theme-ui-colors-activity-4: #216e39;
+  /* Turbopuffer-inspired color palette - Light mode */
+  --theme-ui-colors-text: #0f172a;
+  --theme-ui-colors-background: #f9fafc;
+  --theme-ui-colors-primary: #0f172a;
+  --theme-ui-colors-secondary: #64748b;
+  --theme-ui-colors-muted: #64748b;
+  --theme-ui-colors-border: #e2e8f0;
+  --theme-ui-colors-accent: #fdba74;
+  --theme-ui-colors-accent-text: #431407;
+  --theme-ui-colors-surface: #0f172a;
+  --theme-ui-colors-surface-text: #f9fafc;
+  --theme-ui-colors-danger: #dc2626;
+  --theme-ui-colors-danger-text: #ffffff;
+  --theme-ui-colors-success: #16a34a;
+  --theme-ui-colors-activity-0: #f1f5f9;
+  --theme-ui-colors-activity-1: #fde68a;
+  --theme-ui-colors-activity-2: #fdba74;
+  --theme-ui-colors-activity-3: #fb923c;
+  --theme-ui-colors-activity-4: #ea580c;
 
-  /* GitHub system font stack */
-  --theme-ui-fonts-body: -apple-system, "system-ui", "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
-  --theme-ui-fonts-heading: -apple-system, "system-ui", "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
-  --theme-ui-fonts-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
-  --theme-ui-fontSizes-body: 14px;
-  --theme-ui-fontSizes-small: 12px;
-  --theme-ui-fontSizes-label: 12px;
-  --theme-ui-fontWeights-body: 400;
-  --theme-ui-fontWeights-medium: 500;
-  --theme-ui-fontWeights-bold: 600;
-  --theme-ui-lineHeights-body: 1.5;
-  --theme-ui-lineHeights-tight: 1.25;
-  --theme-ui-letterSpacing-label: normal;
+  /* Banner gradient colors */
+  --theme-ui-colors-gradient-start: #b91c1c;
+  --theme-ui-colors-gradient-end: #fdba74;
+
+  /* Monospace font stack (Turbopuffer uses JetBrains Mono) */
+  --theme-ui-fonts-body: "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --theme-ui-fonts-heading: "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --theme-ui-fonts-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --theme-ui-font-sizes-body: 14px;
+  --theme-ui-font-sizes-small: 12px;
+  --theme-ui-font-sizes-label: 12px;
+  --theme-ui-font-weights-body: 400;
+  --theme-ui-font-weights-medium: 500;
+  --theme-ui-font-weights-bold: 600;
+  --theme-ui-line-heights-body: 1.5;
+  --theme-ui-line-heights-tight: 1.25;
+  --theme-ui-letter-spacing-label: normal;
 
   /* Space */
   --theme-ui-space-1: 8px;
@@ -38,8 +43,8 @@
   --theme-ui-space-3: 24px;
   --theme-ui-space-4: 32px;
 
-  /* Radii - GitHub uses rounded corners */
-  --theme-ui-radii-default: 6px;
+  /* Radii - Turbopuffer uses small rounded corners */
+  --theme-ui-radii-default: 3px;
   --theme-ui-radii-small: 3px;
 
   /* Borders */
@@ -54,65 +59,68 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --theme-ui-colors-text: #f0f6fc;
-    --theme-ui-colors-background: #0d1117;
-    --theme-ui-colors-primary: #f0f6fc;
-    --theme-ui-colors-secondary: #9198a1;
-    --theme-ui-colors-muted: #9198a1;
-    --theme-ui-colors-border: #3d444d;
-    --theme-ui-colors-accent: #4493f8;
-    --theme-ui-colors-surface: #161b22;
-    --theme-ui-colors-surfaceText: #f0f6fc;
-    --theme-ui-colors-danger: #f85149;
-    --theme-ui-colors-dangerText: #ffffff;
-    --theme-ui-colors-success: #3fb950;
-    --theme-ui-colors-activity-0: #161b22;
-    --theme-ui-colors-activity-1: #0e4429;
-    --theme-ui-colors-activity-2: #006d32;
-    --theme-ui-colors-activity-3: #26a641;
-    --theme-ui-colors-activity-4: #39d353;
+    --theme-ui-colors-text: #f9fafc;
+    --theme-ui-colors-background: #0f172a;
+    --theme-ui-colors-primary: #f9fafc;
+    --theme-ui-colors-secondary: #94a3b8;
+    --theme-ui-colors-muted: #94a3b8;
+    --theme-ui-colors-border: #334155;
+    --theme-ui-colors-accent: #fdba74;
+    --theme-ui-colors-accent-text: #431407;
+    --theme-ui-colors-surface: #1e293b;
+    --theme-ui-colors-surface-text: #f9fafc;
+    --theme-ui-colors-danger: #ef4444;
+    --theme-ui-colors-danger-text: #ffffff;
+    --theme-ui-colors-success: #22c55e;
+    --theme-ui-colors-activity-0: #1e293b;
+    --theme-ui-colors-activity-1: #7c2d12;
+    --theme-ui-colors-activity-2: #c2410c;
+    --theme-ui-colors-activity-3: #ea580c;
+    --theme-ui-colors-activity-4: #fb923c;
   }
 }
 
 :root[data-theme="light"] {
-  --theme-ui-colors-text: #1f2328;
-  --theme-ui-colors-background: #ffffff;
-  --theme-ui-colors-primary: #1f2328;
-  --theme-ui-colors-secondary: #59636e;
-  --theme-ui-colors-muted: #59636e;
-  --theme-ui-colors-border: #d1d9e0;
-  --theme-ui-colors-accent: #0969da;
-  --theme-ui-colors-surface: #f6f8fa;
-  --theme-ui-colors-surfaceText: #1f2328;
-  --theme-ui-colors-danger: #d1242f;
-  --theme-ui-colors-dangerText: #ffffff;
-  --theme-ui-colors-success: #1a7f37;
-  --theme-ui-colors-activity-0: #ebedf0;
-  --theme-ui-colors-activity-1: #9be9a8;
-  --theme-ui-colors-activity-2: #40c463;
-  --theme-ui-colors-activity-3: #30a14e;
-  --theme-ui-colors-activity-4: #216e39;
+  --theme-ui-colors-text: #0f172a;
+  --theme-ui-colors-background: #f9fafc;
+  --theme-ui-colors-primary: #0f172a;
+  --theme-ui-colors-secondary: #64748b;
+  --theme-ui-colors-muted: #64748b;
+  --theme-ui-colors-border: #e2e8f0;
+  --theme-ui-colors-accent: #fdba74;
+  --theme-ui-colors-accent-text: #431407;
+  --theme-ui-colors-surface: #0f172a;
+  --theme-ui-colors-surface-text: #f9fafc;
+  --theme-ui-colors-danger: #dc2626;
+  --theme-ui-colors-danger-text: #ffffff;
+  --theme-ui-colors-success: #16a34a;
+  --theme-ui-colors-activity-0: #f1f5f9;
+  --theme-ui-colors-activity-1: #fde68a;
+  --theme-ui-colors-activity-2: #fdba74;
+  --theme-ui-colors-activity-3: #fb923c;
+  --theme-ui-colors-activity-4: #ea580c;
   color-scheme: light;
 }
 
 :root[data-theme="dark"] {
-  --theme-ui-colors-text: #f0f6fc;
-  --theme-ui-colors-background: #0d1117;
-  --theme-ui-colors-primary: #f0f6fc;
-  --theme-ui-colors-secondary: #9198a1;
-  --theme-ui-colors-muted: #9198a1;
-  --theme-ui-colors-border: #3d444d;
-  --theme-ui-colors-accent: #4493f8;
-  --theme-ui-colors-surface: #161b22;
-  --theme-ui-colors-surfaceText: #f0f6fc;
-  --theme-ui-colors-danger: #f85149;
-  --theme-ui-colors-dangerText: #ffffff;
-  --theme-ui-colors-success: #3fb950;
-  --theme-ui-colors-activity-0: #161b22;
-  --theme-ui-colors-activity-1: #0e4429;
-  --theme-ui-colors-activity-2: #006d32;
-  --theme-ui-colors-activity-3: #26a641;
-  --theme-ui-colors-activity-4: #39d353;
+  --theme-ui-colors-text: #f9fafc;
+  --theme-ui-colors-background: #0f172a;
+  --theme-ui-colors-primary: #f9fafc;
+  --theme-ui-colors-secondary: #94a3b8;
+  --theme-ui-colors-muted: #94a3b8;
+  --theme-ui-colors-border: #334155;
+  --theme-ui-colors-accent: #fdba74;
+  --theme-ui-colors-accent-text: #431407;
+  --theme-ui-colors-surface: #1e293b;
+  --theme-ui-colors-surface-text: #f9fafc;
+  --theme-ui-colors-danger: #ef4444;
+  --theme-ui-colors-danger-text: #ffffff;
+  --theme-ui-colors-success: #22c55e;
+  --theme-ui-colors-activity-0: #1e293b;
+  --theme-ui-colors-activity-1: #7c2d12;
+  --theme-ui-colors-activity-2: #c2410c;
+  --theme-ui-colors-activity-3: #ea580c;
+  --theme-ui-colors-activity-4: #fb923c;
   color-scheme: dark;
 }
 
@@ -126,11 +134,18 @@
 /* Base typography */
 body {
   font-family: var(--theme-ui-fonts-body);
-  font-size: var(--theme-ui-fontSizes-body);
-  font-weight: var(--theme-ui-fontWeights-body);
-  line-height: var(--theme-ui-lineHeights-body);
+  font-size: var(--theme-ui-font-sizes-body);
+  font-weight: var(--theme-ui-font-weights-body);
+  line-height: var(--theme-ui-line-heights-body);
   color: var(--theme-ui-colors-text);
   background-color: var(--theme-ui-colors-background);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  flex: 1 0 auto;
 }
 
 .page-content {
@@ -152,12 +167,12 @@ main ol:not(.list) {
   justify-content: center;
   gap: 4px;
   padding: 0 7px;
-  font-size: var(--theme-ui-fontSizes-small);
-  font-weight: var(--theme-ui-fontWeights-medium);
+  font-size: var(--theme-ui-font-sizes-small);
+  font-weight: var(--theme-ui-font-weights-medium);
   border: var(--theme-ui-borders-thin);
   border-radius: 2em;
-  background: var(--theme-ui-colors-surface);
-  color: var(--theme-ui-colors-secondary);
+  background: var(--theme-ui-colors-border);
+  color: var(--theme-ui-colors-text);
   text-decoration: none;
   white-space: nowrap;
   line-height: 22px;
@@ -211,7 +226,7 @@ main ol:not(.list) {
 
 .flash-bar--error {
   background: var(--theme-ui-colors-danger);
-  color: var(--theme-ui-colors-dangerText);
+  color: var(--theme-ui-colors-danger-text);
 }
 
 .flash-bar-inner {
@@ -247,7 +262,7 @@ main ol:not(.list) {
   padding-left: var(--theme-ui-space-1);
   border-left: 2px solid var(--theme-ui-colors-danger);
   color: var(--theme-ui-colors-danger);
-  font-size: var(--theme-ui-fontSizes-small);
+  font-size: var(--theme-ui-font-sizes-small);
 }
 
 /* Page header */
@@ -267,7 +282,7 @@ main ol:not(.list) {
 
 .page-header-title {
   font-size: 20px;
-  font-weight: var(--theme-ui-fontWeights-bold);
+  font-weight: var(--theme-ui-font-weights-bold);
   color: var(--theme-ui-colors-text);
   overflow-wrap: anywhere;
   word-break: break-all;
@@ -309,9 +324,9 @@ main ol:not(.list) {
 /* Typography - same font and size for body and headings */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--theme-ui-fonts-body);
-  font-size: var(--theme-ui-fontSizes-body);
-  font-weight: var(--theme-ui-fontWeights-bold);
-  line-height: var(--theme-ui-lineHeights-body);
+  font-size: var(--theme-ui-font-sizes-body);
+  font-weight: var(--theme-ui-font-weights-bold);
+  line-height: var(--theme-ui-line-heights-body);
   margin-top: 24px;
   margin-bottom: 16px;
 }
@@ -329,25 +344,27 @@ h6:first-child {
 /* Section labels */
 .section-label {
   font-family: var(--theme-ui-fonts-body);
-  font-size: var(--theme-ui-fontSizes-small);
-  font-weight: var(--theme-ui-fontWeights-bold);
+  font-size: var(--theme-ui-font-sizes-small);
+  font-weight: var(--theme-ui-font-weights-bold);
   text-transform: uppercase;
   color: var(--theme-ui-colors-muted);
 }
 
 p, li, a, button, input, textarea, select {
-  font-size: var(--theme-ui-fontSizes-body);
-  line-height: var(--theme-ui-lineHeights-body);
+  font-size: var(--theme-ui-font-sizes-body);
+  line-height: var(--theme-ui-line-heights-body);
 }
 
-/* Links - GitHub blue */
+/* Links - Turbopuffer style (text color, underline on hover) */
 a {
-  color: var(--theme-ui-colors-accent);
-  text-decoration: none;
+  color: var(--theme-ui-colors-text);
+  text-decoration: underline;
+  text-decoration-color: var(--theme-ui-colors-border);
+  text-underline-offset: 2px;
 }
 
 a:hover {
-  text-decoration: underline;
+  text-decoration-color: var(--theme-ui-colors-text);
 }
 
 /* Code */
@@ -358,13 +375,15 @@ code, pre {
 
 code {
   padding: 0.2em 0.4em;
-  background: var(--theme-ui-colors-surface);
+  background: var(--theme-ui-colors-border);
+  color: var(--theme-ui-colors-text);
   border-radius: var(--theme-ui-radii-small);
 }
 
 pre {
   padding: var(--theme-ui-space-2);
   background: var(--theme-ui-colors-surface);
+  color: var(--theme-ui-colors-surface-text);
   border-radius: var(--theme-ui-radii-default);
   overflow-x: auto;
 }

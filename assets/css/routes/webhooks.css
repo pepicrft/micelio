@@ -7,7 +7,7 @@
 }
 
 .webhooks-section-title {
-  font-weight: var(--theme-ui-fontWeights-bold);
+  font-weight: var(--theme-ui-font-weights-bold);
   margin-bottom: var(--theme-ui-space-1);
 }
 
@@ -46,7 +46,7 @@
 }
 
 .webhook-url {
-  font-weight: var(--theme-ui-fontWeights-bold);
+  font-weight: var(--theme-ui-font-weights-bold);
   word-break: break-word;
 }
 
@@ -81,5 +81,5 @@
 
 .webhook-action-danger:hover {
   background-color: var(--theme-ui-colors-danger);
-  color: var(--theme-ui-colors-dangerText);
+  color: var(--theme-ui-colors-danger-text);
 }

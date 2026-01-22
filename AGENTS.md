@@ -17,6 +17,25 @@ Micelio is a forge platform built with Elixir/Phoenix, Zig for CLI tools, and va
 
 Translation files are located in `priv/gettext/{locale}/LC_MESSAGES/`.
 
+## IMPORTANT: Icons
+
+Use open source icons from https://icones.js.org/ and embed them as inline SVG in templates. Prefer a single icon set (e.g., Tabler) for consistency.
+
+### Blog Post Translations
+
+Blog posts are organized by locale in the filesystem:
+- `priv/posts/en/2026/01-14-post-id.md` (English, default)
+- `priv/posts/ja/2026/01-14-post-id.md` (Japanese translation)
+- etc.
+
+When translating a blog post:
+1. Create the locale directory if it doesn't exist: `priv/posts/{locale}/`
+2. Copy the original post maintaining the same directory structure (year/filename)
+3. Translate the content while keeping the same frontmatter structure
+4. The post ID (derived from filename) must match across locales for fallback to work
+
+If a translation is not available for a locale, the English version is used as fallback.
+
 - **Package Manager:** Elixir uses `mix`, Zig uses `zig`
 - **Build:** `mix compile`, `mix phx.server` for dev
 - **Test:** `mix test`

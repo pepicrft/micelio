@@ -51,12 +51,12 @@
 
 .account-profile-section-title {
   margin-bottom: var(--theme-ui-space-1);
-  font-size: var(--theme-ui-fontSizes-2);
+  font-size: var(--theme-ui-font-sizes-2);
 }
 
 .account-profile-section-meta {
   color: var(--theme-ui-colors-muted);
-  font-size: var(--theme-ui-fontSizes-small);
+  font-size: var(--theme-ui-font-sizes-small);
 }
 
 .account-passkey-button {
@@ -64,7 +64,7 @@
   border: var(--theme-ui-borders-thin);
   background-color: var(--theme-ui-colors-background);
   color: var(--theme-ui-colors-text);
-  font-weight: var(--theme-ui-fontWeights-bold);
+  font-weight: var(--theme-ui-font-weights-bold);
   cursor: pointer;
 }
 
@@ -109,7 +109,7 @@
 
 .account-passkey-meta {
   color: var(--theme-ui-colors-muted);
-  font-size: var(--theme-ui-fontSizes-small);
+  font-size: var(--theme-ui-font-sizes-small);
 }
 
 .account-passkey-remove {
@@ -163,7 +163,7 @@
 }
 
 .account-profile-form .label {
-  font-weight: var(--theme-ui-fontWeights-bold);
+  font-weight: var(--theme-ui-font-weights-bold);
   color: var(--theme-ui-colors-text);
 }
 
@@ -193,7 +193,7 @@
 
 .account-profile-form-hint {
   color: var(--theme-ui-colors-muted);
-  font-size: var(--theme-ui-fontSizes-small);
+  font-size: var(--theme-ui-font-sizes-small);
 }
 
 .account-profile-status {
@@ -213,7 +213,7 @@
   border: none;
   background-color: var(--theme-ui-colors-primary);
   color: var(--theme-ui-colors-background);
-  font-weight: var(--theme-ui-fontWeights-bold);
+  font-weight: var(--theme-ui-font-weights-bold);
   cursor: pointer;
 }
 
@@ -222,13 +222,13 @@
 }
 
 .account-profile-list-name {
-  font-weight: var(--theme-ui-fontWeights-bold);
+  font-weight: var(--theme-ui-font-weights-bold);
 }
 
 .account-profile-list-handle {
   color: var(--theme-ui-colors-muted);
   font-family: var(--theme-ui-fonts-mono);
-  font-size: var(--theme-ui-fontSizes-small);
+  font-size: var(--theme-ui-font-sizes-small);
 }
 
 .account-profile-list-description {
@@ -255,7 +255,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-weight: var(--theme-ui-fontWeights-bold);
+  font-weight: var(--theme-ui-font-weights-bold);
   text-transform: uppercase;
 }
 
@@ -267,7 +267,7 @@
 
 .account-profile-org-members {
   color: var(--theme-ui-colors-muted);
-  font-size: var(--theme-ui-fontSizes-small);
+  font-size: var(--theme-ui-font-sizes-small);
 }
 
 @media (min-width: 48rem) {
@@ -367,7 +367,7 @@
   align-items: center;
   gap: var(--theme-ui-space-1);
   margin-top: var(--theme-ui-space-2);
-  font-size: var(--theme-ui-fontSizes-xs);
+  font-size: var(--theme-ui-font-sizes-xs);
   color: var(--theme-ui-colors-muted);
 }
 

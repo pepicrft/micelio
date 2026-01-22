@@ -51,12 +51,13 @@ defmodule MicelioWeb.Layouts do
 
   attr :locale, :string, default: "en", doc: "the current locale"
   attr :current_path, :string, default: "/", doc: "the current path without locale prefix"
+  attr :page_class, :string, default: nil, doc: "optional page-level layout class"
 
   slot :inner_block, required: true
 
   def app(assigns) do
     ~H"""
-    <div>
+    <div class="navbar-wrapper">
       <nav class="navbar" aria-label="Primary">
         <div class="navbar-left">
           <span class="brand">
@@ -125,32 +126,36 @@ defmodule MicelioWeb.Layouts do
           <% end %>
         </div>
       </nav>
-      <.flash_group flash={@flash} />
     </div>
+    <.flash_group flash={@flash} />
 
-    <main>
-      <div class="page-content">
+    <main class={["page-main", @page_class]}>
+      <div class={["page-content", @page_class]}>
         {render_slot(@inner_block)}
       </div>
     </main>
 
     <footer class="site-footer" id="site-footer">
-      <nav class="site-footer-nav" aria-label={gettext("Legal")}>
-        <a href={locale_path(assigns, "/terms")}>{gettext("terms")}</a>
-        <a href={locale_path(assigns, "/privacy")}>{gettext("privacy")}</a>
-        <a href={locale_path(assigns, "/cookies")}>{gettext("cookies")}</a>
-        <a href={locale_path(assigns, "/impressum")}>{gettext("impressum")}</a>
-      </nav>
+      <div class="site-footer-content">
+        <nav class="site-footer-nav" aria-label={gettext("Legal")}>
+          <a href={locale_path(assigns, "/terms")}>{gettext("terms")}</a>
+          <a href={locale_path(assigns, "/privacy")}>{gettext("privacy")}</a>
+          <a href={locale_path(assigns, "/cookies")}>{gettext("cookies")}</a>
+          <a href={locale_path(assigns, "/impressum")}>{gettext("impressum")}</a>
+        </nav>
 
-      <div class="site-footer-locale">
-        <.language_selector
-          current_locale={@locale}
-          current_path={@current_path}
-        />
-      </div>
+        <div class="site-footer-meta-group">
+          <div class="site-footer-locale">
+            <.language_selector
+              current_locale={@locale}
+              current_path={@current_path}
+            />
+          </div>
 
-      <div class="site-footer-meta">
-        © {Date.utc_today().year} Micelio
+          <div class="site-footer-meta">
+            © {Date.utc_today().year} Micelio
+          </div>
+        </div>
       </div>
     </footer>
     """

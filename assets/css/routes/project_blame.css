@@ -28,7 +28,7 @@
 }
 
 .repository-blame-author {
-  font-weight: var(--theme-ui-fontWeights-bold);
+  font-weight: var(--theme-ui-font-weights-bold);
   color: var(--theme-ui-colors-text);
 }
 

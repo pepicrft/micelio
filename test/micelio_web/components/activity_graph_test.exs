@@ -51,12 +51,13 @@ defmodule MicelioWeb.ActivityGraphComponentTest do
     assert html =~ "height=\"98\""
   end
 
-  test "activity graph styles use light base and legend colors" do
+  test "activity graph styles use theme token variables" do
     css_path = Path.join(File.cwd!(), "assets/css/routes/account_profile.css")
     css = File.read!(css_path)
 
-    assert css =~ "--activity-graph-0: #ebedf0;"
-    assert css =~ "--activity-graph-4: #216e39;"
+    # Activity colors now use theme token variables
+    assert css =~ "--activity-graph-0: var(--theme-ui-colors-activity-0);"
+    assert css =~ "--activity-graph-4: var(--theme-ui-colors-activity-4);"
     assert css =~ "#account-activity .account-section-title"
     assert css =~ "margin: 0;"
     assert css =~ "line-height: 1;"

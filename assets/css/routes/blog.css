@@ -19,7 +19,7 @@
 }
 
 .blog-post-title {
-  font-weight: var(--theme-ui-fontWeights-bold);
+  font-weight: var(--theme-ui-font-weights-bold);
   margin-bottom: var(--theme-ui-space-1);
 }
 
@@ -67,7 +67,7 @@
 .blog-post-content h6 {
   margin-top: var(--theme-ui-space-3);
   margin-bottom: var(--theme-ui-space-2);
-  font-weight: var(--theme-ui-fontWeights-bold);
+  font-weight: var(--theme-ui-font-weights-bold);
   border-bottom: var(--theme-ui-borders-thin);
   padding-bottom: var(--theme-ui-space-1);
 }

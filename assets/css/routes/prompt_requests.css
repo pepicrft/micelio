@@ -15,7 +15,7 @@
   color: var(--theme-ui-colors-text);
   text-decoration: none;
   border-radius: 6px;
-  font-weight: var(--theme-ui-fontWeights-semibold);
+  font-weight: var(--theme-ui-font-weights-semibold);
 }
 
 .prompt-request-button:hover {
@@ -48,8 +48,8 @@
 }
 
 .prompt-request-card-title {
-  font-size: var(--theme-ui-fontSizes-large);
-  font-weight: var(--theme-ui-fontWeights-bold);
+  font-size: var(--theme-ui-font-sizes-large);
+  font-weight: var(--theme-ui-font-weights-bold);
   display: flex;
   align-items: center;
   gap: var(--theme-ui-space-1);
@@ -61,7 +61,7 @@
   gap: var(--theme-ui-space-2);
   flex-wrap: wrap;
   color: var(--theme-ui-colors-muted);
-  font-size: var(--theme-ui-fontSizes-small);
+  font-size: var(--theme-ui-font-sizes-small);
 }
 
 .prompt-request-form-container {
@@ -100,7 +100,7 @@
   border-radius: 6px;
   background: var(--theme-ui-colors-background);
   color: var(--theme-ui-colors-text);
-  font-size: var(--theme-ui-fontSizes-body);
+  font-size: var(--theme-ui-font-sizes-body);
 }
 
 .prompt-request-input-error {
@@ -135,7 +135,7 @@
   flex-wrap: wrap;
   gap: var(--theme-ui-space-1);
   color: var(--theme-ui-colors-muted);
-  font-size: var(--theme-ui-fontSizes-small);
+  font-size: var(--theme-ui-font-sizes-small);
 }
 
 .prompt-request-breadcrumb a {
@@ -152,7 +152,7 @@
   gap: var(--theme-ui-space-1);
   align-items: center;
   color: var(--theme-ui-colors-secondary);
-  font-size: var(--theme-ui-fontSizes-small);
+  font-size: var(--theme-ui-font-sizes-small);
 }
 
 .prompt-request-session-link {
@@ -196,7 +196,7 @@
 }
 
 .prompt-request-origin {
-  font-size: var(--theme-ui-fontSizes-xsmall);
+  font-size: var(--theme-ui-font-sizes-xsmall);
   letter-spacing: 0.02em;
 }
 
@@ -235,7 +235,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: var(--theme-ui-space-2);
-  font-size: var(--theme-ui-fontSizes-small);
+  font-size: var(--theme-ui-font-sizes-small);
   color: var(--theme-ui-colors-secondary);
 }
 
@@ -274,7 +274,7 @@
 
 .prompt-request-label {
   display: block;
-  font-size: var(--theme-ui-fontSizes-xsmall);
+  font-size: var(--theme-ui-font-sizes-xsmall);
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--theme-ui-colors-muted);
@@ -337,7 +337,7 @@
   gap: var(--theme-ui-space-1);
   padding: var(--theme-ui-space-2);
   background: var(--theme-ui-colors-border);
-  font-weight: var(--theme-ui-fontWeights-semibold);
+  font-weight: var(--theme-ui-font-weights-semibold);
 }
 
 .prompt-request-diff-body {
@@ -364,7 +364,7 @@
   white-space: pre-wrap;
   word-break: break-word;
   font-family: var(--theme-ui-fonts-mono);
-  font-size: var(--theme-ui-fontSizes-small);
+  font-size: var(--theme-ui-font-sizes-small);
 }
 
 .prompt-request-diff-eq .prompt-request-diff-cell {
@@ -393,7 +393,7 @@
 
 .prompt-request-suggestion span {
   color: var(--theme-ui-colors-muted);
-  font-size: var(--theme-ui-fontSizes-small);
+  font-size: var(--theme-ui-font-sizes-small);
 }
 
 .prompt-request-empty {
@@ -421,12 +421,12 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--theme-ui-space-2);
-  font-size: var(--theme-ui-fontSizes-small);
+  font-size: var(--theme-ui-font-sizes-small);
   color: var(--theme-ui-colors-secondary);
 }
 
 .prompt-request-validation-status {
-  font-weight: var(--theme-ui-fontWeights-semibold);
+  font-weight: var(--theme-ui-font-weights-semibold);
   color: var(--theme-ui-colors-text);
 }
 

@@ -48,10 +48,24 @@ defmodule MicelioWeb.Browser.PageHTML do
                 {project.description || gettext("No description yet.")}
               </p>
               <div class="home-popular-meta">
-                <span class="home-popular-owner">
-                  {gettext("Owner:")} {project.organization.account.handle}
+                <span class="home-popular-stars">
+                  <svg
+                    class="home-popular-icon"
+                    aria-hidden="true"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                    <path d="M3 12h4l3 8l4 -16l3 8h4" />
+                  </svg>
+                  <span class="sr-only">{gettext("Signals")}</span>
+                  {project.star_count || 0}
                 </span>
-                <span class="home-popular-stars">{gettext("Stars:")} {project.star_count || 0}</span>
               </div>
             </div>
           </article>

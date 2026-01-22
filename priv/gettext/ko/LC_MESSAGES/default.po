@@ -11,371 +11,401 @@ msgstr ""
 "Language: ko\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: lib/micelio_web/components/layouts.ex:85
+#: lib/micelio_web/components/layouts.ex:102
 #, elixir-autogen, elixir-format
 msgid "Account (@%{handle})"
-msgstr ""
+msgstr "계정 (@%{handle})"
 
 #: lib/micelio_web/components/core_components.ex:380
 #, elixir-autogen, elixir-format
 msgid "Actions"
-msgstr ""
+msgstr "작업"
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:68
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:82
 #, elixir-autogen, elixir-format
 msgid "Agent-Native by Design"
-msgstr ""
+msgstr "에이전트 네이티브 설계"
 
-#: lib/micelio_web/components/layouts.ex:170
-#: lib/micelio_web/components/layouts.ex:178
+#: lib/micelio_web/components/layouts.ex:182
+#: lib/micelio_web/components/layouts.ex:190
 #, elixir-autogen, elixir-format
 msgid "Attempting to reconnect"
-msgstr ""
+msgstr "재연결 시도 중"
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:52
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:60
 #, elixir-autogen, elixir-format
 msgid "Built for hundreds of AI agents working concurrently on massive codebases"
-msgstr ""
+msgstr "대규모 코드베이스에서 수백 개의 AI 에이전트가 동시에 작업하도록 구축"
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:75
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:91
 #, elixir-autogen, elixir-format
 msgid "Checks"
-msgstr ""
+msgstr "검사"
 
-#: lib/micelio_web/live/project_live/index.ex:88
+#: lib/micelio_web/live/project_live/index.ex:89
 #, elixir-autogen, elixir-format
 msgid "Create your first project"
-msgstr ""
+msgstr "첫 번째 프로젝트 만들기"
 
-#: lib/micelio_web/components/layouts.ex:136
-#, elixir-autogen, elixir-format
-msgid "Daily personality: %{name}. %{description}"
-msgstr ""
-
-#: lib/micelio_web/live/project_live/index.ex:135
+#: lib/micelio_web/live/project_live/index.ex:136
 #, elixir-autogen, elixir-format
 msgid "Delete"
-msgstr ""
+msgstr "삭제"
 
-#: lib/micelio_web/live/project_live/index.ex:133
+#: lib/micelio_web/live/project_live/index.ex:134
 #, elixir-autogen, elixir-format
 msgid "Delete this project?"
-msgstr ""
+msgstr "이 프로젝트를 삭제하시겠습니까?"
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:84
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:102
 #, elixir-autogen, elixir-format
 msgid "Designed for a future where humans review, not write most code. Conversation, decisions, and changes are unified in one workflow."
-msgstr ""
+msgstr "인간이 대부분의 코드를 작성하는 것이 아니라 검토하는 미래를 위해 설계되었습니다. 대화, 결정, 변경 사항이 하나의 워크플로우로 통합됩니다."
 
-#: lib/micelio_web/live/project_live/index.ex:125
+#: lib/micelio_web/live/project_live/index.ex:126
 #, elixir-autogen, elixir-format
 msgid "Edit"
-msgstr ""
+msgstr "편집"
 
 #: lib/micelio_web/controllers/browser/page_html.ex:21
 #, elixir-autogen, elixir-format
 msgid "Explore what the community is building."
-msgstr ""
+msgstr "커뮤니티가 구축하고 있는 것을 탐색하세요."
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:98
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:120
 #, elixir-autogen, elixir-format
 msgid "Forge-First"
-msgstr ""
+msgstr "포지 우선"
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:55
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:65
 #, elixir-autogen, elixir-format
 msgid "Forge-first architecture with object storage at the core"
-msgstr ""
+msgstr "객체 스토리지를 핵심으로 하는 포지 우선 아키텍처"
 
-#: lib/micelio_web/components/layouts.ex:100
+#: lib/micelio_web/components/layouts.ex:118
 #, elixir-autogen, elixir-format
 msgid "Get started"
-msgstr ""
+msgstr "시작하기"
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:82
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:100
 #, elixir-autogen, elixir-format
 msgid "Human + AI Collaboration"
-msgstr ""
+msgstr "인간과 AI의 협업"
 
-#: lib/micelio_web/components/layouts.ex:120
+#: lib/micelio_web/components/layouts.ex:138
 #, elixir-autogen, elixir-format
 msgid "Legal"
-msgstr ""
+msgstr "법적 정보"
 
 #: lib/micelio_web/live/project_live/index.ex:21
 #, elixir-autogen, elixir-format
 msgid "Manage your projects."
-msgstr ""
+msgstr "프로젝트를 관리하세요."
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:91
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:111
 #, elixir-autogen, elixir-format
 msgid "Massive Scale"
-msgstr ""
+msgstr "대규모 확장"
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:43
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:46
 #, elixir-autogen, elixir-format
 msgid "Micelio is the open source, agent-first software versioning forge the future has been waiting for."
-msgstr ""
+msgstr "Micelio는 미래가 기다려온 오픈소스, 에이전트 우선 소프트웨어 버전 관리 포지입니다."
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:19
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:21
 #, elixir-autogen, elixir-format
 msgid "New Project"
-msgstr ""
+msgstr "새 프로젝트"
 
-#: lib/micelio_web/live/project_live/index.ex:72
+#: lib/micelio_web/live/project_live/index.ex:73
 #, elixir-autogen, elixir-format
 msgid "New organization"
-msgstr ""
+msgstr "새 조직"
 
-#: lib/micelio_web/live/project_live/index.ex:76
+#: lib/micelio_web/live/project_live/index.ex:77
 #, elixir-autogen, elixir-format
 msgid "New project"
-msgstr ""
+msgstr "새 프로젝트"
 
-#: lib/micelio_web/controllers/browser/page_html.ex:76
+#: lib/micelio_web/controllers/browser/page_html.ex:90
 #, elixir-autogen, elixir-format
 msgid "Next"
-msgstr ""
+msgstr "다음"
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:77
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:93
 #, elixir-autogen, elixir-format
 msgid "Nix-native checks run locally with the exact derivations that power remote execution. Content-addressed caches keep results consistent and fast, so a green check locally is the same check everywhere - no centralized queue required."
-msgstr ""
+msgstr "Nix 네이티브 검사는 원격 실행을 지원하는 동일한 파생으로 로컬에서 실행됩니다. 콘텐츠 주소 지정 캐시가 결과를 일관되고 빠르게 유지하므로 로컬에서의 녹색 검사는 어디서나 동일한 검사입니다. 중앙 집중식 큐가 필요 없습니다."
 
 #: lib/micelio_web/controllers/browser/page_html.ex:48
 #, elixir-autogen, elixir-format
 msgid "No description yet."
-msgstr ""
+msgstr "아직 설명이 없습니다."
 
-#: lib/micelio_web/live/project_live/index.ex:84
+#: lib/micelio_web/live/project_live/index.ex:85
 #, elixir-autogen, elixir-format
 msgid "No projects yet"
-msgstr ""
+msgstr "아직 프로젝트가 없습니다"
 
 #: lib/micelio_web/controllers/browser/page_html.ex:26
 #, elixir-autogen, elixir-format
 msgid "No public projects yet."
-msgstr ""
-
-#: lib/micelio_web/controllers/browser/page_html.ex:52
-#, elixir-autogen, elixir-format
-msgid "Owner:"
-msgstr ""
+msgstr "아직 공개 프로젝트가 없습니다."
 
 #: lib/micelio_web/controllers/browser/page_html.ex:20
 #, elixir-autogen, elixir-format
 msgid "Popular projects"
-msgstr ""
+msgstr "인기 프로젝트"
 
-#: lib/micelio_web/controllers/browser/page_html.ex:60
+#: lib/micelio_web/controllers/browser/page_html.ex:74
 #, elixir-autogen, elixir-format
 msgid "Popular projects pagination"
-msgstr ""
+msgstr "인기 프로젝트 페이지네이션"
 
-#: lib/micelio_web/controllers/browser/page_html.ex:67
+#: lib/micelio_web/controllers/browser/page_html.ex:81
 #, elixir-autogen, elixir-format
 msgid "Previous"
-msgstr ""
+msgstr "이전"
 
 #: lib/micelio_web/live/project_live/index.ex:48
 #, elixir-autogen, elixir-format
 msgid "Project deleted successfully."
-msgstr ""
+msgstr "프로젝트가 성공적으로 삭제되었습니다."
 
 #: lib/micelio_web/live/project_live/index.ex:37
 #, elixir-autogen, elixir-format
 msgid "Project not found."
-msgstr ""
+msgstr "프로젝트를 찾을 수 없습니다."
 
 #: lib/micelio_web/live/project_live/index.ex:19
-#: lib/micelio_web/live/project_live/index.ex:65
+#: lib/micelio_web/live/project_live/index.ex:66
 #, elixir-autogen, elixir-format
 msgid "Projects"
-msgstr ""
+msgstr "프로젝트"
 
-#: lib/micelio_web/live/project_live/index.ex:85
+#: lib/micelio_web/live/project_live/index.ex:86
 #, elixir-autogen, elixir-format
 msgid "Projects help you organize your code and collaborate with others."
-msgstr ""
+msgstr "프로젝트는 코드를 정리하고 다른 사람들과 협업하는 데 도움이 됩니다."
+
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:13
+#, elixir-autogen, elixir-format
+msgid "Ready to work on your projects?"
+msgstr "프로젝트 작업을 시작할 준비가 되셨나요?"
+
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:67
+#, elixir-autogen, elixir-format
+msgid "Scales to billions of files and hundreds of thousands of landings per day"
+msgstr "수십억 개의 파일과 하루 수십만 건의 랜딩으로 확장"
+
+#: lib/micelio_web/components/core_components.ex:661
+#: lib/micelio_web/components/core_components.ex:666
+#, elixir-autogen, elixir-format
+msgid "Select language"
+msgstr "언어 선택"
+
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:64
+#, elixir-autogen, elixir-format
+msgid "Sessions capture goal, reasoning, and changes together"
+msgstr "세션은 목표, 추론, 변경 사항을 함께 캡처합니다"
+
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:84
+#, elixir-autogen, elixir-format
+msgid "Sessions capture goal, reasoning, and changes together. Built for hundreds of AI agents working concurrently, with stateless compute that auto-scales based on demand."
+msgstr "세션은 목표, 추론, 변경 사항을 함께 캡처합니다. 수백 개의 AI 에이전트가 동시에 작업하도록 구축되었으며, 수요에 따라 자동 확장되는 상태 비저장 컴퓨팅을 제공합니다."
+
+#: lib/micelio_web/components/layouts.ex:188
+#, elixir-autogen, elixir-format
+msgid "Something went wrong!"
+msgstr "문제가 발생했습니다!"
+
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:113
+#, elixir-autogen, elixir-format
+msgid "Targets Google/Meta scale: 1B+ files, 500k+ landings per day, 100k+ concurrent sessions. Object storage-first architecture with O(log n) operations."
+msgstr "Google/Meta 규모 목표: 10억+ 파일, 하루 50만+ 랜딩, 10만+ 동시 세션. O(log n) 연산의 객체 스토리지 우선 아키텍처."
+
+#: lib/micelio_web/components/layouts.ex:81
+#, elixir-autogen, elixir-format
+msgid "Toggle theme"
+msgstr "테마 전환"
+
+#: lib/micelio_web/live/project_live/index.ex:116
+#, elixir-autogen, elixir-format
+msgid "View"
+msgstr "보기"
+
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:18
+#, elixir-autogen, elixir-format
+msgid "View Projects"
+msgstr "프로젝트 보기"
+
+#: lib/micelio_web/components/layouts.ex:180
+#, elixir-autogen, elixir-format
+msgid "We can't find the internet"
+msgstr "인터넷을 찾을 수 없습니다"
 
 #: lib/micelio_web/controllers/browser/page_html/home.html.heex:11
 #, elixir-autogen, elixir-format
-msgid "Ready to work on your projects?"
-msgstr ""
-
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:56
-#, elixir-autogen, elixir-format
-msgid "Scales to billions of files and hundreds of thousands of landings per day"
-msgstr ""
-
-#: lib/micelio_web/components/core_components.ex:657
-#: lib/micelio_web/components/core_components.ex:662
-#, elixir-autogen, elixir-format
-msgid "Select language"
-msgstr ""
-
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:54
-#, elixir-autogen, elixir-format
-msgid "Sessions capture goal, reasoning, and changes together"
-msgstr ""
-
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:70
-#, elixir-autogen, elixir-format
-msgid "Sessions capture goal, reasoning, and changes together. Built for hundreds of AI agents working concurrently, with stateless compute that auto-scales based on demand."
-msgstr ""
-
-#: lib/micelio_web/components/layouts.ex:176
-#, elixir-autogen, elixir-format
-msgid "Something went wrong!"
-msgstr ""
-
-#: lib/micelio_web/controllers/browser/page_html.ex:54
-#, elixir-autogen, elixir-format
-msgid "Stars:"
-msgstr ""
-
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:93
-#, elixir-autogen, elixir-format
-msgid "Targets Google/Meta scale: 1B+ files, 500k+ landings per day, 100k+ concurrent sessions. Object storage-first architecture with O(log n) operations."
-msgstr ""
-
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:100
-#, elixir-autogen, elixir-format
-msgid "The forge is the source of truth, with optional local disk mirrors. Coordinator-free landing with content-addressed conditional writes. No single bottleneck."
-msgstr ""
-
-#: lib/micelio_web/components/layouts.ex:65
-#, elixir-autogen, elixir-format
-msgid "Toggle theme"
-msgstr ""
-
-#: lib/micelio_web/live/project_live/index.ex:115
-#, elixir-autogen, elixir-format
-msgid "View"
-msgstr ""
-
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:16
-#, elixir-autogen, elixir-format
-msgid "View Projects"
-msgstr ""
-
-#: lib/micelio_web/components/layouts.ex:168
-#, elixir-autogen, elixir-format
-msgid "We can't find the internet"
-msgstr ""
-
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:9
-#, elixir-autogen, elixir-format
 msgid "Welcome back, %{email}"
-msgstr ""
+msgstr "다시 오신 것을 환영합니다, %{email}"
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:42
-#, elixir-autogen, elixir-format
-msgid "Welcome to Micelio!"
-msgstr ""
-
-#: lib/micelio_web/live/project_live/index.ex:50
+#: lib/micelio_web/live/project_live/index.ex:51
 #, elixir-autogen, elixir-format
 msgid "You do not have access to this project."
-msgstr ""
+msgstr "이 프로젝트에 대한 액세스 권한이 없습니다."
+
+#: lib/micelio_web/components/layouts.ex:88
+#, elixir-autogen, elixir-format
+msgid "admin"
+msgstr "관리자"
+
+#: lib/micelio_web/components/layouts.ex:71
+#, elixir-autogen, elixir-format
+msgid "blog"
+msgstr "블로그"
 
 #: lib/micelio_web/components/layouts.ex:72
 #, elixir-autogen, elixir-format
-msgid "admin"
-msgstr ""
-
-#: lib/micelio_web/components/layouts.ex:55
-#, elixir-autogen, elixir-format
-msgid "blog"
-msgstr ""
-
-#: lib/micelio_web/components/layouts.ex:56
-#, elixir-autogen, elixir-format
 msgid "changelog"
-msgstr ""
+msgstr "변경 내역"
 
 #: lib/micelio_web/components/core_components.ex:80
 #, elixir-autogen, elixir-format
 msgid "close"
-msgstr ""
+msgstr "닫기"
 
-#: lib/micelio_web/components/core_components.ex:773
+#: lib/micelio_web/components/core_components.ex:781
 #, elixir-autogen, elixir-format
 msgid "contribution"
 msgid_plural "contributions"
-msgstr[0] ""
+msgstr[0] "기여"
 
-#: lib/micelio_web/components/layouts.ex:123
+#: lib/micelio_web/components/layouts.ex:141
 #, elixir-autogen, elixir-format
 msgid "cookies"
-msgstr ""
+msgstr "쿠키"
 
-#: lib/micelio_web/components/layouts.ex:124
+#: lib/micelio_web/components/layouts.ex:142
 #, elixir-autogen, elixir-format
 msgid "impressum"
-msgstr ""
+msgstr "회사 정보"
 
-#: lib/micelio_web/components/layouts.ex:78
+#: lib/micelio_web/components/layouts.ex:94
 #, elixir-autogen, elixir-format
 msgid "logout"
-msgstr ""
+msgstr "로그아웃"
 
-#: lib/micelio_web/components/layouts.ex:122
+#: lib/micelio_web/components/layouts.ex:140
 #, elixir-autogen, elixir-format
 msgid "privacy"
-msgstr ""
+msgstr "개인정보 보호"
 
-#: lib/micelio_web/components/layouts.ex:74
+#: lib/micelio_web/components/layouts.ex:90
 #, elixir-autogen, elixir-format
 msgid "projects"
-msgstr ""
+msgstr "프로젝트"
 
-#: lib/micelio_web/components/layouts.ex:57
+#: lib/micelio_web/components/layouts.ex:73
 #, elixir-autogen, elixir-format
 msgid "search"
-msgstr ""
+msgstr "검색"
 
-#: lib/micelio_web/components/layouts.ex:121
+#: lib/micelio_web/components/layouts.ex:139
 #, elixir-autogen, elixir-format
 msgid "terms"
-msgstr ""
+msgstr "이용약관"
 
-#: lib/micelio_web/components/layouts.ex:67
+#: lib/micelio_web/components/layouts.ex:83
 #, elixir-autogen, elixir-format
 msgid "theme"
-msgstr ""
+msgstr "테마"
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:58
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:72
 #, elixir-autogen, elixir-format
 msgid "Inspired by"
-msgstr ""
+msgstr "영감을 받음"
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:46
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:51
 #, elixir-autogen, elixir-format
 msgid "Micelio is both a CLI"
-msgstr ""
+msgstr "Micelio는 CLI이자"
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:48
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:54
 #, elixir-autogen, elixir-format
 msgid "Micelio is to"
-msgstr ""
+msgstr "Micelio는"
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:61
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:73
 #, elixir-autogen, elixir-format
 msgid "and"
-msgstr ""
+msgstr "그리고"
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:46
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:51
 #, elixir-autogen, elixir-format
 msgid "and a forge, fully open source under"
-msgstr ""
+msgstr "포지이며, 완전히 오픈소스로"
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:48
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:56
 #, elixir-autogen, elixir-format
 msgid "what GitHub is to"
-msgstr ""
+msgstr "GitHub가"
 
-#: lib/micelio_web/components/core_components.ex:656
+#: lib/micelio_web/components/core_components.ex:659
 #, elixir-autogen, elixir-format
 msgid "Language selection"
-msgstr ""
+msgstr "언어 선택"
+
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:122
+#, elixir-autogen, elixir-format
+msgid "The forge is the source of truth. Coordinator-free landing with content-addressed conditional writes. No single bottleneck."
+msgstr "포지는 진실의 원천입니다. 콘텐츠 주소 지정 조건부 쓰기를 통한 코디네이터 없는 랜딩. 단일 병목이 없습니다."
+
+#: lib/micelio_web/controllers/browser/page_html.ex:66
+#, elixir-autogen, elixir-format
+msgid "Signals"
+msgstr "시그널"
+
+#: lib/micelio_web/controllers/browser/auth_html/new.html.heex:51
+#, elixir-autogen, elixir-format
+msgid "Continue with GitHub"
+msgstr "GitHub로 계속하기"
+
+#: lib/micelio_web/controllers/browser/auth_html/new.html.heex:55
+#, elixir-autogen, elixir-format
+msgid "Continue with GitLab"
+msgstr "GitLab로 계속하기"
+
+#: lib/micelio_web/controllers/browser/auth_html/new.html.heex:26
+#, elixir-autogen, elixir-format
+msgid "Email"
+msgstr "이메일"
+
+#: lib/micelio_web/controllers/browser/auth_html/new.html.heex:12
+#, elixir-autogen, elixir-format
+msgid "Enter your email and we'll send you a magic link."
+msgstr "이메일을 입력하면 매직 링크를 보내드립니다."
+
+#: lib/micelio_web/controllers/browser/auth_html/new.html.heex:37
+#, elixir-autogen, elixir-format
+msgid "Send magic link"
+msgstr "매직 링크 보내기"
+
+#: lib/micelio_web/controllers/browser/auth_html/new.html.heex:11
+#, elixir-autogen, elixir-format
+msgid "Sign in to Micelio"
+msgstr "Micelio에 로그인"
+
+#: lib/micelio_web/controllers/browser/auth_html/new.html.heex:46
+#, elixir-autogen, elixir-format
+msgid "Use passkey"
+msgstr "패스키 사용"
+
+#: lib/micelio_web/controllers/browser/auth_html/new.html.heex:42
+#, elixir-autogen, elixir-format
+msgid "or"
+msgstr "또는"
+
+#: lib/micelio_web/controllers/browser/auth_html/new.html.heex:27
+#, elixir-autogen, elixir-format
+msgid "you@example.com"
+msgstr "you@example.com"

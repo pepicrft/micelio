@@ -1,24 +1,25 @@
 defmodule MicelioWeb.ThemeTokensTest do
   use ExUnit.Case, async: true
 
-  test "GitHub-style theme colors are defined in tokens.css" do
+  test "Turbopuffer-inspired theme colors are defined in tokens.css" do
     tokens = File.read!("assets/css/theme/tokens.css")
 
-    # Light mode colors
-    assert tokens =~ "--theme-ui-colors-background: #ffffff;"
-    assert tokens =~ "--theme-ui-colors-text: #1f2328;"
-    assert tokens =~ "--theme-ui-colors-accent: #0969da;"
-    assert tokens =~ "--theme-ui-colors-border: #d1d9e0;"
+    # Light mode colors (Turbopuffer-inspired)
+    assert tokens =~ "--theme-ui-colors-background: #f9fafc;"
+    assert tokens =~ "--theme-ui-colors-text: #0f172a;"
+    assert tokens =~ "--theme-ui-colors-accent: #fdba74;"
+    assert tokens =~ "--theme-ui-colors-border: #e2e8f0;"
   end
 
-  test "GitHub activity graph colors" do
+  test "Turbopuffer activity graph colors" do
     tokens = File.read!("assets/css/theme/tokens.css")
 
-    assert tokens =~ "--theme-ui-colors-activity-0: #ebedf0;"
-    assert tokens =~ "--theme-ui-colors-activity-1: #9be9a8;"
-    assert tokens =~ "--theme-ui-colors-activity-2: #40c463;"
-    assert tokens =~ "--theme-ui-colors-activity-3: #30a14e;"
-    assert tokens =~ "--theme-ui-colors-activity-4: #216e39;"
+    # Orange/amber activity colors
+    assert tokens =~ "--theme-ui-colors-activity-0: #f1f5f9;"
+    assert tokens =~ "--theme-ui-colors-activity-1: #fde68a;"
+    assert tokens =~ "--theme-ui-colors-activity-2: #fdba74;"
+    assert tokens =~ "--theme-ui-colors-activity-3: #fb923c;"
+    assert tokens =~ "--theme-ui-colors-activity-4: #ea580c;"
   end
 
   test "profile activity graph styles use theme tokens" do

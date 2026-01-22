@@ -30,7 +30,7 @@
 }
 
 .agent-progress-header h1 {
-  font-weight: var(--theme-ui-fontWeights-bold);
+  font-weight: var(--theme-ui-font-weights-bold);
   margin-bottom: var(--theme-ui-space-1);
 }
 
@@ -54,7 +54,7 @@
 }
 
 .agent-progress-section-header h2 {
-  font-weight: var(--theme-ui-fontWeights-bold);
+  font-weight: var(--theme-ui-font-weights-bold);
 }
 
 .agent-progress-list {
@@ -80,7 +80,7 @@
 }
 
 .agent-progress-goal {
-  font-weight: var(--theme-ui-fontWeights-bold);
+  font-weight: var(--theme-ui-font-weights-bold);
   margin-bottom: calc(var(--theme-ui-space-1) / 2);
 }
 
@@ -117,7 +117,7 @@
 }
 
 .agent-progress-message-role {
-  font-weight: var(--theme-ui-fontWeights-bold);
+  font-weight: var(--theme-ui-font-weights-bold);
   text-transform: capitalize;
 }
 

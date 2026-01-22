@@ -4,12 +4,13 @@
   current_user={assigns[:current_user]}
     locale={assigns[:locale] || "en"}
     current_path={assigns[:current_path] || "/"}
+  page_class="page-main-auth"
 >
   <div class="auth-screen">
     <div class="auth-container">
       <header class="auth-header">
-        <h1>Sign in to Micelio</h1>
-        <p>Enter your email and we'll send you a magic link.</p>
+        <h1><%= gettext("Sign in to Micelio") %></h1>
+        <p><%= gettext("Enter your email and we'll send you a magic link.") %></p>
       </header>
 
       <.form for={@form} action={~p"/auth/login"} method="post" class="auth-form" id="auth-login-form">
@@ -17,8 +18,8 @@
           <.input
             field={@form[:email]}
             type="email"
-            label="Email"
-            placeholder="you@example.com"
+            label={gettext("Email")}
+            placeholder={gettext("you@example.com")}
             required
             autofocus
             class="auth-input"
@@ -28,25 +29,25 @@
         </div>
 
         <button type="submit" class="auth-button">
-          Send magic link
+          <%= gettext("Send magic link") %>
         </button>
       </.form>
 
       <div class="auth-divider" aria-hidden="true">
-        <span>or</span>
+        <span><%= gettext("or") %></span>
       </div>
 
       <button type="button" class="auth-button auth-button-passkey" id="auth-passkey-button">
-        Use passkey
+        <%= gettext("Use passkey") %>
       </button>
       <p class="auth-passkey-status" id="auth-passkey-status" hidden></p>
 
       <.link href={~p"/auth/github"} class="auth-button auth-button-github" id="auth-github-link">
-        Continue with GitHub
+        <%= gettext("Continue with GitHub") %>
       </.link>
 
       <.link href={~p"/auth/gitlab"} class="auth-button auth-button-gitlab" id="auth-gitlab-link">
-        Continue with GitLab
+        <%= gettext("Continue with GitLab") %>
       </.link>
     </div>
   </div>

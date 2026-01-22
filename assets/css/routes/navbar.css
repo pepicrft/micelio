@@ -1,4 +1,11 @@
-/* Navbar */
+/* Navbar - Turbopuffer-inspired dark header */
+
+.navbar-wrapper {
+  background: var(--theme-ui-colors-surface);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
 
 .navbar {
   padding: var(--theme-ui-space-1) var(--theme-ui-space-2);
@@ -17,12 +24,12 @@
   gap: var(--theme-ui-space-2);
 }
 
-.navbar a {
-  color: var(--theme-ui-colors-text);
+.navbar a:not(.navbar-cta) {
+  color: var(--theme-ui-colors-surface-text);
   text-decoration: none;
 }
 
-.navbar a:hover {
+.navbar a:not(.navbar-cta):hover {
   text-decoration: underline;
 }
 
@@ -30,7 +37,7 @@
   width: 1.5rem;
   height: 1.5rem;
   border-radius: 9999px;
-  border: var(--theme-ui-borders-thin);
+  border: 1px solid var(--theme-ui-colors-border);
   display: inline-block;
   overflow: hidden;
 }
@@ -48,10 +55,14 @@
   gap: var(--theme-ui-space-1);
 }
 
+.navbar .brand .icon {
+  color: var(--theme-ui-colors-surface-text);
+}
+
 .navbar .brand a {
   text-decoration: none;
-  color: var(--theme-ui-colors-text);
-  font-weight: var(--theme-ui-fontWeights-bold);
+  color: var(--theme-ui-colors-surface-text);
+  font-weight: var(--theme-ui-font-weights-bold);
 }
 
 .navbar-cta {
@@ -59,14 +70,21 @@
   align-items: center;
   gap: var(--theme-ui-space-1);
   padding: var(--theme-ui-space-1) var(--theme-ui-space-2);
-  border: var(--theme-ui-borders-thin);
+  border: 1px solid var(--theme-ui-colors-accent-text);
   border-radius: var(--theme-ui-radii-default);
-  background: var(--theme-ui-colors-background);
+  background: var(--theme-ui-colors-accent);
+  color: var(--theme-ui-colors-accent-text);
+  text-decoration: none;
 }
 
 .navbar-cta:hover {
   text-decoration: none;
-  background: var(--theme-ui-colors-border);
+  opacity: 0.9;
+}
+
+.navbar-cta:focus-visible {
+  outline: 2px solid var(--theme-ui-colors-surface-text);
+  outline-offset: 2px;
 }
 
 .navbar-logout-form {
@@ -78,7 +96,7 @@
   border: none;
   background: transparent;
   cursor: pointer;
-  color: var(--theme-ui-colors-text);
+  color: var(--theme-ui-colors-surface-text);
   font: inherit;
   text-decoration: none;
   padding: 0;
@@ -92,7 +110,7 @@
   border: none;
   background: transparent;
   cursor: pointer;
-  color: var(--theme-ui-colors-text);
+  color: var(--theme-ui-colors-surface-text);
   font: inherit;
   text-decoration: none;
   padding: 0;

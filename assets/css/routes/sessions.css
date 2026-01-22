@@ -25,7 +25,7 @@
 }
 
 .sessions-header h1 {
-  font-weight: var(--theme-ui-fontWeights-bold);
+  font-weight: var(--theme-ui-font-weights-bold);
   margin-bottom: var(--theme-ui-space-1);
 }
 
@@ -120,14 +120,14 @@
 }
 
 .session-goal {
-  font-weight: var(--theme-ui-fontWeights-bold);
+  font-weight: var(--theme-ui-font-weights-bold);
   flex: 1;
 }
 
 .status-badge {
   padding: 2px 8px;
   font-size: 0.875rem;
-  font-weight: var(--theme-ui-fontWeights-bold);
+  font-weight: var(--theme-ui-font-weights-bold);
   border-radius: 4px;
   white-space: nowrap;
 }
@@ -202,7 +202,7 @@
 }
 
 .session-show-title h1 {
-  font-weight: var(--theme-ui-fontWeights-bold);
+  font-weight: var(--theme-ui-font-weights-bold);
 }
 
 .session-show-meta {
@@ -270,7 +270,7 @@
 }
 
 .session-section h2 {
-  font-weight: var(--theme-ui-fontWeights-bold);
+  font-weight: var(--theme-ui-font-weights-bold);
   margin-bottom: var(--theme-ui-space-2);
 }
 
@@ -312,7 +312,7 @@
 }
 
 .message-role {
-  font-weight: var(--theme-ui-fontWeights-bold);
+  font-weight: var(--theme-ui-font-weights-bold);
   margin-bottom: var(--theme-ui-space-1);
   text-transform: capitalize;
 }
@@ -347,7 +347,7 @@
 }
 
 .decision-text {
-  font-weight: var(--theme-ui-fontWeights-bold);
+  font-weight: var(--theme-ui-font-weights-bold);
   margin-bottom: var(--theme-ui-space-1);
 }
 
@@ -367,7 +367,7 @@
 }
 
 .metadata-key {
-  font-weight: var(--theme-ui-fontWeights-bold);
+  font-weight: var(--theme-ui-font-weights-bold);
 }
 
 .metadata-value {

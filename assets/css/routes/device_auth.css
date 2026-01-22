@@ -4,7 +4,7 @@
 }
 
 .device-auth-header h1 {
-  font-weight: var(--theme-ui-fontWeights-bold);
+  font-weight: var(--theme-ui-font-weights-bold);
   margin-bottom: var(--theme-ui-space-1);
 }
 
@@ -39,7 +39,7 @@
   color: var(--theme-ui-colors-background);
   border: none;
   padding: var(--theme-ui-space-1);
-  font-weight: var(--theme-ui-fontWeights-bold);
+  font-weight: var(--theme-ui-font-weights-bold);
   cursor: pointer;
 }
 
@@ -54,6 +54,6 @@
 }
 
 .device-auth-success-code {
-  font-weight: var(--theme-ui-fontWeights-bold);
+  font-weight: var(--theme-ui-font-weights-bold);
   margin-bottom: var(--theme-ui-space-1);
 }

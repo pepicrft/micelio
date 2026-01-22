@@ -1,28 +1,40 @@
 /* Auth styles */
 
 .auth-screen {
-  min-height: calc(100vh - var(--theme-ui-space-4));
   display: grid;
   place-items: center;
-  padding: var(--theme-ui-space-3) var(--theme-ui-space-2);
+  padding: var(--theme-ui-space-1) 0;
+}
+
+.page-main.page-main-auth {
+  display: flex;
+}
+
+.page-content.page-main-auth {
+  flex: 1;
+  display: flex;
+}
+
+.page-content.page-main-auth .auth-screen {
+  flex: 1;
+  min-height: 100%;
 }
 
 .auth-container {
-  width: min(24rem, 90vw, calc(100vh - var(--theme-ui-space-4)));
-  aspect-ratio: 1 / 1;
+  width: min(24rem, 90vw);
   display: grid;
   align-content: center;
-  gap: var(--theme-ui-space-2);
-  padding: var(--theme-ui-space-3);
+  gap: var(--theme-ui-space-1);
+  padding: var(--theme-ui-space-2);
 }
 
 .auth-header {
   text-align: center;
-  margin-bottom: var(--theme-ui-space-2);
+  margin-bottom: var(--theme-ui-space-1);
 }
 
 .auth-header h1 {
-  font-weight: var(--theme-ui-fontWeights-bold);
+  font-weight: var(--theme-ui-font-weights-bold);
   margin-bottom: var(--theme-ui-space-1);
 }
 
@@ -33,7 +45,7 @@
 .auth-form {
   display: flex;
   flex-direction: column;
-  gap: var(--theme-ui-space-2);
+  gap: var(--theme-ui-space-1);
 }
 
 .auth-form-group {
@@ -43,7 +55,7 @@
 }
 
 .auth-form-group label {
-  font-weight: var(--theme-ui-fontWeights-bold);
+  font-weight: var(--theme-ui-font-weights-bold);
 }
 
 .auth-input {
@@ -69,15 +81,16 @@
 .auth-button {
   width: 100%;
   padding: var(--theme-ui-space-1);
-  font-weight: var(--theme-ui-fontWeights-bold);
-  color: var(--theme-ui-colors-background);
-  background-color: var(--theme-ui-colors-primary);
-  border: none;
+  font-weight: var(--theme-ui-font-weights-bold);
+  color: var(--theme-ui-colors-accent-text);
+  background-color: var(--theme-ui-colors-accent);
+  border: 1px solid var(--theme-ui-colors-accent-text);
+  border-radius: var(--theme-ui-radii-default);
   cursor: pointer;
 }
 
 .auth-button:hover {
-  background-color: var(--theme-ui-colors-secondary);
+  opacity: 0.9;
 }
 
 .auth-button:focus {
@@ -162,13 +175,12 @@
 }
 
 .auth-link {
-  color: var(--theme-ui-colors-primary);
+  color: var(--theme-ui-colors-text);
   text-decoration: underline;
-  text-decoration-thickness: 0.08em;
-  text-underline-offset: 0.15em;
+  text-decoration-color: var(--theme-ui-colors-border);
+  text-underline-offset: 2px;
 }
 
 .auth-link:hover {
-  color: var(--theme-ui-colors-secondary);
-  text-decoration-color: var(--theme-ui-colors-secondary);
+  text-decoration-color: var(--theme-ui-colors-text);
 }

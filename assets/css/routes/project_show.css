@@ -64,7 +64,7 @@
 
 .repository-stars-count {
   color: var(--theme-ui-colors-muted);
-  font-size: var(--theme-ui-fontSizes-small);
+  font-size: var(--theme-ui-font-sizes-small);
 }
 
 .project-badge {
@@ -75,7 +75,7 @@
 }
 
 .project-badge-title {
-  font-weight: var(--theme-ui-fontWeights-bold);
+  font-weight: var(--theme-ui-font-weights-bold);
   margin-bottom: var(--theme-ui-space-1);
 }
 
@@ -102,8 +102,8 @@
 }
 
 .project-badge-snippet h3 {
-  font-size: var(--theme-ui-fontSizes-body);
-  font-weight: var(--theme-ui-fontWeights-bold);
+  font-size: var(--theme-ui-font-sizes-body);
+  font-weight: var(--theme-ui-font-weights-bold);
   margin-bottom: var(--theme-ui-space-1);
 }
 
@@ -284,7 +284,7 @@
 
 .project-stars-count {
   color: var(--theme-ui-colors-muted);
-  font-size: var(--theme-ui-fontSizes-small);
+  font-size: var(--theme-ui-font-sizes-small);
 }
 
 .project-fork-form {
@@ -416,7 +416,7 @@
 }
 
 .project-readme-title {
-  font-weight: var(--theme-ui-fontWeights-bold);
+  font-weight: var(--theme-ui-font-weights-bold);
   margin: 0;
 }
 
@@ -454,7 +454,7 @@
 .project-readme-markdown h3,
 .project-readme-markdown h4 {
   margin: var(--theme-ui-space-2) 0 var(--theme-ui-space-1);
-  font-weight: var(--theme-ui-fontWeights-bold);
+  font-weight: var(--theme-ui-font-weights-bold);
 }
 
 .project-readme-markdown p {
@@ -662,7 +662,7 @@
 }
 
 .repository-readme-title {
-  font-weight: var(--theme-ui-fontWeights-bold);
+  font-weight: var(--theme-ui-font-weights-bold);
   margin: 0;
 }
 
@@ -699,7 +699,7 @@
 .repository-readme-markdown h3,
 .repository-readme-markdown h4 {
   margin: var(--theme-ui-space-2) 0 var(--theme-ui-space-1);
-  font-weight: var(--theme-ui-fontWeights-bold);
+  font-weight: var(--theme-ui-font-weights-bold);
 }
 
 .repository-readme-markdown p {
@@ -776,7 +776,7 @@
 .highlight .kr,
 .highlight .kt {
   color: var(--theme-ui-colors-primary);
-  font-weight: var(--theme-ui-fontWeights-bold);
+  font-weight: var(--theme-ui-font-weights-bold);
 }
 
 .highlight .s,

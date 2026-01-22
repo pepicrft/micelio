@@ -23,7 +23,7 @@
 }
 
 .project-card-name {
-  font-weight: var(--theme-ui-fontWeights-bold);
+  font-weight: var(--theme-ui-font-weights-bold);
   margin-bottom: var(--theme-ui-space-1);
 }
 
@@ -107,7 +107,7 @@
 }
 
 .project-form .label {
-  font-weight: var(--theme-ui-fontWeights-bold);
+  font-weight: var(--theme-ui-font-weights-bold);
   color: var(--theme-ui-colors-text);
 }
 
@@ -129,7 +129,7 @@
 }
 
 .project-form-group label {
-  font-weight: var(--theme-ui-fontWeights-bold);
+  font-weight: var(--theme-ui-font-weights-bold);
 }
 
 .project-input {
@@ -160,7 +160,7 @@
 .project-button {
   width: 100%;
   padding: var(--theme-ui-space-1);
-  font-weight: var(--theme-ui-fontWeights-bold);
+  font-weight: var(--theme-ui-font-weights-bold);
   color: var(--theme-ui-colors-background);
   background-color: var(--theme-ui-colors-primary);
   border: none;
@@ -269,7 +269,7 @@
 
 .project-show-stars-count {
   color: var(--theme-ui-colors-muted);
-  font-size: var(--theme-ui-fontSizes-small);
+  font-size: var(--theme-ui-font-sizes-small);
 }
 
 .project-show-navigation {
@@ -298,7 +298,7 @@
 }
 
 .project-recent-sessions h2 {
-  font-weight: var(--theme-ui-fontWeights-bold);
+  font-weight: var(--theme-ui-font-weights-bold);
   margin-bottom: var(--theme-ui-space-2);
 }
 
@@ -331,7 +331,7 @@
 
 .session-goal-compact {
   flex: 1;
-  font-weight: var(--theme-ui-fontWeights-medium);
+  font-weight: var(--theme-ui-font-weights-medium);
 }
 
 @media (max-width: 40rem) {

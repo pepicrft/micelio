@@ -11,7 +11,7 @@ msgstr ""
 "Language: en\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: lib/micelio_web/components/layouts.ex:85
+#: lib/micelio_web/components/layouts.ex:102
 #, elixir-autogen, elixir-format
 msgid "Account (@%{handle})"
 msgstr ""
@@ -21,53 +21,48 @@ msgstr ""
 msgid "Actions"
 msgstr ""
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:68
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:82
 #, elixir-autogen, elixir-format
 msgid "Agent-Native by Design"
 msgstr ""
 
-#: lib/micelio_web/components/layouts.ex:170
-#: lib/micelio_web/components/layouts.ex:178
+#: lib/micelio_web/components/layouts.ex:182
+#: lib/micelio_web/components/layouts.ex:190
 #, elixir-autogen, elixir-format
 msgid "Attempting to reconnect"
 msgstr ""
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:52
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:60
 #, elixir-autogen, elixir-format
 msgid "Built for hundreds of AI agents working concurrently on massive codebases"
 msgstr ""
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:75
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:91
 #, elixir-autogen, elixir-format
 msgid "Checks"
 msgstr ""
 
-#: lib/micelio_web/live/project_live/index.ex:88
+#: lib/micelio_web/live/project_live/index.ex:89
 #, elixir-autogen, elixir-format
 msgid "Create your first project"
 msgstr ""
 
-#: lib/micelio_web/components/layouts.ex:136
-#, elixir-autogen, elixir-format
-msgid "Daily personality: %{name}. %{description}"
-msgstr ""
-
-#: lib/micelio_web/live/project_live/index.ex:135
+#: lib/micelio_web/live/project_live/index.ex:136
 #, elixir-autogen, elixir-format
 msgid "Delete"
 msgstr ""
 
-#: lib/micelio_web/live/project_live/index.ex:133
+#: lib/micelio_web/live/project_live/index.ex:134
 #, elixir-autogen, elixir-format
 msgid "Delete this project?"
 msgstr ""
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:84
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:102
 #, elixir-autogen, elixir-format
 msgid "Designed for a future where humans review, not write most code. Conversation, decisions, and changes are unified in one workflow."
 msgstr ""
 
-#: lib/micelio_web/live/project_live/index.ex:125
+#: lib/micelio_web/live/project_live/index.ex:126
 #, elixir-autogen, elixir-format
 msgid "Edit"
 msgstr ""
@@ -77,27 +72,27 @@ msgstr ""
 msgid "Explore what the community is building."
 msgstr ""
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:98
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:120
 #, elixir-autogen, elixir-format
 msgid "Forge-First"
 msgstr ""
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:55
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:65
 #, elixir-autogen, elixir-format
 msgid "Forge-first architecture with object storage at the core"
 msgstr ""
 
-#: lib/micelio_web/components/layouts.ex:100
+#: lib/micelio_web/components/layouts.ex:118
 #, elixir-autogen, elixir-format
 msgid "Get started"
 msgstr ""
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:82
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:100
 #, elixir-autogen, elixir-format
 msgid "Human + AI Collaboration"
 msgstr ""
 
-#: lib/micelio_web/components/layouts.ex:120
+#: lib/micelio_web/components/layouts.ex:138
 #, elixir-autogen, elixir-format
 msgid "Legal"
 msgstr ""
@@ -107,37 +102,37 @@ msgstr ""
 msgid "Manage your projects."
 msgstr ""
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:91
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:111
 #, elixir-autogen, elixir-format
 msgid "Massive Scale"
 msgstr ""
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:43
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:46
 #, elixir-autogen, elixir-format
 msgid "Micelio is the open source, agent-first software versioning forge the future has been waiting for."
 msgstr ""
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:19
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:21
 #, elixir-autogen, elixir-format
 msgid "New Project"
 msgstr ""
 
-#: lib/micelio_web/live/project_live/index.ex:72
+#: lib/micelio_web/live/project_live/index.ex:73
 #, elixir-autogen, elixir-format
 msgid "New organization"
 msgstr ""
 
-#: lib/micelio_web/live/project_live/index.ex:76
+#: lib/micelio_web/live/project_live/index.ex:77
 #, elixir-autogen, elixir-format
 msgid "New project"
 msgstr ""
 
-#: lib/micelio_web/controllers/browser/page_html.ex:76
+#: lib/micelio_web/controllers/browser/page_html.ex:90
 #, elixir-autogen, elixir-format
 msgid "Next"
 msgstr ""
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:77
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:93
 #, elixir-autogen, elixir-format
 msgid "Nix-native checks run locally with the exact derivations that power remote execution. Content-addressed caches keep results consistent and fast, so a green check locally is the same check everywhere - no centralized queue required."
 msgstr ""
@@ -147,7 +142,7 @@ msgstr ""
 msgid "No description yet."
 msgstr ""
 
-#: lib/micelio_web/live/project_live/index.ex:84
+#: lib/micelio_web/live/project_live/index.ex:85
 #, elixir-autogen, elixir-format
 msgid "No projects yet"
 msgstr ""
@@ -157,22 +152,17 @@ msgstr ""
 msgid "No public projects yet."
 msgstr ""
 
-#: lib/micelio_web/controllers/browser/page_html.ex:52
-#, elixir-autogen, elixir-format
-msgid "Owner:"
-msgstr ""
-
 #: lib/micelio_web/controllers/browser/page_html.ex:20
 #, elixir-autogen, elixir-format
 msgid "Popular projects"
 msgstr ""
 
-#: lib/micelio_web/controllers/browser/page_html.ex:60
+#: lib/micelio_web/controllers/browser/page_html.ex:74
 #, elixir-autogen, elixir-format
 msgid "Popular projects pagination"
 msgstr ""
 
-#: lib/micelio_web/controllers/browser/page_html.ex:67
+#: lib/micelio_web/controllers/browser/page_html.ex:81
 #, elixir-autogen, elixir-format
 msgid "Previous"
 msgstr ""
@@ -188,108 +178,93 @@ msgid "Project not found."
 msgstr ""
 
 #: lib/micelio_web/live/project_live/index.ex:19
-#: lib/micelio_web/live/project_live/index.ex:65
+#: lib/micelio_web/live/project_live/index.ex:66
 #, elixir-autogen, elixir-format
 msgid "Projects"
 msgstr ""
 
-#: lib/micelio_web/live/project_live/index.ex:85
+#: lib/micelio_web/live/project_live/index.ex:86
 #, elixir-autogen, elixir-format
 msgid "Projects help you organize your code and collaborate with others."
 msgstr ""
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:11
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:13
 #, elixir-autogen, elixir-format
 msgid "Ready to work on your projects?"
 msgstr ""
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:56
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:67
 #, elixir-autogen, elixir-format
 msgid "Scales to billions of files and hundreds of thousands of landings per day"
 msgstr ""
 
-#: lib/micelio_web/components/core_components.ex:656
 #: lib/micelio_web/components/core_components.ex:661
+#: lib/micelio_web/components/core_components.ex:666
 #, elixir-autogen, elixir-format
 msgid "Select language"
 msgstr ""
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:54
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:64
 #, elixir-autogen, elixir-format
 msgid "Sessions capture goal, reasoning, and changes together"
 msgstr ""
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:70
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:84
 #, elixir-autogen, elixir-format
 msgid "Sessions capture goal, reasoning, and changes together. Built for hundreds of AI agents working concurrently, with stateless compute that auto-scales based on demand."
 msgstr ""
 
-#: lib/micelio_web/components/layouts.ex:176
+#: lib/micelio_web/components/layouts.ex:188
 #, elixir-autogen, elixir-format
 msgid "Something went wrong!"
 msgstr ""
 
-#: lib/micelio_web/controllers/browser/page_html.ex:54
-#, elixir-autogen, elixir-format
-msgid "Stars:"
-msgstr ""
-
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:93
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:113
 #, elixir-autogen, elixir-format
 msgid "Targets Google/Meta scale: 1B+ files, 500k+ landings per day, 100k+ concurrent sessions. Object storage-first architecture with O(log n) operations."
 msgstr ""
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:100
-#, elixir-autogen, elixir-format
-msgid "The forge is the source of truth, with optional local disk mirrors. Coordinator-free landing with content-addressed conditional writes. No single bottleneck."
-msgstr ""
-
-#: lib/micelio_web/components/layouts.ex:65
+#: lib/micelio_web/components/layouts.ex:81
 #, elixir-autogen, elixir-format
 msgid "Toggle theme"
 msgstr ""
 
-#: lib/micelio_web/live/project_live/index.ex:115
+#: lib/micelio_web/live/project_live/index.ex:116
 #, elixir-autogen, elixir-format
 msgid "View"
 msgstr ""
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:16
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:18
 #, elixir-autogen, elixir-format
 msgid "View Projects"
 msgstr ""
 
-#: lib/micelio_web/components/layouts.ex:168
+#: lib/micelio_web/components/layouts.ex:180
 #, elixir-autogen, elixir-format
 msgid "We can't find the internet"
 msgstr ""
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:9
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:11
 #, elixir-autogen, elixir-format
 msgid "Welcome back, %{email}"
 msgstr ""
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:42
-#, elixir-autogen, elixir-format
-msgid "Welcome to Micelio!"
-msgstr ""
-
-#: lib/micelio_web/live/project_live/index.ex:50
+#: lib/micelio_web/live/project_live/index.ex:51
 #, elixir-autogen, elixir-format
 msgid "You do not have access to this project."
 msgstr ""
 
-#: lib/micelio_web/components/layouts.ex:72
+#: lib/micelio_web/components/layouts.ex:88
 #, elixir-autogen, elixir-format
 msgid "admin"
 msgstr ""
 
-#: lib/micelio_web/components/layouts.ex:55
+#: lib/micelio_web/components/layouts.ex:71
 #, elixir-autogen, elixir-format
 msgid "blog"
 msgstr ""
 
-#: lib/micelio_web/components/layouts.ex:56
+#: lib/micelio_web/components/layouts.ex:72
 #, elixir-autogen, elixir-format
 msgid "changelog"
 msgstr ""
@@ -299,84 +274,139 @@ msgstr ""
 msgid "close"
 msgstr ""
 
-#: lib/micelio_web/components/core_components.ex:770
+#: lib/micelio_web/components/core_components.ex:781
 #, elixir-autogen, elixir-format
 msgid "contribution"
 msgid_plural "contributions"
 msgstr[0] ""
 msgstr[1] ""
 
-#: lib/micelio_web/components/layouts.ex:123
+#: lib/micelio_web/components/layouts.ex:141
 #, elixir-autogen, elixir-format
 msgid "cookies"
 msgstr ""
 
-#: lib/micelio_web/components/layouts.ex:124
+#: lib/micelio_web/components/layouts.ex:142
 #, elixir-autogen, elixir-format
 msgid "impressum"
 msgstr ""
 
-#: lib/micelio_web/components/layouts.ex:78
+#: lib/micelio_web/components/layouts.ex:94
 #, elixir-autogen, elixir-format
 msgid "logout"
 msgstr ""
 
-#: lib/micelio_web/components/layouts.ex:122
+#: lib/micelio_web/components/layouts.ex:140
 #, elixir-autogen, elixir-format
 msgid "privacy"
 msgstr ""
 
-#: lib/micelio_web/components/layouts.ex:74
+#: lib/micelio_web/components/layouts.ex:90
 #, elixir-autogen, elixir-format
 msgid "projects"
 msgstr ""
 
-#: lib/micelio_web/components/layouts.ex:57
+#: lib/micelio_web/components/layouts.ex:73
 #, elixir-autogen, elixir-format
 msgid "search"
 msgstr ""
 
-#: lib/micelio_web/components/layouts.ex:121
+#: lib/micelio_web/components/layouts.ex:139
 #, elixir-autogen, elixir-format
 msgid "terms"
 msgstr ""
 
-#: lib/micelio_web/components/layouts.ex:67
+#: lib/micelio_web/components/layouts.ex:83
 #, elixir-autogen, elixir-format
 msgid "theme"
 msgstr ""
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:58
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:72
 #, elixir-autogen, elixir-format
 msgid "Inspired by"
 msgstr ""
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:46
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:51
 #, elixir-autogen, elixir-format
 msgid "Micelio is both a CLI"
 msgstr ""
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:48
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:54
 #, elixir-autogen, elixir-format
 msgid "Micelio is to"
 msgstr ""
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:61
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:73
 #, elixir-autogen, elixir-format
 msgid "and"
 msgstr ""
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:46
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:51
 #, elixir-autogen, elixir-format
 msgid "and a forge, fully open source under"
 msgstr ""
 
-#: lib/micelio_web/controllers/browser/page_html/home.html.heex:48
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:56
 #, elixir-autogen, elixir-format
 msgid "what GitHub is to"
 msgstr ""
 
-#: lib/micelio_web/components/core_components.ex:655
+#: lib/micelio_web/components/core_components.ex:659
 #, elixir-autogen, elixir-format
 msgid "Language selection"
 msgstr ""
+
+#: lib/micelio_web/controllers/browser/page_html/home.html.heex:122
+#, elixir-autogen, elixir-format
+msgid "The forge is the source of truth. Coordinator-free landing with content-addressed conditional writes. No single bottleneck."
+msgstr "The forge is the source of truth. Coordinator-free landing with content-addressed conditional writes. No single bottleneck."
+
+#: lib/micelio_web/controllers/browser/page_html.ex:66
+#, elixir-autogen, elixir-format
+msgid "Signals"
+msgstr "Signals"
+
+#: lib/micelio_web/controllers/browser/auth_html/new.html.heex:51
+#, elixir-autogen, elixir-format
+msgid "Continue with GitHub"
+msgstr "Continue with GitHub"
+
+#: lib/micelio_web/controllers/browser/auth_html/new.html.heex:55
+#, elixir-autogen, elixir-format
+msgid "Continue with GitLab"
+msgstr "Continue with GitLab"
+
+#: lib/micelio_web/controllers/browser/auth_html/new.html.heex:26
+#, elixir-autogen, elixir-format
+msgid "Email"
+msgstr "Email"
+
+#: lib/micelio_web/controllers/browser/auth_html/new.html.heex:12
+#, elixir-autogen, elixir-format
+msgid "Enter your email and we'll send you a magic link."
+msgstr "Enter your email and we'll send you a magic link."
+
+#: lib/micelio_web/controllers/browser/auth_html/new.html.heex:37
+#, elixir-autogen, elixir-format
+msgid "Send magic link"
+msgstr "Send magic link"
+
+#: lib/micelio_web/controllers/browser/auth_html/new.html.heex:11
+#, elixir-autogen, elixir-format
+msgid "Sign in to Micelio"
+msgstr "Sign in to Micelio"
+
+#: lib/micelio_web/controllers/browser/auth_html/new.html.heex:46
+#, elixir-autogen, elixir-format
+msgid "Use passkey"
+msgstr "Use passkey"
+
+#: lib/micelio_web/controllers/browser/auth_html/new.html.heex:42
+#, elixir-autogen, elixir-format
+msgid "or"
+msgstr "or"
+
+#: lib/micelio_web/controllers/browser/auth_html/new.html.heex:27
+#, elixir-autogen, elixir-format
+msgid "you@example.com"
+msgstr "you@example.com"

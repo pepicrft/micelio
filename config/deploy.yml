@@ -70,6 +70,9 @@ env:
     - TLS_KEY_PEM
     - THEME_LLM_API_KEY
     - THEME_LLM_MODEL
+    - GITHUB_OAUTH_REDIRECT_URI
+    - GITHUB_OAUTH_CLIENT_ID
+    - GITHUB_OAUTH_CLIENT_SECRET
 
 accessories:
   postgres:

@@ -8,7 +8,7 @@
 }
 
 .organization-form-header h1 {
-  font-weight: var(--theme-ui-fontWeights-bold);
+  font-weight: var(--theme-ui-font-weights-bold);
   margin-bottom: var(--theme-ui-space-1);
 }
 
@@ -36,7 +36,7 @@
 }
 
 .organization-form .label {
-  font-weight: var(--theme-ui-fontWeights-bold);
+  font-weight: var(--theme-ui-font-weights-bold);
   margin-bottom: var(--theme-ui-space-1);
   color: var(--theme-ui-colors-text);
 }
@@ -79,7 +79,7 @@
 .organization-button {
   width: 100%;
   padding: var(--theme-ui-space-1);
-  font-weight: var(--theme-ui-fontWeights-bold);
+  font-weight: var(--theme-ui-font-weights-bold);
   color: var(--theme-ui-colors-background);
   background-color: var(--theme-ui-colors-primary);
   border: none;

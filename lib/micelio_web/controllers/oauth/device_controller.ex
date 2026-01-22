@@ -72,6 +72,20 @@ defmodule MicelioWeb.Oauth.DeviceController do
     Enum.reject(attrs, fn {_key, value} -> is_nil(value) end) |> Map.new()
   end
 
+  defp fetch_client(%{"client_id" => client_id, "client_secret" => client_secret}, _attrs)
+       when is_binary(client_id) and is_binary(client_secret) do
+    case OAuth.get_device_client(client_id) do
+      %DeviceClient{client_secret: stored_secret} = client when stored_secret == client_secret ->
+        {:ok, client}
+
+      %DeviceClient{} ->
+        {:error, :invalid_client}
+
+      _ ->
+        {:error, :invalid_client}
+    end
+  end
+
   defp fetch_client(%{"client_id" => client_id}, _attrs) when is_binary(client_id) do
     case OAuth.get_device_client(client_id) do
       %DeviceClient{} = client ->
