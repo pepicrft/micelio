@@ -98,18 +98,30 @@ defmodule Micelio.Sessions do
   Gets a session by database ID or session_id with preloaded associations.
   """
   def get_session_with_associations_by_identifier(identifier) when is_binary(identifier) do
-    case Repo.get(Session, identifier) do
-      %Session{} = session ->
-        Repo.preload(session, [:user, :project])
+    # First try to find by session_id (which can be any string)
+    result =
+      Session
+      |> where([s], s.session_id == ^identifier)
+      |> Repo.one()
 
-      _ ->
-        Session
-        |> where([s], s.session_id == ^identifier)
-        |> Repo.one()
-        |> case do
-          nil -> nil
-          session -> Repo.preload(session, [:user, :project])
-        end
+    # If not found by session_id and the identifier looks like a UUID, try by id
+    result =
+      if is_nil(result) and valid_uuid?(identifier) do
+        Repo.get(Session, identifier)
+      else
+        result
+      end
+
+    case result do
+      nil -> nil
+      session -> Repo.preload(session, [:user, :project])
+    end
+  end
+
+  defp valid_uuid?(string) do
+    case Ecto.UUID.cast(string) do
+      {:ok, _} -> true
+      :error -> false
     end
   end
 

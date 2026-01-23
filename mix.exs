@@ -65,6 +65,7 @@ defmodule Micelio.MixProject do
       {:quokka, "~> 2.11", only: [:dev, :test], runtime: false},
       {:tidewave, "~> 0.5", only: :dev},
       {:mimic, "~> 2.0", only: :test},
+      {:floki, "~> 0.37", only: :test},
       {:nimble_publisher, "~> 1.0"},
       {:nimble_totp, "~> 1.0"},
       {:makeup, "~> 1.1"},

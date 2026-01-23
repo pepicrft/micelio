@@ -121,6 +121,7 @@ defmodule Micelio.ContributionConfidenceTest do
         title: "Human prompt",
         prompt: "Manual update",
         result: "Diff output",
+        model: "human",
         origin: :human,
         system_prompt: "System",
         conversation: %{"messages" => [%{"role" => "user", "content" => "Ship it"}]}

@@ -664,7 +664,8 @@ defmodule Micelio.PromptRequestsTest do
                }
              )
 
-    assert_receive {:validation_finished, ^prompt_request.id, {:ok, _run}}, 5_000
+    prompt_request_id = prompt_request.id
+    assert_receive {:validation_finished, ^prompt_request_id, {:ok, _run}}, 5_000
 
     updated = Repo.get!(PromptRequest, prompt_request.id)
     assert updated.review_status == :accepted

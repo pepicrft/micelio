@@ -25,6 +25,7 @@ defmodule Micelio.Storage.UserS3Test do
 
     key = "projects/1/file.txt"
     content = "user-s3"
+    expected_key = "users/#{user.id}/#{key}"
 
     expect(Req, :request, fn opts ->
       assert opts[:method] == :put
@@ -33,7 +34,7 @@ defmodule Micelio.Storage.UserS3Test do
       {:ok, %{status: 200, body: ""}}
     end)
 
-    assert {:ok, ^key} = UserS3.put(user.id, key, content)
+    assert {:ok, ^expected_key} = UserS3.put(user.id, key, content)
   end
 
   test "falls back to instance storage when no config exists" do
@@ -170,20 +171,26 @@ defmodule Micelio.Storage.UserS3Test do
   defp s3_config_fixture(user, overrides \\ %{}) do
     attrs =
       %{
-        user_id: user.id,
-        provider: :aws_s3,
-        bucket_name: "user-bucket",
-        region: "us-east-1",
-        endpoint_url: "https://s3.us-east-1.amazonaws.com",
-        access_key_id: "access-key",
-        secret_access_key: "secret-key",
-        path_prefix: nil,
-        validated_at: nil,
-        last_error: nil
+        "user_id" => user.id,
+        "provider" => "aws_s3",
+        "bucket_name" => "user-bucket",
+        "region" => "us-east-1",
+        "endpoint_url" => "https://s3.us-east-1.amazonaws.com",
+        "access_key_id" => "access-key",
+        "secret_access_key" => "secret-key",
+        "path_prefix" => nil,
+        "validated_at" => nil,
+        "last_error" => nil
       }
-      |> Map.merge(overrides)
+      |> Map.merge(
+        overrides
+        |> Enum.map(fn {k, v} -> {to_string(k), v} end)
+        |> Map.new()
+      )
 
-    Repo.insert!(S3Config.changeset(%S3Config{}, attrs))
+    %S3Config{}
+    |> S3Config.changeset(attrs)
+    |> Repo.insert!()
   end
 
   defp attach_storage_telemetry do

@@ -18,7 +18,7 @@ defmodule Mix.Tasks.Micelio.Sapling.Interoperability do
   def run(args) do
     Mix.Task.run("app.start")
 
-    {opts, _} =
+    {opts, _, _} =
       OptionParser.parse(args,
         strict: [output: :string, tools: :string, allow_missing: :boolean]
       )

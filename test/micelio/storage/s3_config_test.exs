@@ -62,11 +62,13 @@ defmodule Micelio.Storage.S3ConfigTest do
     assert config.access_key_id == "access-key"
     assert config.secret_access_key == "secret-key"
 
+    {:ok, uuid_binary} = Ecto.UUID.dump(config.id)
+
     %{rows: [[stored_access_key_id, stored_secret_access_key]]} =
       Ecto.Adapters.SQL.query!(
         Repo,
-        "SELECT access_key_id, secret_access_key FROM s3_configs WHERE id = ?",
-        [config.id]
+        "SELECT access_key_id, secret_access_key FROM s3_configs WHERE id = $1",
+        [uuid_binary]
       )
 
     refute stored_access_key_id == "access-key"

@@ -11,6 +11,7 @@ defmodule Micelio.Application do
       [
         MicelioWeb.Telemetry,
         Micelio.Mic.Telemetry,
+        Micelio.Cloak,
         Micelio.Repo,
         Micelio.Abuse.Blocklist,
         {Task.Supervisor, name: Micelio.Projects.ImportSupervisor},

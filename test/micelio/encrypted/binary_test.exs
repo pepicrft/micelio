@@ -1,9 +1,21 @@
 defmodule Micelio.Encrypted.BinaryTest do
   use ExUnit.Case, async: false
 
-  test "supports decryption with previous cipher during key rotation" do
+  setup do
     previous_config = Application.get_env(:micelio, Micelio.Cloak)
 
+    on_exit(fn ->
+      if previous_config do
+        Application.put_env(:micelio, Micelio.Cloak, previous_config)
+      else
+        Application.delete_env(:micelio, Micelio.Cloak)
+      end
+    end)
+
+    :ok
+  end
+
+  test "supports decryption with previous cipher during key rotation" do
     old_key = <<1::256>>
     new_key = <<2::256>>
 
@@ -25,7 +37,5 @@ defmodule Micelio.Encrypted.BinaryTest do
     )
 
     assert {:ok, "rotating-secret"} = Micelio.Encrypted.Binary.load(encrypted)
-  after
-    Application.put_env(:micelio, Micelio.Cloak, previous_config)
   end
 end

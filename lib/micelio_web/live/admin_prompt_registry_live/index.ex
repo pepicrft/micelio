@@ -18,6 +18,7 @@ defmodule MicelioWeb.AdminPromptRegistryLive.Index do
       |> assign(:filters, default_filters())
       |> assign(:prompt_requests, [])
       |> assign(:confidence_scores, %{})
+      |> assign(:review_statuses, [:pending, :accepted, :rejected])
 
     {:ok, socket}
   end

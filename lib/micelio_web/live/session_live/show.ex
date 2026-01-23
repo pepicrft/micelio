@@ -54,6 +54,7 @@ defmodule MicelioWeb.SessionLive.Show do
                   |> assign(:session, session)
                   |> assign(:change_stats, change_stats)
                   |> assign(:event_types, EventSchema.event_types())
+                  |> assign(:max_session_events, @event_snapshot_limit)
                   |> load_event_snapshot()
                   |> assign_session_og_summary()
 
