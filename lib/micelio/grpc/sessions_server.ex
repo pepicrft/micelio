@@ -352,11 +352,23 @@ defmodule Micelio.GRPC.Sessions.V1.SessionService.Server do
   end
 
   defp file_change_payloads(files) do
+    require Logger
+
     Enum.map(files, fn file ->
+      content = file.content
+      change_type = empty_to_nil(file.change_type) || "modified"
+
+      # Log files with nil content for debugging
+      if is_nil(content) and change_type != "deleted" do
+        Logger.warning(
+          "Received file with nil content: path=#{inspect(file.path)}, change_type=#{inspect(change_type)}"
+        )
+      end
+
       %{
         "path" => file.path,
-        "content" => file.content,
-        "change_type" => empty_to_nil(file.change_type) || "modified"
+        "content" => content,
+        "change_type" => change_type
       }
     end)
   end

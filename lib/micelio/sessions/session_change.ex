@@ -40,9 +40,12 @@ defmodule Micelio.Sessions.SessionChange do
   end
 
   defp validate_content_or_storage_key(changeset) do
+    require Logger
+
     change_type = get_field(changeset, :change_type)
     content = get_field(changeset, :content)
     storage_key = get_field(changeset, :storage_key)
+    file_path = get_field(changeset, :file_path)
 
     # Deleted files don't need content or storage key
     if change_type == "deleted" do
@@ -50,6 +53,10 @@ defmodule Micelio.Sessions.SessionChange do
     else
       # For added/modified files, we need either content or storage_key
       if is_nil(content) && is_nil(storage_key) do
+        Logger.warning(
+          "File #{inspect(file_path)} has nil content and nil storage_key, change_type=#{inspect(change_type)}"
+        )
+
         add_error(
           changeset,
           :content,
