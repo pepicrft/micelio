@@ -86,6 +86,19 @@ defmodule Micelio.Security.SecretScanner do
     end)
   end
 
+  # Ignore test tokens that are clearly fake (all digits or obvious test patterns)
+  defp ignore_match?(:github_token, content, regex) do
+    Regex.scan(regex, content)
+    |> Enum.all?(fn [match] ->
+      # Extract the part after ghp_
+      token = String.replace_prefix(match, "ghp_", "")
+      # Ignore if it's all digits (obviously fake) or contains "test/example" patterns
+      Regex.match?(~r/^[0-9]+$/, token) or
+        String.contains?(String.downcase(token), "test") or
+        String.contains?(String.downcase(token), "example")
+    end)
+  end
+
   defp ignore_match?(_type, _content, _regex), do: false
 
   defp load_change_content(%SessionChange{change_type: "deleted"}), do: nil

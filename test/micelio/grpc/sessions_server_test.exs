@@ -166,7 +166,7 @@ defmodule Micelio.GRPC.SessionsServerTest do
           files: [
             %FileChange{
               path: "lib/secrets.ex",
-              content: "token = \"ghp_123456789012345678901234567890123456\"\n",
+              content: "token = \"ghp_abcdefghijklmnopqrstuvwxyz0123456789\"\n",
               change_type: "added"
             }
           ]
