@@ -256,7 +256,20 @@ pub fn requireTokens(allocator: std.mem.Allocator) !StoredTokens {
     if (tokens.server.len == 0) return error.InvalidTokens;
     if (tokens.expires_at) |expires_at| {
         const now = std.time.timestamp();
-        if (now >= expires_at) return error.TokenExpired;
+        // Check if token is expired or will expire within 5 minutes
+        const buffer_seconds: i64 = 300;
+        if (now >= expires_at - buffer_seconds) {
+            // Attempt to refresh the token
+            if (tokens.refresh_token) |refresh_token| {
+                const refreshed = refreshTokens(allocator, tokens.server, refresh_token) catch |err| {
+                    std.debug.print("Token refresh failed: {any}\n", .{err});
+                    if (now >= expires_at) return error.TokenExpired;
+                    return tokens;
+                };
+                return refreshed;
+            }
+            if (now >= expires_at) return error.TokenExpired;
+        }
     }
     return tokens;
 }
@@ -284,6 +297,117 @@ pub fn requireTokensWithMessage(allocator: std.mem.Allocator) !StoredTokens {
 pub fn requireAccessTokenWithMessage(allocator: std.mem.Allocator) ![]const u8 {
     const tokens = try requireTokensWithMessage(allocator);
     return tokens.access_token;
+}
+
+/// Refresh tokens using the refresh_token grant.
+/// Uses file locking to prevent concurrent refreshes from multiple processes.
+fn refreshTokens(allocator: std.mem.Allocator, grpc_url: []const u8, refresh_token: []const u8) !StoredTokens {
+    // Acquire lock file to prevent concurrent refreshes (bound to server URL)
+    const lock_path = try lockFilePath(allocator, grpc_url);
+    defer allocator.free(lock_path);
+
+    var lock_file = try std.fs.createFileAbsolute(lock_path, .{
+        .read = true,
+        .lock = .exclusive,
+        .lock_nonblocking = false,
+    });
+    defer {
+        lock_file.close();
+        std.fs.deleteFileAbsolute(lock_path) catch {};
+    }
+
+    // After acquiring lock, re-read tokens to check if another process refreshed
+    const current_tokens = try readTokens(allocator) orelse return error.NotAuthenticated;
+    if (current_tokens.expires_at) |expires_at| {
+        const now = std.time.timestamp();
+        const buffer_seconds: i64 = 300;
+        if (now < expires_at - buffer_seconds) {
+            // Another process already refreshed, use the new tokens
+            return current_tokens;
+        }
+    }
+
+    // Need to actually refresh - find web_url from server config
+    var cfg = config.Config.load(allocator) catch {
+        return error.ConfigLoadFailed;
+    };
+    defer cfg.deinit();
+
+    const server_config = cfg.findServerByGrpcUrl(grpc_url) orelse {
+        return error.ServerNotFound;
+    };
+
+    const web_url = server_config.web_url orelse {
+        return error.NoWebUrl;
+    };
+
+    // Determine client_id
+    const client_id = if (server_config.client_id) |id|
+        id
+    else if (isFirstPartyWebUrl(web_url))
+        FirstParty.client_id
+    else
+        return error.NoClientId;
+
+    // Build refresh token request
+    const url = try std.fmt.allocPrint(allocator, "{s}/oauth/token", .{web_url});
+    defer allocator.free(url);
+
+    const payload = try std.fmt.allocPrint(
+        allocator,
+        "grant_type=refresh_token&refresh_token={s}&client_id={s}",
+        .{ refresh_token, client_id },
+    );
+    defer allocator.free(payload);
+
+    var client = std.http.Client{ .allocator = allocator };
+    defer client.deinit();
+
+    const response = try http.postForm(allocator, &client, url, payload);
+    defer allocator.free(response.body);
+
+    if (response.status != .ok) {
+        std.debug.print("Refresh failed with status {d}: {s}\n", .{ @intFromEnum(response.status), response.body });
+        return error.RefreshFailed;
+    }
+
+    const parsed = try std.json.parseFromSlice(TokenResponse, allocator, response.body, .{
+        .ignore_unknown_fields = true,
+        .allocate = .alloc_always,
+    });
+    defer parsed.deinit();
+
+    const device_tokens = try tokensFromResponse(allocator, parsed.value);
+
+    // Store the new tokens
+    const stored = StoredTokens{
+        .server = try allocator.dupe(u8, grpc_url),
+        .access_token = device_tokens.access_token,
+        .refresh_token = device_tokens.refresh_token,
+        .token_type = device_tokens.token_type,
+        .expires_at = device_tokens.expires_at,
+    };
+
+    try storeTokens(allocator, stored);
+    std.debug.print("Token refreshed successfully.\n", .{});
+
+    return stored;
+}
+
+fn lockFilePath(allocator: std.mem.Allocator, server_url: []const u8) ![]u8 {
+    const dir = try config.configDir(allocator);
+    defer allocator.free(dir);
+
+    // Create a simple hash of the server URL for the lock file name
+    var hash: u32 = 0;
+    for (server_url) |c| {
+        hash = hash *% 31 +% c;
+    }
+
+    const lock_name = try std.fmt.allocPrint(allocator, "tokens.{x}.lock", .{hash});
+    defer allocator.free(lock_name);
+
+    return std.fs.path.join(allocator, &.{ dir, lock_name });
 }
 
 fn storeTokens(allocator: std.mem.Allocator, tokens: StoredTokens) !void {

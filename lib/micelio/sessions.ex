@@ -430,11 +430,20 @@ defmodule Micelio.Sessions do
   Creates multiple session changes in a transaction.
   """
   def create_session_changes(changes_list) when is_list(changes_list) do
+    require Logger
+
     Repo.transaction(fn ->
       Enum.map(changes_list, fn attrs ->
         case create_session_change(attrs) do
-          {:ok, change} -> change
-          {:error, changeset} -> Repo.rollback(changeset)
+          {:ok, change} ->
+            change
+
+          {:error, changeset} ->
+            Logger.error(
+              "Failed to create session change for path #{inspect(attrs[:file_path] || attrs["file_path"])}: #{inspect(changeset.errors)}"
+            )
+
+            Repo.rollback(changeset)
         end
       end)
     end)
