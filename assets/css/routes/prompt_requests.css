@@ -5,7 +5,7 @@
 }
 
 .prompt-requests-subtitle {
-  color: var(--theme-ui-colors-secondary);
+  color: var(--theme-ui-colors-muted);
 }
 
 .prompt-request-button {
@@ -151,7 +151,7 @@
   flex-wrap: wrap;
   gap: var(--theme-ui-space-1);
   align-items: center;
-  color: var(--theme-ui-colors-secondary);
+  color: var(--theme-ui-colors-muted);
   font-size: var(--theme-ui-font-sizes-small);
 }
 
@@ -236,7 +236,7 @@
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: var(--theme-ui-space-2);
   font-size: var(--theme-ui-font-sizes-small);
-  color: var(--theme-ui-colors-secondary);
+  color: var(--theme-ui-colors-muted);
 }
 
 .prompt-request-budget {
@@ -251,7 +251,7 @@
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: var(--theme-ui-space-2);
   font-size: var(--theme-ui-fontSizes-small);
-  color: var(--theme-ui-colors-secondary);
+  color: var(--theme-ui-colors-muted);
 }
 
 .prompt-request-budget-available {
@@ -397,7 +397,7 @@
 }
 
 .prompt-request-empty {
-  color: var(--theme-ui-colors-secondary);
+  color: var(--theme-ui-colors-muted);
 }
 
 .prompt-request-validation {
@@ -422,7 +422,7 @@
   flex-wrap: wrap;
   gap: var(--theme-ui-space-2);
   font-size: var(--theme-ui-font-sizes-small);
-  color: var(--theme-ui-colors-secondary);
+  color: var(--theme-ui-colors-muted);
 }
 
 .prompt-request-validation-status {
@@ -455,7 +455,7 @@
   align-items: center;
   gap: var(--theme-ui-space-2);
   font-size: var(--theme-ui-fontSizes-small);
-  color: var(--theme-ui-colors-secondary);
+  color: var(--theme-ui-colors-muted);
 }
 
 .prompt-request-feedback-status {
@@ -530,7 +530,7 @@
   flex-wrap: wrap;
   gap: var(--theme-ui-space-2);
   font-size: var(--theme-ui-fontSizes-small);
-  color: var(--theme-ui-colors-secondary);
+  color: var(--theme-ui-colors-muted);
 }
 
 .prompt-request-feedback-chip {
@@ -544,12 +544,12 @@
 .prompt-request-feedback-mono {
   font-family: var(--theme-ui-fonts-mono);
   font-size: var(--theme-ui-fontSizes-small);
-  color: var(--theme-ui-colors-secondary);
+  color: var(--theme-ui-colors-muted);
 }
 
 .prompt-request-feedback-note {
   font-size: var(--theme-ui-fontSizes-small);
-  color: var(--theme-ui-colors-secondary);
+  color: var(--theme-ui-colors-muted);
 }
 
 .prompt-request-feedback-output {
@@ -568,7 +568,7 @@
 .prompt-request-feedback-suggestions {
   margin: 0;
   padding-left: var(--theme-ui-space-3);
-  color: var(--theme-ui-colors-secondary);
+  color: var(--theme-ui-colors-muted);
 }
 
 @media (max-width: 768px) {

@@ -12,7 +12,7 @@
 }
 
 .home-tagline {
-  color: var(--theme-ui-colors-secondary);
+  color: var(--theme-ui-colors-muted);
   margin-bottom: var(--theme-ui-space-3);
 }
 
@@ -21,33 +21,39 @@
   margin-top: var(--theme-ui-space-3);
 }
 
+/* Use shared .btn classes from tokens.css instead */
 .home-btn {
-  display: inline-block;
-  padding: var(--theme-ui-space-1) var(--theme-ui-space-2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--theme-ui-space-1);
+  padding: 5px 16px;
+  font-size: var(--theme-ui-font-sizes-body);
+  font-weight: var(--theme-ui-font-weights-medium);
+  line-height: 20px;
   text-decoration: none;
-  border: 1px solid var(--theme-ui-colors-text);
   border-radius: var(--theme-ui-radii-default);
   cursor: pointer;
-  color: var(--theme-ui-colors-text);
-  background: transparent;
+  transition: background-color 0.15s ease;
+  /* Secondary style by default */
+  background-color: var(--theme-ui-colors-button-default-bg);
+  color: var(--theme-ui-colors-button-default-fg);
+  border: 1px solid var(--theme-ui-colors-button-default-border);
 }
 
 .home-btn:hover {
   text-decoration: none;
-  background: var(--theme-ui-colors-border);
+  background-color: var(--theme-ui-colors-button-default-bg-hover);
 }
 
 .home-btn--primary {
-  background: var(--theme-ui-colors-accent);
-  border-color: var(--theme-ui-colors-accent-text);
-  color: var(--theme-ui-colors-accent-text);
+  background-color: var(--theme-ui-colors-button-primary-bg);
+  border-color: transparent;
+  color: var(--theme-ui-colors-button-primary-fg);
 }
 
 .home-btn--primary:hover {
-  opacity: 0.9;
-  background: var(--theme-ui-colors-accent);
-  border-color: var(--theme-ui-colors-accent-text);
-  color: var(--theme-ui-colors-accent-text);
+  background-color: var(--theme-ui-colors-button-primary-bg-hover);
 }
 
 .home-content {
@@ -110,8 +116,8 @@
 }
 
 .home-overview a:hover {
-  color: var(--theme-ui-colors-secondary);
-  text-decoration-color: var(--theme-ui-colors-secondary);
+  color: var(--theme-ui-colors-muted);
+  text-decoration-color: var(--theme-ui-colors-muted);
 }
 
 .home-pricing {
@@ -153,7 +159,7 @@
 
 .home-pricing-description {
   margin-top: var(--theme-ui-space-1);
-  color: var(--theme-ui-colors-secondary);
+  color: var(--theme-ui-colors-muted);
 }
 
 .home-popular {
@@ -173,11 +179,11 @@
 }
 
 .home-popular-subtitle {
-  color: var(--theme-ui-colors-secondary);
+  color: var(--theme-ui-colors-muted);
 }
 
 .home-popular-empty {
-  color: var(--theme-ui-colors-secondary);
+  color: var(--theme-ui-colors-muted);
 }
 
 .home-popular-grid {
@@ -232,7 +238,7 @@
 }
 
 .home-popular-handle {
-  color: var(--theme-ui-colors-secondary);
+  color: var(--theme-ui-colors-muted);
   margin-bottom: var(--theme-ui-space-1);
   word-break: break-word;
 }
@@ -246,8 +252,8 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--theme-ui-space-2);
-  color: var(--theme-ui-colors-secondary);
-  font-size: 0.9rem;
+  color: var(--theme-ui-colors-muted);
+  font-size: var(--theme-ui-font-sizes-body);
 }
 
 .home-popular-pulse-form,
@@ -278,8 +284,8 @@
 }
 
 .home-popular-pulse-count {
-  color: var(--theme-ui-colors-secondary);
-  font-size: 0.9rem;
+  color: var(--theme-ui-colors-muted);
+  font-size: var(--theme-ui-font-sizes-body);
 }
 
 .home-popular-pagination {
@@ -289,14 +295,22 @@
 }
 
 .home-popular-page-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   text-decoration: none;
-  color: var(--theme-ui-colors-primary);
-  border: var(--theme-ui-borders-thin);
+  color: var(--theme-ui-colors-button-default-fg);
+  background-color: var(--theme-ui-colors-button-default-bg);
+  border: 1px solid var(--theme-ui-colors-button-default-border);
   border-radius: var(--theme-ui-radii-default);
-  padding: var(--theme-ui-space-1) var(--theme-ui-space-2);
+  padding: 5px 16px;
+  font-size: var(--theme-ui-font-sizes-body);
+  font-weight: var(--theme-ui-font-weights-medium);
+  line-height: 20px;
+  transition: background-color 0.15s ease;
 }
 
 .home-popular-page-link:hover {
-  color: var(--theme-ui-colors-secondary);
-  border-color: var(--theme-ui-colors-secondary);
+  background-color: var(--theme-ui-colors-button-default-bg-hover);
+  text-decoration: none;
 }

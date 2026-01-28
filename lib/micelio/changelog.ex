@@ -2,12 +2,14 @@ defmodule Micelio.Changelog do
   @moduledoc """
   The Changelog context for managing changelog entries using NimblePublisher.
   """
-
   use NimblePublisher,
+    # Ensure syntax highlighting aliases are registered before NimblePublisher compiles
     build: Micelio.Changelog.Entry,
     from: Application.app_dir(:micelio, "priv/changelog/**/*.md"),
     as: :entries,
-    highlighters: [:makeup_elixir, :makeup_erlang]
+    highlighters: [:makeup_elixir, :makeup_erlang, :makeup_syntect]
+
+  require Micelio.SyntaxHighlighting
 
   # The @entries variable is first populated at compilation time.
   @entries Enum.sort_by(@entries, & &1.date, {:desc, Date})

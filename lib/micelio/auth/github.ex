@@ -8,7 +8,7 @@ defmodule Micelio.Auth.GitHub do
   @default_user_url "https://api.github.com/user"
   @default_emails_url "https://api.github.com/user/emails"
 
-  @scope "read:user user:email"
+  @scope "read:user user:email repo"
 
   def authorize_url(state) when is_binary(state) do
     with {:ok, config} <- oauth_config() do
@@ -35,7 +35,8 @@ defmodule Micelio.Auth.GitHub do
          provider: "github",
          provider_user_id: provider_user_id,
          email: email,
-         login: Map.get(user, "login")
+         login: Map.get(user, "login"),
+         access_token: token
        }}
     end
   end

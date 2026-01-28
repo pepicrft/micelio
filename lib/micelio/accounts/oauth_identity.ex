@@ -8,6 +8,7 @@ defmodule Micelio.Accounts.OAuthIdentity do
   schema "oauth_identities" do
     field :provider, Ecto.Enum, values: @providers
     field :provider_user_id, :string
+    field :access_token_encrypted, Micelio.Encrypted.Binary
 
     belongs_to :user, Micelio.Accounts.User
 
@@ -21,7 +22,7 @@ defmodule Micelio.Accounts.OAuthIdentity do
 
   def changeset(identity, attrs) do
     identity
-    |> cast(attrs, [:provider, :provider_user_id, :user_id])
+    |> cast(attrs, [:provider, :provider_user_id, :user_id, :access_token_encrypted])
     |> validate_required([:provider, :provider_user_id, :user_id])
     |> validate_inclusion(:provider, @providers)
     |> unique_constraint(:provider_user_id,

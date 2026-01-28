@@ -241,7 +241,8 @@ storage_config =
         s3_region: System.get_env("S3_REGION") || "us-east-1",
         s3_endpoint: System.get_env("S3_ENDPOINT"),
         s3_access_key_id: System.get_env("S3_ACCESS_KEY_ID"),
-        s3_secret_access_key: System.get_env("S3_SECRET_ACCESS_KEY")
+        s3_secret_access_key: System.get_env("S3_SECRET_ACCESS_KEY"),
+        s3_url_style: System.get_env("S3_URL_STYLE") || "virtual"
       ]
       |> maybe_put.(:cdn_base_url, cdn_base_url)
 
@@ -266,7 +267,8 @@ storage_config =
               s3_region: System.get_env("S3_REGION") || "us-east-1",
               s3_endpoint: System.get_env("S3_ENDPOINT"),
               s3_access_key_id: System.get_env("S3_ACCESS_KEY_ID"),
-              s3_secret_access_key: System.get_env("S3_SECRET_ACCESS_KEY")
+              s3_secret_access_key: System.get_env("S3_SECRET_ACCESS_KEY"),
+              s3_url_style: System.get_env("S3_URL_STYLE") || "virtual"
             ]
 
         :local ->

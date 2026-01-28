@@ -125,8 +125,6 @@ pub const AuthFlow = struct {
             return null;
         }
 
-        std.debug.print("Poll response: status={s}, body={s}\n", .{ @tagName(response.status), response.body });
-
         const parsed_error = std.json.parseFromSlice(ErrorResponse, self.allocator, response.body, .{
             .ignore_unknown_fields = true,
             .allocate = .alloc_always,

@@ -46,7 +46,7 @@ pub fn unaryCallResult(
 
     const target_z = try toNullTerminated(allocator, endpoint.target);
     defer allocator.free(target_z);
-    const host_z = try toNullTerminated(allocator, endpoint.target);
+    const host_z = try toNullTerminated(allocator, endpoint.host);
     defer allocator.free(host_z);
     const method_z = try toNullTerminated(allocator, method);
     defer allocator.free(method_z);

@@ -455,7 +455,7 @@ int mic_grpc_unary_call(const char *target,
         if (conn.error_message) free(conn.error_message);
         return 1;
     }
-    
+
     /* Setup TLS if needed */
     if (use_tls) {
         if (setup_tls(&conn, hostname) != 0) {
@@ -466,9 +466,9 @@ int mic_grpc_unary_call(const char *target,
             return 1;
         }
     }
-    
+
     free(target_copy);
-    
+
     /* Setup HTTP/2 */
     if (setup_http2(&conn) != 0) {
         *error_out = dup_string(conn.error_message);
@@ -560,14 +560,14 @@ int mic_grpc_unary_call(const char *target,
             free(grpc_request);
             goto cleanup;
         }
-        
+
         ret = nghttp2_session_recv(conn.session);
         if (ret != 0 && ret != NGHTTP2_ERR_EOF) {
             *error_out = dup_string(nghttp2_strerror(ret));
             free(grpc_request);
             goto cleanup;
         }
-        
+
         if (ret == NGHTTP2_ERR_EOF) break;
 
         struct timespec now;
@@ -577,7 +577,7 @@ int mic_grpc_unary_call(const char *target,
 
         if (elapsed_ms > 3000 && conn.response_len > 0) {
             conn.response_complete = 1;
-        } else if (elapsed_ms > 10000) {
+        } else if (elapsed_ms > 300000) {  // 5 minute timeout for large uploads
             *error_out = dup_string("gRPC request timed out");
             free(grpc_request);
             goto cleanup;

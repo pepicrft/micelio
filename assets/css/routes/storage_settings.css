@@ -120,8 +120,8 @@
 }
 
 .storage-settings-step-warning {
-  color: var(--theme-ui-colors-secondary);
-  border-color: var(--theme-ui-colors-secondary);
+  color: var(--theme-ui-colors-muted);
+  border-color: var(--theme-ui-colors-muted);
 }
 
 .storage-settings-step-error {

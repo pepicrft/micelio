@@ -1,68 +1,98 @@
 %{
-  title: "A Vision for Agent-First Development",
+  title: "Micelio: Growing Software Like Nature Grows Forests",
   author: :pedro,
-  tags: ~w(vision exploration),
-  description: "Why I'm building Micelio: rethinking version control for an AI-native world where humans and agents collaborate as peers."
+  tags: ~w(vision exploration agents),
+  description: "Why I named this project after fungal networks, and what it means to build version control that thinks like a living system."
 }
 
 ---
 
-The future of software development is already here, scattered unevenly across our industry. At OpenAI, hundreds of AI agents collaborate on massive codebases. At Google, billions of files live in monorepos that dwarf anything Git was designed for. At Meta, thousands of engineers land hundreds of changes daily in systems that prioritize scale over the traditional commit model.
+Beneath every forest floor lies an invisible network. Mycelium, the root structure of fungi, connects trees across vast distances, sharing nutrients, water, and chemical signals. A dying tree sends its carbon to its neighbors. A seedling in the shade receives sugars from a giant that can reach the sun. The forest thinks together.
 
-The writing is on the wall: Git tracks what happened, but I think we need systems that track why.
+I keep coming back to this image as I build Micelio.
 
-## The Problem: Git Wasn't Built for This
+Software development is entering a similar moment of connection. AI agents are no longer assistants waiting for instructions. They are collaborators making thousands of decisions, reasoning through problems, building alongside us. The question is not whether this will happen. It is already happening at OpenAI, Google, and Meta, where agents and humans work together at scales Git was never designed for.
 
-I've spent years watching brilliant developers waste time on tool friction instead of building the future. Git was revolutionary for enabling distributed human collaboration, but it's fundamentally snapshot-based and human-centric. When you have hundreds of AI agents working concurrently, making thousands of decisions per minute, Git's commit model collapses under the weight of reality.
+The question is: what kind of network do we want to grow?
 
-Consider this scenario: An agent is tasked with "add authentication to the API." In Git, you see the final commits, perhaps a dozen files changed. But you miss the crucial context: Why JWT over sessions? What security requirements drove the bcrypt choice? Which alternatives were considered and rejected? That reasoning is the most valuable artifact of software development, and Git throws it away.
+## The Hidden Intelligence of Forests
 
-I think going back to first principles is worth exploring. Rather than incrementally building from Git or existing forges, LLMs present new capabilities that didn't exist before. It feels easier to design something from the ground up with no legacy constraints than trying to move incrementally from an existing foundation that was never designed for this reality.
+In a healthy forest, mycelium does something remarkable. It does not just transport resources. It carries information. When a pest attacks one tree, chemical signals travel through the fungal network to warn its neighbors. The forest learns. It adapts. It remembers patterns across generations.
 
-## What I'm Building: mic and Micelio
+Git, for all its brilliance, captures only the surface. It records what changed: these lines were added, those were removed, this file was created. But it discards the reasoning. Why did we choose JWT over sessions? What security constraints shaped the authentication design? Which approaches did we consider and reject? That context, the actual intelligence of the work, vanishes the moment a commit is finalized.
 
-This is where **mic** and **micelio** come in—an experiment in rethinking version control and forges from scratch.
+Imagine if the forest only recorded which trees existed, but forgot everything about how they communicated, what signals they exchanged, what wisdom they passed along. That is what we are doing with our software today.
 
-**mic** is a new version control protocol I'm designing from the ground up for AI-native development. Instead of commits, mic has sessions—complete units of work that capture not just what happened, but why it happened and how decisions were made. Imagine having a conversation with an agent about implementing a feature, and that entire reasoning process becomes part of the version history, not just the final code changes.
+## Growing Something New
 
-**micelio** is the forge that makes mic accessible and useful for teams where humans and agents work as peers. Micelio is to mic what GitHub is to git. I'm aiming for the scale that companies like Shopify or Meta need, with modern infrastructure patterns that avoid the bottlenecks of traditional forges. Session-based interfaces let you browse reasoning and decision-making, not just code changes.
+This is where mic and Micelio come in.
 
-## How I'm Approaching It: Fully Open Source
+**mic** is a new version control protocol designed from the ground up for a world where humans and agents collaborate as peers. Instead of commits, mic has sessions: complete units of work that capture not just what happened, but why it happened and how decisions were made. A session is like a conversation, a record of reasoning that future collaborators (human or AI) can learn from.
 
-Both micelio and mic are fully open source. The forge and the CLI are developed in the open, and anyone can contribute or self-host.
+**Micelio** is the forge that makes mic accessible. It is to mic what GitHub is to git, but built for different assumptions. Where GitHub optimizes for human review of code changes, Micelio optimizes for understanding decision-making. Where GitHub scales through complexity, Micelio scales through simplicity: object storage for unlimited capacity, stateless compute to avoid bottlenecks, session-based interfaces that work at enterprise scale.
 
-### mic: The Protocol
+The name matters to me. Micelio is Spanish for mycelium. I wanted something that evokes networks of intelligence, shared context, and organic growth. Software is not a machine we assemble. It is a living system we cultivate.
 
-mic follows the same pattern as git—it's the core protocol that will become a standalone piece mixing CLI tools with communication protocols. I'm currently developing it together with micelio for fast iteration and prototyping, but it will eventually become its own independent foundation that anyone can build upon.
+## Letting Go of Old Mental Models
 
-This approach enables possibilities that traditional version control simply can't handle. I want to explore problems like reproducing environments easily with something like Nix, so developers can be trusted to run checks locally before pushing. I'm investigating how to make those checks run faster so that code can be continuously pushed, exploring what a world post-CI/CD might look like.
+Building this has required me to step outside comfortable defaults. I have carried certain mental models about "good engineering" for a long time. They served me well. But Micelio is an experiment in seeing what becomes possible when I stop mapping new tools onto old workflows.
 
-I also think containers will continue to commoditize, so I'm building a developer experience where where the action happens becomes an implementation detail. Whether your tests run locally, in a container, or in the cloud should be transparent to the developer workflow.
+The most common instinct when a powerful new tool appears is to ask: "Where does this fit in my existing process?" That is reasonable. It is also a trap. If the tool changes the cost of iteration, it changes what is rational to build. If it changes how reasoning can be captured and replayed, it changes what we should value.
 
-### micelio: The Forge
+So I am allowing the workflow to change first, then letting the architecture follow. I am not trying to preserve the old shape of work. I am trying to preserve what matters: clarity, leverage, and momentum.
 
-The forge uses modern infrastructure patterns with object storage as primary storage for unlimited scale, stateless compute to avoid coordinator bottlenecks, and session-based interfaces that work at enterprise scale.
+## Agents at the Center
 
-## Why This Might Matter
+Micelio is not a product with an AI assistant bolted on. Agents are core. They write code. They write documentation. They write blog posts. I am not hiding that behind a marketing layer, because the point is to learn in public what an agent-first workflow feels like when you stop treating agents as a sidekick.
 
-For developers, this could mean capturing your reasoning and never losing context of why decisions were made. You could hand off work to agents with complete context and review their reasoning, not just their code changes.
+My job becomes different. I spend less time executing and more time guiding: defining constraints, choosing tools and feedback mechanisms, setting a direction that makes it easier for an agent to do the right thing. When that guidance is good, the work compounds. When it is vague, the output drifts.
 
-For team leads, it might enable transparent decision-making where everyone sees the why, not just the what. Onboarding new team members by showing them historical decision context, and integrating AI agents as first-class team members.
+This is why I am paying more attention to system boundaries, naming, and ergonomics than I used to. These are not "just code style" anymore. They are the interface between intent and execution. They are the chemical signals traveling through the network.
 
-For companies building the future, it could mean scaling beyond Git's limits, handling massive monorepos efficiently, and preparing for the agent-first development paradigm that's coming whether we're ready or not.
+## The Loop as the Unit of Progress
+
+In an agent-first world, the unit of progress is the iteration loop. I push, monitor, and iterate in very short cycles. I care less about whether a given patch is perfect on the first try, and more about whether the loop is fast enough that imperfection is cheap.
+
+This is where checks matter. Not just tests in the narrow sense, but the full set of things that establish confidence: compilation, formatting, static analysis, runtime assertions, and anything else we treat as required. If checks are slow, they become a tax. If checks are fast and easy to run locally, they become part of the thinking process.
+
+The result is a different rhythm. Work becomes a stream of small hypotheses, each validated by checks and by running code, rather than a sequence of large, carefully staged changes that rely on delayed verification.
+
+I still switch into the slower, more reflective mode of engineering. After a burst of fast iteration, I revisit the code wearing the "senior engineer" hat: remove accidental complexity, fix awkward seams, reduce coupling, make the system easier to reason about. Agents optimize for the objective you give them. If the objective is "ship the feature," you will get shipped features, along with the rough edges that accumulate when nobody is tasked with smoothing them down. Future-proofing is not a vibe. It is a set of deliberate edits.
+
+Fast loops get you to something real. Senior loops keep it clean enough that future agents can move quickly without tripping over yesterday's choices.
+
+## Choosing Technologies That Reveal Themselves
+
+I am being more opinionated about the stack than I usually am. I want short feedback cycles and mental models that are easy for agents to reason about. That points me toward technologies that are explicit, inspectable, and friendly to runtime exploration.
+
+Elixir and Phoenix fit that goal well. The runtime is alive, observable, and built around message passing and clear boundaries. LiveView keeps the feedback loop tight for UI work without requiring a lot of moving parts. When an agent can ask the running system what it is doing, you get better iteration than when everything is hidden behind build steps and opaque tooling.
+
+This is a theme I expect to keep reinforcing: pick systems that make state visible, errors understandable, and change inexpensive. If the goal is to collaborate with agents at high tempo, you do not want a stack that forces long pauses between idea and evidence.
 
 ## The Path Forward
 
-This is very much work in progress. I'm not ready for production use yet, but the vision feels clear, and I'm building it piece by piece. Near term, I'm focusing on session interfaces, conflict resolution, and performance optimization. Medium term, I want to build agent SDKs, migration tools, and grow an ecosystem. Long term, I'm betting on this becoming a standard for agent-first development.
+This is very much work in progress. I am not ready for production use yet, but the vision feels clear, and I am building it piece by piece.
 
-## Let's Tinker Together
+Near term: session interfaces, conflict resolution, performance optimization.
+Medium term: agent SDKs, migration tools, ecosystem growth.
+Long term: a standard for agent-first development.
 
-If this excites you, I'd love to build it together. I'm working on something I think is unprecedented: version control that captures not just what we built, but how we reasoned, why we chose alternatives, and how we can learn from the process.
+Both mic and Micelio are fully open source. The forge and the CLI are developed in the open, and anyone can contribute or self-host.
 
-The future of software development is collaborative intelligence: humans and AI agents working together as peers. This requires new tools designed from the ground up for this reality. Both mic and micelio are fully open source. Git was revolutionary for its time. I think it's time for what comes next.
+## Tending the Network
 
-**Micelio + mic is my bet on that future.**
+Back to the forest. What makes mycelium powerful is not any single connection, but the pattern of connection. Individual trees come and go. The network persists, carrying accumulated wisdom forward.
+
+I think about this when I consider what we are building with software. The code we write today will be modified, extended, refactored, and eventually replaced. What persists? The reasoning. The context. The why behind the what.
+
+If we can capture that reasoning, if we can make it part of the version history rather than something that lives only in our heads or scattered Slack threads, then we are building something that gets smarter over time. Not just bigger. Smarter.
+
+That is the bet. Micelio is my attempt to grow software the way nature grows forests: as a living network of shared intelligence, where humans and agents collaborate as peers, where context flows freely, and where the accumulated wisdom of every decision becomes soil for the next generation of work.
+
+Git was revolutionary for its time. I think it is time for what comes next.
+
+**Micelio is my bet on that future.**
 
 ---
 
-*Pedro is building micelio, an open source agent-first git forge. Follow the project at [micelio.dev](https://micelio.dev).*
+*Pedro is building Micelio, an open source agent-first forge. Follow the project at [micelio.dev](https://micelio.dev).*

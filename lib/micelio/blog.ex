@@ -9,12 +9,14 @@ defmodule Micelio.Blog do
 
   If a translation is not available, the English version is used as fallback.
   """
-
   use NimblePublisher,
+    # Ensure syntax highlighting aliases are registered before NimblePublisher compiles
     build: Micelio.Blog.Post,
     from: Application.app_dir(:micelio, "priv/posts/**/*.md"),
     as: :posts,
-    highlighters: [:makeup_elixir, :makeup_erlang]
+    highlighters: [:makeup_elixir, :makeup_erlang, :makeup_syntect]
+
+  require Micelio.SyntaxHighlighting
 
   @supported_locales ~w(en ko zh_CN zh_TW ja)
 

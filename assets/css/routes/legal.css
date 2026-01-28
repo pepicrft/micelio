@@ -4,7 +4,7 @@
 }
 
 .legal-updated {
-  color: var(--theme-ui-colors-secondary);
+  color: var(--theme-ui-colors-muted);
   margin-bottom: var(--theme-ui-space-3);
 }
 
@@ -39,7 +39,7 @@
 }
 
 .legal-content a:hover {
-  color: var(--theme-ui-colors-secondary);
-  text-decoration-color: var(--theme-ui-colors-secondary);
+  color: var(--theme-ui-colors-muted);
+  text-decoration-color: var(--theme-ui-colors-muted);
 }
 

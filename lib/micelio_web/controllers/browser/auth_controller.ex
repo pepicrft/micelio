@@ -102,8 +102,16 @@ defmodule MicelioWeb.Browser.AuthController do
   @doc """
   Redirects the user to GitHub for OAuth authentication.
   """
-  def github_start(conn, _params) do
+  def github_start(conn, params) do
     state = generate_oauth_state()
+    return_to = params["return_to"]
+
+    conn =
+      if is_binary(return_to) and String.starts_with?(return_to, "/") do
+        put_session(conn, :redirect_after_oauth, return_to)
+      else
+        conn
+      end
 
     case GitHub.authorize_url(state) do
       {:ok, authorize_url} ->
@@ -164,7 +172,8 @@ defmodule MicelioWeb.Browser.AuthController do
              Accounts.get_or_create_user_from_oauth(
                profile.provider,
                profile.provider_user_id,
-               profile.email
+               profile.email,
+               access_token: profile.access_token
              ) do
         maybe_require_totp(conn, user)
       else
@@ -179,6 +188,60 @@ defmodule MicelioWeb.Browser.AuthController do
       conn
       |> oauth_failure_flash("GitHub", :invalid_oauth_state)
       |> redirect(to: ~p"/auth/login")
+    end
+  end
+
+  # Handle GitHub App installation callback (no state parameter)
+  def github_callback(conn, %{
+        "code" => code,
+        "installation_id" => _installation_id,
+        "setup_action" => "install"
+      }) do
+    current_user = conn.assigns[:current_user]
+
+    if current_user do
+      # User is already logged in, just update their GitHub token
+      with {:ok, profile} <- GitHub.fetch_user_profile(code),
+           {:ok, _user} <-
+             Accounts.get_or_create_user_from_oauth(
+               profile.provider,
+               profile.provider_user_id,
+               profile.email,
+               access_token: profile.access_token
+             ) do
+        redirect_to = get_session(conn, :redirect_after_oauth) || ~p"/projects/import"
+
+        conn
+        |> delete_session(:redirect_after_oauth)
+        |> put_flash(:info, gettext("GitHub App installed successfully."))
+        |> redirect(to: redirect_to)
+      else
+        {:error, reason} ->
+          Logger.warning("GitHub App installation callback failed", reason: inspect(reason))
+
+          conn
+          |> oauth_failure_flash("GitHub", reason)
+          |> redirect(to: ~p"/projects/import")
+      end
+    else
+      # User not logged in, treat as regular OAuth
+      with {:ok, profile} <- GitHub.fetch_user_profile(code),
+           {:ok, user} <-
+             Accounts.get_or_create_user_from_oauth(
+               profile.provider,
+               profile.provider_user_id,
+               profile.email,
+               access_token: profile.access_token
+             ) do
+        maybe_require_totp(conn, user)
+      else
+        {:error, reason} ->
+          Logger.warning("GitHub App installation callback failed", reason: inspect(reason))
+
+          conn
+          |> oauth_failure_flash("GitHub", reason)
+          |> redirect(to: ~p"/auth/login")
+      end
     end
   end
 
@@ -397,16 +460,32 @@ defmodule MicelioWeb.Browser.AuthController do
   end
 
   defp maybe_require_totp(conn, user) do
+    {conn, redirect_to} = pop_post_auth_redirect(conn)
+
     if Accounts.totp_enabled?(user) do
       conn
       |> put_session(:totp_pending_user_id, user.id)
-      |> put_session(:totp_pending_redirect, login_redirect_path(conn))
+      |> put_session(:totp_pending_redirect, redirect_to)
       |> redirect(to: ~p"/auth/totp")
     else
       conn
       |> put_session(:user_id, user.id)
       |> put_flash(:info, "Welcome back, #{user.account.handle}!")
-      |> redirect(to: login_redirect_path(conn))
+      |> redirect(to: redirect_to)
+    end
+  end
+
+  defp pop_post_auth_redirect(conn) do
+    case get_session(conn, :redirect_after_oauth) do
+      path when is_binary(path) ->
+        if String.starts_with?(path, "/") do
+          {delete_session(conn, :redirect_after_oauth), path}
+        else
+          {conn, login_redirect_path(conn)}
+        end
+
+      _ ->
+        {conn, login_redirect_path(conn)}
     end
   end
 

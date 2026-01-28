@@ -4,7 +4,7 @@
 }
 
 .repository-description {
-  color: var(--theme-ui-colors-secondary);
+  color: var(--theme-ui-colors-muted);
 }
 
 .repository-url {
@@ -12,7 +12,7 @@
 }
 
 .repository-forked-from {
-  color: var(--theme-ui-colors-secondary);
+  color: var(--theme-ui-colors-muted);
 }
 
 .repository-forked-link {
@@ -23,8 +23,8 @@
 }
 
 .repository-forked-link:hover {
-  color: var(--theme-ui-colors-secondary);
-  text-decoration-color: var(--theme-ui-colors-secondary);
+  color: var(--theme-ui-colors-muted);
+  text-decoration-color: var(--theme-ui-colors-muted);
 }
 
 .repository-url a {
@@ -35,8 +35,8 @@
 }
 
 .repository-url a:hover {
-  color: var(--theme-ui-colors-secondary);
-  text-decoration-color: var(--theme-ui-colors-secondary);
+  color: var(--theme-ui-colors-muted);
+  text-decoration-color: var(--theme-ui-colors-muted);
 }
 
 .repository-stars {
@@ -80,7 +80,7 @@
 }
 
 .project-badge-description {
-  color: var(--theme-ui-colors-secondary);
+  color: var(--theme-ui-colors-muted);
   margin-bottom: var(--theme-ui-space-2);
 }
 
@@ -121,7 +121,7 @@
 
 .project-badge-code code {
   font-family: var(--theme-ui-fonts-mono);
-  font-size: 0.9em;
+  font-size: var(--theme-ui-font-sizes-body);
   color: var(--theme-ui-colors-text);
   display: block;
   max-width: 100%;
@@ -144,7 +144,7 @@
 
 .project-token-balance,
 .project-token-available {
-  color: var(--theme-ui-colors-secondary);
+  color: var(--theme-ui-colors-muted);
   margin-bottom: var(--theme-ui-space-1);
 }
 
@@ -219,12 +219,12 @@
 .project-token-usage-meta {
   display: block;
   margin-top: var(--theme-ui-space-1);
-  color: var(--theme-ui-colors-secondary);
+  color: var(--theme-ui-colors-muted);
   font-size: var(--theme-ui-fontSizes-1);
 }
 
 .project-description {
-  color: var(--theme-ui-colors-secondary);
+  color: var(--theme-ui-colors-muted);
 }
 
 .project-url {
@@ -232,7 +232,7 @@
 }
 
 .project-forked-from {
-  color: var(--theme-ui-colors-secondary);
+  color: var(--theme-ui-colors-muted);
 }
 
 .project-forked-link {
@@ -243,8 +243,8 @@
 }
 
 .project-forked-link:hover {
-  color: var(--theme-ui-colors-secondary);
-  text-decoration-color: var(--theme-ui-colors-secondary);
+  color: var(--theme-ui-colors-muted);
+  text-decoration-color: var(--theme-ui-colors-muted);
 }
 
 .project-url a {
@@ -255,8 +255,8 @@
 }
 
 .project-url a:hover {
-  color: var(--theme-ui-colors-secondary);
-  text-decoration-color: var(--theme-ui-colors-secondary);
+  color: var(--theme-ui-colors-muted);
+  text-decoration-color: var(--theme-ui-colors-muted);
 }
 
 .project-stars {
@@ -365,7 +365,7 @@
   align-items: baseline;
   gap: calc(var(--theme-ui-space-1) / 2);
   margin-bottom: var(--theme-ui-space-1);
-  color: var(--theme-ui-colors-secondary);
+  color: var(--theme-ui-colors-muted);
 }
 
 .project-breadcrumb a {
@@ -389,7 +389,7 @@
 }
 
 .project-empty {
-  color: var(--theme-ui-colors-secondary);
+  color: var(--theme-ui-colors-muted);
 }
 
 .project-tree {
@@ -418,7 +418,7 @@
 }
 
 .project-tree-parent-link {
-  color: var(--theme-ui-colors-secondary);
+  color: var(--theme-ui-colors-muted);
 }
 
 .project-tree-parent-link:hover {
@@ -433,7 +433,7 @@
 .project-tree-kind {
   color: var(--theme-ui-colors-muted);
   font-family: var(--theme-ui-fonts-mono);
-  font-size: 0.875em;
+  font-size: var(--theme-ui-font-sizes-body);
 }
 
 @media (max-width: 40rem) {
@@ -526,17 +526,17 @@
 }
 
 .project-readme-markdown a:hover {
-  color: var(--theme-ui-colors-secondary);
-  text-decoration-color: var(--theme-ui-colors-secondary);
+  color: var(--theme-ui-colors-muted);
+  text-decoration-color: var(--theme-ui-colors-muted);
 }
 
 .project-readme-binary {
-  color: var(--theme-ui-colors-secondary);
+  color: var(--theme-ui-colors-muted);
 }
 
 .project-file-path {
   font-family: var(--theme-ui-fonts-mono);
-  color: var(--theme-ui-colors-secondary);
+  color: var(--theme-ui-colors-muted);
 }
 
 .project-file-back {
@@ -576,7 +576,7 @@
 .project-file-binary {
   border: var(--theme-ui-borders-thin);
   padding: var(--theme-ui-space-2);
-  color: var(--theme-ui-colors-secondary);
+  color: var(--theme-ui-colors-muted);
 }
 
 .repository-fork-form {
@@ -613,7 +613,7 @@
   align-items: baseline;
   gap: calc(var(--theme-ui-space-1) / 2);
   margin-bottom: var(--theme-ui-space-1);
-  color: var(--theme-ui-colors-secondary);
+  color: var(--theme-ui-colors-muted);
 }
 
 .repository-breadcrumb a {
@@ -637,7 +637,7 @@
 }
 
 .repository-empty {
-  color: var(--theme-ui-colors-secondary);
+  color: var(--theme-ui-colors-muted);
 }
 
 .repository-tree {
@@ -666,7 +666,7 @@
 }
 
 .repository-tree-parent-link {
-  color: var(--theme-ui-colors-secondary);
+  color: var(--theme-ui-colors-muted);
 }
 
 .repository-tree-parent-link:hover {
@@ -680,7 +680,7 @@
 .repository-tree-kind {
   color: var(--theme-ui-colors-muted);
   font-family: var(--theme-ui-fonts-mono);
-  font-size: 0.875em;
+  font-size: var(--theme-ui-font-sizes-body);
 }
 
 @media (max-width: 40rem) {
@@ -771,17 +771,17 @@
 }
 
 .repository-readme-markdown a:hover {
-  color: var(--theme-ui-colors-secondary);
-  text-decoration-color: var(--theme-ui-colors-secondary);
+  color: var(--theme-ui-colors-muted);
+  text-decoration-color: var(--theme-ui-colors-muted);
 }
 
 .repository-readme-binary {
-  color: var(--theme-ui-colors-secondary);
+  color: var(--theme-ui-colors-muted);
 }
 
 .repository-file-path {
   font-family: var(--theme-ui-fonts-mono);
-  color: var(--theme-ui-colors-secondary);
+  color: var(--theme-ui-colors-muted);
 }
 
 .repository-file-back {
@@ -837,7 +837,7 @@
 .highlight .ss,
 .highlight .sx,
 .highlight .dl {
-  color: var(--theme-ui-colors-secondary);
+  color: var(--theme-ui-colors-muted);
 }
 
 .highlight .c,
@@ -857,7 +857,7 @@
 .highlight .mi,
 .highlight .mo,
 .highlight .il {
-  color: var(--theme-ui-colors-secondary);
+  color: var(--theme-ui-colors-muted);
 }
 
 .highlight .bp,
@@ -884,5 +884,5 @@
 .repository-file-binary {
   border: var(--theme-ui-borders-thin);
   padding: var(--theme-ui-space-2);
-  color: var(--theme-ui-colors-secondary);
+  color: var(--theme-ui-colors-muted);
 }

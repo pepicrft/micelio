@@ -77,7 +77,7 @@ defmodule Micelio.Storage.S3 do
           {:error, :not_found}
 
         status ->
-          Logger.error("S3: GET #{key} failed with status #{status}")
+          Logger.error("S3: GET #{key} failed with status #{status}: #{inspect(response.body)}")
           {:error, {:s3_error, status, response.body}}
       end
     else

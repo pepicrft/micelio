@@ -285,10 +285,27 @@ defmodule Micelio.Projects.Import do
   end
 
   defp update_import(import, attrs) do
-    import
-    |> ProjectImport.changeset(attrs)
-    |> Repo.update()
+    case import
+         |> ProjectImport.changeset(attrs)
+         |> Repo.update() do
+      {:ok, updated} ->
+        broadcast_update(updated)
+        {:ok, updated}
+
+      error ->
+        error
+    end
   end
+
+  defp broadcast_update(%ProjectImport{} = import) do
+    Phoenix.PubSub.broadcast(
+      Micelio.PubSub,
+      import_topic(import.id),
+      {:import_updated, import}
+    )
+  end
+
+  defp import_topic(import_id), do: "project_import:#{import_id}"
 
   defp temp_dir(%ProjectImport{id: id}) do
     Path.join([temp_root(), id])

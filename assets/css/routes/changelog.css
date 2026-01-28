@@ -15,7 +15,7 @@
 }
 
 .changelog-category-label {
-  color: var(--theme-ui-colors-secondary);
+  color: var(--theme-ui-colors-muted);
 }
 
 .changelog-entries {
@@ -53,7 +53,7 @@
 }
 
 .changelog-entry-meta {
-  color: var(--theme-ui-colors-secondary);
+  color: var(--theme-ui-colors-muted);
   display: flex;
   align-items: center;
   gap: var(--theme-ui-space-1);

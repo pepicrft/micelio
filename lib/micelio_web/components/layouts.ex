@@ -69,31 +69,76 @@ defmodule MicelioWeb.Layouts do
             <a href="/">micelio</a>
           </span>
 
+          <%= if assigns[:current_user] do %>
+            <a href={~p"/projects"}>{gettext("projects")}</a>
+          <% end %>
           <a href={~p"/blog"}>{gettext("blog")}</a>
+          <a href={~p"/docs"}>{gettext("docs")}</a>
           <a href={~p"/changelog"}>{gettext("changelog")}</a>
           <a href={~p"/search"}>{gettext("search")}</a>
         </div>
 
         <div class="navbar-right">
-          <button
-            id="theme-toggle"
-            type="button"
-            class="navbar-theme-toggle"
-            aria-label={gettext("Toggle theme")}
-          >
-            {gettext("theme")}
-          </button>
-
           <%= if assigns[:current_user] do %>
             <%= if Micelio.Admin.admin_user?(assigns.current_user) do %>
               <a href={~p"/admin"}>{gettext("admin")}</a>
             <% end %>
-            <a href={~p"/projects"}>{gettext("projects")}</a>
             <form action={~p"/auth/logout"} method="post" class="navbar-logout-form">
               <input type="hidden" name="_csrf_token" value={Phoenix.Controller.get_csrf_token()} />
               <input type="hidden" name="_method" value="delete" />
               <button type="submit" class="navbar-link-button">{gettext("logout")}</button>
             </form>
+
+            <div class="navbar-add-dropdown">
+              <button
+                type="button"
+                class="navbar-add-button"
+                id="navbar-add-toggle"
+                aria-haspopup="true"
+                aria-expanded="false"
+                aria-controls="navbar-add-menu"
+                aria-label={gettext("Add new")}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M12 5v14" /><path d="M5 12h14" />
+                </svg>
+              </button>
+              <div
+                class="navbar-add-menu"
+                id="navbar-add-menu"
+                role="menu"
+                aria-labelledby="navbar-add-toggle"
+                hidden
+              >
+                <a href={~p"/projects/import"} role="menuitem" class="navbar-add-menu-item">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" />
+                    <path d="M9 18c-4.51 2-5-2-7-2" />
+                  </svg>
+                  {gettext("Import Git project")}
+                </a>
+              </div>
+            </div>
 
             <a
               href={~p"/account"}
@@ -151,6 +196,15 @@ defmodule MicelioWeb.Layouts do
               current_path={@current_path}
             />
           </div>
+
+          <button
+            id="theme-toggle"
+            type="button"
+            class="footer-theme-toggle"
+            aria-label={gettext("Toggle theme")}
+          >
+            {gettext("theme")}
+          </button>
 
           <div class="site-footer-meta">
             © {Date.utc_today().year} Micelio

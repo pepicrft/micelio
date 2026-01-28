@@ -30,6 +30,7 @@ import "../css/app.css";
 import { setupPasskeys } from "./auth/passkeys";
 import { initTheme, setupThemeToggle } from "./ui/theme";
 import { setupFlashDismiss } from "./ui/flash";
+import { setupDropdown } from "./ui/dropdown";
 import { setupProjectHandleGeneration } from "./forms/project-handle";
 
 const csrfToken = document
@@ -507,7 +508,25 @@ const liveSocket = new LiveSocket("/live", Socket, {
 });
 
 // Show progress bar on live navigation and form submits
-topbar.config({ barColors: { 0: "#29d" }, shadowColor: "rgba(0, 0, 0, .3)" });
+// Get theme primary color from CSS variables
+function getThemePrimaryColor() {
+  return getComputedStyle(document.documentElement)
+    .getPropertyValue("--theme-ui-colors-primary")
+    .trim() || "#2f7c4c";
+}
+
+// Configure topbar with theme color
+function configureTopbar() {
+  const primaryColor = getThemePrimaryColor();
+  topbar.config({ barColors: { 0: primaryColor }, shadowColor: "rgba(0, 0, 0, .3)" });
+}
+
+// Initial configuration
+configureTopbar();
+
+// Reconfigure when theme changes
+window.addEventListener("theme-changed", configureTopbar);
+
 window.addEventListener("phx:page-loading-start", (_info) => topbar.show(300));
 window.addEventListener("phx:page-loading-stop", (_info) => topbar.hide());
 
@@ -524,6 +543,7 @@ window.liveSocket = liveSocket;
 initTheme();
 setupThemeToggle();
 setupFlashDismiss();
+setupDropdown();
 setupPasskeys();
 document.addEventListener("DOMContentLoaded", setupProjectHandleGeneration);
 window.addEventListener("phx:page-loading-stop", setupPasskeys);

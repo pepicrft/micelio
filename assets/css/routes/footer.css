@@ -5,7 +5,7 @@
   margin: 0 auto;
   padding: var(--theme-ui-space-3) var(--theme-ui-space-2);
   border-top: var(--theme-ui-borders-thin);
-  color: var(--theme-ui-colors-secondary);
+  color: var(--theme-ui-colors-muted);
 }
 
 .site-footer-content {
@@ -53,6 +53,20 @@
   align-items: center;
   justify-content: flex-end;
   gap: var(--theme-ui-space-2);
+}
+
+.footer-theme-toggle {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--theme-ui-colors-text);
+  font: inherit;
+  text-decoration: none;
+  padding: 0;
+}
+
+.footer-theme-toggle:hover {
+  text-decoration: underline;
 }
 
 /* Language selector */

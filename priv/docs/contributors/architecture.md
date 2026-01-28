@@ -1,13 +1,13 @@
-# Micelio Project Context
+%{
+  title: "Architecture",
+  description: "Overview of Micelio's technical architecture and design decisions."
+}
+---
 
-Micelio is a monorepo containing:
+Micelio is a monorepo containing two main components:
 
 - **Forge** (Elixir/Phoenix) - The web application and gRPC server
-- **mic** (Zig) - The `mic` command-line interface
-
-## Architecture
-
-See [docs/contributors/next.md](../contributors/next.md) for upcoming features and [docs/contributors/design.md](../contributors/design.md) for architecture.
+- **mic** (Zig) - The command-line interface
 
 ## Tech Stack
 
@@ -48,3 +48,20 @@ The Elixir module `Micelio.Git` exposes:
 - `tree_blob/3` - Read file content at a ref and path
 
 All functions return `{:ok, result}` or `{:error, reason}` tuples.
+
+## Design Principles
+
+### Forge-First Architecture
+
+The server is the source of truth, not the local disk. This enables:
+- Stateless agents that can work from anywhere
+- S3 as primary storage (like Turbopuffer)
+- O(log n) operations via bloom filters
+- Coordinator-free landing via S3 conditional writes
+
+### Code Quality Standards
+
+- **Single Responsibility**: Each module/function does ONE thing well
+- **Clear boundaries**: Separate concerns (parsing, validation, business logic, I/O)
+- **Explicit over implicit**: No magic; make data flow obvious
+- **Fail fast**: Validate inputs at boundaries, return errors early

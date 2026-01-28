@@ -63,4 +63,31 @@ defmodule Micelio.Auth.GitHubHttpClient do
         {:error, reason}
     end
   end
+
+  @impl true
+  def fetch_repositories(token, opts \\ []) do
+    per_page = Keyword.get(opts, :per_page, 100)
+    page = Keyword.get(opts, :page, 1)
+    sort = Keyword.get(opts, :sort, "updated")
+
+    headers = [
+      {"accept", @github_accept},
+      {"authorization", "Bearer #{token}"},
+      {"user-agent", "Micelio"}
+    ]
+
+    url =
+      "https://api.github.com/user/repos?per_page=#{per_page}&page=#{page}&sort=#{sort}&affiliation=owner,collaborator,organization_member"
+
+    case Req.get(url, headers: headers) do
+      {:ok, %{status: 200, body: body}} when is_list(body) ->
+        {:ok, body}
+
+      {:ok, %{status: status, body: body}} ->
+        {:error, {:repos_fetch_failed, status, body}}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
 end

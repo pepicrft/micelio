@@ -46,6 +46,9 @@ function applyThemePreference(preference) {
       effective === "dark" ? "Switch to light mode" : "Switch to dark mode",
     );
   }
+
+  // Dispatch event so other components can react to theme change
+  window.dispatchEvent(new CustomEvent("theme-changed"));
 }
 
 /**

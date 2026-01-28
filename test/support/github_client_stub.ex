@@ -21,4 +21,20 @@ defmodule Micelio.Auth.GitHubClientStub do
   end
 
   def fetch_emails(_token, _config), do: {:error, :invalid_token}
+
+  @impl true
+  def fetch_repositories("valid-token", _opts) do
+    {:ok,
+     [
+       %{
+         "id" => 1,
+         "full_name" => "octocat/hello-world",
+         "clone_url" => "https://github.com/octocat/hello-world.git",
+         "private" => false,
+         "description" => "A test repository"
+       }
+     ]}
+  end
+
+  def fetch_repositories(_token, _opts), do: {:error, :invalid_token}
 end

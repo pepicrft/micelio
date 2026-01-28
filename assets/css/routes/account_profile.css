@@ -74,7 +74,7 @@
 
 .account-passkey-status {
   margin-top: var(--theme-ui-space-1);
-  color: var(--theme-ui-colors-secondary);
+  color: var(--theme-ui-colors-muted);
 }
 
 .account-profile-empty {
@@ -218,7 +218,7 @@
 }
 
 .account-profile-button:hover {
-  background-color: var(--theme-ui-colors-secondary);
+  background-color: var(--theme-ui-colors-muted);
 }
 
 .account-profile-list-name {
@@ -233,7 +233,7 @@
 
 .account-profile-list-description {
   margin: var(--theme-ui-space-1) 0 0;
-  color: var(--theme-ui-colors-secondary);
+  color: var(--theme-ui-colors-muted);
 }
 
 .account-profile-org-link {

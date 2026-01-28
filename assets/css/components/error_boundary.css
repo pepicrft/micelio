@@ -11,13 +11,13 @@
 }
 
 .error-boundary-title {
-  font-size: 1.25rem;
+  font-size: var(--theme-ui-font-sizes-body);
   font-weight: var(--theme-ui-fontWeights-bold);
   margin-bottom: var(--theme-ui-space-1);
 }
 
 .error-boundary-message {
-  color: var(--theme-ui-colors-secondary);
+  color: var(--theme-ui-colors-muted);
   margin-bottom: var(--theme-ui-space-2);
 }
 

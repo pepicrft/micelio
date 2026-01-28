@@ -14,12 +14,15 @@
   padding: var(--theme-ui-space-2);
   background-color: var(--theme-ui-colors-background);
   border: var(--theme-ui-borders-thin);
+  border-radius: var(--theme-ui-radii-default);
   text-decoration: none;
   color: inherit;
+  transition: border-color 0.15s ease;
 }
 
 .project-card:hover {
   border-color: var(--theme-ui-colors-primary);
+  text-decoration: none;
 }
 
 .project-card-name {
@@ -50,8 +53,8 @@
 }
 
 .project-card-url a:hover {
-  color: var(--theme-ui-colors-secondary);
-  text-decoration-color: var(--theme-ui-colors-secondary);
+  color: var(--theme-ui-colors-muted);
+  text-decoration-color: var(--theme-ui-colors-muted);
 }
 
 .project-card-actions {
@@ -65,13 +68,16 @@
   padding: var(--theme-ui-space-1);
   text-decoration: none;
   border: var(--theme-ui-borders-thin);
+  border-radius: var(--theme-ui-radii-default);
   background-color: var(--theme-ui-colors-background);
   color: var(--theme-ui-colors-text);
   cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
 }
 
 .project-card-action:hover {
   border-color: var(--theme-ui-colors-primary);
+  background-color: var(--theme-ui-colors-hover);
 }
 
 .projects-empty {
@@ -134,18 +140,37 @@
 
 .project-input {
   width: 100%;
-  padding: var(--theme-ui-space-1);
-  border: var(--theme-ui-borders-thin);
-  background-color: var(--theme-ui-colors-background);
+  padding: 5px 12px;
+  font-size: var(--theme-ui-font-sizes-body);
+  line-height: 20px;
+  color: var(--theme-ui-colors-text);
+  vertical-align: middle;
+  background-color: var(--theme-ui-colors-control-bg);
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  border: 1px solid var(--theme-ui-colors-control-border);
+  border-radius: var(--theme-ui-radii-default);
+  box-shadow: inset 0 1px 0 rgba(208, 215, 222, 0.2);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .project-input:focus {
-  outline: none;
   border-color: var(--theme-ui-colors-primary);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(9, 105, 218, 0.3);
 }
 
 .project-input::placeholder {
   color: var(--theme-ui-colors-muted);
+  opacity: 1;
+}
+
+.project-input-error {
+  border-color: var(--theme-ui-colors-danger);
+}
+
+.project-input-error:focus {
+  box-shadow: 0 0 0 3px rgba(209, 36, 47, 0.3);
 }
 
 .project-textarea {
@@ -158,31 +183,49 @@
 }
 
 .project-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--theme-ui-space-1);
   width: 100%;
-  padding: var(--theme-ui-space-1);
-  font-weight: var(--theme-ui-font-weights-bold);
-  color: var(--theme-ui-colors-background);
-  background-color: var(--theme-ui-colors-primary);
-  border: none;
+  padding: 5px 16px;
+  font-size: var(--theme-ui-font-sizes-body);
+  font-weight: var(--theme-ui-font-weights-medium);
+  font-family: inherit;
+  line-height: 20px;
+  color: var(--theme-ui-colors-button-primary-fg);
+  background-color: var(--theme-ui-colors-button-primary-bg);
+  border: 1px solid transparent;
+  border-radius: var(--theme-ui-radii-default);
+  text-decoration: none;
   cursor: pointer;
+  transition: background-color 0.2s ease;
 }
 
 .project-button:hover {
-  background-color: var(--theme-ui-colors-secondary);
+  background-color: var(--theme-ui-colors-button-primary-bg-hover);
 }
 
 .project-button:focus {
-  outline: none;
+  outline: 2px solid var(--theme-ui-colors-primary);
+  outline-offset: 2px;
 }
 
 .project-button-secondary {
-  background-color: transparent;
-  color: var(--theme-ui-colors-text);
-  border: var(--theme-ui-borders-thin);
+  background-color: var(--theme-ui-colors-button-default-bg);
+  color: var(--theme-ui-colors-button-default-fg);
+  border: 1px solid var(--theme-ui-colors-button-default-border);
+  text-decoration: none;
 }
 
 .project-button-secondary:hover {
-  background-color: var(--theme-ui-colors-border);
+  background-color: var(--theme-ui-colors-button-default-bg-hover);
+}
+
+.project-button:disabled,
+.project-button[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* Project show page */
@@ -211,14 +254,16 @@
 }
 
 .project-show-url a:hover {
-  color: var(--theme-ui-colors-secondary);
-  text-decoration-color: var(--theme-ui-colors-secondary);
+  color: var(--theme-ui-colors-muted);
+  text-decoration-color: var(--theme-ui-colors-muted);
 }
 
 .project-show-action {
   padding: var(--theme-ui-space-1);
   text-decoration: none;
   cursor: pointer;
+  border-radius: var(--theme-ui-radii-default);
+  transition: background-color 0.15s ease;
 }
 
 .project-show-action-edit {
@@ -228,7 +273,7 @@
 }
 
 .project-show-action-edit:hover {
-  background-color: var(--theme-ui-colors-border);
+  background-color: var(--theme-ui-colors-hover);
 }
 
 .project-show-action-delete {
@@ -238,7 +283,7 @@
 }
 
 .project-show-action-delete:hover {
-  background-color: var(--theme-ui-colors-border);
+  background-color: var(--theme-ui-colors-hover);
 }
 
 .project-show-action-star {
@@ -248,7 +293,7 @@
 }
 
 .project-show-action-star:hover {
-  background-color: var(--theme-ui-colors-border);
+  background-color: var(--theme-ui-colors-hover);
 }
 
 .project-show-action-agents {
@@ -258,7 +303,7 @@
 }
 
 .project-show-action-agents:hover {
-  background-color: var(--theme-ui-colors-border);
+  background-color: var(--theme-ui-colors-hover);
 }
 
 .project-show-stars {
@@ -286,11 +331,14 @@
   text-decoration: none;
   color: var(--theme-ui-colors-primary);
   border: var(--theme-ui-borders-thin);
+  border-radius: var(--theme-ui-radii-default);
   background-color: var(--theme-ui-colors-background);
+  transition: background-color 0.15s ease;
 }
 
 .project-show-nav-link:hover {
-  background-color: var(--theme-ui-colors-border);
+  background-color: var(--theme-ui-colors-hover);
+  text-decoration: none;
 }
 
 .project-recent-sessions {
@@ -314,12 +362,15 @@
   padding: var(--theme-ui-space-1);
   background-color: var(--theme-ui-colors-background);
   border: var(--theme-ui-borders-thin);
+  border-radius: var(--theme-ui-radii-default);
   text-decoration: none;
   color: inherit;
+  transition: border-color 0.15s ease;
 }
 
 .session-card-compact:hover {
   border-color: var(--theme-ui-colors-primary);
+  text-decoration: none;
 }
 
 .session-card-content {

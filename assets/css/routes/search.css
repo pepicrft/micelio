@@ -8,7 +8,7 @@
 
 .search-header h1 {
   font-weight: var(--theme-ui-font-weights-bold);
-  font-size: calc(var(--theme-ui-font-sizes-body) * 1.5);
+  font-size: var(--theme-ui-font-sizes-body);
   margin-bottom: var(--theme-ui-space-1);
 }
 
@@ -105,7 +105,7 @@
 }
 
 .search-result-description {
-  color: var(--theme-ui-colors-secondary);
+  color: var(--theme-ui-colors-muted);
 }
 
 .search-result-visibility {

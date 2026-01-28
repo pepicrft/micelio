@@ -184,8 +184,7 @@ defmodule Micelio.Storage.UserS3Test do
       }
       |> Map.merge(
         overrides
-        |> Enum.map(fn {k, v} -> {to_string(k), v} end)
-        |> Map.new()
+        |> Map.new(fn {k, v} -> {to_string(k), v} end)
       )
 
     %S3Config{}

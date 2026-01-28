@@ -7,6 +7,7 @@ const content_proto = @import("grpc/content_proto.zig");
 const sessions_proto = @import("grpc/sessions_proto.zig");
 const manifest = @import("workspace/manifest.zig");
 const fs = @import("workspace/fs.zig");
+const ignore = @import("workspace/ignore.zig");
 const cache_mod = @import("cache.zig");
 
 const WorkspaceChange = struct {
@@ -398,6 +399,10 @@ fn collectChanges(
         try known.put(entry.path, entry.hash);
     }
 
+    // Load ignore patterns
+    var ignore_patterns = try ignore.load(allocator, workspace_root);
+    defer ignore_patterns.deinit();
+
     var changes: std.ArrayList(WorkspaceChange) = .empty;
 
     for (state.entries) |entry| {
@@ -429,6 +434,7 @@ fn collectChanges(
     while (try walker.next()) |entry| {
         if (entry.kind != .file) continue;
         if (isMetadataPath(entry.path)) continue;
+        if (ignore_patterns.shouldIgnore(entry.path)) continue;
         if (known.contains(entry.path)) continue;
         const path_copy = try allocator.dupe(u8, entry.path);
         try changes.append(allocator, .{ .path = path_copy, .change_type = "added" });
@@ -448,7 +454,7 @@ fn buildFileChanges(
             break :blk &[_]u8{};
         } else blk: {
             const path = try std.fs.path.join(allocator, &[_][]const u8{ workspace_root, change.path });
-            const data = try fs.readFileAlloc(allocator, path, 50 * 1024 * 1024);
+            const data = try fs.readFileAlloc(allocator, path, 200 * 1024 * 1024);
             if (data == null) return error.FileNotFound;
             break :blk data.?;
         };

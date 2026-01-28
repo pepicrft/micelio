@@ -205,13 +205,16 @@ pub fn main() !void {
         return;
     };
 
+    // Load configuration to get default server
+    var cfg = try config.Config.load(allocator);
+    defer cfg.deinit();
+
+    const default_server = cfg.getDefaultServer() orelse oauth.default_server;
+
     // Output handled by std.debug.print in command handlers
 
     if (matches.subcommandMatches("auth")) |auth_matches| {
         if (auth_matches.subcommandMatches("login")) |_| {
-            var cfg = try config.Config.load(allocator);
-            defer cfg.deinit();
-
             const default_name = cfg.getDefaultServerName() orelse {
                 std.debug.print("Error: No default server configured.\n", .{});
                 return error.NoDefaultServer;
@@ -254,13 +257,13 @@ pub fn main() !void {
 
     if (matches.subcommandMatches("org")) |org_matches| {
         if (org_matches.subcommandMatches("list")) |_| {
-            try organizations.list(allocator, oauth.default_server);
+            try organizations.list(allocator, default_server);
             return;
         }
 
         if (org_matches.subcommandMatches("get")) |get_matches| {
             if (get_matches.getSingleValue("HANDLE")) |handle| {
-                try organizations.get(allocator, oauth.default_server, handle);
+                try organizations.get(allocator, default_server, handle);
             } else {
                 std.debug.print("Error: organization handle required\n", .{});
                 std.debug.print("Usage: mic org get <handle>\n", .{});
@@ -275,7 +278,7 @@ pub fn main() !void {
     if (matches.subcommandMatches("project")) |project_matches| {
         if (project_matches.subcommandMatches("list")) |list_matches| {
             if (list_matches.getSingleValue("ORGANIZATION")) |org| {
-                try projects.list(allocator, oauth.default_server, org);
+                try projects.list(allocator, default_server, org);
             } else {
                 std.debug.print("Error: organization required\n", .{});
                 std.debug.print("Usage: mic project list <organization>\n", .{});
@@ -295,7 +298,7 @@ pub fn main() !void {
             }
 
             const description = create_matches.getSingleValue("description");
-            try projects.create(allocator, oauth.default_server, org.?, handle.?, name.?, description);
+            try projects.create(allocator, default_server, org.?, handle.?, name.?, description);
             return;
         }
 
@@ -309,7 +312,7 @@ pub fn main() !void {
                 return;
             }
 
-            try projects.get(allocator, oauth.default_server, org.?, handle.?);
+            try projects.get(allocator, default_server, org.?, handle.?);
             return;
         }
 
@@ -333,7 +336,7 @@ pub fn main() !void {
                 return;
             }
 
-            try projects.update(allocator, oauth.default_server, org.?, handle.?, name, description, new_handle);
+            try projects.update(allocator, default_server, org.?, handle.?, name, description, new_handle);
             return;
         }
 
@@ -347,7 +350,7 @@ pub fn main() !void {
                 return;
             }
 
-            try projects.delete(allocator, oauth.default_server, org.?, handle.?);
+            try projects.delete(allocator, default_server, org.?, handle.?);
             return;
         }
 
@@ -501,7 +504,7 @@ pub fn main() !void {
             };
         } else null;
 
-        var target = resolveCatTarget(arena_alloc, account, project, path) catch |err| {
+        var target = resolveCatTarget(arena_alloc, default_server, account, project, path) catch |err| {
             switch (err) {
                 error.InvalidCatArguments => {
                     std.debug.print("Error: account, project, and path required\n", .{});
@@ -559,7 +562,7 @@ pub fn main() !void {
             };
         } else null;
 
-        try content.ls(allocator, oauth.default_server, account.?, project.?, path, position);
+        try content.ls(allocator, default_server, account.?, project.?, path, position);
         return;
     }
 
@@ -574,7 +577,7 @@ pub fn main() !void {
             return;
         }
 
-        try content.blame(allocator, oauth.default_server, account.?, project.?, path.?);
+        try content.blame(allocator, default_server, account.?, project.?, path.?);
         return;
     }
 
@@ -732,7 +735,7 @@ pub fn main() !void {
         }
 
         if (session_matches.subcommandMatches("land")) |_| {
-            try session.land(allocator, oauth.default_server);
+            try session.land(allocator, default_server);
             return;
         }
 
@@ -743,7 +746,7 @@ pub fn main() !void {
 
         if (session_matches.subcommandMatches("resolve")) |resolve_matches| {
             const strategy = resolve_matches.getSingleValue("strategy") orelse "interactive";
-            try session.resolve(allocator, oauth.default_server, strategy);
+            try session.resolve(allocator, default_server, strategy);
             return;
         }
 
@@ -793,6 +796,7 @@ fn parseProjectRef(value: []const u8) ?ProjectRef {
 
 fn resolveCatTarget(
     allocator: std.mem.Allocator,
+    server: []const u8,
     account: ?[]const u8,
     project: ?[]const u8,
     path: ?[]const u8,
@@ -802,7 +806,7 @@ fn resolveCatTarget(
         if (normalized.len == 0) return error.InvalidPath;
 
         return .{
-            .server = try allocator.dupe(u8, oauth.default_server),
+            .server = try allocator.dupe(u8, server),
             .account = try allocator.dupe(u8, account.?),
             .project = try allocator.dupe(u8, project.?),
             .path = try allocator.dupe(u8, normalized),
@@ -815,7 +819,7 @@ fn resolveCatTarget(
             if (normalized.len == 0) return error.InvalidPath;
 
             return .{
-                .server = try allocator.dupe(u8, oauth.default_server),
+                .server = try allocator.dupe(u8, server),
                 .account = try allocator.dupe(u8, parsed.account),
                 .project = try allocator.dupe(u8, parsed.project),
                 .path = try allocator.dupe(u8, normalized),
@@ -933,7 +937,7 @@ test "resolveCatTarget supports explicit account and project" {
     defer arena.deinit();
     const allocator = arena.allocator();
 
-    var target = try resolveCatTarget(allocator, "acme", "app", "/README.md");
+    var target = try resolveCatTarget(allocator, oauth.default_server, "acme", "app", "/README.md");
     defer target.deinit(allocator);
 
     try std.testing.expectEqualStrings(oauth.default_server, target.server);
@@ -947,7 +951,7 @@ test "resolveCatTarget supports project ref plus path" {
     defer arena.deinit();
     const allocator = arena.allocator();
 
-    var target = try resolveCatTarget(allocator, "acme/app", "docs/guide.md", null);
+    var target = try resolveCatTarget(allocator, oauth.default_server, "acme/app", "docs/guide.md", null);
     defer target.deinit(allocator);
 
     try std.testing.expectEqualStrings(oauth.default_server, target.server);
@@ -992,7 +996,7 @@ test "resolveCatTarget reads workspace manifest when only path provided" {
 
     try manifest.save(allocator, temp_root, state);
 
-    var target = try resolveCatTarget(allocator, "notes.md", null, null);
+    var target = try resolveCatTarget(allocator, oauth.default_server, "notes.md", null, null);
     defer target.deinit(allocator);
 
     try std.testing.expectEqualStrings("http://forge.example:50051", target.server);

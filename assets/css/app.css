@@ -6,6 +6,7 @@
 @import "./routes/footer.css";
 @import "./routes/home.css";
 @import "./routes/blog.css";
+@import "./routes/docs.css";
 @import "./routes/changelog.css";
 @import "./routes/legal.css";
 @import "./routes/account_show.css";
@@ -13,6 +14,7 @@
 @import "./routes/project_blame.css";
 @import "./routes/auth.css";
 @import "./routes/projects.css";
+@import "./routes/project_import.css";
 @import "./routes/prompt_requests.css";
 @import "./routes/sessions.css";
 @import "./routes/agent_progress.css";

@@ -1,51 +1,86 @@
 :root {
-  /* Turbopuffer-inspired color palette - Light mode */
-  --theme-ui-colors-text: #0f172a;
-  --theme-ui-colors-background: #f9fafc;
-  --theme-ui-colors-primary: #0f172a;
-  --theme-ui-colors-secondary: #64748b;
-  --theme-ui-colors-muted: #64748b;
-  --theme-ui-colors-border: #e2e8f0;
-  --theme-ui-colors-accent: #fdba74;
-  --theme-ui-colors-accent-text: #431407;
-  --theme-ui-colors-surface: #0f172a;
-  --theme-ui-colors-surface-text: #f9fafc;
-  --theme-ui-colors-danger: #dc2626;
+  /* Nature-inspired palette - Light mode */
+  --theme-ui-colors-text: #1f3324;
+  --theme-ui-colors-background: #f8f5ef;
+  --theme-ui-colors-primary: #2f7c4c;
+  --theme-ui-colors-primary-alpha: #d9eadf;
+  --theme-ui-colors-secondary: #4f5d4c;
+  --theme-ui-colors-muted: #4f5d4c;
+  --theme-ui-colors-border: #c6d1c4;
+  --theme-ui-colors-hover: #e8eee4;
+  --theme-ui-colors-accent: #2f7c4c;
+  --theme-ui-colors-accent-text: #ffffff;
+  --theme-ui-colors-surface: #eef2ea;
+  --theme-ui-colors-surface-text: #1f3324;
+  --theme-ui-colors-danger: #c7362f;
   --theme-ui-colors-danger-text: #ffffff;
-  --theme-ui-colors-success: #16a34a;
-  --theme-ui-colors-activity-0: #f1f5f9;
-  --theme-ui-colors-activity-1: #fde68a;
-  --theme-ui-colors-activity-2: #fdba74;
-  --theme-ui-colors-activity-3: #fb923c;
-  --theme-ui-colors-activity-4: #ea580c;
+  --theme-ui-colors-success: #2f7c4c;
+  --theme-ui-colors-success-alpha: #d9eadf;
+  --theme-ui-colors-warning: #b57a1a;
+  --theme-ui-colors-warning-alpha: #fff3d6;
+  --theme-ui-colors-activity-0: #e6ede4;
+  --theme-ui-colors-activity-1: #bcd7b8;
+  --theme-ui-colors-activity-2: #8abf8c;
+  --theme-ui-colors-activity-3: #4f995d;
+  --theme-ui-colors-activity-4: #2f7c4c;
 
-  /* Banner gradient colors */
-  --theme-ui-colors-gradient-start: #b91c1c;
-  --theme-ui-colors-gradient-end: #fdba74;
+  /* Button colors */
+  --theme-ui-colors-button-primary-bg: #2f7c4c;
+  --theme-ui-colors-button-primary-bg-hover: #2a6f45;
+  --theme-ui-colors-button-primary-fg: #ffffff;
+  --theme-ui-colors-button-default-bg: #eef2ea;
+  --theme-ui-colors-button-default-bg-hover: #e4ebde;
+  --theme-ui-colors-button-default-fg: #1f3324;
+  --theme-ui-colors-button-default-border: #c6d1c4;
 
-  /* Monospace font stack (Turbopuffer uses JetBrains Mono) */
-  --theme-ui-fonts-body: "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
-  --theme-ui-fonts-heading: "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
-  --theme-ui-fonts-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
-  --theme-ui-font-sizes-body: 14px;
-  --theme-ui-font-sizes-small: 12px;
-  --theme-ui-font-sizes-label: 12px;
+  /* Control/input colors */
+  --theme-ui-colors-control-bg: #fdfcf9;
+  --theme-ui-colors-control-border: #c6d1c4;
+
+  /* Nature-inspired typography */
+  --theme-ui-font-size-base: 15px;
+  --theme-ui-fonts-body: "Optima", "Gill Sans", "Segoe UI", "Noto Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  --theme-ui-fonts-heading: "Palatino", "Palatino Linotype", "Book Antiqua", Georgia, "Times New Roman", serif, "Apple Color Emoji", "Segoe UI Emoji";
+  --theme-ui-fonts-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --theme-ui-font-sizes-body: var(--theme-ui-font-size-base);
+  --theme-ui-font-sizes-small: var(--theme-ui-font-size-base);
+  --theme-ui-font-sizes-label: var(--theme-ui-font-size-base);
+  --theme-ui-font-sizes-0: var(--theme-ui-font-size-base);
+  --theme-ui-font-sizes-1: var(--theme-ui-font-size-base);
+  --theme-ui-font-sizes-2: var(--theme-ui-font-size-base);
+  --theme-ui-font-sizes-4: var(--theme-ui-font-size-base);
+  --theme-ui-font-sizes-large: var(--theme-ui-font-size-base);
+  --theme-ui-font-sizes-xs: var(--theme-ui-font-size-base);
+  --theme-ui-font-sizes-sm: var(--theme-ui-font-size-base);
+  --theme-ui-fontSizes-body: var(--theme-ui-font-size-base);
+  --theme-ui-fontSizes-small: var(--theme-ui-font-size-base);
+  --theme-ui-fontSizes-sm: var(--theme-ui-font-size-base);
+  --theme-ui-fontSizes-xsmall: var(--theme-ui-font-size-base);
+  --theme-ui-fontSizes-xs: var(--theme-ui-font-size-base);
+  --theme-ui-fontSizes-0: var(--theme-ui-font-size-base);
+  --theme-ui-fontSizes-1: var(--theme-ui-font-size-base);
+  --theme-ui-fontSizes-2: var(--theme-ui-font-size-base);
+  --theme-ui-fontSizes-4: var(--theme-ui-font-size-base);
+  --theme-ui-fontSizes-xl: var(--theme-ui-font-size-base);
   --theme-ui-font-weights-body: 400;
   --theme-ui-font-weights-medium: 500;
+  --theme-ui-font-weights-semibold: 600;
   --theme-ui-font-weights-bold: 600;
   --theme-ui-line-heights-body: 1.5;
   --theme-ui-line-heights-tight: 1.25;
   --theme-ui-letter-spacing-label: normal;
 
-  /* Space */
+  /* GitHub Primer spacing - based on 8px grid */
+  --theme-ui-space-0: 4px;
   --theme-ui-space-1: 8px;
   --theme-ui-space-2: 16px;
   --theme-ui-space-3: 24px;
   --theme-ui-space-4: 32px;
 
-  /* Radii - Turbopuffer uses small rounded corners */
-  --theme-ui-radii-default: 3px;
+  /* GitHub Primer border radii */
   --theme-ui-radii-small: 3px;
+  --theme-ui-radii-default: 6px;
+  --theme-ui-radii-large: 12px;
 
   /* Borders */
   --theme-ui-borders-thin: 1px solid var(--theme-ui-colors-border);
@@ -53,74 +88,131 @@
 
   /* Layout */
   --theme-ui-sizes-container: 1280px;
+  --theme-ui-sizes-container-small: 768px;
 
   color-scheme: light dark;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --theme-ui-colors-text: #f9fafc;
-    --theme-ui-colors-background: #0f172a;
-    --theme-ui-colors-primary: #f9fafc;
-    --theme-ui-colors-secondary: #94a3b8;
-    --theme-ui-colors-muted: #94a3b8;
-    --theme-ui-colors-border: #334155;
-    --theme-ui-colors-accent: #fdba74;
-    --theme-ui-colors-accent-text: #431407;
-    --theme-ui-colors-surface: #1e293b;
-    --theme-ui-colors-surface-text: #f9fafc;
-    --theme-ui-colors-danger: #ef4444;
+    --theme-ui-colors-text: #e7f2e9;
+    --theme-ui-colors-background: #0f1713;
+    --theme-ui-colors-primary: #5bbf7a;
+    --theme-ui-colors-primary-alpha: #1f4730;
+    --theme-ui-colors-secondary: #9fb7a1;
+    --theme-ui-colors-muted: #9fb7a1;
+    --theme-ui-colors-border: #2d3a31;
+    --theme-ui-colors-hover: #16231b;
+    --theme-ui-colors-accent: #5bbf7a;
+    --theme-ui-colors-accent-text: #ffffff;
+    --theme-ui-colors-surface: #131e17;
+    --theme-ui-colors-surface-text: #e7f2e9;
+    --theme-ui-colors-danger: #e0665f;
     --theme-ui-colors-danger-text: #ffffff;
-    --theme-ui-colors-success: #22c55e;
-    --theme-ui-colors-activity-0: #1e293b;
-    --theme-ui-colors-activity-1: #7c2d12;
-    --theme-ui-colors-activity-2: #c2410c;
-    --theme-ui-colors-activity-3: #ea580c;
-    --theme-ui-colors-activity-4: #fb923c;
+    --theme-ui-colors-success: #5bbf7a;
+    --theme-ui-colors-success-alpha: #1f4730;
+    --theme-ui-colors-warning: #d39b36;
+    --theme-ui-colors-warning-alpha: #2c2314;
+    --theme-ui-colors-activity-0: #152019;
+    --theme-ui-colors-activity-1: #21402d;
+    --theme-ui-colors-activity-2: #2f7c4c;
+    --theme-ui-colors-activity-3: #4ca66a;
+    --theme-ui-colors-activity-4: #6ddc8f;
+
+    /* Button colors - dark mode */
+    --theme-ui-colors-button-primary-bg: #5bbf7a;
+    --theme-ui-colors-button-primary-bg-hover: #52b271;
+    --theme-ui-colors-button-primary-fg: #ffffff;
+    --theme-ui-colors-button-default-bg: #131e17;
+    --theme-ui-colors-button-default-bg-hover: #1a261e;
+    --theme-ui-colors-button-default-fg: #e7f2e9;
+    --theme-ui-colors-button-default-border: #2d3a31;
+
+    /* Control/input colors - dark mode */
+    --theme-ui-colors-control-bg: #131e17;
+    --theme-ui-colors-control-border: #2d3a31;
   }
 }
 
 :root[data-theme="light"] {
-  --theme-ui-colors-text: #0f172a;
-  --theme-ui-colors-background: #f9fafc;
-  --theme-ui-colors-primary: #0f172a;
-  --theme-ui-colors-secondary: #64748b;
-  --theme-ui-colors-muted: #64748b;
-  --theme-ui-colors-border: #e2e8f0;
-  --theme-ui-colors-accent: #fdba74;
-  --theme-ui-colors-accent-text: #431407;
-  --theme-ui-colors-surface: #0f172a;
-  --theme-ui-colors-surface-text: #f9fafc;
-  --theme-ui-colors-danger: #dc2626;
+  --theme-ui-colors-text: #1f3324;
+  --theme-ui-colors-background: #f8f5ef;
+  --theme-ui-colors-primary: #2f7c4c;
+  --theme-ui-colors-primary-alpha: #d9eadf;
+  --theme-ui-colors-secondary: #4f5d4c;
+  --theme-ui-colors-muted: #4f5d4c;
+  --theme-ui-colors-border: #c6d1c4;
+  --theme-ui-colors-hover: #e8eee4;
+  --theme-ui-colors-accent: #2f7c4c;
+  --theme-ui-colors-accent-text: #ffffff;
+  --theme-ui-colors-surface: #eef2ea;
+  --theme-ui-colors-surface-text: #1f3324;
+  --theme-ui-colors-danger: #c7362f;
   --theme-ui-colors-danger-text: #ffffff;
-  --theme-ui-colors-success: #16a34a;
-  --theme-ui-colors-activity-0: #f1f5f9;
-  --theme-ui-colors-activity-1: #fde68a;
-  --theme-ui-colors-activity-2: #fdba74;
-  --theme-ui-colors-activity-3: #fb923c;
-  --theme-ui-colors-activity-4: #ea580c;
+  --theme-ui-colors-success: #2f7c4c;
+  --theme-ui-colors-success-alpha: #d9eadf;
+  --theme-ui-colors-warning: #b57a1a;
+  --theme-ui-colors-warning-alpha: #fff3d6;
+  --theme-ui-colors-activity-0: #e6ede4;
+  --theme-ui-colors-activity-1: #bcd7b8;
+  --theme-ui-colors-activity-2: #8abf8c;
+  --theme-ui-colors-activity-3: #4f995d;
+  --theme-ui-colors-activity-4: #2f7c4c;
+
+  /* Button colors - light mode */
+  --theme-ui-colors-button-primary-bg: #2f7c4c;
+  --theme-ui-colors-button-primary-bg-hover: #2a6f45;
+  --theme-ui-colors-button-primary-fg: #ffffff;
+  --theme-ui-colors-button-default-bg: #eef2ea;
+  --theme-ui-colors-button-default-bg-hover: #e4ebde;
+  --theme-ui-colors-button-default-fg: #1f3324;
+  --theme-ui-colors-button-default-border: #c6d1c4;
+
+  /* Control/input colors - light mode */
+  --theme-ui-colors-control-bg: #fdfcf9;
+  --theme-ui-colors-control-border: #c6d1c4;
+
   color-scheme: light;
 }
 
 :root[data-theme="dark"] {
-  --theme-ui-colors-text: #f9fafc;
-  --theme-ui-colors-background: #0f172a;
-  --theme-ui-colors-primary: #f9fafc;
-  --theme-ui-colors-secondary: #94a3b8;
-  --theme-ui-colors-muted: #94a3b8;
-  --theme-ui-colors-border: #334155;
-  --theme-ui-colors-accent: #fdba74;
-  --theme-ui-colors-accent-text: #431407;
-  --theme-ui-colors-surface: #1e293b;
-  --theme-ui-colors-surface-text: #f9fafc;
-  --theme-ui-colors-danger: #ef4444;
+  --theme-ui-colors-text: #e7f2e9;
+  --theme-ui-colors-background: #0f1713;
+  --theme-ui-colors-primary: #5bbf7a;
+  --theme-ui-colors-primary-alpha: #1f4730;
+  --theme-ui-colors-secondary: #9fb7a1;
+  --theme-ui-colors-muted: #9fb7a1;
+  --theme-ui-colors-border: #2d3a31;
+  --theme-ui-colors-hover: #16231b;
+  --theme-ui-colors-accent: #5bbf7a;
+  --theme-ui-colors-accent-text: #ffffff;
+  --theme-ui-colors-surface: #131e17;
+  --theme-ui-colors-surface-text: #e7f2e9;
+  --theme-ui-colors-danger: #e0665f;
   --theme-ui-colors-danger-text: #ffffff;
-  --theme-ui-colors-success: #22c55e;
-  --theme-ui-colors-activity-0: #1e293b;
-  --theme-ui-colors-activity-1: #7c2d12;
-  --theme-ui-colors-activity-2: #c2410c;
-  --theme-ui-colors-activity-3: #ea580c;
-  --theme-ui-colors-activity-4: #fb923c;
+  --theme-ui-colors-success: #5bbf7a;
+  --theme-ui-colors-success-alpha: #1f4730;
+  --theme-ui-colors-warning: #d39b36;
+  --theme-ui-colors-warning-alpha: #2c2314;
+  --theme-ui-colors-activity-0: #152019;
+  --theme-ui-colors-activity-1: #21402d;
+  --theme-ui-colors-activity-2: #2f7c4c;
+  --theme-ui-colors-activity-3: #4ca66a;
+  --theme-ui-colors-activity-4: #6ddc8f;
+
+  /* Button colors - dark mode */
+  --theme-ui-colors-button-primary-bg: #5bbf7a;
+  --theme-ui-colors-button-primary-bg-hover: #52b271;
+  --theme-ui-colors-button-primary-fg: #ffffff;
+  --theme-ui-colors-button-default-bg: #131e17;
+  --theme-ui-colors-button-default-bg-hover: #1a261e;
+  --theme-ui-colors-button-default-fg: #e7f2e9;
+  --theme-ui-colors-button-default-border: #2d3a31;
+
+  /* Control/input colors - dark mode */
+  --theme-ui-colors-control-bg: #131e17;
+  --theme-ui-colors-control-border: #2d3a31;
+
   color-scheme: dark;
 }
 
@@ -171,7 +263,7 @@ main ol:not(.list) {
   font-weight: var(--theme-ui-font-weights-medium);
   border: var(--theme-ui-borders-thin);
   border-radius: 2em;
-  background: var(--theme-ui-colors-border);
+  background: var(--theme-ui-colors-surface);
   color: var(--theme-ui-colors-text);
   text-decoration: none;
   white-space: nowrap;
@@ -188,8 +280,8 @@ main ol:not(.list) {
 
 .badge--solid,
 .badge.is-active {
-  background: var(--theme-ui-colors-accent);
-  border-color: var(--theme-ui-colors-accent);
+  background: var(--theme-ui-colors-primary);
+  border-color: var(--theme-ui-colors-primary);
   color: #ffffff;
 }
 
@@ -198,8 +290,8 @@ main ol:not(.list) {
 }
 
 .badge--interactive:hover {
-  background: var(--theme-ui-colors-accent);
-  border-color: var(--theme-ui-colors-accent);
+  background: var(--theme-ui-colors-primary);
+  border-color: var(--theme-ui-colors-primary);
   color: #ffffff;
   text-decoration: none;
 }
@@ -207,8 +299,8 @@ main ol:not(.list) {
 /* Flash */
 .flash-bar {
   width: 100%;
-  background: var(--theme-ui-colors-accent);
-  color: var(--theme-ui-colors-accent-text);
+  background: var(--theme-ui-colors-success);
+  color: #ffffff;
 }
 
 .flash-stack #client-error,
@@ -281,7 +373,7 @@ main ol:not(.list) {
 }
 
 .page-header-title {
-  font-size: 20px;
+  font-size: var(--theme-ui-font-sizes-body);
   font-weight: var(--theme-ui-font-weights-bold);
   color: var(--theme-ui-colors-text);
   overflow-wrap: anywhere;
@@ -291,7 +383,7 @@ main ol:not(.list) {
 
 .page-header-subtitle {
   margin-top: var(--theme-ui-space-1);
-  color: var(--theme-ui-colors-secondary);
+  color: var(--theme-ui-colors-muted);
   display: grid;
   gap: var(--theme-ui-space-1);
   overflow-wrap: anywhere;
@@ -321,14 +413,29 @@ main ol:not(.list) {
   }
 }
 
-/* Typography - same font and size for body and headings */
+/* Typography - unified sizing, weight-driven hierarchy */
 h1, h2, h3, h4, h5, h6 {
-  font-family: var(--theme-ui-fonts-body);
+  font-family: var(--theme-ui-fonts-heading);
   font-size: var(--theme-ui-font-sizes-body);
+  line-height: var(--theme-ui-line-heights-tight);
+  margin-top: 16px;
+  margin-bottom: 8px;
+}
+
+h1 {
   font-weight: var(--theme-ui-font-weights-bold);
-  line-height: var(--theme-ui-line-heights-body);
-  margin-top: 24px;
-  margin-bottom: 16px;
+}
+
+h2 {
+  font-weight: var(--theme-ui-font-weights-semibold);
+}
+
+h3 {
+  font-weight: var(--theme-ui-font-weights-medium);
+}
+
+h4, h5, h6 {
+  font-weight: var(--theme-ui-font-weights-body);
 }
 
 /* Remove margin from first heading */
@@ -345,7 +452,7 @@ h6:first-child {
 .section-label {
   font-family: var(--theme-ui-fonts-body);
   font-size: var(--theme-ui-font-sizes-small);
-  font-weight: var(--theme-ui-font-weights-bold);
+  font-weight: var(--theme-ui-font-weights-semibold);
   text-transform: uppercase;
   color: var(--theme-ui-colors-muted);
 }
@@ -355,27 +462,25 @@ p, li, a, button, input, textarea, select {
   line-height: var(--theme-ui-line-heights-body);
 }
 
-/* Links - Turbopuffer style (text color, underline on hover) */
+/* Links - GitHub style (blue, underline on hover) */
 a {
-  color: var(--theme-ui-colors-text);
-  text-decoration: underline;
-  text-decoration-color: var(--theme-ui-colors-border);
-  text-underline-offset: 2px;
+  color: var(--theme-ui-colors-primary);
+  text-decoration: none;
 }
 
 a:hover {
-  text-decoration-color: var(--theme-ui-colors-text);
+  text-decoration: underline;
 }
 
 /* Code */
 code, pre {
   font-family: var(--theme-ui-fonts-mono);
-  font-size: 85%;
+  font-size: var(--theme-ui-font-sizes-body);
 }
 
 code {
   padding: 0.2em 0.4em;
-  background: var(--theme-ui-colors-border);
+  background: var(--theme-ui-colors-surface);
   color: var(--theme-ui-colors-text);
   border-radius: var(--theme-ui-radii-small);
 }
@@ -392,3 +497,465 @@ pre code {
   padding: 0;
   background: transparent;
 }
+
+/* Form controls - GitHub style */
+select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath fill='%2359636e' d='m4.427 9.427 3.396 3.396a.25.25 0 0 0 .354 0l3.396-3.396A.25.25 0 0 0 11.396 9H4.604a.25.25 0 0 0-.177.427m3.573-6.25L4.427 6.573A.25.25 0 0 0 4.604 7h6.792a.25.25 0 0 0 .177-.427L8.177 3.177a.25.25 0 0 0-.354 0'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  padding-right: 32px;
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--theme-ui-colors-primary);
+}
+
+/* ============================================
+   SHARED COMPONENT STYLES
+   Consolidated styles for visual consistency
+   ============================================ */
+
+/* Input - Single reusable input style */
+.input {
+  width: 100%;
+  padding: 5px 12px;
+  font-size: var(--theme-ui-font-sizes-body);
+  font-family: inherit;
+  line-height: 20px;
+  color: var(--theme-ui-colors-text);
+  background-color: var(--theme-ui-colors-control-bg);
+  border: 1px solid var(--theme-ui-colors-control-border);
+  border-radius: var(--theme-ui-radii-default);
+  box-shadow: inset 0 1px 0 rgba(208, 215, 222, 0.2);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.input:focus {
+  border-color: var(--theme-ui-colors-primary);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(9, 105, 218, 0.3);
+}
+
+.input::placeholder {
+  color: var(--theme-ui-colors-muted);
+  opacity: 1;
+}
+
+.input--error {
+  border-color: var(--theme-ui-colors-danger);
+}
+
+.input--error:focus {
+  box-shadow: 0 0 0 3px rgba(209, 36, 47, 0.3);
+}
+
+.input--textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+/* Button - Primary action button (green) */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--theme-ui-space-1);
+  padding: 5px 16px;
+  font-size: var(--theme-ui-font-sizes-body);
+  font-weight: var(--theme-ui-font-weights-medium);
+  font-family: inherit;
+  line-height: 20px;
+  color: var(--theme-ui-colors-button-primary-fg);
+  background-color: var(--theme-ui-colors-button-primary-bg);
+  border: 1px solid transparent;
+  border-radius: var(--theme-ui-radii-default);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.btn:hover {
+  background-color: var(--theme-ui-colors-button-primary-bg-hover);
+  text-decoration: none;
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--theme-ui-colors-primary);
+  outline-offset: 2px;
+}
+
+.btn:disabled,
+.btn[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Button - Secondary (gray outline) */
+.btn--secondary {
+  background-color: var(--theme-ui-colors-button-default-bg);
+  color: var(--theme-ui-colors-button-default-fg);
+  border: 1px solid var(--theme-ui-colors-button-default-border);
+}
+
+.btn--secondary:hover {
+  background-color: var(--theme-ui-colors-button-default-bg-hover);
+}
+
+/* Button - Danger (red) */
+.btn--danger {
+  background-color: var(--theme-ui-colors-danger);
+  color: var(--theme-ui-colors-danger-text);
+  border-color: var(--theme-ui-colors-danger);
+}
+
+.btn--danger:hover {
+  opacity: 0.9;
+}
+
+/* Button - Ghost (transparent with border) */
+.btn--ghost {
+  background-color: transparent;
+  color: var(--theme-ui-colors-text);
+  border: var(--theme-ui-borders-thin);
+}
+
+.btn--ghost:hover {
+  background-color: var(--theme-ui-colors-hover);
+}
+
+/* Button - Link style (looks like a link) */
+.btn--link {
+  background: transparent;
+  border: none;
+  color: var(--theme-ui-colors-primary);
+  padding: 0;
+}
+
+.btn--link:hover {
+  text-decoration: underline;
+  background: transparent;
+}
+
+/* Button sizes */
+.btn--sm {
+  padding: 3px 12px;
+  font-size: var(--theme-ui-font-sizes-small);
+}
+
+.btn--block {
+  width: 100%;
+}
+
+/* Card - Consistent card/container style */
+.card {
+  padding: var(--theme-ui-space-2);
+  background-color: var(--theme-ui-colors-background);
+  border: var(--theme-ui-borders-thin);
+  border-radius: var(--theme-ui-radii-default);
+}
+
+.card--interactive {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s ease;
+}
+
+.card--interactive:hover {
+  border-color: var(--theme-ui-colors-primary);
+}
+
+/* Icon utility */
+.icon {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+.icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.icon path {
+  fill: currentColor;
+}
+
+/* Form group */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--theme-ui-space-1);
+}
+
+.form-group label {
+  font-weight: var(--theme-ui-font-weights-semibold);
+  color: var(--theme-ui-colors-text);
+}
+
+.form-hint {
+  font-size: var(--theme-ui-font-sizes-small);
+  color: var(--theme-ui-colors-muted);
+}
+
+/* Form actions row */
+.form-actions {
+  display: flex;
+  gap: var(--theme-ui-space-1);
+  align-items: center;
+}
+
+/* Text colors */
+.text-muted {
+  color: var(--theme-ui-colors-muted);
+}
+
+.text-danger {
+  color: var(--theme-ui-colors-danger);
+}
+
+.text-success {
+  color: var(--theme-ui-colors-success);
+}
+
+/* Syntax highlighting colors - Light mode */
+:root {
+  --syntax-background: #eef2ea;
+  --syntax-text: #1f3324;
+  --syntax-comment: #5a7058;
+  --syntax-keyword: #2f7c4c;
+  --syntax-string: #9e5a1a;
+  --syntax-number: #6e4a9e;
+  --syntax-function: #2f5c9e;
+  --syntax-variable: #1f3324;
+  --syntax-operator: #4f5d4c;
+  --syntax-class: #7c4c2f;
+  --syntax-constant: #8b4c2f;
+  --syntax-attribute: #6a8d5a;
+  --syntax-tag: #2f7c4c;
+  --syntax-error: #c7362f;
+  --syntax-deleted: #c7362f;
+  --syntax-inserted: #2f7c4c;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --syntax-background: #131e17;
+    --syntax-text: #e7f2e9;
+    --syntax-comment: #7a9a78;
+    --syntax-keyword: #5bbf7a;
+    --syntax-string: #e0a060;
+    --syntax-number: #b08ae0;
+    --syntax-function: #70a0e0;
+    --syntax-variable: #e7f2e9;
+    --syntax-operator: #9fb7a1;
+    --syntax-class: #e0a070;
+    --syntax-constant: #e0a070;
+    --syntax-attribute: #8ab880;
+    --syntax-tag: #5bbf7a;
+    --syntax-error: #e0665f;
+    --syntax-deleted: #e0665f;
+    --syntax-inserted: #5bbf7a;
+  }
+}
+
+:root[data-theme="light"] {
+  --syntax-background: #eef2ea;
+  --syntax-text: #1f3324;
+  --syntax-comment: #5a7058;
+  --syntax-keyword: #2f7c4c;
+  --syntax-string: #9e5a1a;
+  --syntax-number: #6e4a9e;
+  --syntax-function: #2f5c9e;
+  --syntax-variable: #1f3324;
+  --syntax-operator: #4f5d4c;
+  --syntax-class: #7c4c2f;
+  --syntax-constant: #8b4c2f;
+  --syntax-attribute: #6a8d5a;
+  --syntax-tag: #2f7c4c;
+  --syntax-error: #c7362f;
+  --syntax-deleted: #c7362f;
+  --syntax-inserted: #2f7c4c;
+}
+
+:root[data-theme="dark"] {
+  --syntax-background: #131e17;
+  --syntax-text: #e7f2e9;
+  --syntax-comment: #7a9a78;
+  --syntax-keyword: #5bbf7a;
+  --syntax-string: #e0a060;
+  --syntax-number: #b08ae0;
+  --syntax-function: #70a0e0;
+  --syntax-variable: #e7f2e9;
+  --syntax-operator: #9fb7a1;
+  --syntax-class: #e0a070;
+  --syntax-constant: #e0a070;
+  --syntax-attribute: #8ab880;
+  --syntax-tag: #5bbf7a;
+  --syntax-error: #e0665f;
+  --syntax-deleted: #e0665f;
+  --syntax-inserted: #5bbf7a;
+}
+
+/* Makeup syntax highlighting */
+/* Makeup adds class="makeup {language}" to the code element inside pre */
+pre code.makeup {
+  display: block;
+  background-color: var(--syntax-background);
+  color: var(--syntax-text);
+}
+
+/* Also support .highlight wrapper for backwards compatibility */
+.highlight {
+  background-color: var(--syntax-background);
+  color: var(--syntax-text);
+  padding: var(--theme-ui-space-2);
+  border-radius: var(--theme-ui-radii-default);
+  overflow-x: auto;
+}
+
+/* Token highlighting - works for both .highlight and code.makeup */
+.highlight .hll,
+code.makeup .hll { background-color: var(--theme-ui-colors-primary-alpha); }
+
+.highlight .unselectable,
+code.makeup .unselectable {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Comments */
+.highlight .c, code.makeup .c,
+.highlight .c1, code.makeup .c1,
+.highlight .ch, code.makeup .ch,
+.highlight .cm, code.makeup .cm,
+.highlight .cs, code.makeup .cs,
+.highlight .cpf, code.makeup .cpf { color: var(--syntax-comment); font-style: italic; }
+
+/* Preprocessor/directives */
+.highlight .cp, code.makeup .cp { color: var(--syntax-keyword); }
+
+/* Keywords */
+.highlight .k, code.makeup .k,
+.highlight .kc, code.makeup .kc,
+.highlight .kd, code.makeup .kd,
+.highlight .kn, code.makeup .kn,
+.highlight .kp, code.makeup .kp,
+.highlight .kr, code.makeup .kr { color: var(--syntax-keyword); font-weight: 600; }
+
+/* Keyword type (int, void, etc.) */
+.highlight .kt, code.makeup .kt { color: var(--syntax-class); }
+
+/* Strings */
+.highlight .s, code.makeup .s,
+.highlight .s1, code.makeup .s1,
+.highlight .s2, code.makeup .s2,
+.highlight .sa, code.makeup .sa,
+.highlight .sb, code.makeup .sb,
+.highlight .sc, code.makeup .sc,
+.highlight .sh, code.makeup .sh,
+.highlight .sx, code.makeup .sx { color: var(--syntax-string); }
+
+/* String delimiter */
+.highlight .dl, code.makeup .dl { color: var(--syntax-string); }
+
+/* String doc */
+.highlight .sd, code.makeup .sd { color: var(--syntax-comment); font-style: italic; }
+
+/* String escape */
+.highlight .se, code.makeup .se { color: var(--syntax-constant); font-weight: 600; }
+
+/* String interpolation */
+.highlight .si, code.makeup .si { color: var(--syntax-constant); font-weight: 600; }
+
+/* String regex */
+.highlight .sr, code.makeup .sr { color: var(--syntax-string); }
+
+/* String symbol (atoms in Elixir) */
+.highlight .ss, code.makeup .ss { color: var(--syntax-constant); }
+
+/* Numbers */
+.highlight .m, code.makeup .m,
+.highlight .mb, code.makeup .mb,
+.highlight .mf, code.makeup .mf,
+.highlight .mh, code.makeup .mh,
+.highlight .mi, code.makeup .mi,
+.highlight .mo, code.makeup .mo,
+.highlight .il, code.makeup .il { color: var(--syntax-number); }
+
+/* Names */
+.highlight .n, code.makeup .n { color: var(--syntax-text); }
+
+/* Name attribute */
+.highlight .na, code.makeup .na { color: var(--syntax-attribute); }
+
+/* Name builtin */
+.highlight .nb, code.makeup .nb,
+.highlight .bp, code.makeup .bp { color: var(--syntax-keyword); }
+
+/* Name class */
+.highlight .nc, code.makeup .nc { color: var(--syntax-class); font-weight: 600; }
+
+/* Name constant */
+.highlight .no, code.makeup .no { color: var(--syntax-constant); }
+
+/* Name decorator */
+.highlight .nd, code.makeup .nd { color: var(--syntax-attribute); }
+
+/* Name entity */
+.highlight .ni, code.makeup .ni { color: var(--syntax-text); font-weight: 600; }
+
+/* Name exception */
+.highlight .ne, code.makeup .ne { color: var(--syntax-error); font-weight: 600; }
+
+/* Name function */
+.highlight .nf, code.makeup .nf,
+.highlight .fm, code.makeup .fm { color: var(--syntax-function); }
+
+/* Name label */
+.highlight .nl, code.makeup .nl { color: var(--syntax-attribute); }
+
+/* Name namespace (module names) */
+.highlight .nn, code.makeup .nn { color: var(--syntax-class); font-weight: 600; }
+
+/* Name tag (HTML/XML) */
+.highlight .nt, code.makeup .nt { color: var(--syntax-tag); font-weight: 600; }
+
+/* Name variable */
+.highlight .nv, code.makeup .nv,
+.highlight .vc, code.makeup .vc,
+.highlight .vg, code.makeup .vg,
+.highlight .vi, code.makeup .vi,
+.highlight .vm, code.makeup .vm { color: var(--syntax-variable); }
+
+/* Operators */
+.highlight .o, code.makeup .o { color: var(--syntax-operator); }
+.highlight .ow, code.makeup .ow { color: var(--syntax-keyword); font-weight: 600; }
+
+/* Punctuation */
+.highlight .p, code.makeup .p { color: var(--syntax-text); }
+
+/* Whitespace */
+.highlight .w, code.makeup .w { color: var(--syntax-text); }
+
+/* Error */
+.highlight .err, code.makeup .err { color: var(--syntax-error); }
+
+/* Generic styles (diffs, etc.) */
+.highlight .gd, code.makeup .gd { color: var(--syntax-deleted); background-color: rgba(199, 54, 47, 0.1); }
+.highlight .ge, code.makeup .ge { font-style: italic; }
+.highlight .gh, code.makeup .gh { color: var(--syntax-text); font-weight: 600; }
+.highlight .gi, code.makeup .gi { color: var(--syntax-inserted); background-color: rgba(47, 124, 76, 0.1); }
+.highlight .go, code.makeup .go { color: var(--syntax-comment); }
+.highlight .gp, code.makeup .gp { color: var(--syntax-comment); font-weight: 600; }
+.highlight .gr, code.makeup .gr { color: var(--syntax-error); }
+.highlight .gs, code.makeup .gs { font-weight: 600; }
+.highlight .gt, code.makeup .gt { color: var(--syntax-function); }
+.highlight .gu, code.makeup .gu { color: var(--syntax-attribute); font-weight: 600; }

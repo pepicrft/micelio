@@ -44,7 +44,7 @@
 }
 
 .device-auth-button:hover {
-  background: var(--theme-ui-colors-secondary);
+  background: var(--theme-ui-colors-muted);
 }
 
 .device-auth-success {

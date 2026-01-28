@@ -279,6 +279,13 @@ defmodule Micelio.Accounts do
   end
 
   @doc """
+  Gets an OAuth identity for a user by provider.
+  """
+  def get_oauth_identity_for_user(%User{} = user, provider) when is_atom(provider) do
+    Repo.get_by(OAuthIdentity, user_id: user.id, provider: provider)
+  end
+
+  @doc """
   Lists passkeys for a user.
   """
   def list_passkeys_for_user(%User{} = user) do
@@ -402,26 +409,39 @@ defmodule Micelio.Accounts do
   @doc """
   Gets or creates a user from an OAuth provider profile.
   """
-  def get_or_create_user_from_oauth(provider, provider_user_id, email)
+  def get_or_create_user_from_oauth(provider, provider_user_id, email, opts \\ [])
       when is_binary(provider) and is_binary(provider_user_id) do
+    access_token = Keyword.get(opts, :access_token)
+
     if is_binary(email) and String.trim(email) != "" do
       case get_oauth_identity(provider, provider_user_id) do
         %OAuthIdentity{} = identity ->
           identity = Repo.preload(identity, user: :account)
+          # Update access token if provided
+          if access_token do
+            update_oauth_identity_token(identity, access_token)
+          end
+
           {:ok, identity.user}
 
         nil ->
           case get_user_by_email(email) do
             %User{} = user ->
-              attach_oauth_identity_to_user(user, provider, provider_user_id)
+              attach_oauth_identity_to_user(user, provider, provider_user_id, access_token)
 
             nil ->
-              create_user_for_oauth(provider, provider_user_id, email)
+              create_user_for_oauth(provider, provider_user_id, email, access_token)
           end
       end
     else
       {:error, :missing_email}
     end
+  end
+
+  defp update_oauth_identity_token(identity, access_token) do
+    identity
+    |> OAuthIdentity.changeset(%{access_token_encrypted: access_token})
+    |> Repo.update()
   end
 
   @doc """
@@ -465,7 +485,17 @@ defmodule Micelio.Accounts do
     |> Repo.insert()
   end
 
-  defp create_user_for_oauth(provider, provider_user_id, email) do
+  defp create_user_for_oauth(provider, provider_user_id, email, access_token) do
+    identity_attrs = %{
+      provider: provider,
+      provider_user_id: provider_user_id
+    }
+
+    identity_attrs =
+      if access_token,
+        do: Map.put(identity_attrs, :access_token_encrypted, access_token),
+        else: identity_attrs
+
     Ecto.Multi.new()
     |> Ecto.Multi.insert(:user, User.changeset(%User{}, %{email: email}))
     |> Ecto.Multi.insert(:account, fn %{user: user} ->
@@ -475,11 +505,7 @@ defmodule Micelio.Accounts do
       })
     end)
     |> Ecto.Multi.insert(:identity, fn %{user: user} ->
-      OAuthIdentity.changeset(%OAuthIdentity{}, %{
-        provider: provider,
-        provider_user_id: provider_user_id,
-        user_id: user.id
-      })
+      OAuthIdentity.changeset(%OAuthIdentity{}, Map.put(identity_attrs, :user_id, user.id))
     end)
     |> Repo.transaction()
     |> case do
@@ -500,15 +526,22 @@ defmodule Micelio.Accounts do
     end
   end
 
-  defp attach_oauth_identity_to_user(%User{} = user, provider, provider_user_id) do
+  defp attach_oauth_identity_to_user(%User{} = user, provider, provider_user_id, access_token) do
     user = Repo.preload(user, :account)
 
-    %OAuthIdentity{}
-    |> OAuthIdentity.changeset(%{
+    identity_attrs = %{
       provider: provider,
       provider_user_id: provider_user_id,
       user_id: user.id
-    })
+    }
+
+    identity_attrs =
+      if access_token,
+        do: Map.put(identity_attrs, :access_token_encrypted, access_token),
+        else: identity_attrs
+
+    %OAuthIdentity{}
+    |> OAuthIdentity.changeset(identity_attrs)
     |> Repo.insert()
     |> case do
       {:ok, _identity} ->

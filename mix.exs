@@ -71,6 +71,7 @@ defmodule Micelio.MixProject do
       {:makeup, "~> 1.1"},
       {:makeup_elixir, "~> 0.16"},
       {:makeup_erlang, "~> 1.0"},
+      {:makeup_syntect, "~> 0.1"},
       {:let_me, "~> 1.2"},
       {:boruta, git: "https://github.com/malach-it/boruta_auth", branch: "master"},
       {:hammer, "~> 6.2"},

@@ -35,7 +35,7 @@
 }
 
 .agent-progress-subtitle {
-  color: var(--theme-ui-colors-secondary);
+  color: var(--theme-ui-colors-muted);
 }
 
 .agent-progress-meta {
@@ -85,7 +85,7 @@
 }
 
 .agent-progress-agent {
-  color: var(--theme-ui-colors-secondary);
+  color: var(--theme-ui-colors-muted);
 }
 
 .agent-progress-status {
@@ -104,7 +104,7 @@
 .agent-progress-card-stats {
   display: flex;
   gap: var(--theme-ui-space-1);
-  color: var(--theme-ui-colors-secondary);
+  color: var(--theme-ui-colors-muted);
   flex-wrap: wrap;
 }
 

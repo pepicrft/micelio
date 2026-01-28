@@ -113,6 +113,23 @@ defmodule MicelioWeb.Router do
     get("/:id", BlogController, :show)
   end
 
+  # Docs routes (public)
+  scope "/docs", MicelioWeb do
+    pipe_through(:browser)
+
+    live_session :docs,
+      on_mount: [{MicelioWeb.LiveAuth, :current_user}, MicelioWeb.LiveOpenGraphCacheBuster] do
+      live("/", DocsLive.Index, :index)
+    end
+  end
+
+  scope "/docs", MicelioWeb.Browser do
+    pipe_through(:browser)
+
+    get("/:category", DocsController, :category)
+    get("/:category/:id", DocsController, :show)
+  end
+
   # Changelog routes (public)
   scope "/changelog", MicelioWeb.Browser do
     pipe_through(:browser)
@@ -236,6 +253,7 @@ defmodule MicelioWeb.Router do
       on_mount: [{MicelioWeb.LiveAuth, :require_auth}, MicelioWeb.LiveOpenGraphCacheBuster] do
       live("/", ProjectLive.Index, :index)
       live("/new", ProjectLive.New, :new)
+      live("/import", ProjectLive.ImportNew, :new)
       live("/:organization_handle/:project_handle/edit", ProjectLive.Edit, :edit)
       live("/:organization_handle/:project_handle", ProjectLive.Show, :show)
 
@@ -334,6 +352,7 @@ defmodule MicelioWeb.Router do
       live("/:account/:project/settings", ProjectLive.Settings, :edit)
       live("/:account/:project/settings/import", ProjectLive.Import, :edit)
       live("/:account/:project/settings/webhooks", ProjectLive.Webhooks, :index)
+      live("/:account/:project/import/:import_id", ProjectLive.ImportProgress, :show)
     end
   end
 
