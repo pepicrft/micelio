@@ -498,7 +498,7 @@ socket =
 - Use standard library for dates: `Time`, `Date`, `DateTime`, `Calendar`
 - Don't use `String.to_atom/1` on user input
 - Predicate functions end with `?` (not `is_`)
-- Place `require` at module root, never inside functions
+- Place `require`, `import`, and `use` at module level, never inside functions
 - Use `Task.async_stream/3` with `timeout: :infinity` for concurrent enumeration
 
 #### Mix
