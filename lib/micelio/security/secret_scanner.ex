@@ -23,29 +23,39 @@ defmodule Micelio.Security.SecretScanner do
     {:private_key, ~r/-----BEGIN [A-Z ]*PRIVATE KEY-----/}
   ]
 
+  # Paths that are excluded from secret scanning (test files often contain fake secrets)
+  @excluded_paths [
+    ~r{^test/},
+    ~r{_test\.exs?$}
+  ]
+
   def scan_session_changes(%Session{} = session) do
     hits =
       session
       |> Sessions.list_session_changes()
       |> Enum.reduce(%{}, fn change, acc ->
-        case load_change_content(change) do
-          content when is_binary(content) ->
-            if text_content?(content) do
-              types = scan_content(content)
+        if excluded_path?(change.file_path) do
+          acc
+        else
+          case load_change_content(change) do
+            content when is_binary(content) ->
+              if text_content?(content) do
+                types = scan_content(content)
 
-              if types == [] do
-                acc
+                if types == [] do
+                  acc
+                else
+                  Map.update(acc, change.file_path, MapSet.new(types), fn existing ->
+                    Enum.reduce(types, existing, &MapSet.put(&2, &1))
+                  end)
+                end
               else
-                Map.update(acc, change.file_path, MapSet.new(types), fn existing ->
-                  Enum.reduce(types, existing, &MapSet.put(&2, &1))
-                end)
+                acc
               end
-            else
-              acc
-            end
 
-          _ ->
-            acc
+            _ ->
+              acc
+          end
         end
       end)
 
@@ -117,4 +127,10 @@ defmodule Micelio.Security.SecretScanner do
   defp text_content?(content) when is_binary(content) do
     String.valid?(content) and not String.contains?(content, <<0>>)
   end
+
+  defp excluded_path?(path) when is_binary(path) do
+    Enum.any?(@excluded_paths, fn regex -> Regex.match?(regex, path) end)
+  end
+
+  defp excluded_path?(_), do: false
 end
