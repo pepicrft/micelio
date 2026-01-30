@@ -13,19 +13,104 @@ const mount = @import("mount.zig");
 const log = @import("log.zig");
 const diff = @import("diff.zig");
 const goto = @import("goto.zig");
+const cli = @import("cli_output.zig");
 
 const App = yazap.App;
 const Arg = yazap.Arg;
 
-pub fn main() !void {
+test "main renders CLIError without backtrace" {
+    const main_mod = @import("main.zig");
+    try std.testing.expect(@hasDecl(main_mod, "run"));
+}
+
+fn successResult() cli.CLIResult {
+    return .{ .success = .{ .message = "", .details = null } };
+}
+
+fn jsonFlagFromArgs() bool {
+    var args = std.process.args();
+    while (args.next()) |arg| {
+        if (std.mem.eql(u8, arg, "--json")) {
+            return true;
+        }
+    }
+    return false;
+}
+
+fn shouldRender(reporter: *cli.CLIReporter, result: cli.CLIResult) bool {
+    if (reporter.warnings().len > 0) {
+        return true;
+    }
+
+    return switch (result) {
+        .success => |success| success.message.len > 0 or success.details != null,
+        .@"error" => true,
+    };
+}
+
+pub fn main() void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
     const allocator = gpa.allocator();
 
+    var reporter = cli.CLIReporter.init(allocator);
+    defer reporter.deinit();
+
+    const json_output = jsonFlagFromArgs();
+
+    var env_map = std.process.getEnvMap(allocator) catch {
+        std.debug.print("Error: failed to read environment\n", .{});
+        std.process.exit(1);
+    };
+    defer env_map.deinit();
+
+    const env_flags = cli.EnvFlags{
+        .mic_color = env_map.get("MIC_COLOR") orelse "auto",
+        .no_color = env_map.get("NO_COLOR") != null,
+        .force_color = env_map.get("FORCE_COLOR") != null,
+        .term = env_map.get("TERM") orelse "",
+        .ci = env_map.get("CI") != null,
+    };
+
+    const mode = cli.colorModeFor(env_flags, std.fs.File.stdout().isTty());
+    const renderer = cli.CLIRenderer.init(mode);
+    const format: cli.OutputFormat = if (json_output) .json else .text;
+
+    const result = run(allocator, &reporter) catch |err| cli.CLIResult{
+        .@"error" = .{
+            .code = @errorName(err),
+            .message = "Command failed.",
+            .details = null,
+        },
+    };
+
+    if (shouldRender(&reporter, result)) {
+        const rendered = renderer.render(allocator, format, reporter.warnings(), result) catch |err| {
+            std.debug.print("Error: {s}\n", .{@errorName(err)});
+            std.process.exit(1);
+        };
+        defer allocator.free(rendered);
+
+        if (rendered.len > 0) {
+            _ = std.fs.File.stdout().writeAll(rendered) catch {};
+        }
+    }
+
+    const exit_code: u8 = switch (result) {
+        .success => 0,
+        .@"error" => 1,
+    };
+
+    std.process.exit(exit_code);
+}
+
+fn run(allocator: std.mem.Allocator, reporter: *cli.CLIReporter) !cli.CLIResult {
+    _ = reporter;
     var app = App.init(allocator, "mic", "The Micelio CLI - a forge-first version control system for the agent era");
     defer app.deinit();
 
     var root = app.rootCommand();
+    try root.addArg(Arg.booleanOption("json", null, "Output JSON"));
 
     // Auth: Authenticate with a forge
     var auth_cmd = app.createCommand("auth", "Authenticate with a forge");
@@ -88,6 +173,11 @@ pub fn main() !void {
     try checkout_cmd.addArg(Arg.positional("PROJECT", "Account/project (e.g., acme/app)", null));
     try checkout_cmd.addArg(Arg.singleValueOption("path", 'p', "Local directory (defaults to ./<project>)"));
     try root.addSubcommand(checkout_cmd);
+
+    // Link: Link an existing workspace to a project
+    var link_cmd = app.createCommand("link", "Link the current directory to a project");
+    try link_cmd.addArg(Arg.positional("TARGET", "Project ref (org/project) or URL", null));
+    try root.addSubcommand(link_cmd);
 
     // Mount: Mount project as virtual filesystem
     var mount_cmd = app.createCommand("mount", "Mount project as virtual filesystem");
@@ -202,7 +292,7 @@ pub fn main() !void {
 
     const matches = app.parseProcess() catch {
         try app.displayHelp();
-        return;
+        return successResult();
     };
 
     // Load configuration to get default server
@@ -238,27 +328,27 @@ pub fn main() !void {
                 server.client_id;
 
             try auth.login(allocator, web_url, grpc_url, client_id);
-            return;
+            return successResult();
         }
 
         if (auth_matches.subcommandMatches("status")) |_| {
             try auth.status(allocator);
-            return;
+            return successResult();
         }
 
         if (auth_matches.subcommandMatches("logout")) |_| {
             try auth.logout(allocator);
-            return;
+            return successResult();
         }
 
         std.debug.print("Usage: mic auth <login|status|logout>\n", .{});
-        return;
+        return successResult();
     }
 
     if (matches.subcommandMatches("org")) |org_matches| {
         if (org_matches.subcommandMatches("list")) |_| {
             try organizations.list(allocator, default_server);
-            return;
+            return successResult();
         }
 
         if (org_matches.subcommandMatches("get")) |get_matches| {
@@ -268,11 +358,11 @@ pub fn main() !void {
                 std.debug.print("Error: organization handle required\n", .{});
                 std.debug.print("Usage: mic org get <handle>\n", .{});
             }
-            return;
+            return successResult();
         }
 
         std.debug.print("Usage: mic org <list|get>\n", .{});
-        return;
+        return successResult();
     }
 
     if (matches.subcommandMatches("project")) |project_matches| {
@@ -283,7 +373,7 @@ pub fn main() !void {
                 std.debug.print("Error: organization required\n", .{});
                 std.debug.print("Usage: mic project list <organization>\n", .{});
             }
-            return;
+            return successResult();
         }
 
         if (project_matches.subcommandMatches("create")) |create_matches| {
@@ -294,12 +384,12 @@ pub fn main() !void {
             if (org == null or handle == null or name == null) {
                 std.debug.print("Error: organization, handle, and name required\n", .{});
                 std.debug.print("Usage: mic project create <organization> <handle> <name> [--description <desc>]\n", .{});
-                return;
+                return successResult();
             }
 
             const description = create_matches.getSingleValue("description");
             try projects.create(allocator, default_server, org.?, handle.?, name.?, description);
-            return;
+            return successResult();
         }
 
         if (project_matches.subcommandMatches("get")) |get_matches| {
@@ -309,11 +399,11 @@ pub fn main() !void {
             if (org == null or handle == null) {
                 std.debug.print("Error: organization and handle required\n", .{});
                 std.debug.print("Usage: mic project get <organization> <handle>\n", .{});
-                return;
+                return successResult();
             }
 
             try projects.get(allocator, default_server, org.?, handle.?);
-            return;
+            return successResult();
         }
 
         if (project_matches.subcommandMatches("update")) |update_matches| {
@@ -323,7 +413,7 @@ pub fn main() !void {
             if (org == null or handle == null) {
                 std.debug.print("Error: organization and handle required\n", .{});
                 std.debug.print("Usage: mic project update <organization> <handle> [--name <name>] [--description <desc>] [--new-handle <handle>]\n", .{});
-                return;
+                return successResult();
             }
 
             const name = update_matches.getSingleValue("name");
@@ -333,11 +423,11 @@ pub fn main() !void {
             if (name == null and description == null and new_handle == null) {
                 std.debug.print("Error: supply at least one field to update\n", .{});
                 std.debug.print("Usage: mic project update <organization> <handle> [--name <name>] [--description <desc>] [--new-handle <handle>]\n", .{});
-                return;
+                return successResult();
             }
 
             try projects.update(allocator, default_server, org.?, handle.?, name, description, new_handle);
-            return;
+            return successResult();
         }
 
         if (project_matches.subcommandMatches("delete")) |delete_matches| {
@@ -347,11 +437,11 @@ pub fn main() !void {
             if (org == null or handle == null) {
                 std.debug.print("Error: organization and handle required\n", .{});
                 std.debug.print("Usage: mic project delete <organization> <handle>\n", .{});
-                return;
+                return successResult();
             }
 
             try projects.delete(allocator, default_server, org.?, handle.?);
-            return;
+            return successResult();
         }
 
         std.debug.print("Project management commands:\n", .{});
@@ -360,7 +450,7 @@ pub fn main() !void {
         std.debug.print("  get <organization> <handle>   - Get project details\n", .{});
         std.debug.print("  update <org> <handle>         - Update project fields\n", .{});
         std.debug.print("  delete <org> <handle>         - Delete a project\n", .{});
-        return;
+        return successResult();
     }
 
     if (matches.subcommandMatches("checkout")) |checkout_matches| {
@@ -370,18 +460,18 @@ pub fn main() !void {
         if (project_ref == null) {
             std.debug.print("Error: project required\n", .{});
             std.debug.print("Usage: mic checkout <account>/<project> [--path dir]\n", .{});
-            return;
+            return successResult();
         }
 
         const parsed = parseProjectRef(project_ref.?);
         if (parsed == null) {
             std.debug.print("Error: invalid project format\n", .{});
             std.debug.print("Usage: mic checkout <account>/<project> [--path dir]\n", .{});
-            return;
+            return successResult();
         }
 
         try workspace.checkout(allocator, parsed.?.account, parsed.?.project, path);
-        return;
+        return successResult();
     }
 
     if (matches.subcommandMatches("mount")) |mount_matches| {
@@ -392,32 +482,32 @@ pub fn main() !void {
         if (project_ref == null) {
             std.debug.print("Error: project required\n", .{});
             std.debug.print("Usage: mic mount <account>/<project> [--path dir] [--port n]\n", .{});
-            return;
+            return successResult();
         }
 
         const parsed = parseProjectRef(project_ref.?);
         if (parsed == null) {
             std.debug.print("Error: invalid project format\n", .{});
             std.debug.print("Usage: mic mount <account>/<project> [--path dir] [--port n]\n", .{});
-            return;
+            return successResult();
         }
 
         const port: u16 = if (port_str) |value|
             std.fmt.parseInt(u16, value, 10) catch {
                 std.debug.print("Error: invalid port\n", .{});
                 std.debug.print("Usage: mic mount <account>/<project> [--path dir] [--port n]\n", .{});
-                return;
+                return successResult();
             }
         else
             mount.DefaultPort;
 
         if (port == 0) {
             std.debug.print("Error: port must be greater than 0\n", .{});
-            return;
+            return successResult();
         }
 
         try mount.mount(allocator, parsed.?.account, parsed.?.project, path, port);
-        return;
+        return successResult();
     }
 
     if (matches.subcommandMatches("unmount")) |unmount_matches| {
@@ -426,16 +516,28 @@ pub fn main() !void {
         if (path == null) {
             std.debug.print("Error: mount path required\n", .{});
             std.debug.print("Usage: mic unmount <path>\n", .{});
-            return;
+            return successResult();
         }
 
         try mount.unmount(allocator, path.?);
-        return;
+        return successResult();
+    }
+
+    if (matches.subcommandMatches("link")) |link_matches| {
+        const target = link_matches.getSingleValue("TARGET");
+        if (target == null) {
+            std.debug.print("Error: target required\n", .{});
+            std.debug.print("Usage: mic link <org/project> or mic link <url>\n", .{});
+            return successResult();
+        }
+
+        try workspace.link(allocator, target.?);
+        return successResult();
     }
 
     if (matches.subcommandMatches("status")) |_| {
         try workspace.status(allocator);
-        return;
+        return successResult();
     }
 
     if (matches.subcommandMatches("land")) |land_matches| {
@@ -443,11 +545,11 @@ pub fn main() !void {
         if (goal == null) {
             std.debug.print("Error: goal required\n", .{});
             std.debug.print("Usage: mic land <goal>\n", .{});
-            return;
+            return successResult();
         }
 
         try workspace.land(allocator, goal.?);
-        return;
+        return successResult();
     }
 
     if (matches.subcommandMatches("sync")) |sync_matches| {
@@ -455,10 +557,10 @@ pub fn main() !void {
         const strategy = workspace.parseMergeStrategy(strategy_raw) orelse {
             std.debug.print("Error: invalid strategy '{s}'.\n", .{strategy_raw});
             std.debug.print("Usage: mic sync [--strategy ours|theirs|interactive]\n", .{});
-            return;
+            return successResult();
         };
         _ = try workspace.syncWorkspace(allocator, strategy);
-        return;
+        return successResult();
     }
 
     if (matches.subcommandMatches("clone")) |clone_matches| {
@@ -467,19 +569,19 @@ pub fn main() !void {
         if (project_ref == null) {
             std.debug.print("Error: project required\n", .{});
             std.debug.print("Usage: mic clone <account>/<project>\n", .{});
-            return;
+            return successResult();
         }
 
         const parsed = parseProjectRef(project_ref.?);
         if (parsed == null) {
             std.debug.print("Error: invalid project format\n", .{});
             std.debug.print("Usage: mic clone <account>/<project>\n", .{});
-            return;
+            return successResult();
         }
 
         // Clone uses checkout with the project name as the default directory
         try workspace.checkout(allocator, parsed.?.account, parsed.?.project, null);
-        return;
+        return successResult();
     }
 
     if (matches.subcommandMatches("cat")) |cat_matches| {
@@ -496,7 +598,7 @@ pub fn main() !void {
             const parsed = parsePositionOrLatest(value) orelse {
                 std.debug.print("Error: invalid position\n", .{});
                 std.debug.print("  position can be @N, N, @latest, or HEAD\n", .{});
-                return;
+                return successResult();
             };
             break :blk switch (parsed) {
                 .position => |p| p,
@@ -523,7 +625,7 @@ pub fn main() !void {
                 },
                 else => return err,
             }
-            return;
+            return successResult();
         };
         defer target.deinit(arena_alloc);
 
@@ -535,7 +637,7 @@ pub fn main() !void {
             target.path,
             position,
         );
-        return;
+        return successResult();
     }
 
     if (matches.subcommandMatches("ls")) |ls_matches| {
@@ -547,14 +649,14 @@ pub fn main() !void {
         if (account == null or project == null) {
             std.debug.print("Error: account and project required\n", .{});
             std.debug.print("Usage: mic ls <account> <project> [--path prefix] [--position <@N>]\n", .{});
-            return;
+            return successResult();
         }
 
         const position: ?u64 = if (position_str) |value| blk: {
             const parsed = parsePositionOrLatest(value) orelse {
                 std.debug.print("Error: invalid position\n", .{});
                 std.debug.print("  position can be @N, N, @latest, or HEAD\n", .{});
-                return;
+                return successResult();
             };
             break :blk switch (parsed) {
                 .position => |p| p,
@@ -563,7 +665,7 @@ pub fn main() !void {
         } else null;
 
         try content.ls(allocator, default_server, account.?, project.?, path, position);
-        return;
+        return successResult();
     }
 
     if (matches.subcommandMatches("blame")) |blame_matches| {
@@ -574,11 +676,11 @@ pub fn main() !void {
         if (account == null or project == null or path == null) {
             std.debug.print("Error: account, project, and path required\n", .{});
             std.debug.print("Usage: mic blame <account> <project> <path>\n", .{});
-            return;
+            return successResult();
         }
 
         try content.blame(allocator, default_server, account.?, project.?, path.?);
-        return;
+        return successResult();
     }
 
     if (matches.subcommandMatches("write")) |write_matches| {
@@ -586,11 +688,11 @@ pub fn main() !void {
         if (path == null) {
             std.debug.print("Error: path required\n", .{});
             std.debug.print("Usage: mic write <path>\n", .{});
-            return;
+            return successResult();
         }
 
         try session.write(allocator, path.?);
-        return;
+        return successResult();
     }
 
     if (matches.subcommandMatches("log")) |log_matches| {
@@ -601,14 +703,14 @@ pub fn main() !void {
         if (project_ref == null) {
             std.debug.print("Error: project required\n", .{});
             std.debug.print("Usage: mic log <account>/<project> [--path <path>] [--limit <n>]\n", .{});
-            return;
+            return successResult();
         }
 
         const parsed = parseProjectRef(project_ref.?);
         if (parsed == null) {
             std.debug.print("Error: invalid project format\n", .{});
             std.debug.print("Usage: mic log <account>/<project>\n", .{});
-            return;
+            return successResult();
         }
 
         const limit: u32 = if (limit_str) |s|
@@ -617,7 +719,7 @@ pub fn main() !void {
             20;
 
         try log.list(allocator, parsed.?.account, parsed.?.project, path_filter, limit);
-        return;
+        return successResult();
     }
 
     if (matches.subcommandMatches("diff")) |diff_matches| {
@@ -629,19 +731,19 @@ pub fn main() !void {
             std.debug.print("Error: project and from position required\n", .{});
             std.debug.print("Usage: mic diff <account>/<project> <from> [to]\n", .{});
             std.debug.print("  from/to can be @N, N, @latest, or HEAD\n", .{});
-            return;
+            return successResult();
         }
 
         const parsed = parseProjectRef(project_ref.?);
         if (parsed == null) {
             std.debug.print("Error: invalid project format\n", .{});
             std.debug.print("Usage: mic diff <account>/<project> <from> [to]\n", .{});
-            return;
+            return successResult();
         }
 
         const from_parsed = parsePositionOrLatest(from_str.?) orelse {
             std.debug.print("Error: invalid from position\n", .{});
-            return;
+            return successResult();
         };
 
         // Convert PositionOrLatest to the format diff.show expects
@@ -653,7 +755,7 @@ pub fn main() !void {
         const to_position: ?u64 = if (to_str) |s| blk: {
             const to_parsed = parsePositionOrLatest(s) orelse {
                 std.debug.print("Error: invalid to position\n", .{});
-                return;
+                return successResult();
             };
             break :blk switch (to_parsed) {
                 .position => |p| p,
@@ -662,7 +764,7 @@ pub fn main() !void {
         } else null;
 
         try diff.show(allocator, parsed.?.account, parsed.?.project, from_position, to_position);
-        return;
+        return successResult();
     }
 
     if (matches.subcommandMatches("goto")) |goto_matches| {
@@ -674,19 +776,19 @@ pub fn main() !void {
             std.debug.print("Error: project and position required\n", .{});
             std.debug.print("Usage: mic goto <account>/<project> <position> [--path prefix]\n", .{});
             std.debug.print("  position can be @N, N, @latest, or HEAD\n", .{});
-            return;
+            return successResult();
         }
 
         const parsed = parseProjectRef(project_ref.?);
         if (parsed == null) {
             std.debug.print("Error: invalid project format\n", .{});
             std.debug.print("Usage: mic goto <account>/<project> <position>\n", .{});
-            return;
+            return successResult();
         }
 
         const pos_parsed = parsePositionOrLatest(position_str.?) orelse {
             std.debug.print("Error: invalid position\n", .{});
-            return;
+            return successResult();
         };
 
         // Convert to optional u64 (null means HEAD)
@@ -696,7 +798,7 @@ pub fn main() !void {
         };
 
         try goto.show(allocator, parsed.?.account, parsed.?.project, position, path_prefix);
-        return;
+        return successResult();
     }
 
     if (matches.subcommandMatches("session")) |session_matches| {
@@ -708,16 +810,16 @@ pub fn main() !void {
             if (org == null or project == null or goal == null) {
                 std.debug.print("Error: organization, project, and goal required\n", .{});
                 std.debug.print("Usage: mic session start <organization> <project> <goal>\n", .{});
-                return;
+                return successResult();
             }
 
             try session.start(allocator, org.?, project.?, goal.?);
-            return;
+            return successResult();
         }
 
         if (session_matches.subcommandMatches("status")) |_| {
             try session.status(allocator);
-            return;
+            return successResult();
         }
 
         if (session_matches.subcommandMatches("note")) |note_matches| {
@@ -727,27 +829,27 @@ pub fn main() !void {
             if (message == null) {
                 std.debug.print("Error: message required\n", .{});
                 std.debug.print("Usage: mic session note <message> [--role human|agent]\n", .{});
-                return;
+                return successResult();
             }
 
             try session.addNote(allocator, role, message.?);
-            return;
+            return successResult();
         }
 
         if (session_matches.subcommandMatches("land")) |_| {
             try session.land(allocator, default_server);
-            return;
+            return successResult();
         }
 
         if (session_matches.subcommandMatches("abandon")) |_| {
             try session.abandon(allocator);
-            return;
+            return successResult();
         }
 
         if (session_matches.subcommandMatches("resolve")) |resolve_matches| {
             const strategy = resolve_matches.getSingleValue("strategy") orelse "interactive";
             try session.resolve(allocator, default_server, strategy);
-            return;
+            return successResult();
         }
 
         std.debug.print("Session management commands:\n", .{});
@@ -757,10 +859,11 @@ pub fn main() !void {
         std.debug.print("  land                          - Land the session (push to forge)\n", .{});
         std.debug.print("  abandon                       - Abandon the current session\n", .{});
         std.debug.print("  resolve [--strategy]          - Interactive conflict resolution\n", .{});
-        return;
+        return successResult();
     }
 
     try app.displayHelp();
+    return successResult();
 }
 
 const ProjectRef = struct {

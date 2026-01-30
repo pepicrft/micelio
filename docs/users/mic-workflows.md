@@ -28,6 +28,21 @@ mic project create <organization> <handle> <name> [--description <desc>]
 mic checkout <account>/<project> [--path dir]
 ```
 
+## Link an existing local project
+
+Use this when you already have a local project directory and want to land it to a Micelio project without running checkout.
+
+```bash
+# Link by project ref (uses default server)
+mic link <account>/<project>
+
+# Link by URL
+mic link https://micelio.dev/<account>/<project>
+
+# Land your changes
+mic land "Describe the goal"
+```
+
 ## Start a session and land changes
 
 ```bash

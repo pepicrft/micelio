@@ -1,5 +1,6 @@
 const std = @import("std");
 const auth = @import("auth.zig");
+const config = @import("config.zig");
 const content_mod = @import("content.zig");
 const grpc_client = @import("grpc/client.zig");
 const grpc_endpoint = @import("grpc/endpoint.zig");
@@ -135,7 +136,7 @@ pub fn status(allocator: std.mem.Allocator) !void {
     const workspace_root = try std.process.getCwdAlloc(arena_alloc);
     const parsed = try manifest.load(arena_alloc, workspace_root);
     if (parsed == null) {
-        std.debug.print("No workspace metadata found. Run 'mic workspace checkout'.\n", .{});
+        std.debug.print("No workspace metadata found. Run 'mic link' or 'mic checkout'.\n", .{});
         return;
     }
 
@@ -151,6 +152,78 @@ pub fn status(allocator: std.mem.Allocator) !void {
     }
 }
 
+pub fn link(allocator: std.mem.Allocator, target: []const u8) !void {
+    var arena = std.heap.ArenaAllocator.init(allocator);
+    defer arena.deinit();
+    const arena_alloc = arena.allocator();
+
+    const workspace_root = try std.process.getCwdAlloc(arena_alloc);
+    const existing = try manifest.load(arena_alloc, workspace_root);
+    if (existing != null) {
+        std.debug.print("Error: Workspace already linked. Remove .mic/workspace.json to relink.\n", .{});
+        return error.WorkspaceExists;
+    }
+
+    var cfg = config.Config.load(arena_alloc) catch {
+        std.debug.print("Error: Failed to load mic config.\n", .{});
+        return error.ConfigLoadFailed;
+    };
+    defer cfg.deinit();
+
+    const default_server = cfg.getDefaultServer();
+    const link_target = try resolveLinkTarget(arena_alloc, target, default_server);
+
+    const tokens = try auth.requireTokensWithMessage(arena_alloc);
+    if (!std.mem.eql(u8, tokens.server, link_target.server)) {
+        std.debug.print("Error: Credentials are for {s}.\n", .{tokens.server});
+        std.debug.print("Run 'mic auth login' against {s} and try again.\n", .{link_target.server});
+        return error.ServerMismatch;
+    }
+
+    const endpoint = try grpc_endpoint.parseServer(arena_alloc, link_target.server);
+    const request = try content_proto.encodeGetHeadTreeRequest(
+        arena_alloc,
+        link_target.account,
+        link_target.project,
+    );
+    defer arena_alloc.free(request);
+
+    const response = try grpc_client.unaryCall(
+        arena_alloc,
+        endpoint,
+        "/micelio.content.v1.ContentService/GetHeadTree",
+        request,
+        tokens.access_token,
+    );
+    defer arena_alloc.free(response.bytes);
+
+    const tree = try content_proto.decodeTreeResponse(arena_alloc, response.bytes);
+    const tree_hash_hex = try hexEncode(arena_alloc, tree.tree_hash);
+
+    var entries: std.ArrayList(manifest.WorkspaceEntry) = .empty;
+    for (tree.entries) |entry| {
+        if (!isSafePath(entry.path)) {
+            std.debug.print("Error: Unsafe path in tree: {s}\n", .{entry.path});
+            return error.InvalidPath;
+        }
+        const hash_hex = try hexEncode(arena_alloc, entry.hash);
+        try entries.append(arena_alloc, .{ .path = entry.path, .hash = hash_hex });
+    }
+
+    const state = manifest.WorkspaceState{
+        .version = 1,
+        .server = link_target.server,
+        .account = link_target.account,
+        .project = link_target.project,
+        .tree_hash = tree_hash_hex,
+        .entries = try entries.toOwnedSlice(arena_alloc),
+    };
+
+    try manifest.save(arena_alloc, workspace_root, state);
+
+    std.debug.print("Workspace linked to {s}/{s}.\n", .{ link_target.account, link_target.project });
+}
+
 pub fn land(allocator: std.mem.Allocator, goal: []const u8) !void {
     var arena = std.heap.ArenaAllocator.init(allocator);
     defer arena.deinit();
@@ -159,8 +232,8 @@ pub fn land(allocator: std.mem.Allocator, goal: []const u8) !void {
     const workspace_root = try std.process.getCwdAlloc(arena_alloc);
     const parsed = try manifest.load(arena_alloc, workspace_root);
     if (parsed == null) {
-        std.debug.print("No workspace metadata found. Run 'mic workspace checkout'.\n", .{});
-        return;
+        std.debug.print("No workspace link. Run 'mic link <org/project>' or 'mic link <url>'.\n", .{});
+        return error.NoWorkspace;
     }
 
     const state = parsed.?.value;
@@ -511,6 +584,121 @@ fn generateSessionId(allocator: std.mem.Allocator) ![]u8 {
     return try allocator.dupe(u8, encoded);
 }
 
+const LinkTarget = struct {
+    server: []const u8,
+    account: []const u8,
+    project: []const u8,
+};
+
+fn resolveLinkTarget(
+    allocator: std.mem.Allocator,
+    target: []const u8,
+    default_server: ?[]const u8,
+) !LinkTarget {
+    if (std.mem.indexOf(u8, target, "://") != null) {
+        return parseLinkUrl(allocator, target);
+    }
+
+    const parsed = parseProjectRef(target) orelse {
+        std.debug.print("Error: invalid project reference '{s}'.\n", .{target});
+        std.debug.print("Usage: mic link <org/project> or mic link <url>\n", .{});
+        return error.InvalidProject;
+    };
+
+    const server = default_server orelse {
+        std.debug.print("Error: No default server configured.\n", .{});
+        std.debug.print("Run 'mic auth login' or set a default server in config.\n", .{});
+        return error.MissingDefaultServer;
+    };
+
+    return .{
+        .server = try allocator.dupe(u8, server),
+        .account = try allocator.dupe(u8, parsed.account),
+        .project = try allocator.dupe(u8, parsed.project),
+    };
+}
+
+const ProjectRef = struct {
+    account: []const u8,
+    project: []const u8,
+};
+
+fn parseProjectRef(value: []const u8) ?ProjectRef {
+    const slash_index = std.mem.indexOfScalar(u8, value, '/') orelse return null;
+    if (slash_index == 0 or slash_index + 1 >= value.len) return null;
+    if (std.mem.indexOfScalar(u8, value[slash_index + 1 ..], '/') != null) return null;
+
+    return .{
+        .account = value[0..slash_index],
+        .project = value[slash_index + 1 ..],
+    };
+}
+
+fn parseLinkUrl(allocator: std.mem.Allocator, target: []const u8) !LinkTarget {
+    const uri = std.Uri.parse(target) catch {
+        std.debug.print("Error: invalid URL '{s}'.\n", .{target});
+        return error.InvalidUrl;
+    };
+
+    if (uri.scheme.len == 0) {
+        std.debug.print("Error: URL must include a scheme (https).\n", .{});
+        return error.InvalidUrl;
+    }
+
+    const host = uri.getHostAlloc(allocator) catch {
+        std.debug.print("Error: URL must include a host.\n", .{});
+        return error.InvalidUrl;
+    };
+
+    const is_localhost = isLocalhost(host);
+    const is_https = std.mem.eql(u8, uri.scheme, "https");
+    const is_http = std.mem.eql(u8, uri.scheme, "http");
+
+    if (!is_https and !(is_http and is_localhost)) {
+        std.debug.print("Error: URL must use https (http allowed only for localhost).\n", .{});
+        return error.InvalidUrl;
+    }
+
+    const path = try uri.path.toRawMaybeAlloc(allocator);
+    const trimmed = std.mem.trim(u8, path, "/");
+    if (trimmed.len == 0) {
+        std.debug.print("Error: URL must include /<org>/<project>.\n", .{});
+        return error.InvalidUrl;
+    }
+
+    var iter = std.mem.splitScalar(u8, trimmed, '/');
+    const account = iter.next() orelse {
+        std.debug.print("Error: URL must include /<org>/<project>.\n", .{});
+        return error.InvalidUrl;
+    };
+    const project = iter.next() orelse {
+        std.debug.print("Error: URL must include /<org>/<project>.\n", .{});
+        return error.InvalidUrl;
+    };
+    if (iter.next() != null) {
+        std.debug.print("Error: URL must be in the form https://host/<org>/<project>.\n", .{});
+        return error.InvalidUrl;
+    }
+
+    const server = try inferGrpcUrl(allocator, host, is_localhost);
+    return .{
+        .server = server,
+        .account = try allocator.dupe(u8, account),
+        .project = try allocator.dupe(u8, project),
+    };
+}
+
+fn inferGrpcUrl(allocator: std.mem.Allocator, host: []const u8, is_localhost: bool) ![]u8 {
+    if (is_localhost) {
+        return std.fmt.allocPrint(allocator, "http://{s}:50051", .{host});
+    }
+    return std.fmt.allocPrint(allocator, "https://api.{s}:443", .{host});
+}
+
+fn isLocalhost(host: []const u8) bool {
+    return std.mem.eql(u8, host, "localhost") or std.mem.eql(u8, host, "127.0.0.1");
+}
+
 pub const SyncResult = struct {
     updated: u32,
     conflicts: []const []const u8,
@@ -543,7 +731,7 @@ pub fn syncWorkspace(allocator: std.mem.Allocator, strategy: MergeStrategy) !Syn
     const workspace_root = try std.process.getCwdAlloc(arena_alloc);
     const parsed = try manifest.load(arena_alloc, workspace_root);
     if (parsed == null) {
-        std.debug.print("No workspace metadata found. Run 'mic workspace checkout'.\n", .{});
+        std.debug.print("No workspace metadata found. Run 'mic link' or 'mic checkout'.\n", .{});
         return error.NoWorkspace;
     }
 
@@ -780,4 +968,37 @@ fn hexEncode(allocator: std.mem.Allocator, bytes: []const u8) ![]u8 {
         out[idx * 2 + 1] = hex[byte & 0x0f];
     }
     return out;
+}
+
+test "link target parses web URL" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const alloc = arena.allocator();
+
+    const target = try parseLinkUrl(alloc, "https://micelio.dev/acme/app");
+    try std.testing.expectEqualStrings("https://api.micelio.dev:443", target.server);
+    try std.testing.expectEqualStrings("acme", target.account);
+    try std.testing.expectEqualStrings("app", target.project);
+}
+
+test "link target parses localhost URL" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const alloc = arena.allocator();
+
+    const target = try parseLinkUrl(alloc, "http://localhost:4000/acme/app");
+    try std.testing.expectEqualStrings("http://localhost:50051", target.server);
+    try std.testing.expectEqualStrings("acme", target.account);
+    try std.testing.expectEqualStrings("app", target.project);
+}
+
+test "link target uses default server for ref" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const alloc = arena.allocator();
+
+    const target = try resolveLinkTarget(alloc, "acme/app", "http://localhost:50051");
+    try std.testing.expectEqualStrings("http://localhost:50051", target.server);
+    try std.testing.expectEqualStrings("acme", target.account);
+    try std.testing.expectEqualStrings("app", target.project);
 }
